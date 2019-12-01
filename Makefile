@@ -1,0 +1,27 @@
+install:
+	pip install -e .
+
+test:
+	py.test tests -vv
+
+doc:
+	cd docs && make html
+
+clean:
+	rm -rf build/ dist/ *.egg-info .pytest_cache
+	find . -name '*.pyc' -type f -exec rm -rf {} +
+	find . -name '__pycache__' -exec rm -rf {} +
+
+package: clean
+	python3 setup.py sdist bdist_wheel
+
+publish: package
+	twine upload dist/*
+
+style:
+	# stop the build if there are Python syntax errors or undefined names
+	flake8 spectree --count --select=E9,F63,F7,F82 --show-source --statistics
+	# exit-zero treats all errors as warnings
+	flake8 spectree --count --exit-zero --statistics
+
+.PHONY: test doc
