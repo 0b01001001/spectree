@@ -11,9 +11,8 @@ class Config:
     :ivar DOMAIN: service host domain
     """
 
-    def __init__(self):
-        self.PATH = 'apidocs'
-        self.TEMPLATE_FOLDER = 'templates'
+    def __init__(self, **kwargs):
+        self.PATH = 'apidoc'
         self.FILENAME = 'openapi.json'
         self.OPENAPI_VERSION = '3.0.2'
         self.UI = 'redoc'
@@ -24,6 +23,12 @@ class Config:
         self.TITLE = 'Service API Document'
         self.VERSION = '0.1'
         self.DOMAIN = None
+
+        self.update(**kwargs)
+
+    @property
+    def spec_url(self):
+        return f'/{self.PATH}/{self.FILENAME}'
 
     def __repr__(self):
         display = '\n{:=^80}\n'.format(self.__class__.__name__)
