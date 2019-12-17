@@ -10,7 +10,10 @@ Welcome to spectree's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   spectree
    config
+   response
+   utils
 
 
 
