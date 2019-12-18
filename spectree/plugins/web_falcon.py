@@ -139,7 +139,7 @@ class FlaconPlugin(BasePlugin):
 
         except ValidationError as err:
             _resp.status = '422 Unprocessable Entity'
-            _resp.media = err.json()
+            _resp.media = err.errors()
             return
         except Exception:
             raise

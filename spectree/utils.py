@@ -63,3 +63,7 @@ def has_model(func):
         return True
 
     return False
+
+
+def parse_code(http_code):
+    return http_code.split('_', 1)[1]

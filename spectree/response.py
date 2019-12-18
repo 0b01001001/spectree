@@ -1,3 +1,5 @@
+from .utils import parse_code
+
 
 class Response:
     """
@@ -27,10 +29,10 @@ class Response:
     def generate_spec(self):
         responses = {}
         for code in self.codes:
-            responses[str(code)] = {'description': DEFAULT_CODE_DESC[code]}
+            responses[parse_code(code)] = {'description': DEFAULT_CODE_DESC[code]}
 
         for code, model in self.code_models.items():
-            responses[str(code)] = {
+            responses[parse_code(code)] = {
                 'description': DEFAULT_CODE_DESC[code],
                 'content': {
                     'application/json': {
