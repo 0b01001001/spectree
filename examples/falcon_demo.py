@@ -58,7 +58,7 @@ class Classification():
         """
         resp.media = {'msg': f'hello from {source} to {target}'}
 
-    @api.validate(query=Query, json=Data, resp=[Response(200, Resp), Response(403, BadLuck)])
+    @api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck))
     def on_post(self, req, resp, source, target):
         """
         post demo
@@ -67,12 +67,12 @@ class Classification():
         """
         print(f'{source} => {target}')
         print(req.context.query)
-        print(req.context.data)
+        print(req.context.media)
         if random() < 0.5:
             resp.status = falcon.HTTP_403
-            resp.media = BadLuck(loc='unknown', msg='bad luck', typ='random')
+            resp.context.media = BadLuck(loc='unknown', msg='bad luck', typ='random')
             return
-        resp.media = Resp(label=int(10 * random()), score=random())
+        resp.context.media = Resp(label=int(10 * random()), score=random())
 
 
 if __name__ == '__main__':

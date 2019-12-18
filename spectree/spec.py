@@ -2,7 +2,6 @@ from functools import partial
 from pydantic import BaseModel
 
 from .plugins import PLUGINS
-from .response import Response
 from .config import Config
 from .utils import parse_comments, parse_request, parse_params, parse_resp
 
@@ -60,7 +59,7 @@ class SpecTree:
         :param query: `pydantic.BaseModel` object, query in uri like `?name=value`
         :param json: `pydantic.BaseModel` object, JSON format request body
         :param headers: `pydantic.BaseModel` object, if you have specific headers
-        :param resp: list of `spectree.Response`
+        :param resp: `spectree.Response` object
         :param tags: list of tags' string
         """
         def decorate_validation(func):
@@ -76,9 +75,8 @@ class SpecTree:
                     setattr(validation, name, model.__name__)
 
             if resp:
-                for r in resp:
-                    assert(isinstance(r, Response))
-                    self.models[r.model.__name__] = r.model.schema()
+                for model in resp.models:
+                    self.models[model.__name__] = model.schema()
                 validation.resp = resp
 
             if tags:

@@ -11,8 +11,8 @@ class FlaskPlugin(BasePlugin):
     def parse_path(self, route):
         return super().parse_path(route)
 
-    def validate(self, query, json, headers, resp):
-        return super().validate(query, json, headers, resp)
+    def validate(self, *args, **kwargs):
+        pass
 
     def register_route(self, spectree):
         return super().register_route(spectree)

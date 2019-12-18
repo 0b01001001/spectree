@@ -9,7 +9,6 @@ def parse_comments(func):
     will be saved as description.
     """
     doc = getdoc(func.keywords['func'])
-    print(doc)
     if doc is None:
         return None, None
     doc = doc.split('\n', 1)
@@ -48,22 +47,19 @@ def parse_params(func, params):
 def parse_resp(func):
     if not hasattr(func, 'resp'):
         return {}
-    responses = {}
-    for resp in func.resp:
-        responses[str(resp.code)] = resp.generate_spec()
+    responses = func.resp.generate_spec()
 
     if '422' not in responses and has_model(func):
-        responses['422'] = {
-            'description': 'Validation Error',
-        }
+        responses['422'] = {'description': 'Validation Error'}
+
     return responses
 
 
 def has_model(func):
     if any(hasattr(func, x) for x in ('query', 'json', 'headers')):
         return True
-    if hasattr(func, 'resp'):
-        for response in func.resp:
-            if not response.model:
-                return True
+
+    if hasattr(func, 'resp') and func.resp.has_model():
+        return True
+
     return False

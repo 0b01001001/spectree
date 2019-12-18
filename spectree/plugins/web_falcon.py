@@ -123,12 +123,20 @@ class FlaconPlugin(BasePlugin):
         return f'/{"/".join(subs)}', parameters
 
     def validate(self, _req, _resp, *args, **kwargs):
+        query = kwargs.pop('query')
+        json = kwargs.pop('json')
+        headers = kwargs.pop('headers')
+        resp = kwargs.pop('resp')
+        func = kwargs.pop('func')
         try:
-            if kwargs.get('query'):
-                setattr(_req.context, 'query', kwargs['query'](**_req.params))
+            if query:
+                _req.context.query = query(**_req.params)
+            if headers:
+                _req.context.headers = headers(**_req.headers)
             media = _req.media or {}
-            if kwargs.get('json'):
-                _req.media = kwargs['json'](**media)
+            if json:
+                _req.context.media = json(**media)
+
         except ValidationError as err:
             _resp.status = '422 Unprocessable Entity'
             _resp.media = err.json()
@@ -136,9 +144,10 @@ class FlaconPlugin(BasePlugin):
         except Exception:
             raise
 
-        kwargs['func'](self, _req, _resp, *args, **kwargs)
-        if kwargs.get('resp'):
-            _resp.media = _resp.media.dict()
+        print(args, kwargs)
+        func(self, _req, _resp, *args, **kwargs)
+        if resp:
+            _resp.media = _resp.context.media.dict()
 
     def bypass(self, func, method):
         if not func.args:
