@@ -5,7 +5,7 @@ class Response:
     """
     response object
 
-    :param codes: list of HTTP status code, format('HTTP[0-9]{3}'), 'HTTP200'
+    :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP200'
     :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`>
     """
 

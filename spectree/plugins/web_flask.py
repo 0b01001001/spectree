@@ -2,17 +2,17 @@ from .base import BasePlugin
 
 
 class FlaskPlugin(BasePlugin):
-    def find_routes(self):
-        return super().find_routes()
+    def find_routes(self, app):
+        pass
 
     def bypass(self, func, method):
-        return super().bypass(func, method)
+        pass
 
     def parse_path(self, route):
-        return super().parse_path(route)
+        pass
 
     def validate(self, *args, **kwargs):
         pass
 
-    def register_route(self, spectree):
-        return super().register_route(spectree)
+    def register_route(self, app, config, spec):
+        pass
