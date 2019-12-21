@@ -14,8 +14,8 @@ class OpenAPI:
 
 
 class DocPage:
-    def __init__(self, config):
-        self.page = PAGES[config.UI].format(config.spec_url)
+    def __init__(self, html, spec_url):
+        self.page = html.format(spec_url)
 
     def on_get(self, req, resp):
         resp.content_type = 'text/html'
@@ -43,11 +43,12 @@ INT_ARGS_NAMES = ('num_digits', 'min', 'max')
 class FlaconPlugin(BasePlugin):
     def register_route(self, app, config, spec):
         app.add_route(
-            f'/{config.PATH}', DocPage(config)
-        )
-        app.add_route(
             config.spec_url, OpenAPI(spec)
         )
+        for ui in PAGES:
+            app.add_route(
+                f'/{ui}', DocPage(PAGES[ui], config.spec_url)
+            )
 
     def find_routes(self, app):
         routes = []
