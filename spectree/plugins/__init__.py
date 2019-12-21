@@ -1,7 +1,9 @@
-from .web_flask import FlaskPlugin
-from .web_falcon import FlaconPlugin
+from .base import BasePlugin
+from .flask_plugin import FlaskPlugin
+from .falcon_plugin import FlaconPlugin
 
 PLUGINS = {
+    'base': BasePlugin,
     'flask': FlaskPlugin,
     'falcon': FlaconPlugin,
 }
