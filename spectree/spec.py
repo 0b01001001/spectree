@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial, wraps
 from pydantic import BaseModel
 
 from .plugins import PLUGINS
@@ -11,9 +11,9 @@ class SpecTree:
     Interface
     """
 
-    def __init__(self, backend=None, app=None, **kwargs):
-        self.backend = PLUGINS.get(backend)()
+    def __init__(self, backend='base', app=None, **kwargs):
         self.config = Config(**kwargs)
+        self.backend = PLUGINS[backend](self)
         # init
         self.models = {}
         if app:
@@ -21,7 +21,7 @@ class SpecTree:
 
     def register(self, app):
         self.app = app
-        self.backend.register_route(self.app, self.config, self.spec)
+        self.backend.register_route(self.app)
 
     @property
     def spec(self):
@@ -56,19 +56,20 @@ class SpecTree:
         - validate response body and status code
         - add tags to this API route
 
-        :param query: `pydantic.BaseModel` object, query in uri like `?name=value`
-        :param json: `pydantic.BaseModel` object, JSON format request body
-        :param headers: `pydantic.BaseModel` object, if you have specific headers
-        :param resp: `spectree.Response` object
+        :param query: `pydantic.BaseModel`, query in uri like `?name=value`
+        :param json: `pydantic.BaseModel`, JSON format request body
+        :param headers: `pydantic.BaseModel`, if you have specific headers
+        :param resp: `spectree.Response`
         :param tags: list of tags' string
         """
         def decorate_validation(func):
-            validation = partial(
+            validation = wraps(func)(partial(
                 self.backend.validate,
-                func=func, query=query, json=json, headers=headers, resp=resp)
+                func=func, query=query, json=json, headers=headers, resp=resp))
 
             # register
-            for name, model in zip(('query', 'json', 'headers'), (query, json, headers)):
+            for name, model in zip(('query', 'json', 'headers'),
+                                   (query, json, headers)):
                 if model is not None:
                     assert(issubclass(model, BaseModel))
                     self.models[model.__name__] = model.schema()
@@ -89,10 +90,10 @@ class SpecTree:
 
     def _generate_spec(self):
         routes, tags = {}, {}
-        for route in self.backend.find_routes(self.app):
+        for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
             routes[path] = {}
-            for method, func in route.method_map.items():
+            for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
@@ -132,8 +133,8 @@ class SpecTree:
         definitions = {}
         for schema in self.models.values():
             if 'definitions' in schema:
-                for key, value in schema['definitions']:
-                    definitions[key] = schema['definitions'][key]
+                for key, value in schema['definitions'].items():
+                    definitions[key] = value
                 del schema['definitions']
 
         return definitions

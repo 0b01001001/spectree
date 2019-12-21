@@ -5,24 +5,6 @@ from .base import BasePlugin
 from .page import PAGES
 
 
-class OpenAPI:
-    def __init__(self, spec):
-        self.spec = spec
-
-    def on_get(self, req, resp):
-        resp.media = self.spec
-
-
-class DocPage:
-    def __init__(self, config):
-        self.page = PAGES[config.UI].format(config.spec_url)
-
-    def on_get(self, req, resp):
-        resp.content_type = 'text/html'
-        resp.body = self.page
-
-
-DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 _FIELD_PATTERN = re.compile(
     # NOTE from `falcon.routing.compiled`
     r'{((?P<fname>[^}:]*)((?P<cname_sep>:(?P<cname>[^}\(]*))(\((?P<argstr>[^}]*)\))?)?)}'
@@ -40,16 +22,39 @@ INT_ARGS = re.compile(r'''
 INT_ARGS_NAMES = ('num_digits', 'min', 'max')
 
 
-class FlaconPlugin(BasePlugin):
-    def register_route(self, app, config, spec):
-        app.add_route(
-            f'/{config.PATH}', DocPage(config)
-        )
-        app.add_route(
-            config.spec_url, OpenAPI(spec)
-        )
+class OpenAPI:
+    def __init__(self, spec):
+        self.spec = spec
 
-    def find_routes(self, app):
+    def on_get(self, req, resp):
+        resp.media = self.spec
+
+
+class DocPage:
+    def __init__(self, html, spec_url):
+        self.page = html.format(spec_url)
+
+    def on_get(self, req, resp):
+        resp.content_type = 'text/html'
+        resp.body = self.page
+
+
+DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
+
+
+class FlaconPlugin(BasePlugin):
+    def register_route(self, app):
+        self.app = app
+        self.app.add_route(
+            self.config.spec_url, OpenAPI(self.spectree.spec)
+        )
+        for ui in PAGES:
+            self.app.add_route(
+                f'/{self.config.PATH}/{ui}',
+                DocPage(PAGES[ui], self.config.spec_url),
+            )
+
+    def find_routes(self):
         routes = []
 
         def find_node(node):
@@ -59,10 +64,13 @@ class FlaconPlugin(BasePlugin):
             for child in node.children:
                 find_node(child)
 
-        for route in app._router._roots:
+        for route in self.app._router._roots:
             find_node(route)
 
         return routes
+
+    def parse_func(self, route):
+        return route.method_map.items()
 
     def parse_path(self, route):
         subs, parameters = [], []
@@ -144,7 +152,6 @@ class FlaconPlugin(BasePlugin):
         except Exception:
             raise
 
-        print(args, kwargs)
         func(self, _req, _resp, *args, **kwargs)
         if resp:
             _resp.media = _resp.context.media.dict()
