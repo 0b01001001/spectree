@@ -131,19 +131,14 @@ class FlaskPlugin(BasePlugin):
         from flask import jsonify
 
         self.app = app
-        spec = self.spectree.spec
 
         def doc_page(ui):
             return PAGES[ui].format(self.config.spec_url)
 
-        def openapi():
-            return jsonify(spec)
-
         self.app.add_url_rule(
             self.config.spec_url,
             'openapi',
-            # lambda: jsonify(spec),
-            openapi,
+            lambda: jsonify(self.spectree.spec),
         )
         for ui in PAGES:
             self.app.add_url_rule(
