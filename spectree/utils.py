@@ -1,4 +1,5 @@
-from inspect import getdoc
+import inspect
+from functools import partial
 
 
 def parse_comments(func):
@@ -8,7 +9,7 @@ def parse_comments(func):
     First line of comments will be saved as summary, and the rest
     will be saved as description.
     """
-    doc = getdoc(func.keywords['func'])
+    doc = inspect.getdoc(func)
     if doc is None:
         return None, None
     doc = doc.split('\n', 1)
@@ -67,3 +68,13 @@ def has_model(func):
 
 def parse_code(http_code):
     return http_code.split('_', 1)[1]
+
+
+def parse_name(func):
+    if isinstance(func, partial):
+        if inspect.ismethod(func.func):
+            return func.func.__class__.__name__
+        else:
+            return func.__wrapped__.__name__
+    else:
+        return func.__name__
