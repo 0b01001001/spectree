@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+Context = namedtuple('Context', ['query', 'json', 'headers'])
 
 
 class BasePlugin:
@@ -9,7 +12,7 @@ class BasePlugin:
         self.spectree = spectree
         self.config = spectree.config
 
-    def register_route(self, app, config, spec):
+    def register_route(self, app):
         raise NotImplementedError
 
     def validate(self, query, json, headers, resp):

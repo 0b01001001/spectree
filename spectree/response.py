@@ -22,6 +22,9 @@ class Response:
     def has_model(self):
         return True if self.code_models else False
 
+    def find_model(self, code):
+        return self.code_models.get(f'HTTP_{code}')
+
     @property
     def models(self):
         return self.code_models.values()

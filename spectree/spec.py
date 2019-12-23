@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from .plugins import PLUGINS
 from .config import Config
-from .utils import parse_comments, parse_request, parse_params, parse_resp
+from .utils import parse_comments, parse_request, parse_params, parse_resp, parse_name
 
 
 class SpecTree:
@@ -97,7 +97,7 @@ class SpecTree:
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
-                name = func.func.__class__.__name__
+                name = parse_name(func)
                 summary, desc = parse_comments(func)
                 func_tags = getattr(func, 'tags', [])
                 for tag in func_tags:

@@ -1,12 +1,7 @@
-from functools import partial
 from pydantic import ValidationError
 
-from .base import BasePlugin
+from .base import BasePlugin, Context
 from .page import PAGES
-
-
-class Context:
-    __slots__ = ('query', 'json', 'headers')
 
 
 class FlaskPlugin(BasePlugin):
@@ -105,16 +100,18 @@ class FlaskPlugin(BasePlugin):
         headers = kwargs.pop('headers')
         resp = kwargs.pop('resp')
         func = kwargs.pop('func')
+
         try:
-            request.context = Context()
             arg = request.args or {}
-            request.context.query = query(**arg) if query else None
             data = request.get_json() or {}
-            request.context.json = json(**data) if json else None
             head = request.headers or {}
-            request.context.headers = headers(**head) if headers else None
+            request.context = Context(
+                query(**arg) if query else None,
+                json(**data) if json else None,
+                headers(**head) if headers else None
+            )
         except ValidationError as err:
-            abort(make_response(jsonify(message=err.errors()), 422))
+            abort(make_response(jsonify(err.errors()), 422))
         except Exception:
             raise
 
@@ -128,26 +125,18 @@ class FlaskPlugin(BasePlugin):
         return make_response(response, *others)
 
     def register_route(self, app):
-        from flask import jsonify
-
         self.app = app
-        spec = self.spectree.spec
-
-        def doc_page(ui):
-            return PAGES[ui].format(self.config.spec_url)
-
-        def openapi():
-            return jsonify(spec)
+        from flask import jsonify
 
         self.app.add_url_rule(
             self.config.spec_url,
             'openapi',
-            # lambda: jsonify(spec),
-            openapi,
+            lambda: jsonify(self.spectree.spec),
         )
+
         for ui in PAGES:
             self.app.add_url_rule(
                 f'/{self.config.PATH}/{ui}',
                 f'doc_page_{ui}',
-                partial(doc_page, ui),
+                lambda ui=ui: PAGES[ui].format(self.config.spec_url)
             )

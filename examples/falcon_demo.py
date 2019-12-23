@@ -45,7 +45,16 @@ class Data(BaseModel):
     vip: bool
 
 
-class Classification():
+class Ping:
+    @api.validate(tags=['demo'])
+    def on_get(self, req, resp):
+        """
+        health check
+        """
+        resp.media = {'msg': 'pong'}
+
+
+class Classification:
     """
     classification demo
     """
@@ -77,6 +86,7 @@ class Classification():
 
 if __name__ == '__main__':
     app = falcon.API()
+    app.add_route('/ping', Ping())
     app.add_route('/api/{source}/{target}', Classification())
     api.register(app)
 
