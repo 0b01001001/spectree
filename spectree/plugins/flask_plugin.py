@@ -1,4 +1,3 @@
-from functools import partial
 from pydantic import ValidationError
 
 from .base import BasePlugin, Context
@@ -134,9 +133,10 @@ class FlaskPlugin(BasePlugin):
             'openapi',
             lambda: jsonify(self.spectree.spec),
         )
+
         for ui in PAGES:
             self.app.add_url_rule(
                 f'/{self.config.PATH}/{ui}',
                 f'doc_page_{ui}',
-                lambda: PAGES[ui].format(self.config.spec_url),
+                lambda ui=ui: PAGES[ui].format(self.config.spec_url)
             )
