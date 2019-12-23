@@ -38,8 +38,12 @@ install with pip: `pip install spectree`
    * `headers`
    * `resp`
    * `tags`
-4. register to the web application `api.register(app)`
-5. check the document at `/apidoc/redoc` or `/apidoc/swagger`
+4. access these data with `context(query, json, headers)`
+   * flask: `request.context`
+   * falcon: `req.context`
+   * starlette: `request.context`
+5. register to the web application `api.register(app)`
+6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
 
 ### Examples
 
