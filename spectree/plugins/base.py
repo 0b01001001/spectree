@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Context = namedtuple('Context', ['query', 'json', 'headers'])
+Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
 
 
 class BasePlugin:

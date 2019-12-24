@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 
+from ..utils import pop_keywords
 from .base import BasePlugin, Context
 from .page import PAGES
 
@@ -95,20 +96,18 @@ class FlaskPlugin(BasePlugin):
     def validate(self, *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
-        query = kwargs.pop('query')
-        json = kwargs.pop('json')
-        headers = kwargs.pop('headers')
-        resp = kwargs.pop('resp')
-        func = kwargs.pop('func')
+        func, query, json, headers, cookies, resp = pop_keywords(kwargs)
 
         try:
             arg = request.args or {}
             data = request.get_json() or {}
             head = request.headers or {}
+            cook = request.cookies or {}
             request.context = Context(
                 query(**arg) if query else None,
                 json(**data) if json else None,
-                headers(**head) if headers else None
+                headers(**head) if headers else None,
+                cookies(**cook) if cookies else None,
             )
         except ValidationError as err:
             abort(make_response(jsonify(err.errors()), 422))
