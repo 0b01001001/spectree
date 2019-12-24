@@ -7,9 +7,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 6
+      max-parallel: 3
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest]
 
     steps:
@@ -30,7 +30,3 @@ jobs:
       run: |
         pip install pytest
         make test
-    - name: Generate doc with sphinx
-      run: |
-        pip install sphinx
-        make doc
