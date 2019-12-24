@@ -50,7 +50,7 @@ class SpecTree:
                 return True
             return False
 
-    def validate(self, query=None, json=None, headers=None, resp=None, tags=[]):
+    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=[]):
         """
         - validate query, json, headers in request
         - validate response body and status code
@@ -59,17 +59,19 @@ class SpecTree:
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
         :param headers: `pydantic.BaseModel`, if you have specific headers
+        :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
         :param tags: list of tags' string
         """
         def decorate_validation(func):
             validation = wraps(func)(partial(
                 self.backend.validate,
-                func=func, query=query, json=json, headers=headers, resp=resp))
+                func=func, query=query, json=json, headers=headers,
+                cookies=cookies, resp=resp))
 
             # register
-            for name, model in zip(('query', 'json', 'headers'),
-                                   (query, json, headers)):
+            for name, model in zip(('query', 'json', 'headers', 'cookies'),
+                                   (query, json, headers, cookies)):
                 if model is not None:
                     assert(issubclass(model, BaseModel))
                     self.models[model.__name__] = model.schema()

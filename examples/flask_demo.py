@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, abort
 from pydantic import BaseModel, Schema
 from random import random
+from enum import Enum
 
 from spectree import SpecTree, Response
 
@@ -28,6 +29,15 @@ class Data(BaseModel):
     vip: bool
 
 
+class Language(str, Enum):
+    en = 'en-US'
+    zh = 'zh-CN'
+
+
+class Header(BaseModel):
+    Lang: Language
+
+
 @app.route('/api/predict/<string(length=2):source>/<string(length=2):target>', methods=['POST'])
 @api.validate(query=Query, json=Data, resp=Response('HTTP_403', HTTP_200=Resp), tags=['model'])
 def predict(source, target):
@@ -45,12 +55,12 @@ def predict(source, target):
 
 
 @app.route('/api/header', methods=['POST'])
-@api.validate(resp=Response('HTTP_203'), tags=['test', 'demo'])
+@api.validate(headers=Header, resp=Response('HTTP_203'), tags=['test', 'demo'])
 def with_code_header():
     """
     demo for JSON with status code and header
     """
-    return jsonify('header'), 203, {'X': 233}
+    return jsonify(language=request.context.headers.Lang), 203, {'X': 233}
 
 
 if __name__ == '__main__':

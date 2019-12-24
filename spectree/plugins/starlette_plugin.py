@@ -4,6 +4,7 @@ from collections import namedtuple
 from functools import partial
 from pydantic import ValidationError
 
+from ..utils import pop_keywords
 from .base import BasePlugin, Context
 from .page import PAGES
 
@@ -41,11 +42,7 @@ class StarlettePlugin(BasePlugin):
         from starlette.requests import Request
         from starlette.responses import JSONResponse
 
-        query = kwargs.pop('query')
-        json = kwargs.pop('json')
-        headers = kwargs.pop('headers')
-        resp = kwargs.pop('resp')
-        func = kwargs.pop('func')
+        func, query, json, headers, cookies, resp = pop_keywords(kwargs)
 
         request = Request(scope, receive)
         try:
@@ -53,6 +50,7 @@ class StarlettePlugin(BasePlugin):
                 query(**request.query_params) if query else None,
                 json(**(await request.json())) if json else None,
                 headers(**request.headers) if headers else None,
+                cookies(**request.cookies) if cookies else None,
             )
         except ValidationError as err:
             return JSONResponse(err.errors(), 422)

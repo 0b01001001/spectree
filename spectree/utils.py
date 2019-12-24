@@ -42,6 +42,22 @@ def parse_params(func, params):
                 '$ref': f'#/components/schemas/{func.query}',
             }
         })
+    if hasattr(func, 'headers'):
+        params.append({
+            'name': func.headers,
+            'in': 'header',
+            'schema': {
+                '$ref': f'#/components/schemas/{func.headers}',
+            }
+        })
+    if hasattr(func, 'cookies'):
+        params.append({
+            'name': func.cookies,
+            'in': 'cookie',
+            'schema': {
+                '$ref': f'#/components/schemas/{func.cookies}',
+            }
+        })
     return params
 
 
@@ -78,3 +94,13 @@ def parse_name(func):
             return func.__wrapped__.__name__
     else:
         return func.__name__
+
+
+def pop_keywords(kwargs):
+    query = kwargs.pop('query')
+    json = kwargs.pop('json')
+    headers = kwargs.pop('headers')
+    cookies = kwargs.pop('cookies')
+    resp = kwargs.pop('resp')
+    func = kwargs.pop('func')
+    return func, query, json, headers, cookies, resp

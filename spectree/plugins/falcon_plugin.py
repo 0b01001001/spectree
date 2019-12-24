@@ -1,25 +1,9 @@
 import re
 from pydantic import ValidationError
 
+from ..utils import pop_keywords
 from .base import BasePlugin
 from .page import PAGES
-
-
-_FIELD_PATTERN = re.compile(
-    # NOTE from `falcon.routing.compiled`
-    r'{((?P<fname>[^}:]*)((?P<cname_sep>:(?P<cname>[^}\(]*))(\((?P<argstr>[^}]*)\))?)?)}'
-)
-# NOTE from `falcon.routing.compiled.CompiledRouterNode`
-ESCAPE = r'[\.\(\)\[\]\?\$\*\+\^\|]'
-ESCAPE_TO = r'\\\g<0>'
-EXTRACT = r'{\2}'
-# NOTE this regex is copied from werkzeug.routing._converter_args_re and
-# modified to support only int args
-INT_ARGS = re.compile(r'''
-    ((?P<name>\w+)\s*=\s*)?
-    (?P<value>\d+)\s*
-''', re.VERBOSE)
-INT_ARGS_NAMES = ('num_digits', 'min', 'max')
 
 
 class OpenAPI:
@@ -43,6 +27,23 @@ DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 
 
 class FlaconPlugin(BasePlugin):
+    def __init__(self, spectree):
+        super().__init__(spectree)
+        from falcon.routing.compiled import _FIELD_PATTERN
+
+        self.FIELD_PATTERN = _FIELD_PATTERN
+        # NOTE from `falcon.routing.compiled.CompiledRouterNode`
+        self.ESCAPE = r'[\.\(\)\[\]\?\$\*\+\^\|]'
+        self.ESCAPE_TO = r'\\\g<0>'
+        self.EXTRACT = r'{\2}'
+        # NOTE this regex is copied from werkzeug.routing._converter_args_re and
+        # modified to support only int args
+        self.INT_ARGS = re.compile(r'''
+            ((?P<name>\w+)\s*=\s*)?
+            (?P<value>\d+)\s*
+        ''', re.VERBOSE)
+        self.INT_ARGS_NAMES = ('num_digits', 'min', 'max')
+
     def register_route(self, app):
         self.app = app
         self.app.add_route(
@@ -75,13 +76,13 @@ class FlaconPlugin(BasePlugin):
     def parse_path(self, route):
         subs, parameters = [], []
         for segment in route.uri_template.strip('/').split('/'):
-            matches = _FIELD_PATTERN.finditer(segment)
+            matches = self.FIELD_PATTERN.finditer(segment)
             if not matches:
                 subs.append(segment)
                 continue
 
-            escaped = re.sub(ESCAPE, ESCAPE_TO, segment)
-            subs.append(_FIELD_PATTERN.sub(EXTRACT, escaped))
+            escaped = re.sub(self.ESCAPE, self.ESCAPE_TO, segment)
+            subs.append(self.FIELD_PATTERN.sub(self.EXTRACT, escaped))
 
             for field in matches:
                 variable, converter, argstr = [field.group(name) for name in
@@ -92,10 +93,10 @@ class FlaconPlugin(BasePlugin):
                         argstr = ''
 
                     arg_values = [None, None, None]
-                    for index, match in enumerate(INT_ARGS.finditer(argstr)):
+                    for index, match in enumerate(self.INT_ARGS.finditer(argstr)):
                         name, value = match.group('name'), match.group('value')
                         if name:
-                            index = INT_ARGS_NAMES.index(name)
+                            index = self.INT_ARGS_NAMES.index(name)
                         arg_values[index] = value
 
                     num_digits, minumum, maximum = arg_values
@@ -131,16 +132,14 @@ class FlaconPlugin(BasePlugin):
         return f'/{"/".join(subs)}', parameters
 
     def validate(self, _req, _resp, *args, **kwargs):
-        query = kwargs.pop('query')
-        json = kwargs.pop('json')
-        headers = kwargs.pop('headers')
-        resp = kwargs.pop('resp')
-        func = kwargs.pop('func')
+        func, query, json, headers, cookies, resp = pop_keywords(kwargs)
         try:
             if query:
                 _req.context.query = query(**_req.params)
             if headers:
                 _req.context.headers = headers(**_req.headers)
+            if cookies:
+                _req.context.cookies = cookies(**_req.cookies)
             media = _req.media or {}
             if json:
                 _req.context.media = json(**media)
