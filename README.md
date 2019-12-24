@@ -36,9 +36,10 @@ install with pip: `pip install spectree`
    * `query`
    * `json`
    * `headers`
+   * `cookies`
    * `resp`
    * `tags`
-4. access these data with `context(query, json, headers)`
+4. access these data with `context(query, json, headers, cookies)`
    * flask: `request.context`
    * falcon: `req.context`
    * starlette: `request.context`
