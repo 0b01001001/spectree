@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, abort
-from pydantic import BaseModel, Schema
+from pydantic import BaseModel, Field
 from random import random
 from enum import Enum
 
@@ -16,7 +16,7 @@ class Query(BaseModel):
 
 class Resp(BaseModel):
     label: int
-    score: float = Schema(
+    score: float = Field(
         ...,
         gt=0,
         lt=1,
@@ -51,7 +51,8 @@ def predict(source, target):
     print(f'Query: {request.context.query}')  # Query
     if random() < 0.5:
         abort(403)
-    return Resp(label=int(10 * random()), score=random())
+
+    return jsonify(label=int(10 * random()), score=random())
 
 
 @app.route('/api/header', methods=['POST'])

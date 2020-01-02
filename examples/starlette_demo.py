@@ -56,7 +56,7 @@ def ping(request):
 if __name__ == "__main__":
     app = Starlette(routes=[
         Route('/ping', ping),
-        Route('/api/predict/{luck:int}', predict),
+        Route('/api/predict/{luck:int}', predict, methods=['POST']),
     ])
     api.register(app)
 
