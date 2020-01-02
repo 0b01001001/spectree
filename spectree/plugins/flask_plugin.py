@@ -114,14 +114,13 @@ class FlaskPlugin(BasePlugin):
         except Exception:
             raise
 
-        response = func(*args, **kwargs)
-        others = {}
-        if isinstance(response, tuple) and len(response) > 1:
-            response, others = response[0], response[1:]
+        response = make_response(func(*args, **kwargs))
 
         if resp and resp.has_model():
-            return make_response(jsonify(**response.dict()), *others)
-        return make_response(response, *others)
+            model = resp.find_model(response.status_code)
+            model.validate(response.get_json())
+
+        return response
 
     def register_route(self, app):
         self.app = app
