@@ -79,9 +79,9 @@ class Classification:
         print(req.context.media)
         if random() < 0.5:
             resp.status = falcon.HTTP_403
-            resp.context.media = BadLuck(loc='unknown', msg='bad luck', typ='random')
+            resp.media = {'loc': 'unknown', 'msg': 'bad luck', 'typ': 'random'}
             return
-        resp.context.media = Resp(label=int(10 * random()), score=random())
+        resp.media = {'label': int(10 * random()), 'score': random()}
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
 import re
+import inspect
+from functools import partial
 from pydantic import ValidationError
 
 from ..utils import pop_keywords
@@ -152,10 +154,14 @@ class FlaconPlugin(BasePlugin):
             raise
 
         func(self, _req, _resp, *args, **kwargs)
-        if resp:
-            _resp.media = _resp.context.media.dict()
+        if resp and resp.has_model():
+            model = resp.find_model(_resp.status[:3])
+            model.validate(_resp.media)
 
     def bypass(self, func, method):
-        if not func.args:
+        if not isinstance(func, partial):
             return False
+        if inspect.ismethod(func.func):
+            return False
+        # others are <cyfunction>
         return True
