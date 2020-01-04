@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from .utils import parse_code
 
 
@@ -11,10 +13,11 @@ class Response:
 
     def __init__(self, *codes, **code_models):
         for code in codes:
-            assert code in DEFAULT_CODE_DESC
+            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
 
-        for code in code_models:
-            assert code in DEFAULT_CODE_DESC
+        for code, model in code_models.items():
+            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
+            assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
 
         self.codes = codes
         self.code_models = code_models
