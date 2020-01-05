@@ -1,5 +1,4 @@
 import pytest
-from pydantic import BaseModel
 
 from spectree.utils import (
     parse_comments, parse_request, parse_params, parse_resp,
@@ -8,13 +7,10 @@ from spectree.utils import (
 from spectree.spec import SpecTree
 from spectree.response import Response
 
+from .common import DemoModel
+
 
 api = SpecTree()
-
-
-class DemoModel(BaseModel):
-    name: str
-    limit: int
 
 
 def undecorated_func():

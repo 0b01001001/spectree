@@ -20,11 +20,20 @@ class SpecTree:
             self.register(app)
 
     def register(self, app):
+        """
+        register to backend application
+
+        This will be automatically triggered if the app is passed into the
+        init step.
+        """
         self.app = app
         self.backend.register_route(self.app)
 
     @property
     def spec(self):
+        """
+        get the OpenAPI spec
+        """
         if not hasattr(self, '_spec'):
             self._spec = self._generate_spec()
         return self._spec
@@ -91,6 +100,9 @@ class SpecTree:
         return decorate_validation
 
     def _generate_spec(self):
+        """
+        generate OpenAPI spec according to routes and decorators
+        """
         routes, tags = {}, {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
@@ -132,6 +144,9 @@ class SpecTree:
         return spec
 
     def _get_model_definitions(self):
+        """
+        handle nested models
+        """
         definitions = {}
         for schema in self.models.values():
             if 'definitions' in schema:

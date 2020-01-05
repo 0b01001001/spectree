@@ -1,13 +1,8 @@
 import pytest
-from pydantic import BaseModel
 
 from spectree.response import Response, DEFAULT_CODE_DESC
 
-
-class DemoModel(BaseModel):
-    uid: int
-    limit: int
-    name: str
+from .common import DemoModel
 
 
 class NormalClass:
