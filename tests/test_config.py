@@ -17,6 +17,10 @@ def test_update_config(config):
     assert config.TITLE == 'demo'
     assert config.VERSION == 'latest'
 
+    config.update(unknown='missing')
+    with pytest.raises(AttributeError):
+        assert config.unknown
+
 
 def test_update_ui(config):
     config.update(ui='swagger')

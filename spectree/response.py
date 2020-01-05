@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from .utils import parse_code
 
 
@@ -11,25 +13,40 @@ class Response:
 
     def __init__(self, *codes, **code_models):
         for code in codes:
-            assert code in DEFAULT_CODE_DESC
+            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
 
-        for code in code_models:
-            assert code in DEFAULT_CODE_DESC
+        for code, model in code_models.items():
+            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
+            assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
 
         self.codes = codes
         self.code_models = code_models
 
     def has_model(self):
+        """
+        :returns: boolean -- does this response has models or not
+        """
         return True if self.code_models else False
 
     def find_model(self, code):
+        """
+        :param code: ``r'\\d{3}'``
+        """
         return self.code_models.get(f'HTTP_{code}')
 
     @property
     def models(self):
+        """
+        :returns:  dict_values -- all the models in this response
+        """
         return self.code_models.values()
 
     def generate_spec(self):
+        """
+        generate the spec for responses
+
+        :returns: JSON
+        """
         responses = {}
         for code in self.codes:
             responses[parse_code(code)] = {'description': DEFAULT_CODE_DESC[code]}

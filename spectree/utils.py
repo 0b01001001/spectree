@@ -1,5 +1,7 @@
+import re
 import inspect
-from functools import partial
+
+HTTP_CODE = re.compile(r'^HTTP_(?P<code>\d{3})$')
 
 
 def parse_comments(func):
@@ -15,10 +17,13 @@ def parse_comments(func):
     doc = doc.split('\n', 1)
     if len(doc) == 1:
         return doc[0], None
-    return doc
+    return doc[0], doc[1].strip()
 
 
 def parse_request(func):
+    """
+    get json spec
+    """
     data = {
         'content': {
             'application/json': {
@@ -62,9 +67,16 @@ def parse_params(func, params):
 
 
 def parse_resp(func):
-    if not hasattr(func, 'resp'):
-        return {}
-    responses = func.resp.generate_spec()
+    """
+    get the response spec
+
+    If this function does not have explicit ``resp`` but have other models,
+    a ``422 Validation Error`` will be append to the response spec. Since
+    this may be triggered in the validation step.
+    """
+    responses = {}
+    if hasattr(func, 'resp'):
+        responses = func.resp.generate_spec()
 
     if '422' not in responses and has_model(func):
         responses['422'] = {'description': 'Validation Error'}
@@ -73,6 +85,9 @@ def parse_resp(func):
 
 
 def has_model(func):
+    """
+    return True if this function have ``pydantic.BaseModel``
+    """
     if any(hasattr(func, x) for x in ('query', 'json', 'headers')):
         return True
 
@@ -83,20 +98,32 @@ def has_model(func):
 
 
 def parse_code(http_code):
-    return http_code.split('_', 1)[1]
+    """
+    get the code of this HTTP status
+
+    :param str http_code: format like ``HTTP_200``
+    """
+    match = HTTP_CODE.match(http_code)
+    if not match:
+        return None
+    return match.group('code')
 
 
 def parse_name(func):
-    if isinstance(func, partial):
-        if inspect.ismethod(func.func):
-            return func.func.__class__.__name__
-        else:
-            return func.__wrapped__.__name__
-    else:
-        return func.__name__
+    """
+    the func can be
+
+        * undecorated functions
+        * decorated functions
+        * decorated class methods
+    """
+    return func.__name__
 
 
 def pop_keywords(kwargs):
+    """
+    pop (query, json, headers, cookies, resp, func) from the decorated function
+    """
     query = kwargs.pop('query')
     json = kwargs.pop('json')
     headers = kwargs.pop('headers')

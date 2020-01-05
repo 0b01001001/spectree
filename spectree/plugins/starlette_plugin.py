@@ -53,7 +53,9 @@ class StarlettePlugin(BasePlugin):
                 cookies(**request.cookies) if cookies else None,
             )
         except ValidationError as err:
-            return JSONResponse(err.errors(), 422)
+            response = JSONResponse(err.errors(), 422)
+            await response(scope, receive, send)
+            return
         except Exception:
             raise
 
