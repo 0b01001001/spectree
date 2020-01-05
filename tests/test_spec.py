@@ -6,6 +6,8 @@ from starlette.applications import Starlette
 from spectree.spec import SpecTree
 from spectree.config import Config
 
+from .common import get_paths
+
 
 def backend_app():
     return [
@@ -66,20 +68,9 @@ def create_app():
     return app
 
 
-def get_paths(spec):
-    paths = []
-    for path in spec['paths']:
-        if spec['paths'][path]:
-            paths.append(path)
-
-    paths.sort()
-    return paths
-
-
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
-    print(api.spec['paths'])
     assert get_paths(api.spec) == ['/foo', '/lone']
 
     app = create_app()
