@@ -144,7 +144,7 @@ class FlaconPlugin(BasePlugin):
                 _req.context.cookies = cookies(**_req.cookies)
             media = _req.media or {}
             if json:
-                _req.context.media = json(**media)
+                _req.context.json = json(**media)
 
         except ValidationError as err:
             _resp.status = '422 Unprocessable Entity'
