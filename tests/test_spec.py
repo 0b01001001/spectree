@@ -61,8 +61,12 @@ def create_app():
     def bar():
         pass
 
-    @app.route('/lone')
-    def lone():
+    @app.route('/lone', methods=['GET'])
+    def lone_get():
+        pass
+
+    @app.route('/lone', methods=['POST'])
+    def lone_post():
         pass
 
     return app
@@ -80,3 +84,13 @@ def test_spec_bypass_mode():
     app = create_app()
     api_strict.register(app)
     assert get_paths(api_strict.spec) == ['/bar']
+
+
+def test_two_endpoints_with_the_same_path():
+    app = create_app()
+    api.register(app)
+    spec = api.spec
+
+    http_methods = list(spec['paths']['/lone'].keys())
+    http_methods.sort()
+    assert http_methods == ['get', 'post']

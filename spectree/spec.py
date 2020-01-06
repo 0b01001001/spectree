@@ -110,7 +110,7 @@ class SpecTree:
         routes, tags = {}, {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
-            routes[path] = {}
+            routes[path] = routes.get(path, {})
             for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
