@@ -97,3 +97,4 @@ if __name__ == "__main__":
 > ValidationError: missing field for headers
 
 The HTTP headers' keys in Flask are capitalized, in Falcon are upper cases, in Starlette are lower cases.
+You can use [`pydantic.root_validators(pre=True)`](https://pydantic-docs.helpmanual.io/usage/validators/#root-validators) to change all the keys into lower cases or upper cases.
