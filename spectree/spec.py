@@ -9,6 +9,10 @@ from .utils import parse_comments, parse_request, parse_params, parse_resp, pars
 class SpecTree:
     """
     Interface
+
+    :param str backend: choose from ('flask', 'falcon', 'starlette')
+    :param app: backend framework application instance (you can also register to it later)
+    :param kwargs: update default :class:`spectree.config.Config`
     """
 
     def __init__(self, backend='base', app=None, **kwargs):

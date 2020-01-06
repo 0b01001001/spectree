@@ -6,6 +6,7 @@
 [![downloads](https://img.shields.io/pypi/dm/spectree.svg)](https://pypistats.org/packages/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/0b01001001/spectree/context:python)
+[![Documentation Status](https://readthedocs.org/projects/spectree/badge/?version=latest)](https://spectree.readthedocs.io/en/latest/?badge=latest)
 
 Yet another library to generate OpenAPI document and validate request & response with Python annotations.
 
@@ -23,29 +24,76 @@ Yet another library to generate OpenAPI document and validate request & response
 
 install with pip: `pip install spectree`
 
-### Demo
+### Examples
 
-```py
-```
+Check the [examples](/examples) folder.
 
 ### Step by Step
 
-1. Define your data structure with `pydantic.BaseModel`
-2. create `spectree.SpecTree` instance with the web framework name you are using `api = SpecTree('flask')`
-3. `validate` the route
+1. Define your data structure used in (query, json, headers, cookies, resp) with `pydantic.BaseModel`
+2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`
+3. `api.validate` decorate the route with
    * `query`
    * `json`
    * `headers`
    * `cookies`
    * `resp`
    * `tags`
-4. access these data with `context(query, json, headers, cookies)`
+4. access these data with `context(query, json, headers, cookies)` (of course, you can access these from the original place where the framework offered)
    * flask: `request.context`
    * falcon: `req.context`
    * starlette: `request.context`
 5. register to the web application `api.register(app)`
 6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
 
-### Examples
+## Demo
 
-Check the [examples](/examples) folder.
+### Flask
+
+```py
+from flask import Flask, request, jsonify
+from pydantic import BaseModel, Field, constr
+from spectree import SpecTree, Response
+
+
+class Profile(BaseModel):
+    name: constr(min_length=2, max_length=40) # Constrained Str
+    age: int = Field(
+        ...,
+        gt=0,
+        lt=150,
+        description='user age(Human)'
+    )
+
+
+class Message(BaseModel):
+    text: str
+
+
+app = Flask(__name__)
+api = SpecTree('flask')
+
+
+@app.route('/api/user', methods=['POST'])
+@api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+def user_profile():
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user'age, ... (long description)
+    """
+    print(request.context.json) # or `request.json`
+    return jsonify(text='it works')
+
+
+if __name__ == "__main__":
+    api.register(app) # if you don't register in api init step
+    app.run()
+
+```
+
+## FAQ
+
+> ValidationError: missing field for headers
+
+The HTTP headers' keys in Flask are capitalized, in Falcon are upper cases, in Starlette are lower cases.

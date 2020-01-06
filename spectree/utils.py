@@ -1,6 +1,7 @@
 import re
 import inspect
 
+# parse HTTP status code to get the code
 HTTP_CODE = re.compile(r'^HTTP_(?P<code>\d{3})$')
 
 
@@ -38,6 +39,9 @@ def parse_request(func):
 
 
 def parse_params(func, params):
+    """
+    get spec for (query, headers, cookies)
+    """
     if hasattr(func, 'query'):
         params.append({
             'name': func.query,

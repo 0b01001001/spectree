@@ -14,7 +14,7 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='spectree',
-    version='0.1.0',
+    version='0.2.0',
     author='Keming Yang',
     author_email='kemingy94@gmail.com',
     description=('generate OpenAPI document and validate request&response '
@@ -38,7 +38,7 @@ setup(
     extras_require={
         'flask': ['flask'],
         'falcon': ['falcon'],
-        'starlette': ['starlette'],
+        'starlette': ['starlette', 'requests'],
     },
     zip_safe=False,
     entry_points={
