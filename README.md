@@ -46,6 +46,52 @@ Check the [examples](/examples) folder.
 5. register to the web application `api.register(app)`
 6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
 
+## Demo
+
+### Flask
+
+```py
+from flask import Flask, request, jsonify
+from pydantic import BaseModel, Field, constr
+from spectree import SpecTree, Response
+
+
+class Profile(BaseModel):
+    name: constr(min_length=2, max_length=40) # Constrained Str
+    age: int = Field(
+        ...,
+        gt=0,
+        lt=150,
+        description='user age(Human)'
+    )
+
+
+class Message(BaseModel):
+    text: str
+
+
+app = Flask(__name__)
+api = SpecTree('flask')
+
+
+@app.route('/api/user', methods=['POST'])
+@api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+def user_profile():
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user'age, ... (long description)
+    """
+    print(request.context.json) # or `request.json`
+    return jsonify(text='it works')
+
+
+if __name__ == "__main__":
+    api.register(app) # if you don't register in api init step
+    app.run()
+
+```
+
 ## FAQ
 
 > ValidationError: missing field for headers
