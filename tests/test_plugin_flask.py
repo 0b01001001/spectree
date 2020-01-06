@@ -45,7 +45,7 @@ def test_flask_validate(client):
     resp = client.get('/ping')
     assert resp.status_code == 422
 
-    resp = client.get('/ping', headers={'Lang': 'en-US'})
+    resp = client.get('/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
 
     resp = client.post('api/user/flask')
