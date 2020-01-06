@@ -1,6 +1,6 @@
 import pytest
 
-from .common import Query, JSON, Resp, Cookies, get_paths
+from .common import Query, JSON, Resp, Cookies, Headers, get_paths
 from .test_plugin_flask import api as flask_api
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_starlette import api as starlette_api
@@ -8,7 +8,7 @@ from .test_plugin_starlette import api as starlette_api
 
 @pytest.mark.parametrize('api', [flask_api, falcon_api, starlette_api])
 def test_plugin_spec(api):
-    models = {m.__name__: m.schema() for m in (Query, JSON, Resp, Cookies)}
+    models = {m.__name__: m.schema() for m in (Query, JSON, Resp, Cookies, Headers)}
     for name, schema in models.items():
         assert api.spec['components']['schemas'][name] == schema
 
