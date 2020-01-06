@@ -1,7 +1,7 @@
 from enum import IntEnum, Enum
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 
 
 class Order(IntEnum):
@@ -29,18 +29,11 @@ class Language(str, Enum):
 
 
 class Headers(BaseModel):
-    Lang: Language
-
-    class Config:
-        case_sensitive = False
-
-
-class UpperHeaders(BaseModel):
-    LANG: Language
-
-
-class LowerHeaders(BaseModel):
     lang: Language
+
+    @root_validator(pre=True)
+    def lower_keys(cls, values):
+        return {key.lower(): value for key, value in values.items()}
 
 
 class Cookies(BaseModel):

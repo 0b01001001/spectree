@@ -7,13 +7,13 @@ from starlette.testclient import TestClient
 
 from spectree import SpecTree, Response
 
-from .common import Query, Resp, JSON, LowerHeaders, Cookies
+from .common import Query, Resp, JSON, Headers, Cookies
 
 
 api = SpecTree('starlette')
 
 
-@api.validate(headers=LowerHeaders, tags=['test', 'health'])
+@api.validate(headers=Headers, tags=['test', 'health'])
 def ping(request):
     return JSONResponse({'msg': 'pong'})
 

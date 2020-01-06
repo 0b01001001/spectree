@@ -5,14 +5,14 @@ from falcon import testing
 
 from spectree import SpecTree, Response
 
-from .common import Query, Resp, JSON, UpperHeaders, Cookies
+from .common import Query, Resp, JSON, Headers, Cookies
 
 
 api = SpecTree('falcon')
 
 
 class Ping:
-    @api.validate(headers=UpperHeaders, tags=['test', 'health'])
+    @api.validate(headers=Headers, tags=['test', 'health'])
     def on_get(self, req, resp):
         resp.media = {'msg': 'pong'}
 
@@ -46,7 +46,7 @@ def test_falcon_validate(client):
     resp = client.simulate_request('GET', '/ping')
     assert resp.status_code == 422
 
-    resp = client.simulate_request('GET', '/ping', headers={'LANG': 'en-US'})
+    resp = client.simulate_request('GET', '/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
 
     resp = client.simulate_request('POST', '/api/user/falcon')
