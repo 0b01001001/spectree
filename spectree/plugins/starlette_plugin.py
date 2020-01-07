@@ -48,7 +48,7 @@ class StarlettePlugin(BasePlugin):
         try:
             request.context = Context(
                 query(**request.query_params) if query else None,
-                json(**(await request.json())) if json else None,
+                json(**json_loads(await request.body() or '{}')) if json else None,
                 headers(**request.headers) if headers else None,
                 cookies(**request.cookies) if cookies else None,
             )

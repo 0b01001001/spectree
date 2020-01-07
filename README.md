@@ -11,7 +11,7 @@ Yet another library to generate OpenAPI document and validate request & response
 
 ## Features
 
-* Less boilerplate code, annotations are really easy-to-use :sparkles:
+* Less boilerplate code, only annotations, no need for YAML :sparkles:
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
@@ -45,7 +45,11 @@ Check the [examples](/examples) folder.
 5. register to the web application `api.register(app)`
 6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
 
+If the request doesn't pass the validation, it will return a 422 with JSON error message(ctx, loc, msg, type).
+
 ## Demo
+
+Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)
 
 ### Flask
 
@@ -87,7 +91,104 @@ def user_profile():
 
 if __name__ == "__main__":
     api.register(app) # if you don't register in api init step
-    app.run()
+    app.run(port=8000)
+
+```
+
+### Falcon
+
+```py
+import falcon
+from wsgiref import simple_server
+from pydantic import BaseModel, Field, constr
+from spectree import SpecTree, Response
+
+
+class Profile(BaseModel):
+    name: constr(min_length=2, max_length=40)  # Constrained Str
+    age: int = Field(
+        ...,
+        gt=0,
+        lt=150,
+        description='user age(Human)'
+    )
+
+
+class Message(BaseModel):
+    text: str
+
+
+api = SpecTree('falcon')
+
+
+class UserProfile:
+    @api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+    def on_post(self, req, resp):
+        """
+        verify user profile (summary of this endpoint)
+
+        user's name, user's age, ... (long description)
+        """
+        print(req.context.json)  # or `req.media`
+        resp.media = {'text': 'it works'}
+
+
+if __name__ == "__main__":
+    app = falcon.API()
+    app.add_route('/api/user', UserProfile())
+    api.register(app)
+
+    httpd = simple_server.make_server('localhost', 8000, app)
+    httpd.serve_forever()
+
+```
+
+### Starlette
+
+```py
+import uvicorn
+from starlette.applications import Starlette
+from starlette.routing import Route
+from starlette.responses import JSONResponse
+from pydantic import BaseModel, Field, constr
+from spectree import SpecTree, Response
+
+
+class Profile(BaseModel):
+    name: constr(min_length=2, max_length=40)  # Constrained Str
+    age: int = Field(
+        ...,
+        gt=0,
+        lt=150,
+        description='user age(Human)'
+    )
+
+
+class Message(BaseModel):
+    text: str
+
+
+api = SpecTree('starlette')
+
+
+@api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+async def user_profile(request):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(request.context.json)  # or await request.json()
+    return JSONResponse({'text': 'it works'})
+
+
+if __name__ == "__main__":
+    app = Starlette(routes=[
+        Route('/api/user', user_profile, methods=['POST']),
+    ])
+    api.register(app)
+
+    uvicorn.run(app)
 
 ```
 
