@@ -1,4 +1,4 @@
-SpecTree response
+Response
 ====================
 
 .. automodule:: spectree.response

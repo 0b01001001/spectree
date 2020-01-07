@@ -1,4 +1,4 @@
-SpecTree utils
+Utils
 ====================
 
 .. automodule:: spectree.utils
