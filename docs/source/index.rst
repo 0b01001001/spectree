@@ -6,7 +6,7 @@
 Welcome to spectree's documentation!
 ====================================
 
-|GitHub Actions| |pypi| |downloads| |versions| |Language grade: Python|
+|GitHub Actions| |pypi| |versions| |Language grade: Python|
 |Documentation Status|
 
 Yet another library to generate OpenAPI document and validate request &
@@ -79,8 +79,6 @@ cases, in Starlette are lower cases.
    :target: https://github.com/0b01001001/spectree/actions
 .. |pypi| image:: https://img.shields.io/pypi/v/spectree.svg
    :target: https://pypi.python.org/pypi/spectree
-.. |downloads| image:: https://img.shields.io/pypi/dm/spectree.svg
-   :target: https://pypistats.org/packages/spectree
 .. |versions| image:: https://img.shields.io/pypi/pyversions/spectree.svg
    :target: https://github.com/0b01001001/spectree
 .. |Language grade: Python| image:: https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&logoWidth=18

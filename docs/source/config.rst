@@ -1,4 +1,4 @@
-SpecTree config
+Config
 ====================
 
 .. automodule:: spectree.config
