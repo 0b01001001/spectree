@@ -25,16 +25,17 @@ def parse_request(func):
     """
     get json spec
     """
-    data = {
-        'content': {
-            'application/json': {
-                'schema': {
-                    '$ref': f'#/components/schemas/{func.json}'
-                    if hasattr(func, 'json') else ''
+    data = {}
+    if hasattr(func, 'json'):
+        data = {
+            'content': {
+                'application/json': {
+                    'schema': {
+                        '$ref': f'#/components/schemas/{func.json}'
+                    }
                 }
             }
         }
-    }
     return data
 
 
