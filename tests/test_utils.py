@@ -102,8 +102,7 @@ def test_parse_resp():
 def test_parse_request():
     assert parse_request(demo_func)['content']['application/json']['schema']['$ref'] \
         == '#/components/schemas/DemoModel'
-    assert parse_request(demo_class.demo_method)['content']['application/json']['schema']['$ref'] \
-        == ''
+    assert parse_request(demo_class.demo_method) == {}
 
 
 def test_parse_params():
