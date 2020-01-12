@@ -15,6 +15,8 @@ app = Flask(__name__)
 @app.route('/ping')
 @api.validate(headers=Headers, tags=['test', 'health'])
 def ping():
+    """summary
+    description"""
     return jsonify(msg='pong')
 
 

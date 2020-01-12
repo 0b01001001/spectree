@@ -2,7 +2,7 @@ install:
 	pip install -e .
 
 test:
-	py.test tests -vv
+	pytest tests -vv
 
 doc:
 	cd docs && make html
@@ -13,7 +13,7 @@ clean:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 package: clean
-	python3 setup.py sdist bdist_wheel
+	python setup.py sdist bdist_wheel
 
 publish: package
 	twine upload dist/*

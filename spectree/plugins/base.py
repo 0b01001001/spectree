@@ -22,7 +22,7 @@ class BasePlugin:
         """
         raise NotImplementedError
 
-    def validate(self, query, json, headers, resp):
+    def validate(self, *args, **kwargs):
         """
         validate the request and response
         """

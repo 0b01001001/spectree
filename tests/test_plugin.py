@@ -19,6 +19,8 @@ def test_plugin_spec(api):
     ping = api.spec['paths']['/ping']['get']
     assert ping['tags'] == ['test', 'health']
     assert ping['parameters'][0]['in'] == 'header'
+    assert ping['summary'] == 'summary'
+    assert ping['description'] == 'description'
 
     user = api.spec['paths']['/api/user/{name}']['post']
     assert user['tags'] == ['api', 'test']

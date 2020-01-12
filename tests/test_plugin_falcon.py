@@ -14,10 +14,20 @@ api = SpecTree('falcon')
 class Ping:
     @api.validate(headers=Headers, tags=['test', 'health'])
     def on_get(self, req, resp):
+        """summary
+        description
+        """
         resp.media = {'msg': 'pong'}
 
 
 class UserScore:
+    def extra_method(self):
+        pass
+
+    def on_get(self, req, resp, name):
+        self.extra_method()
+        resp.media = {'name': name}
+
     @api.validate(
         query=Query,
         json=JSON,
@@ -48,6 +58,9 @@ def test_falcon_validate(client):
 
     resp = client.simulate_request('GET', '/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
+
+    resp = client.simulate_request('GET', '/api/user/falcon')
+    assert resp.json == {'name': 'falcon'}
 
     resp = client.simulate_request('POST', '/api/user/falcon')
     assert resp.status_code == 422

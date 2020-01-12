@@ -133,7 +133,7 @@ class FlaconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def validate(self, _req, _resp, *args, **kwargs):
+    def validate(self, _self, _req, _resp, *args, **kwargs):
         func, query, json, headers, cookies, resp = pop_keywords(kwargs)
         try:
             if query:
@@ -153,7 +153,7 @@ class FlaconPlugin(BasePlugin):
         except Exception:
             raise
 
-        func(self, _req, _resp, *args, **kwargs)
+        func(_self, _req, _resp, *args, **kwargs)
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             model.validate(_resp.media)
