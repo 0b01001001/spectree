@@ -15,6 +15,8 @@ api = SpecTree('starlette')
 
 @api.validate(headers=Headers, tags=['test', 'health'])
 def ping(request):
+    """summary
+    description"""
     return JSONResponse({'msg': 'pong'})
 
 
