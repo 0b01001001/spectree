@@ -1,9 +1,12 @@
-from functools import partial, wraps
+from functools import partial, update_wrapper
 from pydantic import BaseModel
 
 from .plugins import PLUGINS
 from .config import Config
-from .utils import parse_comments, parse_request, parse_params, parse_resp, parse_name
+from .utils import (
+    parse_comments, parse_request, parse_params, parse_resp, parse_name,
+    partial_as_func
+)
 
 
 class SpecTree:
@@ -15,9 +18,10 @@ class SpecTree:
     :param kwargs: update default :class:`spectree.config.Config`
     """
 
-    def __init__(self, backend='base', app=None, **kwargs):
+    def __init__(self, backend_name='base', app=None, **kwargs):
         self.config = Config(**kwargs)
-        self.backend = PLUGINS[backend](self)
+        self.backend_name = backend_name
+        self.backend = PLUGINS[backend_name](self)
         # init
         self.models = {}
         if app:
@@ -77,10 +81,17 @@ class SpecTree:
         :param tags: list of tags' string
         """
         def decorate_validation(func):
-            validation = wraps(func)(partial(
-                self.backend.validate,
-                func=func, query=query, json=json, headers=headers,
-                cookies=cookies, resp=resp))
+            if self.backend_name == 'falcon':
+                # NOTE `functools.partialmethod` cannot be wrapped correctly
+                validation = update_wrapper(partial_as_func(
+                    self.backend.validate,
+                    query=query, json=json, headers=headers, cookies=cookies,
+                    func=func, resp=resp), func)
+            else:
+                validation = update_wrapper(partial(
+                    self.backend.validate,
+                    query=query, json=json, headers=headers, cookies=cookies,
+                    func=func, resp=resp), func)
 
             # register
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
