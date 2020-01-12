@@ -46,11 +46,15 @@ class Data(BaseModel):
 
 
 class Ping:
+    def check(self):
+        pass
+
     @api.validate(tags=['demo'])
     def on_get(self, req, resp):
         """
         health check
         """
+        self.check()
         resp.media = {'msg': 'pong'}
 
 
