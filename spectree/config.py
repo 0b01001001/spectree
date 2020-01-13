@@ -1,3 +1,6 @@
+import logging
+
+
 class Config:
     """
     :ivar MODE: mode for route. **normal** includes undecorated routes and
@@ -24,6 +27,15 @@ class Config:
         self.VERSION = '0.1'
         self.DOMAIN = None
 
+        # setup logging
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        console.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        ))
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(console)
+
         self.update(**kwargs)
 
     @property
@@ -43,14 +55,17 @@ class Config:
         update config from key-value pairs
 
         :param kwargs: key(case insensitive)-value pairs for config
+
+        If the key is not in attributes, it will be ignored. Otherwise, the
+        corresponding attribute will be updated. (Logging Level: INFO)
         """
         for key, value in kwargs.items():
             key = key.upper()
             if not hasattr(self, key):
-                print(f'[✗] Ignore unknown attribute "{key}"')
+                self.logger.info(f'[✗] Ignore unknown attribute "{key}"')
             else:
                 setattr(self, key, value)
-                print(f'[✓] Attribute "{key}" has been updated to "{value}"')
+                self.logger.info(f'[✓] Attribute "{key}" has been updated to "{value}"')
 
         assert self.UI in self._SUPPORT_UI, 'unsupported UI'
         assert self.MODE in self._SUPPORT_MODE, 'unsupported MODE'
