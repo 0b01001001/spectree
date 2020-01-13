@@ -14,7 +14,7 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='spectree',
-    version='0.2.3',
+    version='0.2.4',
     author='Keming Yang',
     author_email='kemingy94@gmail.com',
     description=('generate OpenAPI document and validate request&response '
