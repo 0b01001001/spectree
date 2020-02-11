@@ -78,7 +78,7 @@ class StarlettePlugin(BasePlugin):
                 if route.path.startswith(f'/{self.config.PATH}'):
                     continue
 
-                func = route.endpoint
+                func = route.app
                 if isinstance(func, partial):
                     try:
                         func = func.__wrapped__
