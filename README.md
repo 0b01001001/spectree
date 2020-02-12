@@ -15,9 +15,9 @@ Yet another library to generate OpenAPI document and validate request & response
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
-  * Flask
-  * Falcon
-  * Starlette
+  * Flask [example](#flask)
+  * Falcon [example](#falcon)
+  * Starlette [example](#starlette)
 
 ## Quick Start
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 ```py
 import uvicorn
 from starlette.applications import Starlette
-from starlette.routing import Route
+from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field, constr
 from spectree import SpecTree, Response
@@ -184,7 +184,9 @@ async def user_profile(request):
 
 if __name__ == "__main__":
     app = Starlette(routes=[
-        Route('/api/user', user_profile, methods=['POST']),
+        Mount('api', routes=[
+            Route('/user', user_profile, methods=['POST']),
+        ])
     ])
     api.register(app)
 

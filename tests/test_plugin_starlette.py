@@ -2,7 +2,7 @@ from random import randint
 import pytest
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
-from starlette.routing import Route
+from starlette.routing import Mount, Route
 from starlette.testclient import TestClient
 
 from spectree import SpecTree, Response
@@ -38,7 +38,11 @@ async def user_score(request):
 
 app = Starlette(routes=[
     Route('/ping', ping),
-    Route('/api/user/{name}', user_score, methods=['POST']),
+    Mount('/api', routes=[
+        Mount('/user', routes=[
+            Route('/{name}', user_score, methods=['POST']),
+        ])
+    ])
 ])
 api.register(app)
 

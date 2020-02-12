@@ -1,6 +1,6 @@
 import uvicorn
 from starlette.applications import Starlette
-from starlette.routing import Route
+from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -56,7 +56,9 @@ def ping(request):
 if __name__ == "__main__":
     app = Starlette(routes=[
         Route('/ping', ping),
-        Route('/api/predict/{luck:int}', predict, methods=['POST']),
+        Mount('/api', routes=[
+            Route('/predict/{luck:int}', predict, methods=['POST'])
+        ])
     ])
     api.register(app)
 
