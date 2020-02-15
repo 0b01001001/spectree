@@ -1,11 +1,10 @@
-from functools import partial, update_wrapper
+from functools import wraps
 from pydantic import BaseModel
 
 from .plugins import PLUGINS
 from .config import Config
 from .utils import (
-    parse_comments, parse_request, parse_params, parse_resp, parse_name,
-    partial_as_func
+    parse_comments, parse_request, parse_params, parse_resp, parse_name
 )
 
 
@@ -81,17 +80,19 @@ class SpecTree:
         :param tags: list of tags' string
         """
         def decorate_validation(func):
-            if self.backend_name == 'falcon':
-                # NOTE `functools.partialmethod` cannot be wrapped correctly
-                validation = update_wrapper(partial_as_func(
-                    self.backend.validate,
-                    query=query, json=json, headers=headers, cookies=cookies,
-                    func=func, resp=resp), func)
-            else:
-                validation = update_wrapper(partial(
-                    self.backend.validate,
-                    query=query, json=json, headers=headers, cookies=cookies,
-                    func=func, resp=resp), func)
+            # for sync framework
+            @wraps(func)
+            def sync_validate(*args, **kwargs):
+                return self.backend.validate(
+                    func, query, json, headers, cookies, resp, *args, **kwargs)
+
+            # for async framework
+            @wraps(func)
+            async def async_validate(*args, **kwargs):
+                return await self.backend.validate(
+                    func, query, json, headers, cookies, resp, *args, **kwargs)
+
+            validation = async_validate if self.backend_name == 'starlette' else sync_validate
 
             # register
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
