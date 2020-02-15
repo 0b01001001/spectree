@@ -17,7 +17,7 @@ api = SpecTree('starlette')
 
 
 class ping(HTTPEndpoint):
-    @api.validate(header=Header, tags=['test', 'health'])
+    @api.validate(headers=Headers, tags=['test', 'health'])
     async def get(self, request):
         """summary
         description"""
