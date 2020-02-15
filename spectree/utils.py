@@ -1,6 +1,5 @@
 import re
 import inspect
-from functools import wraps
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r'^HTTP_(?P<code>\d{3})$')
@@ -123,23 +122,3 @@ def parse_name(func):
         * decorated class methods
     """
     return func.__name__
-
-
-def pop_keywords(kwargs):
-    """
-    pop (query, json, headers, cookies, resp, func) from the decorated function
-    """
-    query = kwargs.pop('query')
-    json = kwargs.pop('json')
-    headers = kwargs.pop('headers')
-    cookies = kwargs.pop('cookies')
-    resp = kwargs.pop('resp')
-    func = kwargs.pop('func')
-    return func, query, json, headers, cookies, resp
-
-
-def partial_as_func(function, *args, **kwargs):
-    @wraps(function)
-    def method_as_func(self, *words, **keywords):
-        return function(self, *args, *words, **kwargs, **keywords)
-    return method_as_func

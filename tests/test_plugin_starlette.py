@@ -1,6 +1,7 @@
 from random import randint
 import pytest
 from starlette.applications import Starlette
+from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from starlette.testclient import TestClient
@@ -13,11 +14,12 @@ from .common import Query, Resp, JSON, Headers, Cookies
 api = SpecTree('starlette')
 
 
-@api.validate(headers=Headers, tags=['test', 'health'])
-def ping(request):
-    """summary
-    description"""
-    return JSONResponse({'msg': 'pong'})
+class Ping(HTTPEndpoint):
+    @api.validate(headers=Headers, tags=['test', 'health'])
+    def get(self, request):
+        """summary
+        description"""
+        return JSONResponse({'msg': 'pong'})
 
 
 @api.validate(
@@ -37,7 +39,7 @@ async def user_score(request):
 
 
 app = Starlette(routes=[
-    Route('/ping', ping),
+    Route('/ping', Ping),
     Mount('/api', routes=[
         Mount('/user', routes=[
             Route('/{name}', user_score, methods=['POST']),

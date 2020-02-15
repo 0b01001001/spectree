@@ -2,7 +2,7 @@ import pytest
 
 from spectree.utils import (
     parse_comments, parse_request, parse_params, parse_resp,
-    has_model, parse_code, parse_name, pop_keywords
+    has_model, parse_code, parse_name
 )
 from spectree.spec import SpecTree
 from spectree.response import Response
@@ -62,22 +62,6 @@ def test_parse_name():
     assert parse_name(undecorated_func) == 'undecorated_func'
     assert parse_name(demo_func) == 'demo_func'
     assert parse_name(demo_class.demo_method) == 'demo_method'
-
-
-def test_pop_kw():
-    kwargs = {
-        'func': demo_func,
-        'json': DemoModel,
-        'query': None,
-        'headers': None,
-        'cookies': None,
-        'resp': None,
-    }
-    func, query, json, headers, cookies, resp = pop_keywords(kwargs)
-    assert json == DemoModel
-    assert func == demo_func
-    assert not all([query, headers, cookies, resp])
-    assert not kwargs
 
 
 def test_has_model():
