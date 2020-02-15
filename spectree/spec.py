@@ -139,10 +139,13 @@ class SpecTree:
                     'operationID': f'{name}__{method.lower()}',
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
-                    'requestBody': parse_request(func),
                     'parameters': parse_params(func, parameters[:]),
                     'responses': parse_resp(func),
                 }
+
+                request_body = parse_request(func)
+                if request_body:
+                    routes[path][method.lower()]['requestBody'] = request_body
 
         spec = {
             'openapi': self.config.OPENAPI_VERSION,
