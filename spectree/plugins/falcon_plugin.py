@@ -3,7 +3,6 @@ import inspect
 from functools import partial
 from pydantic import ValidationError
 
-from ..utils import pop_keywords
 from .base import BasePlugin
 from .page import PAGES
 
@@ -133,8 +132,9 @@ class FlaconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def validate(self, _self, _req, _resp, *args, **kwargs):
-        func, query, json, headers, cookies, resp = pop_keywords(kwargs)
+    def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+        # falcon endpoint method arguments: (self, req, resp)
+        _self, _req, _resp = args[:3]
         try:
             if query:
                 _req.context.query = query(**_req.params)
@@ -153,7 +153,7 @@ class FlaconPlugin(BasePlugin):
         except Exception:
             raise
 
-        func(_self, _req, _resp, *args, **kwargs)
+        func(*args, **kwargs)
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             model.validate(_resp.media)
