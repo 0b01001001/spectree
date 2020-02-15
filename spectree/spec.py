@@ -81,7 +81,7 @@ class SpecTree:
         :param tags: list of tags' string
         """
         def decorate_validation(func):
-            if self.backend_name == 'falcon':
+            if '.' in str(func):
                 # NOTE `functools.partialmethod` cannot be wrapped correctly
                 validation = update_wrapper(partial_as_func(
                     self.backend.validate,

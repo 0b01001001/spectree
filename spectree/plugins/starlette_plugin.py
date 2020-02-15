@@ -38,13 +38,21 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def validate(self, scope, receive, send, *args, **kwargs):
+    async def validate(self, *args, **kwargs):
         from starlette.requests import Request
         from starlette.responses import JSONResponse
 
         func, query, json, headers, cookies, resp = pop_keywords(kwargs)
 
-        request = Request(scope, receive)
+        is_endpoint = '.' in str(func)
+        if is_endpoint:
+            # the first arg is `self`
+            instance, request = args[:2]
+            scope, receive, send = instance.scope, instance.receive, instance.send
+        else:
+            scope, receive, send = args[:3]
+            request = Request(scope, receive)
+
         try:
             request.context = Context(
                 query(**request.query_params) if query else None,
@@ -59,10 +67,12 @@ class StarlettePlugin(BasePlugin):
         except Exception:
             raise
 
+        if not is_endpoint:
+            args = (request, *args[3:])
         if inspect.iscoroutinefunction(func):
-            response = await func(request, *args, **kwargs)
+            response = await func(*args, **kwargs)
         else:
-            response = func(request, *args, **kwargs)
+            response = func(*args, **kwargs)
 
         if resp:
             model = resp.find_model(response.status_code)
