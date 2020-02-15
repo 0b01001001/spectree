@@ -4,7 +4,6 @@ from collections import namedtuple
 from functools import partial
 from pydantic import ValidationError
 
-from ..utils import pop_keywords
 from .base import BasePlugin, Context
 from .page import PAGES
 
@@ -38,13 +37,13 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def validate(self, scope, receive, send, *args, **kwargs):
-        from starlette.requests import Request
+    async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from starlette.responses import JSONResponse
 
-        func, query, json, headers, cookies, resp = pop_keywords(kwargs)
+        # NOTE: if func is endpoint, it should have '.' in name
+        # This is not an elegant way. But it seems `inspect` doesn't work here.
+        request = args[1] if '.' in str(func) else args[0]
 
-        request = Request(scope, receive)
         try:
             request.context = Context(
                 query(**request.query_params) if query else None,
@@ -54,21 +53,20 @@ class StarlettePlugin(BasePlugin):
             )
         except ValidationError as err:
             response = JSONResponse(err.errors(), 422)
-            await response(scope, receive, send)
-            return
+            return response
         except Exception:
             raise
 
         if inspect.iscoroutinefunction(func):
-            response = await func(request, *args, **kwargs)
+            response = await func(*args, **kwargs)
         else:
-            response = func(request, *args, **kwargs)
+            response = func(*args, **kwargs)
 
         if resp:
             model = resp.find_model(response.status_code)
             model.validate(json_loads(response.body))
 
-        await response(scope, receive, send)
+        return response
 
     def find_routes(self):
         routes = []
