@@ -17,7 +17,7 @@ class Config:
     def __init__(self, **kwargs):
         self.PATH = 'apidoc'
         self.FILENAME = 'openapi.json'
-        self.OPENAPI_VERSION = '3.0.2'
+        self.OPENAPI_VERSION = '3.0.3'
         self.UI = 'redoc'
         self._SUPPORT_UI = {'redoc', 'swagger'}
         self.MODE = 'normal'

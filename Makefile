@@ -1,3 +1,5 @@
+check: style test
+
 install:
 	pip install -e .
 

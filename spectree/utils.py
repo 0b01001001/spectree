@@ -39,7 +39,7 @@ def parse_request(func):
     return data
 
 
-def parse_params(func, params):
+def parse_params(func, params, models):
     """
     get spec for (query, headers, cookies)
     """
@@ -53,21 +53,23 @@ def parse_params(func, params):
             }
         })
     if hasattr(func, 'headers'):
-        params.append({
-            'name': func.headers,
-            'in': 'header',
-            'schema': {
-                '$ref': f'#/components/schemas/{func.headers}',
-            }
-        })
+        headers = models[func.headers]
+        for key, value in headers['properties'].items():
+            params.append({
+                'name': key,
+                'in': 'header',
+                'type': value['type'],
+                'required': key in headers['required'],
+            })
     if hasattr(func, 'cookies'):
-        params.append({
-            'name': func.cookies,
-            'in': 'cookie',
-            'schema': {
-                '$ref': f'#/components/schemas/{func.cookies}',
-            }
-        })
+        cookies = models[func.cookies]
+        for key, value in cookies['properties'].items():
+            params.append({
+                'name': key,
+                'in': 'cookie',
+                'type': value['type'],
+                'required': key in cookies['required'],
+            })
     return params
 
 
