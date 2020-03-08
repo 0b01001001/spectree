@@ -38,6 +38,10 @@ class Header(BaseModel):
     Lang: Language
 
 
+class Cookie(BaseModel):
+    key: str
+
+
 @app.route('/api/predict/<string(length=2):source>/<string(length=2):target>', methods=['POST'])
 @api.validate(query=Query, json=Data, resp=Response('HTTP_403', HTTP_200=Resp), tags=['model'])
 def predict(source, target):
@@ -45,6 +49,8 @@ def predict(source, target):
     predict demo
 
     demo for `query`, `data`, `resp`, `x`
+
+    query with ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
     """
     print(f'=> from {source} to {target}')  # path
     print(f'JSON: {request.context.json}')  # Data
@@ -56,10 +62,12 @@ def predict(source, target):
 
 
 @app.route('/api/header', methods=['POST'])
-@api.validate(headers=Header, resp=Response('HTTP_203'), tags=['test', 'demo'])
+@api.validate(headers=Header, cookies=Cookie, resp=Response('HTTP_203'), tags=['test', 'demo'])
 def with_code_header():
     """
     demo for JSON with status code and header
+
+    query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
     return jsonify(language=request.context.headers.Lang), 203, {'X': 233}
 

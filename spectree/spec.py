@@ -139,7 +139,7 @@ class SpecTree:
                     'operationID': f'{name}__{method.lower()}',
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
-                    'parameters': parse_params(func, parameters[:]),
+                    'parameters': parse_params(func, parameters[:], self.models),
                     'responses': parse_resp(func),
                 }
 
