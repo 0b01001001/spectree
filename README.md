@@ -47,6 +47,38 @@ Check the [examples](/examples) folder.
 
 If the request doesn't pass the validation, it will return a 422 with JSON error message(ctx, loc, msg, type).
 
+## How To
+
+> How to add summary and description to endpoints?
+
+Just add docs to the endpoint function. The 1st line is the summary, and the rest is the description for this endpoint.
+
+> How to add description to parameters?
+
+Check the [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/) document about description in `Field`.
+
+> Any config I can change?
+
+Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
+
+You can update the config when init the spectree like: 
+
+```py
+SpecTree('flask', title='Demo API', version='v1.0', path='doc')
+```
+
+> What is `Response` and how to use it?
+
+To build a response for the endpoint, you need to declare the status code with format `HTTP_{code}` and corresponding data (optional).
+
+```py
+Response('HTPP_200', HTTP_403=ForbidModel)
+```
+
+> What should I return when I'm using the library?
+
+No need to change anything. Just return what the framework required.
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)

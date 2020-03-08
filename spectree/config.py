@@ -7,7 +7,6 @@ class Config:
         routes decorated by this instance. **strict** only includes routes
         decorated by this instance. **greedy** includes all the routes.
     :ivar PATH: path for API document page
-    :ivar UI: UI for API document, 'redoc' or 'swagger'
     :ivar OPENAPI_VERSION: OpenAPI version
     :ivar TITLE: service name
     :ivar VERSION: service version
