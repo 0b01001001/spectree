@@ -80,7 +80,7 @@ class Classification:
         """
         print(f'{source} => {target}')
         print(req.context.query)
-        print(req.context.media)
+        print(req.context.json)
         if random() < 0.5:
             resp.status = falcon.HTTP_403
             resp.media = {'loc': 'unknown', 'msg': 'bad luck', 'typ': 'random'}
