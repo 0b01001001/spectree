@@ -113,7 +113,7 @@ class StarlettePlugin(BasePlugin):
 
     def parse_path(self, route):
         from starlette.routing import compile_path
-        variables = compile_path(route.path)[-1]
+        _, path, variables = compile_path(route.path)
         parameters = []
 
         for name, conv in variables.items():
@@ -144,4 +144,4 @@ class StarlettePlugin(BasePlugin):
                 'schema': schema,
             })
 
-        return route.path, parameters
+        return path, parameters
