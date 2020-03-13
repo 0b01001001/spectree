@@ -52,6 +52,13 @@ class StarlettePlugin(BasePlugin):
                 cookies(**request.cookies) if cookies else None,
             )
         except ValidationError as err:
+            self.logger.info(
+                '422 Validation Error',
+                extra={
+                    'spectree_model': err.model.__name__,
+                    'spectree_validation': err.errors(),
+                },
+            )
             response = JSONResponse(err.errors(), 422)
             return response
         except Exception:
