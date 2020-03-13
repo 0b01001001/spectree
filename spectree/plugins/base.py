@@ -1,4 +1,5 @@
 from collections import namedtuple
+import logging
 
 Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
 
@@ -13,6 +14,7 @@ class BasePlugin:
     def __init__(self, spectree):
         self.spectree = spectree
         self.config = spectree.config
+        self.logger = logging.getLogger(__name__)
 
     def register_route(self, app):
         """

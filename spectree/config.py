@@ -26,14 +26,7 @@ class Config:
         self.VERSION = '0.1'
         self.DOMAIN = None
 
-        # setup logging
-        console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
-        console.setFormatter(logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        ))
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(console)
 
         self.update(**kwargs)
 

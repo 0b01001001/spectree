@@ -15,9 +15,9 @@ Yet another library to generate OpenAPI document and validate request & response
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
-  * Flask [example](#flask)
-  * Falcon [example](#falcon)
-  * Starlette [example](#starlette)
+  * Flask [demo](#flask)
+  * Falcon [demo](#falcon)
+  * Starlette [demo](#starlette)
 
 ## Quick Start
 
@@ -26,6 +26,10 @@ install with pip: `pip install spectree`
 ### Examples
 
 Check the [examples](/examples) folder.
+
+* [flask example](/examples/flask_demo.py)
+* [falcon example with logging when validation failed](/examples/falcon_demo.py)
+* [starlette example](examples/starlette_demo.py)
 
 ### Step by Step
 
@@ -79,6 +83,10 @@ Response('HTPP_200', HTTP_403=ForbidModel)
 
 No need to change anything. Just return what the framework required.
 
+> How to logging when the validation failed?
+
+Validation errors are logged with INFO level. Details are passed into `extra`. Check the [falcon example](examples/falcon_demo.py) for details.
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)
@@ -110,7 +118,7 @@ api = SpecTree('flask')
 
 
 @app.route('/api/user', methods=['POST'])
-@api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+@api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
 def user_profile():
     """
     verify user profile (summary of this endpoint)
@@ -154,7 +162,7 @@ api = SpecTree('falcon')
 
 
 class UserProfile:
-    @api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+    @api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
     def on_post(self, req, resp):
         """
         verify user profile (summary of this endpoint)
@@ -203,7 +211,7 @@ class Message(BaseModel):
 api = SpecTree('starlette')
 
 
-@api.validate(json=Profile, resp=Response('HTTP_404', HTTP_200=Message), tags=['api'])
+@api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
 async def user_profile(request):
     """
     verify user profile (summary of this endpoint)

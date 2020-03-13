@@ -147,6 +147,13 @@ class FlaconPlugin(BasePlugin):
                 _req.context.json = json(**media)
 
         except ValidationError as err:
+            self.logger.info(
+                '422 Validation Error',
+                extra={
+                    'spectree_model': err.model.__name__,
+                    'spectree_validation': err.errors(),
+                },
+            )
             _resp.status = '422 Unprocessable Entity'
             _resp.media = err.errors()
             return
