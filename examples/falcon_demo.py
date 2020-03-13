@@ -1,3 +1,5 @@
+import logging
+import json
 import falcon
 from wsgiref import simple_server
 from pydantic import BaseModel, Field
@@ -86,6 +88,36 @@ class Classification:
             resp.media = {'loc': 'unknown', 'msg': 'bad luck', 'typ': 'random'}
             return
         resp.media = {'label': int(10 * random()), 'score': random()}
+
+
+class JSONFormatter(logging.Formatter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        lr = logging.LogRecord(None, None, '', 0, '', (), None, None)
+        self.default_keys = [key for key in lr.__dict__]
+
+    def extra_data(self, record):
+        return {
+            key: getattr(record, key) for key in record.__dict__
+            if key not in self.default_keys
+        }
+
+    def format(self, record):
+        log_data = {
+            "severity": record.levelname,
+            "path_name": record.pathname,
+            "function_name": record.funcName,
+            "message": record.msg,
+            **self.extra_data(record)
+        }
+        return json.dumps(log_data)
+
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 
 if __name__ == '__main__':
