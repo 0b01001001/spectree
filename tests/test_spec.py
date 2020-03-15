@@ -36,7 +36,7 @@ def test_register(name, app):
 
 @pytest.mark.parametrize('name, app', backend_app())
 def test_spec_generate(name, app):
-    api = SpecTree(name, app, title=f'{name}')
+    api = SpecTree(name, app=app, title=f'{name}')
     spec = api.spec
 
     assert spec['info']['title'] == name
