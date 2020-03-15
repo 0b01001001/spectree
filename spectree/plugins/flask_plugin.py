@@ -92,19 +92,23 @@ class FlaskPlugin(BasePlugin):
 
         return ''.join(subs), parameters
 
+    def get_req_data(self, request):
+        query = request.args or {}
+        json = request.get_json() or {}
+        headers = request.headers or {}
+        cookies = request.cookies or {}
+        return query, json, headers, cookies
+
     def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
         try:
-            arg = request.args or {}
-            data = request.get_json() or {}
-            head = request.headers or {}
-            cook = request.cookies or {}
+            arg, json_data, header, cookie = self.get_req_data(request)
             request.context = Context(
                 query(**arg) if query else None,
-                json(**data) if json else None,
-                headers(**head) if headers else None,
-                cookies(**cook) if cookies else None,
+                json(**json_data) if json else None,
+                headers(**header) if headers else None,
+                cookies(**cookie) if cookies else None,
             )
         except ValidationError as err:
             self.logger.info(
@@ -122,7 +126,8 @@ class FlaskPlugin(BasePlugin):
 
         if resp and resp.has_model():
             model = resp.find_model(response.status_code)
-            model.validate(response.get_json())
+            if model:
+                model.validate(response.get_json())
 
         return response
 
