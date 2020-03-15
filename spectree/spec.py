@@ -12,15 +12,16 @@ class SpecTree:
     """
     Interface
 
-    :param str backend: choose from ('flask', 'falcon', 'starlette')
+    :param str backend_name: choose from ('flask', 'falcon', 'starlette')
+    :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
     :param app: backend framework application instance (you can also register to it later)
     :param kwargs: update default :class:`spectree.config.Config`
     """
 
-    def __init__(self, backend_name='base', app=None, **kwargs):
+    def __init__(self, backend_name='base', backend=None, app=None, **kwargs):
         self.config = Config(**kwargs)
         self.backend_name = backend_name
-        self.backend = PLUGINS[backend_name](self)
+        self.backend = backend(self) if backend else PLUGINS[backend_name](self)
         # init
         self.models = {}
         if app:
