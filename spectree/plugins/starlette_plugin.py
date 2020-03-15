@@ -71,7 +71,8 @@ class StarlettePlugin(BasePlugin):
 
         if resp:
             model = resp.find_model(response.status_code)
-            model.validate(json_loads(response.body))
+            if model:
+                model.validate(json_loads(response.body))
 
         return response
 

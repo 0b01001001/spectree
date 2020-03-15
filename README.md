@@ -76,7 +76,8 @@ SpecTree('flask', title='Demo API', version='v1.0', path='doc')
 To build a response for the endpoint, you need to declare the status code with format `HTTP_{code}` and corresponding data (optional).
 
 ```py
-Response('HTPP_200', HTTP_403=ForbidModel)
+Response(HTTP_200=None, HTTP_403=ForbidModel)
+Response('HTTP_200') # equals to Response(HTTP_200=None)
 ```
 
 > What should I return when I'm using the library?
@@ -118,7 +119,7 @@ api = SpecTree('flask')
 
 
 @app.route('/api/user', methods=['POST'])
-@api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
+@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
 def user_profile():
     """
     verify user profile (summary of this endpoint)
@@ -162,7 +163,7 @@ api = SpecTree('falcon')
 
 
 class UserProfile:
-    @api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
+    @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
     def on_post(self, req, resp):
         """
         verify user profile (summary of this endpoint)
@@ -211,7 +212,7 @@ class Message(BaseModel):
 api = SpecTree('starlette')
 
 
-@api.validate(json=Profile, resp=Response('HTTP_403', HTTP_200=Message), tags=['api'])
+@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
 async def user_profile(request):
     """
     verify user profile (summary of this endpoint)
@@ -240,3 +241,7 @@ if __name__ == "__main__":
 
 The HTTP headers' keys in Flask are capitalized, in Falcon are upper cases, in Starlette are lower cases.
 You can use [`pydantic.root_validators(pre=True)`](https://pydantic-docs.helpmanual.io/usage/validators/#root-validators) to change all the keys into lower cases or upper cases.
+
+> ValidationError: value is not a valid list for query
+
+Since there is no standard for HTTP query with multiple values, it's hard to find the way to handle this for different web frameworks. So I suggest not to use list type in query until I find a suitable way to fix it.

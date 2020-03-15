@@ -25,7 +25,7 @@ def ping():
     query=Query,
     json=JSON,
     cookies=Cookies,
-    resp=Response('HTTP_401', HTTP_200=Resp),
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=['api', 'test'])
 def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
@@ -59,6 +59,7 @@ def test_flask_validate(client):
         data=json.dumps(dict(name='flask', limit=10)),
         content_type='application/json',
     )
+    assert resp.status_code == 200, resp.json
     assert resp.json['name'] == 'flask'
     assert resp.json['score'] == sorted(resp.json['score'], reverse=1)
 

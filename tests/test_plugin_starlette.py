@@ -26,7 +26,7 @@ class Ping(HTTPEndpoint):
     query=Query,
     json=JSON,
     cookies=Cookies,
-    resp=Response('HTTP_401', HTTP_200=Resp),
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=['api', 'test'])
 async def user_score(request):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
