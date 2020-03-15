@@ -23,6 +23,12 @@ def test_init_response():
     assert resp.find_model(201) == DemoModel
     assert DemoModel in resp.models
 
+    resp = Response(HTTP_200=None, HTTP_403=DemoModel)
+    assert resp.has_model()
+    assert resp.find_model(403) == DemoModel
+    assert resp.find_model(200) is None
+    assert DemoModel in resp.models
+
     assert not Response().has_model()
 
 

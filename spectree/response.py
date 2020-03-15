@@ -8,19 +8,23 @@ class Response:
     response object
 
     :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP200'
-    :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`>
+    :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`> or None
     """
 
     def __init__(self, *codes, **code_models):
+        self.codes = []
         for code in codes:
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
+            self.codes.append(code)
 
+        self.code_models = {}
         for code, model in code_models.items():
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
-            assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
-
-        self.codes = codes
-        self.code_models = code_models
+            if model:
+                assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
+                self.code_models[code] = model
+            else:
+                self.codes.append(code)
 
     def has_model(self):
         """
