@@ -163,7 +163,8 @@ class FlaconPlugin(BasePlugin):
         func(*args, **kwargs)
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
-            model.validate(_resp.media)
+            if model:
+                model.validate(_resp.media)
 
     def bypass(self, func, method):
         if not isinstance(func, partial):

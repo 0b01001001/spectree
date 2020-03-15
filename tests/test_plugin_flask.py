@@ -25,7 +25,7 @@ def ping():
     query=Query,
     json=JSON,
     cookies=Cookies,
-    resp=Response('HTTP_401', HTTP_200=Resp),
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=['api', 'test'])
 def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]

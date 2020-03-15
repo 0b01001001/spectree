@@ -32,7 +32,7 @@ class UserScore:
         query=Query,
         json=JSON,
         cookies=Cookies,
-        resp=Response('HTTP_401', HTTP_200=Resp),
+        resp=Response(HTTP_200=Resp, HTTP_401=None),
         tags=['api', 'test'])
     def on_post(self, req, resp, name):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
