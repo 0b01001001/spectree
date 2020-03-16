@@ -88,6 +88,10 @@ No need to change anything. Just return what the framework required.
 
 Validation errors are logged with INFO level. Details are passed into `extra`. Check the [falcon example](examples/falcon_demo.py) for details.
 
+> How can I write a customized plugin for another backend framework?
+
+Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)
