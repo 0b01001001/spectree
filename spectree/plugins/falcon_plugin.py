@@ -132,19 +132,23 @@ class FlaconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
+    async def get_request_data(self, request, query_model):
+        """Helper for extracting data from a request."""
+        return request.params, request.media or {}, request.headers, request.cookies
+
     def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         # falcon endpoint method arguments: (self, req, resp)
-        _self, _req, _resp = args[:3]
+        _req, _resp = args[1:3]
+        req_args, req_json, req_headers, req_cookies = self.get_request_data(_req, query)
         try:
             if query:
-                _req.context.query = query(**_req.params)
+                _req.context.query = query(**req_args)
             if headers:
-                _req.context.headers = headers(**_req.headers)
+                _req.context.headers = headers(**req_headers)
             if cookies:
-                _req.context.cookies = cookies(**_req.cookies)
-            media = _req.media or {}
+                _req.context.cookies = cookies(**req_cookies)
             if json:
-                _req.context.json = json(**media)
+                _req.context.json = json(**req_json)
 
         except ValidationError as err:
             self.logger.info(

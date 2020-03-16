@@ -92,19 +92,25 @@ class FlaskPlugin(BasePlugin):
 
         return ''.join(subs), parameters
 
+    async def get_request_data(self, request, query_model):
+        """Helper for extracting data from a request."""
+        args = request.args or {}
+        json = request.get_json() or {}
+        headers = request.headers or {}
+        cookies = request.cookies or {}
+        return args, json, headers, cookies
+
     def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
+        req_args, req_json, req_headers, req_cookies = self.get_request_data(request, query)
+
         try:
-            arg = request.args or {}
-            data = request.get_json() or {}
-            head = request.headers or {}
-            cook = request.cookies or {}
             request.context = Context(
-                query(**arg) if query else None,
-                json(**data) if json else None,
-                headers(**head) if headers else None,
-                cookies(**cook) if cookies else None,
+                query(**req_args) if query else None,
+                json(**req_json) if json else None,
+                headers(**req_headers) if headers else None,
+                cookies(**req_cookies) if cookies else None,
             )
         except ValidationError as err:
             self.logger.info(

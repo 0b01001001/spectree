@@ -1,5 +1,5 @@
 import inspect
-from json import loads as json_loads
+from json import loads as json_loads, JSONDecodeError
 from collections import namedtuple
 from functools import partial
 from pydantic import ValidationError
@@ -37,6 +37,14 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
+    async def get_request_data(self, request, query_model):
+        """Helper for extracting data from a request."""
+        try:
+            req_json = await request.json()
+        except JSONDecodeError:
+            req_json = {}
+        return request.query_params, req_json, request.headers, request.cookies
+
     async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from starlette.responses import JSONResponse
 
@@ -44,12 +52,14 @@ class StarlettePlugin(BasePlugin):
         # This is not an elegant way. But it seems `inspect` doesn't work here.
         request = args[1] if '.' in str(func) else args[0]
 
+        req_args, req_json, req_headers, req_cookies = await self.get_request_data(request, query)
+
         try:
             request.context = Context(
-                query(**request.query_params) if query else None,
-                json(**json_loads(await request.body() or '{}')) if json else None,
-                headers(**request.headers) if headers else None,
-                cookies(**request.cookies) if cookies else None,
+                query(**req_args) if query else None,
+                json(**req_json) if json else None,
+                headers(**req_headers) if headers else None,
+                cookies(**req_cookies) if cookies else None,
             )
         except ValidationError as err:
             self.logger.info(
