@@ -92,24 +92,23 @@ class FlaskPlugin(BasePlugin):
 
         return ''.join(subs), parameters
 
-    def get_req_data(self, request):
-        query = request.args or {}
-        json = request.get_json() or {}
-        headers = request.headers or {}
-        cookies = request.cookies or {}
-        return query, json, headers, cookies
+    def request_validation(self, request, query, json, headers, cookies):
+        arg = request.args or {}
+        json_data = request.get_json() or {}
+        header = request.headers or {}
+        cookie = request.cookies or {}
+        request.context = Context(
+            query(**arg) if query else None,
+            json(**json_data) if json else None,
+            headers(**header) if headers else None,
+            cookies(**cookie) if cookies else None,
+        )
 
     def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
         try:
-            arg, json_data, header, cookie = self.get_req_data(request)
-            request.context = Context(
-                query(**arg) if query else None,
-                json(**json_data) if json else None,
-                headers(**header) if headers else None,
-                cookies(**cookie) if cookies else None,
-            )
+            self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
             self.logger.info(
                 '422 Validation Error',
