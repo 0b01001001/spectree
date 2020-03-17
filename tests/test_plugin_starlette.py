@@ -32,6 +32,7 @@ async def user_score(request):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order)
     assert request.context.cookies.pub == 'abcdefg'
+    assert request.cookies['pub'] == 'abcdefg'
     return JSONResponse({
         'name': request.context.json.name,
         'score': score

@@ -38,6 +38,7 @@ class UserScore:
         score = [randint(0, req.context.json.limit) for _ in range(5)]
         score.sort(reverse=req.context.query.order)
         assert req.context.cookies.pub == 'abcdefg'
+        assert req.cookies['pub'] == 'abcdefg'
         resp.media = {'name': req.context.json.name, 'score': score}
 
 
