@@ -1,5 +1,6 @@
 import inspect
 from json import loads as json_loads
+from json import JSONDecodeError
 from collections import namedtuple
 from functools import partial
 from pydantic import ValidationError
@@ -37,20 +38,23 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
+    async def request_validation(self, request, query, json, headers, cookies):
+        request.context = Context(
+            query(**request.query_params) if query else None,
+            json(**json_loads(await request.body() or '{}')) if json else None,
+            headers(**request.headers) if headers else None,
+            cookies(**request.cookies) if cookies else None,
+        )
+
     async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         from starlette.responses import JSONResponse
 
-        # NOTE: if func is endpoint, it should have '.' in name
+        # NOTE: if func is a `HTTPEndpoint`, it should have '.' in name
         # This is not an elegant way. But it seems `inspect` doesn't work here.
         request = args[1] if '.' in str(func) else args[0]
 
         try:
-            request.context = Context(
-                query(**request.query_params) if query else None,
-                json(**json_loads(await request.body() or '{}')) if json else None,
-                headers(**request.headers) if headers else None,
-                cookies(**request.cookies) if cookies else None,
-            )
+            await self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
             self.logger.info(
                 '422 Validation Error',
@@ -61,6 +65,14 @@ class StarlettePlugin(BasePlugin):
             )
             response = JSONResponse(err.errors(), 422)
             return response
+        except JSONDecodeError as err:
+            self.logger.info(
+                '422 Validation Error',
+                extra={
+                    'spectree_validation': str(err),
+                }
+            )
+            response = JSONResponse({'error_msg': str(err)}, 422)
         except Exception:
             raise
 

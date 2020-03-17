@@ -5,6 +5,7 @@ from starlette.applications import Starlette
 
 from spectree.spec import SpecTree
 from spectree.config import Config
+from spectree.plugins import FlaskPlugin
 
 from .common import get_paths
 
@@ -36,7 +37,7 @@ def test_register(name, app):
 
 @pytest.mark.parametrize('name, app', backend_app())
 def test_spec_generate(name, app):
-    api = SpecTree(name, app, title=f'{name}')
+    api = SpecTree(name, app=app, title=f'{name}')
     spec = api.spec
 
     assert spec['info']['title'] == name
@@ -46,6 +47,7 @@ def test_spec_generate(name, app):
 api = SpecTree('flask')
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
+api_customize_backend = SpecTree(backend=FlaskPlugin)
 
 
 def create_app():
@@ -75,6 +77,10 @@ def create_app():
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
+    assert get_paths(api.spec) == ['/foo', '/lone']
+
+    app = create_app()
+    api_customize_backend.register(app)
     assert get_paths(api.spec) == ['/foo', '/lone']
 
     app = create_app()
