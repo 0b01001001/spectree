@@ -1,5 +1,6 @@
 import inspect
 from json import loads as json_loads
+from json import JSONDecodeError
 from collections import namedtuple
 from functools import partial
 from pydantic import ValidationError
@@ -64,6 +65,14 @@ class StarlettePlugin(BasePlugin):
             )
             response = JSONResponse(err.errors(), 422)
             return response
+        except JSONDecodeError as err:
+            self.logger.info(
+                '422 Validation Error',
+                extra={
+                    'spectree_validation': str(err),
+                }
+            )
+            response = JSONResponse({'error_msg': str(err)}, 422)
         except Exception:
             raise
 
