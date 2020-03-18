@@ -63,8 +63,7 @@ class StarlettePlugin(BasePlugin):
                     'spectree_validation': err.errors(),
                 },
             )
-            response = JSONResponse(err.errors(), 422)
-            return response
+            return JSONResponse(err.errors(), 422)
         except JSONDecodeError as err:
             self.logger.info(
                 '422 Validation Error',
@@ -72,7 +71,7 @@ class StarlettePlugin(BasePlugin):
                     'spectree_validation': str(err),
                 }
             )
-            response = JSONResponse({'error_msg': str(err)}, 422)
+            return JSONResponse({'error_msg': str(err)}, 422)
         except Exception:
             raise
 
