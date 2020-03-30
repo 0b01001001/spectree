@@ -56,9 +56,19 @@ def create_app():
     def foo():
         pass
 
+    @app.route('/baz')
+    @api.doc()
+    def baz():
+        pass
+
     @app.route('/bar')
     @api_strict.validate()
     def bar():
+        pass
+
+    @app.route('/baz_strict')
+    @api_strict.doc()
+    def baz_strict():
         pass
 
     @app.route('/lone', methods=['GET'])
@@ -75,15 +85,15 @@ def create_app():
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
-    assert get_paths(api.spec) == ['/foo', '/lone']
+    assert get_paths(api.spec) == ['/baz', '/foo', '/lone']
 
     app = create_app()
     api_greedy.register(app)
-    assert get_paths(api_greedy.spec) == ['/bar', '/foo', '/lone']
+    assert get_paths(api_greedy.spec) == ['/bar', '/baz', '/baz_strict', '/foo', '/lone']
 
     app = create_app()
     api_strict.register(app)
-    assert get_paths(api_strict.spec) == ['/bar']
+    assert get_paths(api_strict.spec) == ['/bar', '/baz_strict']
 
 
 def test_two_endpoints_with_the_same_path():

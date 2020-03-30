@@ -66,11 +66,12 @@ class SpecTree:
                 return True
             return False
 
-    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=[]):
+    def _base(
+        self, validator_func, query=None, json=None, headers=None, cookies=None, resp=None,
+        tags=None
+    ):
         """
-        - validate query, json, headers in request
-        - validate response body and status code
-        - add tags to this API route
+        Captures documentation about the endpoint, and applies validation based on a validator
 
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
@@ -79,20 +80,10 @@ class SpecTree:
         :param resp: `spectree.Response`
         :param tags: list of tags' string
         """
-        def decorate_validation(func):
-            # for sync framework
-            @wraps(func)
-            def sync_validate(*args, **kwargs):
-                return self.backend.validate(
-                    func, query, json, headers, cookies, resp, *args, **kwargs)
+        tags = tags or []
 
-            # for async framework
-            @wraps(func)
-            async def async_validate(*args, **kwargs):
-                return await self.backend.validate(
-                    func, query, json, headers, cookies, resp, *args, **kwargs)
-
-            validation = async_validate if self.backend_name == 'starlette' else sync_validate
+        def wrapper(func):
+            validation = validator_func(func)
 
             # register
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
@@ -113,7 +104,64 @@ class SpecTree:
             # register decorator
             validation._decorator = self
             return validation
-        return decorate_validation
+
+        return wrapper
+
+    def doc(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=[]):
+        """
+        Captures documentation about the endpoint
+
+        :param query: `pydantic.BaseModel`, query in uri like `?name=value`
+        :param json: `pydantic.BaseModel`, JSON format request body
+        :param headers: `pydantic.BaseModel`, if you have specific headers
+        :param cookies: `pydantic.BaseModel`, if you have cookies for this route
+        :param resp: `spectree.Response`
+        :param tags: list of tags' string
+        """
+        def empty_validator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return self._base(
+            empty_validator, query=query, json=json, headers=headers, cookies=cookies,
+            resp=resp, tags=tags
+        )
+
+    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=[]):
+        """
+        - validate query, json, headers in request
+        - validate response body and status code
+        - add tags to this API route
+
+        :param query: `pydantic.BaseModel`, query in uri like `?name=value`
+        :param json: `pydantic.BaseModel`, JSON format request body
+        :param headers: `pydantic.BaseModel`, if you have specific headers
+        :param cookies: `pydantic.BaseModel`, if you have cookies for this route
+        :param resp: `spectree.Response`
+        :param tags: list of tags' string
+        """
+        def validator(func):
+            # for sync framework
+            @wraps(func)
+            def sync_validate(*args, **kwargs):
+                return self.backend.validate(
+                    func, query, json, headers, cookies, resp, *args, **kwargs)
+
+            # for async framework
+            @wraps(func)
+            async def async_validate(*args, **kwargs):
+                return await self.backend.validate(
+                    func, query, json, headers, cookies, resp, *args, **kwargs)
+
+            return async_validate if self.backend_name == 'starlette' else sync_validate
+
+        return self._base(
+            validator, query=query, json=json, headers=headers, cookies=cookies, resp=resp,
+            tags=tags
+        )
 
     def _generate_spec(self):
         """
