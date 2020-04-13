@@ -166,7 +166,7 @@ class FalconPlugin(BasePlugin):
 
         except ValidationError as err:
             self.logger.info(
-                '422 Validation Error',
+                HTTP_422,
                 extra={
                     'spectree_model': err.model.__name__,
                     'spectree_validation': err.errors(),
@@ -219,7 +219,7 @@ class FalconAsgiPlugin(FalconPlugin):
             await self.request_validation(_req, query, json, headers, cookies)
         except ValidationError as err:
             self.logger.info(
-                '422 Validation Error',
+                HTTP_422,
                 extra={
                     'spectree_model': err.model.__name__,
                     'spectree_validation': err.errors(),
