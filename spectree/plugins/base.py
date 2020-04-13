@@ -10,6 +10,9 @@ class BasePlugin:
 
     :param spectree: :class:`spectree.SpecTree` instance
     """
+    # Class constant that marks whether this class's validation uses async/await; override for
+    #  async frameworks
+    IS_ASYNC = False
 
     def __init__(self, spectree):
         self.spectree = spectree

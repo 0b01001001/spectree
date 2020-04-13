@@ -26,8 +26,10 @@ class DocPage:
 
 DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 
+HTTP_422 = '422 Unprocessable Entity'
 
-class FlaconPlugin(BasePlugin):
+
+class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
         from falcon.routing.compiled import _FIELD_PATTERN
@@ -157,7 +159,7 @@ class FlaconPlugin(BasePlugin):
                     'spectree_validation': err.errors(),
                 },
             )
-            _resp.status = '422 Unprocessable Entity'
+            _resp.status = HTTP_422
             _resp.media = err.errors()
             return
         except Exception:
@@ -176,3 +178,37 @@ class FlaconPlugin(BasePlugin):
             return False
         # others are <cyfunction>
         return True
+
+class FalconAsgiPlugin(FalconPlugin):
+    """Light wrapper around default Falcon plug-in to support Falcon 3.0 ASGI apps"""
+    IS_ASYNC = True
+
+    async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+        # Falcon endpoint method arguments: (self, req, resp)
+        _self, _req, _resp = args[:3]
+        try:
+            self.request_validation(_req, query, json, headers, cookies)
+        except ValidationError as err:
+            self.logger.info(
+                '422 Validation Error',
+                extra={
+                    'spectree_model': err.model.__name__,
+                    'spectree_validation': err.errors(),
+                },
+            )
+            _resp.status = HTTP_422
+            _resp.media = err.errors()
+            return
+        except Exception:
+            raise
+
+        if inspect.iscoroutinefunction(func):
+            await func(*args, **kwargs)
+        else:
+            func(*args, **kwargs)
+
+        if resp and resp.has_model():
+            model = resp.find_model(_resp.status[:3])
+            if model:
+                model.validate(_resp.media)
+
