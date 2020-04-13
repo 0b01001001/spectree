@@ -12,7 +12,7 @@ class SpecTree:
     """
     Interface
 
-    :param str backend_name: choose from ('flask', 'falcon', 'starlette')
+    :param str backend_name: choose from ('flask', 'falcon', 'falcon-asgi', 'starlette')
     :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
     :param app: backend framework application instance (you can also register to it later)
     :param kwargs: update default :class:`spectree.config.Config`
