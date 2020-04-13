@@ -198,11 +198,25 @@ class FalconAsgiPlugin(FalconPlugin):
     BASE_ROUTE = OpenAPIAsgi
     BASE_DOC_ROUTE = DocPageAsgi
 
+    async def request_validation(self, req, query, json, headers, cookies):
+        if query:
+            req.context.query = query(**req.params)
+        if headers:
+            req.context.headers = headers(**req.headers)
+        if cookies:
+            req.context.cookies = cookies(**req.cookies)
+        if json:
+            # `get_media()` is required for async Falcon apps, but will throw an exception if
+            #  there is no JSON. To avoid accidentally hiding when we have legitimately invalid
+            #  JSON, we only check for the media if we are expecting JSON input
+            media = await req.get_media() or {}
+            req.context.json = json(**media)
+
     async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         # Falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
         try:
-            self.request_validation(_req, query, json, headers, cookies)
+            await self.request_validation(_req, query, json, headers, cookies)
         except ValidationError as err:
             self.logger.info(
                 '422 Validation Error',
