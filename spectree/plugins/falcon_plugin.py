@@ -24,12 +24,25 @@ class DocPage:
         resp.body = self.page
 
 
-DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
+class OpenAPIAsgi(OpenAPI):
+    async def on_get(self, req, resp):
+        super().on_get(req, resp)
+
+
+class DocPageAsgi(DocPage):
+    async def on_get(self, req, resp):
+        super().on_get(req, resp)
+
+
+DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)]
 
 HTTP_422 = '422 Unprocessable Entity'
 
 
 class FalconPlugin(BasePlugin):
+    BASE_ROUTE = OpenAPI
+    BASE_DOC_ROUTE = DocPage
+
     def __init__(self, spectree):
         super().__init__(spectree)
         from falcon.routing.compiled import _FIELD_PATTERN
@@ -50,12 +63,12 @@ class FalconPlugin(BasePlugin):
     def register_route(self, app):
         self.app = app
         self.app.add_route(
-            self.config.spec_url, OpenAPI(self.spectree.spec)
+            self.config.spec_url, self.BASE_ROUTE(self.spectree.spec)
         )
         for ui in PAGES:
             self.app.add_route(
                 f'/{self.config.PATH}/{ui}',
-                DocPage(PAGES[ui], self.config.spec_url),
+                self.BASE_DOC_ROUTE(PAGES[ui], self.config.spec_url),
             )
 
     def find_routes(self):
@@ -182,6 +195,8 @@ class FalconPlugin(BasePlugin):
 class FalconAsgiPlugin(FalconPlugin):
     """Light wrapper around default Falcon plug-in to support Falcon 3.0 ASGI apps"""
     IS_ASYNC = True
+    BASE_ROUTE = OpenAPIAsgi
+    BASE_DOC_ROUTE = DocPageAsgi
 
     async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         # Falcon endpoint method arguments: (self, req, resp)
