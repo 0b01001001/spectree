@@ -20,6 +20,7 @@ class Config:
         self.UI = 'redoc'
         self._SUPPORT_UI = {'redoc', 'swagger'}
         self.MODE = 'normal'
+        self.PAGE = ''
         self._SUPPORT_MODE = {'normal', 'strict', 'greedy'}
 
         self.TITLE = 'Service API Document'

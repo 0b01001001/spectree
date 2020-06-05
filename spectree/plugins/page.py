@@ -36,7 +36,7 @@ PAGES = {
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Swagger UI</title>
+        <title>Swagger UI 2</title>
         <link rel="stylesheet" type="text/css"
         href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css" >
         <style>

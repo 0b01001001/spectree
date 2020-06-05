@@ -51,9 +51,14 @@ class FlaconPlugin(BasePlugin):
             self.config.spec_url, OpenAPI(self.spectree.spec)
         )
         for ui in PAGES:
+            if self.config.PAGE:
+                page = self.config.PAGE
+            else:
+                page = PAGES[self.config.UI]
+
             self.app.add_route(
-                f'/{self.config.PATH}/{ui}',
-                DocPage(PAGES[ui], self.config.spec_url),
+                f'/{self.config.PATH}/',
+                DocPage(page, self.config.spec_url),
             )
 
     def find_routes(self):
