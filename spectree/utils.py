@@ -44,32 +44,35 @@ def parse_params(func, params, models):
     get spec for (query, headers, cookies)
     """
     if hasattr(func, 'query'):
-        params.append({
-            'name': func.query,
-            'in': 'query',
-            'required': True,
-            'schema': {
-                '$ref': f'#/components/schemas/{func.query}',
-            }
-        })
+        query = models[func.query]
+        for name, schema in query['properties'].items():
+            params.append({
+                'name': name,
+                'in': 'query',
+                'schema': schema,
+                'required': name in query.get('required', []),
+            })
+
     if hasattr(func, 'headers'):
         headers = models[func.headers]
-        for key, value in headers['properties'].items():
+        for name, schema in headers['properties'].items():
             params.append({
-                'name': key,
+                'name': name,
                 'in': 'header',
-                'type': value['type'],
-                'required': key in headers['required'],
+                'schema': schema,
+                'required': name in headers.get('required', []),
             })
+
     if hasattr(func, 'cookies'):
         cookies = models[func.cookies]
-        for key, value in cookies['properties'].items():
+        for name, schema in cookies['properties'].items():
             params.append({
-                'name': key,
+                'name': name,
                 'in': 'cookie',
-                'type': value['type'],
-                'required': key in cookies['required'],
+                'schema': schema,
+                'required': name in cookies.get('required', []),
             })
+
     return params
 
 

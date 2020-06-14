@@ -90,14 +90,16 @@ def test_parse_request():
 
 
 def test_parse_params():
-    assert parse_params(demo_func, [], {}) == []
-    params = parse_params(demo_class.demo_method, [], {})
-    assert len(params) == 1
+    models = {'DemoModel': DemoModel.schema()}
+    assert parse_params(demo_func, [], models) == []
+    params = parse_params(demo_class.demo_method, [], models)
+    assert len(params) == 3
     assert params[0] == {
-        'name': 'DemoModel',
+        'name': 'uid',
         'in': 'query',
         'required': True,
         'schema': {
-            '$ref': '#/components/schemas/DemoModel',
+            'title': 'Uid',
+            'type': 'integer',
         }
     }
