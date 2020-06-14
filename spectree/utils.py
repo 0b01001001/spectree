@@ -44,14 +44,17 @@ def parse_params(func, params, models):
     get spec for (query, headers, cookies)
     """
     if hasattr(func, 'query'):
-        params.append({
-            'name': func.query,
-            'in': 'query',
-            'required': True,
-            'schema': {
-                '$ref': f'#/components/schemas/{func.query}',
-            }
-        })
+        for query_param in models[func.query]["properties"].keys():
+            has_default = "default" in \
+                models[func.query]["properties"][query_param].keys()
+
+            params.append({
+                'name': query_param,
+                'in': 'query',
+                'required': has_default,
+                'schema': models[func.query]["properties"][query_param]
+            })
+
     if hasattr(func, 'headers'):
         headers = models[func.headers]
         for key, value in headers['properties'].items():
