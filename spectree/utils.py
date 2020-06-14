@@ -51,7 +51,7 @@ def parse_params(func, params, models):
             params.append({
                 'name': query_param,
                 'in': 'query',
-                'required': has_default,
+                'required': not has_default,
                 'schema': models[func.query]["properties"][query_param]
             })
 
