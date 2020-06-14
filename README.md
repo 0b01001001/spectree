@@ -113,6 +113,15 @@ class Profile(BaseModel):
         description='user age(Human)'
     )
 
+    class Config:
+        schema_extra = {
+            # provide an example
+            'example': {
+                'name': 'very_important_user',
+                'age': 42,
+            }
+        }
+
 
 class Message(BaseModel):
     text: str

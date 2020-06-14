@@ -40,10 +40,10 @@ class StarlettePlugin(BasePlugin):
 
     async def request_validation(self, request, query, json, headers, cookies):
         request.context = Context(
-            query(**request.query_params) if query else None,
-            json(**json_loads(await request.body() or '{}')) if json else None,
-            headers(**request.headers) if headers else None,
-            cookies(**request.cookies) if cookies else None,
+            query.parse_obj(request.query_params) if query else None,
+            json.parse_obj(json_loads(await request.body() or '{}')) if json else None,
+            headers.parse_obj(request.headers) if headers else None,
+            cookies.parse_obj(request.cookies) if cookies else None,
         )
 
     async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):

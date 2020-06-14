@@ -134,14 +134,14 @@ class FlaconPlugin(BasePlugin):
 
     def request_validation(self, req, query, json, headers, cookies):
         if query:
-            req.context.query = query(**req.params)
+            req.context.query = query.parse_obj(req.params)
         if headers:
-            req.context.headers = headers(**req.headers)
+            req.context.headers = headers.parse_obj(req.headers)
         if cookies:
-            req.context.cookies = cookies(**req.cookies)
+            req.context.cookies = cookies.parse_obj(req.cookies)
         media = req.media or {}
         if json:
-            req.context.json = json(**media)
+            req.context.json = json.parse_obj(media)
 
     def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
         # falcon endpoint method arguments: (self, req, resp)
