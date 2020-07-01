@@ -67,7 +67,7 @@ class SpecTree:
                 return True
             return False
 
-    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=[]):
+    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=()):
         """
         - validate query, json, headers in request
         - validate response body and status code
@@ -78,7 +78,7 @@ class SpecTree:
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
-        :param tags: list of tags' string
+        :param tags: a tuple of tags string
         """
         def decorate_validation(func):
             # for sync framework
@@ -130,7 +130,7 @@ class SpecTree:
 
                 name = parse_name(func)
                 summary, desc = parse_comments(func)
-                func_tags = getattr(func, 'tags', [])
+                func_tags = getattr(func, 'tags', ())
                 for tag in func_tags:
                     if tag not in tags:
                         tags[tag] = {'name': tag}
