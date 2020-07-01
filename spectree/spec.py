@@ -1,10 +1,12 @@
 from functools import wraps
+
 from pydantic import BaseModel
 
-from .plugins import PLUGINS
 from .config import Config
+from .plugins import PLUGINS
 from .utils import (
-    parse_comments, parse_request, parse_params, parse_resp, parse_name
+    parse_comments, parse_request, parse_params, parse_resp, parse_name,
+    default_before_handler, default_after_handler,
 )
 
 
@@ -15,10 +17,22 @@ class SpecTree:
     :param str backend_name: choose from ('flask', 'falcon', 'starlette')
     :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
     :param app: backend framework application instance (you can also register to it later)
+    :param before: a callback function of the form :meth:`spectree.utils.default_before_handler`
+        ``func(req, resp, req_validation_error, instance)``
+        that will be called after the request validation before the endpoint function
+    :param after: a callback function of the form :meth:`spectree.utils.default_after_handler`
+        ``func(req, resp, resp_validation_error, instance)``
+        that will be called after the response validation
     :param kwargs: update default :class:`spectree.config.Config`
     """
 
-    def __init__(self, backend_name='base', backend=None, app=None, **kwargs):
+    def __init__(self,
+                 backend_name='base', backend=None,
+                 app=None,
+                 before=default_before_handler, after=default_after_handler,
+                 **kwargs):
+        self.before = before
+        self.after = after
         self.config = Config(**kwargs)
         self.backend_name = backend_name
         self.backend = backend(self) if backend else PLUGINS[backend_name](self)
@@ -80,18 +94,25 @@ class SpecTree:
         :param resp: `spectree.Response`
         :param tags: a tuple of tags string
         """
+
         def decorate_validation(func):
             # for sync framework
             @wraps(func)
             def sync_validate(*args, **kwargs):
                 return self.backend.validate(
-                    func, query, json, headers, cookies, resp, *args, **kwargs)
+                    func,
+                    query, json, headers, cookies, resp,
+                    self.before, self.after,
+                    *args, **kwargs)
 
             # for async framework
             @wraps(func)
             async def async_validate(*args, **kwargs):
                 return await self.backend.validate(
-                    func, query, json, headers, cookies, resp, *args, **kwargs)
+                    func,
+                    query, json, headers, cookies, resp,
+                    self.before, self.after,
+                    *args, **kwargs)
 
             validation = async_validate if self.backend_name == 'starlette' else sync_validate
 
@@ -99,7 +120,7 @@ class SpecTree:
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
                                    (query, json, headers, cookies)):
                 if model is not None:
-                    assert(issubclass(model, BaseModel))
+                    assert (issubclass(model, BaseModel))
                     self.models[model.__name__] = model.schema()
                     setattr(validation, name, model.__name__)
 
@@ -114,6 +135,7 @@ class SpecTree:
             # register decorator
             validation._decorator = self
             return validation
+
         return decorate_validation
 
     def _generate_spec(self):
