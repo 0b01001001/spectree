@@ -1,8 +1,11 @@
 import re
 import inspect
+import logging
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r'^HTTP_(?P<code>\d{3})$')
+
+logger = logging.getLogger(__name__)
 
 
 def parse_comments(func):
@@ -128,3 +131,25 @@ def parse_name(func):
         * decorated class methods
     """
     return func.__name__
+
+
+def default_before_handler(req, resp, req_validation_error, instance):
+    if req_validation_error:
+        logger.info(
+            '422 Validation Error',
+            extra={
+                'spectree_model': req_validation_error.model.__name__,
+                'spectree_validation': req_validation_error.errors(),
+            },
+        )
+
+
+def default_after_handler(req, resp, resp_validation_error, instance):
+    if resp_validation_error:
+        logger.info(
+            '500 Response Validation Error',
+            extra={
+                'spectree_model': resp_validation_error.model.__name__,
+                'spectree_validation': resp_validation_error.errors(),
+            },
+        )
