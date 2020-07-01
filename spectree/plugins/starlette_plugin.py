@@ -1,13 +1,13 @@
 import inspect
-from json import loads as json_loads
-from json import JSONDecodeError
 from collections import namedtuple
 from functools import partial
+from json import JSONDecodeError
+from json import loads as json_loads
+
 from pydantic import ValidationError
 
 from .base import BasePlugin, Context
 from .page import PAGES
-
 
 METHODS = {'get', 'post', 'put', 'patch', 'delete'}
 Route = namedtuple('Route', ['path', 'methods', 'func'])
@@ -46,34 +46,36 @@ class StarlettePlugin(BasePlugin):
             cookies.parse_obj(request.cookies) if cookies else None,
         )
 
-    async def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+    async def validate(self,
+                       func,
+                       query, json, headers, cookies, resp,
+                       before, after,
+                       *args, **kwargs):
         from starlette.responses import JSONResponse
 
-        # NOTE: if func is a `HTTPEndpoint`, it should have '.' in name
-        # This is not an elegant way. But it seems `inspect` doesn't work here.
+        # NOTE: If func is a `HTTPEndpoint`, it should have '.' in its name
+        # This is not elegant. But it seems `inspect` doesn't work here.
+        instance = args[0] if '.' in str(func) else None
         request = args[1] if '.' in str(func) else args[0]
+        response = None
+        req_validation_error, resp_validation_error, json_decode_error = None, None, None
 
         try:
             await self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
-            self.logger.info(
-                '422 Validation Error',
-                extra={
-                    'spectree_model': err.model.__name__,
-                    'spectree_validation': err.errors(),
-                },
-            )
-            return JSONResponse(err.errors(), 422)
+            req_validation_error = err
+            response = JSONResponse(err.errors(), 422)
         except JSONDecodeError as err:
+            json_decode_error = err
             self.logger.info(
                 '422 Validation Error',
-                extra={
-                    'spectree_validation': str(err),
-                }
+                extra={'spectree_json_decode_error': str(err)}
             )
-            return JSONResponse({'error_msg': str(err)}, 422)
-        except Exception:
-            raise
+            response = JSONResponse({'error_msg': str(err)}, 422)
+
+        before(request, response, req_validation_error, instance)
+        if req_validation_error or json_decode_error:
+            return response
 
         if inspect.iscoroutinefunction(func):
             response = await func(*args, **kwargs)
@@ -83,7 +85,13 @@ class StarlettePlugin(BasePlugin):
         if resp:
             model = resp.find_model(response.status_code)
             if model:
-                model.validate(json_loads(response.body))
+                try:
+                    model.validate(json_loads(response.body))
+                except ValidationError as err:
+                    resp_validation_error = err
+                    response = JSONResponse(err.errors(), 500)
+
+        after(request, response, resp_validation_error, instance)
 
         return response
 
