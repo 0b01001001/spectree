@@ -8,7 +8,7 @@ class FlaskPlugin(BasePlugin):
     def find_routes(self):
         for rule in self.app.url_map.iter_rules():
             if any(str(rule).startswith(path) for path in (
-                f'/{self.config.PATH}', '/static'
+                    f'/{self.config.PATH}', '/static'
             )):
                 continue
             yield rule
@@ -104,29 +104,38 @@ class FlaskPlugin(BasePlugin):
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
-    def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+    def validate(self,
+                 func,
+                 query, json, headers, cookies, resp,
+                 before, after,
+                 *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
+        response, req_validation_error, resp_validation_error = None, None, None
         try:
             self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
-            self.logger.info(
-                '422 Validation Error',
-                extra={
-                    'spectree_model': err.model.__name__,
-                    'spectree_validation': err.errors(),
-                },
-            )
-            abort(make_response(jsonify(err.errors()), 422))
-        except Exception:
-            raise
+            req_validation_error = err
+            response = make_response(jsonify(err.errors()), 422)
+
+        before(request, response, req_validation_error, None)
+        if req_validation_error:
+            abort(response)
 
         response = make_response(func(*args, **kwargs))
 
         if resp and resp.has_model():
             model = resp.find_model(response.status_code)
             if model:
-                model.validate(response.get_json())
+                try:
+                    model.validate(response.get_json())
+                except ValidationError as err:
+                    resp_validation_error = err
+                    response = make_response(jsonify(
+                        {'message': 'response validation error'}
+                    ), 500)
+
+        after(request, response, resp_validation_error, None)
 
         return response
 

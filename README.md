@@ -92,6 +92,10 @@ Validation errors are logged with INFO level. Details are passed into `extra`. C
 
 Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
 
+> How can I change the response when there is a validation error? Can I record some metrics?
+
+This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or for a specific endpoint validation.
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)

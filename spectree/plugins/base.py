@@ -1,5 +1,5 @@
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
 Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
 
