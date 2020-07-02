@@ -81,7 +81,9 @@ class SpecTree:
                 return True
             return False
 
-    def validate(self, query=None, json=None, headers=None, cookies=None, resp=None, tags=()):
+    def validate(self,
+                 query=None, json=None, headers=None, cookies=None, resp=None, tags=(),
+                 before=None, after=None):
         """
         - validate query, json, headers in request
         - validate response body and status code
@@ -93,6 +95,8 @@ class SpecTree:
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
         :param tags: a tuple of tags string
+        :param before: :meth:`spectree.utils.default_before_handler` for specific endpoint
+        :param after: :meth:`spectree.utils.default_after_handler` for specific endpoint
         """
 
         def decorate_validation(func):
@@ -102,7 +106,7 @@ class SpecTree:
                 return self.backend.validate(
                     func,
                     query, json, headers, cookies, resp,
-                    self.before, self.after,
+                    before or self.before, after or self.after,
                     *args, **kwargs)
 
             # for async framework
@@ -111,7 +115,7 @@ class SpecTree:
                 return await self.backend.validate(
                     func,
                     query, json, headers, cookies, resp,
-                    self.before, self.after,
+                    before or self.before, after or self.after,
                     *args, **kwargs)
 
             validation = async_validate if self.backend_name == 'starlette' else sync_validate
