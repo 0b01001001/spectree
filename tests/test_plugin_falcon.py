@@ -8,10 +8,23 @@ from spectree import SpecTree, Response
 from .common import Query, Resp, JSON, Headers, Cookies
 
 
-api = SpecTree('falcon')
+def before_handler(req, resp, err, instance):
+    if err:
+        resp.set_header('X-Error', err.errors())
+
+
+def after_handler(req, resp, err, instance):
+    print(instance.name)
+    resp.set_header('X-Name', instance.name)
+    print(resp.get_header('X-Name'))
+
+
+api = SpecTree('falcon', before=before_handler, after=after_handler)
 
 
 class Ping:
+    name = 'health check'
+
     @api.validate(headers=Headers, tags=['test', 'health'])
     def on_get(self, req, resp):
         """summary
@@ -21,6 +34,8 @@ class Ping:
 
 
 class UserScore:
+    name = 'sorted random score'
+
     def extra_method(self):
         pass
 
@@ -56,15 +71,20 @@ def client():
 def test_falcon_validate(client):
     resp = client.simulate_request('GET', '/ping')
     assert resp.status_code == 422
+    assert resp.headers.get('X-Error'), resp.headers
 
     resp = client.simulate_request('GET', '/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
+    assert resp.headers.get('X-Error') is None
+    assert resp.headers.get('X-Name') == 'health check'
 
     resp = client.simulate_request('GET', '/api/user/falcon')
     assert resp.json == {'name': 'falcon'}
 
     resp = client.simulate_request('POST', '/api/user/falcon')
     assert resp.status_code == 422
+    assert resp.headers.get('X-Error')
+    assert resp.headers.get('X-Name') is None
 
     resp = client.simulate_request(
         'POST',
@@ -73,7 +93,8 @@ def test_falcon_validate(client):
         headers={'Cookie': 'pub=abcdefg'},
     )
     assert resp.json['name'] == 'falcon'
-    assert resp.json['score'] == sorted(resp.json['score'], reverse=1)
+    assert resp.json['score'] == sorted(resp.json['score'], reverse=True)
+    assert resp.headers.get('X-Name') == 'sorted random score'
 
     resp = client.simulate_request(
         'POST',
@@ -82,7 +103,8 @@ def test_falcon_validate(client):
         headers={'Cookie': 'pub=abcdefg'},
     )
     assert resp.json['name'] == 'falcon'
-    assert resp.json['score'] == sorted(resp.json['score'], reverse=0)
+    assert resp.json['score'] == sorted(resp.json['score'], reverse=False)
+    assert resp.headers.get('X-Name') == 'sorted random score'
 
 
 def test_falcon_doc(client):
