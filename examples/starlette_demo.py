@@ -1,5 +1,6 @@
 import uvicorn
 from starlette.applications import Starlette
+from starlette.endpoints import HTTPEndpoint
 from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -45,17 +46,18 @@ async def predict(request):
     return JSONResponse({'label': 5, 'score': 0.5})
 
 
-@api.validate(tags=['health check', 'api'])
-def ping(request):
-    """
-    health check
-    """
-    return JSONResponse({'msg': 'pong'})
+class Ping(HTTPEndpoint):
+    @api.validate(tags=['health check', 'api'])
+    def get(self, request):
+        """
+        health check
+        """
+        return JSONResponse({'msg': 'pong'})
 
 
 if __name__ == "__main__":
     app = Starlette(routes=[
-        Route('/ping', ping),
+        Route('/ping', Ping),
         Mount('/api', routes=[
             Route('/predict/{luck:int}', predict, methods=['POST'])
         ])
