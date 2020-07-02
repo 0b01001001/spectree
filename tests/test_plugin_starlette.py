@@ -11,11 +11,26 @@ from spectree import SpecTree, Response
 from .common import Query, Resp, JSON, Headers, Cookies
 
 
-api = SpecTree('starlette')
+def before_handler(req, resp, err, instance):
+    if err:
+        resp.headers['X-Error'] = 'Validation Error'
+
+
+def after_handler(req, resp, err, instance):
+    resp.headers['X-Validation'] = 'Pass'
+
+
+def method_handler(req, resp, err, instance):
+    resp.headers['X-Name'] = instance.name
+
+
+api = SpecTree('starlette', before=before_handler, after=after_handler)
 
 
 class Ping(HTTPEndpoint):
-    @api.validate(headers=Headers, tags=['test', 'health'])
+    name = 'Ping'
+
+    @api.validate(headers=Headers, tags=['test', 'health'], after=method_handler)
     def get(self, request):
         """summary
         description"""
@@ -59,28 +74,37 @@ def client():
 def test_starlette_validate(client):
     resp = client.get('/ping')
     assert resp.status_code == 422
+    assert resp.headers.get('X-Error') == 'Validation Error', resp.headers
 
     resp = client.get('/ping', headers={'lang': 'en-US'})
     assert resp.json() == {'msg': 'pong'}
+    assert resp.headers.get('X-Error') is None
+    assert resp.headers.get('X-Name') == 'Ping'
+    assert resp.headers.get('X-Validation') is None
 
     resp = client.post('/api/user/starlette')
     assert resp.status_code == 422
+    assert resp.headers.get('X-Error') == 'Validation Error'
 
     resp = client.post(
         '/api/user/starlette?order=1',
         json=dict(name='starlette', limit=10),
         cookies=dict(pub='abcdefg'),
-    ).json()
-    assert resp['name'] == 'starlette'
-    assert resp['score'] == sorted(resp['score'], reverse=1)
+    )
+    resp_body = resp.json()
+    assert resp_body['name'] == 'starlette'
+    assert resp_body['score'] == sorted(resp_body['score'], reverse=True)
+    assert resp.headers.get('X-Validation') == 'Pass'
 
     resp = client.post(
         '/api/user/starlette?order=0',
         json=dict(name='starlette', limit=10),
         cookies=dict(pub='abcdefg'),
-    ).json()
-    assert resp['name'] == 'starlette'
-    assert resp['score'] == sorted(resp['score'], reverse=0)
+    )
+    resp_body = resp.json()
+    assert resp_body['name'] == 'starlette'
+    assert resp_body['score'] == sorted(resp_body['score'], reverse=False)
+    assert resp.headers.get('X-Validation') == 'Pass'
 
 
 def test_starlette_doc(client):

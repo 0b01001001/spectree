@@ -10,7 +10,7 @@ from .common import Query, Resp, JSON, Headers, Cookies
 
 def before_handler(req, resp, err, instance):
     if err:
-        resp.set_header('X-Error', err.errors())
+        resp.set_header('X-Error', 'Validation Error')
 
 
 def after_handler(req, resp, err, instance):
@@ -71,7 +71,7 @@ def client():
 def test_falcon_validate(client):
     resp = client.simulate_request('GET', '/ping')
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error'), resp.headers
+    assert resp.headers.get('X-Error') == 'Validation Error', resp.headers
 
     resp = client.simulate_request('GET', '/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
@@ -83,7 +83,7 @@ def test_falcon_validate(client):
 
     resp = client.simulate_request('POST', '/api/user/falcon')
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error')
+    assert resp.headers.get('X-Error') == 'Validation Error'
     assert resp.headers.get('X-Name') is None
 
     resp = client.simulate_request(

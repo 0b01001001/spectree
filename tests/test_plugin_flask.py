@@ -8,16 +8,16 @@ from spectree import SpecTree, Response
 from .common import Query, Resp, JSON, Headers, Cookies
 
 
-def before_handler(req, resp, error, _):
-    if error:
-        resp.headers['X-Error'] = error.errors()
+def before_handler(req, resp, err, _):
+    if err:
+        resp.headers['X-Error'] = 'Validation Error'
 
 
-def after_handler(req, resp, error, _):
+def after_handler(req, resp, err, _):
     resp.headers['X-Validation'] = 'Pass'
 
 
-def api_after_handler(req, resp, error, _):
+def api_after_handler(req, resp, err, _):
     resp.headers['X-API'] = 'OK'
 
 
@@ -61,7 +61,7 @@ def client():
 def test_flask_validate(client):
     resp = client.get('/ping')
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error')
+    assert resp.headers.get('X-Error') == 'Validation Error'
 
     resp = client.get('/ping', headers={'lang': 'en-US'})
     assert resp.json == {'msg': 'pong'}
@@ -70,7 +70,7 @@ def test_flask_validate(client):
 
     resp = client.post('api/user/flask')
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error')
+    assert resp.headers.get('X-Error') == 'Validation Error'
 
     client.set_cookie('flask', 'pub', 'abcdefg')
     resp = client.post(
