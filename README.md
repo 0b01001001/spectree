@@ -1,5 +1,7 @@
 # Spectree
 
+# INSTALL FROM GITHUB
+ * pip install git+git://github.com/oscfrayle/spectree.git@v0.3.4
 
 [![GitHub Actions](https://github.com/0b01001001/spectree/workflows/Python%20package/badge.svg)](https://github.com/0b01001001/spectree/actions)
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
