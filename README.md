@@ -29,6 +29,7 @@ install with pip: pip install git+git://github.com/oscfrayle/spectree.git@v0.3.4
 import falcon
 from pydantic import BaseModel, Field, constr
 from spectree import SpecTree, Response
+from constants import PAGES
 
 
 class Profile(BaseModel):
@@ -44,8 +45,6 @@ class Profile(BaseModel):
 class Message(BaseModel):
     text: str
 
-
-from constants import PAGES
 
 api = SpecTree('falcon', title='Demo API', version='v1.0', path="api/v1/docs", page=PAGES["swagger"])
 
