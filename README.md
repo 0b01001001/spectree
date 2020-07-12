@@ -24,7 +24,7 @@ install with pip: pip install git+git://github.com/oscfrayle/spectree.git@v0.3.4
 
 ### Examples
 
-'''python
+```py
 import falcon
 from pydantic import BaseModel, Field, constr
 from spectree import SpecTree, Response
@@ -75,7 +75,7 @@ app = falcon.API()
 app.add_route('/api/user', UserProfile())
 api.register(app)
 
-'''
+```
 
 ### Run
 
