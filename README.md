@@ -19,7 +19,9 @@ Yet another library to generate OpenAPI document and validate request & response
 
 ## Quick Start
 
+```
 install with pip: pip install git+git://github.com/oscfrayle/spectree.git@v0.3.4
+```
 
 ### Falcon
 
