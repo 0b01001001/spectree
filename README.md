@@ -14,15 +14,14 @@ Yet another library to generate OpenAPI document and validate request & response
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
-  * Flask [demo](#flask)
+
   * Falcon [demo](#falcon)
-  * Starlette [demo](#starlette)
 
 ## Quick Start
 
 install with pip: pip install git+git://github.com/oscfrayle/spectree.git@v0.3.4
 
-### Examples
+### Falcon
 
 ```py
 import falcon
