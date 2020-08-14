@@ -8,7 +8,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     readme = f.read()
 
-with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
+with open(path.join(here, 'requirements/production.txt'), encoding='utf-8') as f:
     requires = [req.strip() for req in f if req]
 
 

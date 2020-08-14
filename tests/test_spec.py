@@ -1,13 +1,23 @@
+import json
+
 import pytest
 from flask import Flask
 import falcon
 from starlette.applications import Starlette
+from openapi_spec_validator import validate_v3_spec
+from pydantic import BaseModel, StrictFloat, Field
 
 from spectree.spec import SpecTree
 from spectree.config import Config
 from spectree.plugins import FlaskPlugin
 
 from .common import get_paths
+
+
+class ExampleModel(BaseModel):
+    name: str = Field(strip_whitespace=True)
+    age: int
+    height: StrictFloat
 
 
 def backend_app():
@@ -44,7 +54,7 @@ def test_spec_generate(name, app):
     assert spec['paths'] == {}
 
 
-api = SpecTree('flask')
+api = SpecTree('flask', )
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
 api_customize_backend = SpecTree(backend=FlaskPlugin)
@@ -68,6 +78,7 @@ def create_app():
         pass
 
     @app.route('/lone', methods=['POST'])
+    @api.validate(json=ExampleModel, resp=ExampleModel)
     def lone_post():
         pass
 
@@ -100,3 +111,10 @@ def test_two_endpoints_with_the_same_path():
     http_methods = list(spec['paths']['/lone'].keys())
     http_methods.sort()
     assert http_methods == ['get', 'post']
+
+
+def test_valid_openapi_spec():
+    app = create_app()
+    api.register(app)
+    spec = api.spec
+    validate_v3_spec(spec)

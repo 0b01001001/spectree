@@ -1,6 +1,8 @@
 from functools import wraps
+from typing import Mapping, Type
 
 from pydantic import BaseModel
+from inflection import camelize
 
 from .config import Config
 from .plugins import PLUGINS
@@ -125,7 +127,7 @@ class SpecTree:
                                    (query, json, headers, cookies)):
                 if model is not None:
                     assert (issubclass(model, BaseModel))
-                    self.models[model.__name__] = model.schema()
+                    self.models[model.__name__] = self._get_open_api_schema(model)
                     setattr(validation, name, model.__name__)
 
             if resp:
@@ -163,7 +165,7 @@ class SpecTree:
 
                 routes[path][method.lower()] = {
                     'summary': summary or f'{name} <{method}>',
-                    'operationID': f'{name}__{method.lower()}',
+                    'operationId': camelize(f'{name}', False),
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
                     'parameters': parse_params(func, parameters[:], self.models),
@@ -185,9 +187,36 @@ class SpecTree:
             'components': {
                 'schemas': {**self.models}
             },
-            'definitions': self._get_model_definitions()
         }
         return spec
+
+    def _validate_property(self, property: Mapping) -> Mapping:
+        allowed_fields = {
+            "title", "multipleOf", "maximum", "exclusiveMaximum", "minimum",
+            "exclusiveMinimum", "maxLength", "minLength", "pattern",
+            "maxItems", "minItems", "uniqueItems", "maxProperties", "minProperties",
+            "required", "enum", "type", "allOf", "anyOf", "oneOf", "not", "items",
+            "properties", "additionalProperties", "description", "format", "default",
+            "nullable", "discriminator", "readOnly", "writeOnly", "xml", "externalDocs",
+            "example", "deprecated"
+        }
+        result = {}
+        for key, value in property.items():
+            result[key] = {k: v for k, v in value.items() if k in allowed_fields}
+        return result
+
+    def _get_open_api_schema(self, model: Type[BaseModel]) -> Mapping:
+        """
+        Convert a Pydantic model into an OpenAPI compliant schema object.
+        """
+        result = {}
+        schema = model.schema()
+        for key, value in schema.items():
+            if key == "properties":
+                result[key] = self._validate_property(value)
+            else:
+                result[key] = value
+        return result
 
     def _get_model_definitions(self):
         """

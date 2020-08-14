@@ -1,0 +1,2 @@
+pydantic>=1.2
+inflection==0.5.0
