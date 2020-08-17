@@ -132,7 +132,7 @@ class SpecTree:
 
             if resp:
                 for model in resp.models:
-                    self.models[model.__name__] = model.schema()
+                    self.models[model.__name__] = self._get_open_api_schema(model)
                 validation.resp = resp
 
             if tags:
@@ -185,7 +185,7 @@ class SpecTree:
             'tags': list(tags.values()),
             'paths': {**routes},
             'components': {
-                'schemas': {**self.models}
+                'schemas': {**self._get_model_definitions()}
             },
         }
         return spec
@@ -202,7 +202,13 @@ class SpecTree:
         }
         result = {}
         for key, value in property.items():
-            result[key] = {k: v for k, v in value.items() if k in allowed_fields}
+            for prop, val in value.items():
+                if isinstance(val, str) and '/definitions' in val:
+                    result[key] = {prop: f"#/components/schemas/{val.split('/definitions/')[-1]}"}
+                elif prop in allowed_fields:
+                    result[key] = {prop: val}
+                else:
+                    continue
         return result
 
     def _get_open_api_schema(self, model: Type[BaseModel]) -> Mapping:
@@ -223,10 +229,11 @@ class SpecTree:
         handle nested models
         """
         definitions = {}
-        for schema in self.models.values():
+        for model, schema in self.models.items():
+            if model not in definitions.keys():
+                definitions[model] = schema
             if 'definitions' in schema:
                 for key, value in schema['definitions'].items():
                     definitions[key] = value
                 del schema['definitions']
-
         return definitions
