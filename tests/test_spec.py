@@ -1,5 +1,6 @@
 import pytest
 from flask import Flask
+from typing import List
 import falcon
 from starlette.applications import Starlette
 from openapi_spec_validator import validate_v3_spec
@@ -18,6 +19,11 @@ class ExampleModel(BaseModel):
     age: int
     height: StrictFloat
 
+class ExampleNestedList(BaseModel):
+    __root__: List[ExampleModel]
+
+class ExampleNestedModel(BaseModel):
+    example: ExampleModel
 
 def backend_app():
     return [
@@ -77,7 +83,7 @@ def create_app():
         pass
 
     @app.route('/lone', methods=['POST'])
-    @api.validate(json=ExampleModel, resp=Response(HTTP_200=ExampleModel, HTTP_404=None))
+    @api.validate(json=ExampleModel, resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel))
     def lone_post():
         pass
 

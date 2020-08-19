@@ -127,12 +127,12 @@ class SpecTree:
                                    (query, json, headers, cookies)):
                 if model is not None:
                     assert (issubclass(model, BaseModel))
-                    self.models[model.__name__] = self._get_open_api_schema(model)
+                    self.models[model.__name__] = self._get_open_api_schema(model.schema())
                     setattr(validation, name, model.__name__)
 
             if resp:
                 for model in resp.models:
-                    self.models[model.__name__] = self._get_open_api_schema(model)
+                    self.models[model.__name__] = self._get_open_api_schema(model.schema())
                 validation.resp = resp
 
             if tags:
@@ -190,6 +190,11 @@ class SpecTree:
         }
         return spec
 
+    def _move_schema_reference(self, reference: str) -> str:
+        if '/definitions' in reference:
+            return f"#/components/schemas/{reference.split('/definitions/')[-1]}"
+        return reference
+
     def _validate_property(self, property: Mapping) -> Mapping:
         allowed_fields = {
             "title", "multipleOf", "maximum", "exclusiveMaximum", "minimum",
@@ -203,23 +208,25 @@ class SpecTree:
         result = {}
         for key, value in property.items():
             for prop, val in value.items():
-                if isinstance(val, str) and '/definitions' in val:
-                    result[key] = {prop: f"#/components/schemas/{val.split('/definitions/')[-1]}"}
+                if isinstance(val, str):
+                    result[key] = {prop: self._move_schema_reference(val)}
                 elif prop in allowed_fields:
                     result[key] = {prop: val}
                 else:
                     continue
         return result
 
-    def _get_open_api_schema(self, model: Type[BaseModel]) -> Mapping:
+    def _get_open_api_schema(self, schema: Mapping) -> Mapping:
         """
         Convert a Pydantic model into an OpenAPI compliant schema object.
         """
         result = {}
-        schema = model.schema()
         for key, value in schema.items():
             if key == "properties":
                 result[key] = self._validate_property(value)
+            elif key == "items":
+                for ref, path in value.items():
+                    result[key] = {ref: self._move_schema_reference(path)}
             else:
                 result[key] = value
         return result
@@ -234,6 +241,6 @@ class SpecTree:
                 definitions[model] = schema
             if 'definitions' in schema:
                 for key, value in schema['definitions'].items():
-                    definitions[key] = value
+                    definitions[key] = self._get_open_api_schema(value)
                 del schema['definitions']
         return definitions
