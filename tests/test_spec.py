@@ -25,6 +25,9 @@ class ExampleNestedList(BaseModel):
 class ExampleNestedModel(BaseModel):
     example: ExampleModel
 
+class ExampleDeepNestedModel(BaseModel):
+    data: List['ExampleModel']
+
 def backend_app():
     return [
         ('flask', Flask(__name__)),
@@ -83,7 +86,9 @@ def create_app():
         pass
 
     @app.route('/lone', methods=['POST'])
-    @api.validate(json=ExampleModel, resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel))
+    @api.validate(json=ExampleModel, resp=Response(
+        HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel, HTTP_422=ExampleDeepNestedModel
+    ))
     def lone_post():
         pass
 

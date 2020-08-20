@@ -1,15 +1,22 @@
+from collections import defaultdict
 from functools import wraps
 from typing import Mapping, Type
 
 from pydantic import BaseModel
 from inflection import camelize
-
+from nested_lookup import nested_alter
 from .config import Config
 from .plugins import PLUGINS
 from .utils import (
     parse_comments, parse_request, parse_params, parse_resp, parse_name,
     default_before_handler, default_after_handler,
 )
+
+
+def _move_schema_reference(reference: str) -> str:
+    if '/definitions' in reference:
+        return f"#/components/schemas/{reference.split('/definitions/')[-1]}"
+    return reference
 
 
 class SpecTree:
@@ -190,11 +197,6 @@ class SpecTree:
         }
         return spec
 
-    def _move_schema_reference(self, reference: str) -> str:
-        if '/definitions' in reference:
-            return f"#/components/schemas/{reference.split('/definitions/')[-1]}"
-        return reference
-
     def _validate_property(self, property: Mapping) -> Mapping:
         allowed_fields = {
             "title", "multipleOf", "maximum", "exclusiveMaximum", "minimum",
@@ -203,17 +205,15 @@ class SpecTree:
             "required", "enum", "type", "allOf", "anyOf", "oneOf", "not", "items",
             "properties", "additionalProperties", "description", "format", "default",
             "nullable", "discriminator", "readOnly", "writeOnly", "xml", "externalDocs",
-            "example", "deprecated"
+            "example", "deprecated", "$ref"
         }
-        result = {}
+        result = defaultdict(dict)
+
         for key, value in property.items():
             for prop, val in value.items():
-                if isinstance(val, str):
-                    result[key] = {prop: self._move_schema_reference(val)}
-                elif prop in allowed_fields:
-                    result[key] = {prop: val}
-                else:
-                    continue
+                if prop in allowed_fields:
+                    result[key][prop] = val
+
         return result
 
     def _get_open_api_schema(self, schema: Mapping) -> Mapping:
@@ -224,9 +224,6 @@ class SpecTree:
         for key, value in schema.items():
             if key == "properties":
                 result[key] = self._validate_property(value)
-            elif key == "items":
-                for ref, path in value.items():
-                    result[key] = {ref: self._move_schema_reference(path)}
             else:
                 result[key] = value
         return result
@@ -243,4 +240,5 @@ class SpecTree:
                 for key, value in schema['definitions'].items():
                     definitions[key] = self._get_open_api_schema(value)
                 del schema['definitions']
-        return definitions
+
+        return nested_alter(definitions, "$ref", _move_schema_reference)
