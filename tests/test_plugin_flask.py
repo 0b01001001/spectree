@@ -52,12 +52,14 @@ def user_score(name):
 api.register(app)
 
 
-@pytest.fixture
-def client():
+@pytest.fixture(params=[422, 400])
+def client(request):
+    api.config.validation_error_code = request.param
     with app.test_client() as client:
         yield client
 
 
+@pytest.mark.parametrize('client', [422], indirect=True)
 def test_flask_validate(client):
     resp = client.get('/ping')
     assert resp.status_code == 422
@@ -91,7 +93,7 @@ def test_flask_validate(client):
     )
     assert resp.json['score'] == sorted(resp.json['score'], reverse=False)
 
-
+@pytest.mark.parametrize('client', [422], indirect=True)
 def test_flask_doc(client):
     resp = client.get('/apidoc/openapi.json')
     assert resp.json == api.spec
@@ -101,3 +103,13 @@ def test_flask_doc(client):
 
     resp = client.get('/apidoc/swagger')
     assert resp.status_code == 200
+
+@pytest.mark.parametrize('client', [400], indirect=True)
+def test_flask_validate_with_alternative_code(client):
+    resp = client.get('/ping')
+    assert resp.status_code == 400
+    assert resp.headers.get('X-Error') == 'Validation Error'
+
+    resp = client.post('api/user/flask')
+    assert resp.status_code == 400
+    assert resp.headers.get('X-Error') == 'Validation Error'
