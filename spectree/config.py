@@ -11,6 +11,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
+    :ivar VALIDATION_ERROR_CODE: code for validation error responses
     """
 
     def __init__(self, **kwargs):
@@ -21,6 +22,7 @@ class Config:
         self._SUPPORT_UI = {'redoc', 'swagger'}
         self.MODE = 'normal'
         self._SUPPORT_MODE = {'normal', 'strict', 'greedy'}
+        self.validation_error_code = 422
 
         self.TITLE = 'Service API Document'
         self.VERSION = '0.1'
