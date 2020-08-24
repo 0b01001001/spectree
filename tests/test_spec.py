@@ -19,14 +19,18 @@ class ExampleModel(BaseModel):
     age: int
     height: StrictFloat
 
+
 class ExampleNestedList(BaseModel):
     __root__: List[ExampleModel]
+
 
 class ExampleNestedModel(BaseModel):
     example: ExampleModel
 
+
 class ExampleDeepNestedModel(BaseModel):
     data: List['ExampleModel']
+
 
 def backend_app():
     return [
@@ -55,14 +59,22 @@ def test_register(name, app):
 
 @pytest.mark.parametrize('name, app', backend_app())
 def test_spec_generate(name, app):
-    api = SpecTree(name, app=app, title=f'{name}')
+    api = SpecTree(
+        name,
+        app=app,
+        title=f'{name}',
+        info={'title': 'override', 'description': 'api level description'},
+        tags=[{'name': 'lone', 'description': 'a lone api'}],
+    )
     spec = api.spec
 
     assert spec['info']['title'] == name
+    assert spec['info']['description'] == 'api level description'
     assert spec['paths'] == {}
+    assert spec['tags'] == []
 
 
-api = SpecTree('flask')
+api = SpecTree('flask', tags=[{'name': 'lone', 'description': 'a lone api'}])
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
 api_customize_backend = SpecTree(backend=FlaskPlugin)
@@ -88,7 +100,7 @@ def create_app():
     @app.route('/lone', methods=['POST'])
     @api.validate(json=ExampleModel, resp=Response(
         HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel, HTTP_422=ExampleDeepNestedModel
-    ))
+    ), tags=['lone'])
     def lone_post():
         pass
 
@@ -128,3 +140,12 @@ def test_valid_openapi_spec():
     api.register(app)
     spec = api.spec
     validate_v3_spec(spec)
+
+
+def test_openapi_tags():
+    app = create_app()
+    api.register(app)
+    spec = api.spec
+
+    assert spec['tags'][0]['name'] == 'lone'
+    assert spec['tags'][0]['description'] == 'a lone api'

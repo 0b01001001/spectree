@@ -28,6 +28,9 @@ class Config:
         self.VERSION = '0.1'
         self.DOMAIN = None
 
+        self.INFO = {}
+        self.TAGS = []
+
         self.logger = logging.getLogger(__name__)
 
         self.update(**kwargs)
