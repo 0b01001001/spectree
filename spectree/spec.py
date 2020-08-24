@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import wraps
-from typing import Mapping, Type
+from typing import Mapping
 
 from pydantic import BaseModel
 from inflection import camelize
@@ -155,6 +155,7 @@ class SpecTree:
         """
         generate OpenAPI spec according to routes and decorators
         """
+        tag_lookup = {tag['name']: tag for tag in self.config.TAGS}
         routes, tags = {}, {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
@@ -168,7 +169,7 @@ class SpecTree:
                 func_tags = getattr(func, 'tags', ())
                 for tag in func_tags:
                     if tag not in tags:
-                        tags[tag] = {'name': tag}
+                        tags[tag] = tag_lookup.get(tag, {'name': tag})
 
                 routes[path][method.lower()] = {
                     'summary': summary or f'{name} <{method}>',
@@ -186,8 +187,11 @@ class SpecTree:
         spec = {
             'openapi': self.config.OPENAPI_VERSION,
             'info': {
-                'title': self.config.TITLE,
-                'version': self.config.VERSION,
+                **self.config.INFO,
+                **{
+                    'title': self.config.TITLE,
+                    'version': self.config.VERSION,
+                }
             },
             'tags': list(tags.values()),
             'paths': {**routes},
