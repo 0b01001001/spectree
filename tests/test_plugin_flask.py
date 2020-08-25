@@ -21,7 +21,7 @@ def api_after_handler(req, resp, err, _):
     resp.headers['X-API'] = 'OK'
 
 
-api = SpecTree('flask', before=before_handler, after=after_handler)
+api = SpecTree('flask', before=before_handler, after=after_handler, title='Test API')
 app = Flask(__name__)
 
 
@@ -100,6 +100,8 @@ def test_flask_doc(client):
 
     resp = client.get('/apidoc/redoc')
     assert resp.status_code == 200
+    assert b"spec-url='/apidoc/openapi.json'" in resp.data
+    assert b"<title>Test API</title>" in resp.data
 
     resp = client.get('/apidoc/swagger')
     assert resp.status_code == 200

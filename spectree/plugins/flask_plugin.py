@@ -153,5 +153,5 @@ class FlaskPlugin(BasePlugin):
             self.app.add_url_rule(
                 f'/{self.config.PATH}/{ui}',
                 f'doc_page_{ui}',
-                lambda ui=ui: PAGES[ui].format(self.config.spec_url)
+                lambda ui=ui: PAGES[ui].format(self.config)
             )
