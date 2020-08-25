@@ -54,7 +54,7 @@ api.register(app)
 
 @pytest.fixture(params=[422, 400])
 def client(request):
-    api.config.validation_error_code = request.param
+    api.config.VALIDATION_ERROR_CODE = request.param
     with app.test_client() as client:
         yield client
 
@@ -93,6 +93,7 @@ def test_flask_validate(client):
     )
     assert resp.json['score'] == sorted(resp.json['score'], reverse=False)
 
+
 @pytest.mark.parametrize('client', [422], indirect=True)
 def test_flask_doc(client):
     resp = client.get('/apidoc/openapi.json')
@@ -105,6 +106,7 @@ def test_flask_doc(client):
 
     resp = client.get('/apidoc/swagger')
     assert resp.status_code == 200
+
 
 @pytest.mark.parametrize('client', [400], indirect=True)
 def test_flask_validate_with_alternative_code(client):

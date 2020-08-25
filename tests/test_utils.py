@@ -71,16 +71,20 @@ def test_has_model():
 
 
 def test_parse_resp():
-    assert parse_resp(undecorated_func) == {}
-    assert parse_resp(demo_class.demo_method) == {
+    assert parse_resp(undecorated_func, 422) == {}
+    assert parse_resp(demo_class.demo_method, 422) == {
         '422': {
             'description': 'Validation Error'
         }
     }
-    resp_spec = parse_resp(demo_func)
+    resp_spec = parse_resp(demo_func, 422)
     assert resp_spec['422']['description'] == 'Validation Error'
     assert resp_spec['200']['content']['application/json']['schema']['$ref'] \
         == '#/components/schemas/DemoModel'
+
+    resp_spec = parse_resp(demo_func, 400)
+    assert '422' not in resp_spec
+    assert resp_spec['400']['description'] == 'Validation Error'
 
 
 def test_parse_request():

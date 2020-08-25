@@ -177,7 +177,7 @@ class SpecTree:
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
                     'parameters': parse_params(func, parameters[:], self.models),
-                    'responses': parse_resp(func),
+                    'responses': parse_resp(func, self.config.VALIDATION_ERROR_CODE),
                 }
 
                 request_body = parse_request(func)

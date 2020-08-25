@@ -22,7 +22,7 @@ class Config:
         self._SUPPORT_UI = {'redoc', 'swagger'}
         self.MODE = 'normal'
         self._SUPPORT_MODE = {'normal', 'strict', 'greedy'}
-        self.validation_error_code = 422
+        self.VALIDATION_ERROR_CODE = 422
 
         self.TITLE = 'Service API Document'
         self.VERSION = '0.1'

@@ -74,7 +74,11 @@ def test_spec_generate(name, app):
     assert spec['tags'] == []
 
 
-api = SpecTree('flask', tags=[{'name': 'lone', 'description': 'a lone api'}])
+api = SpecTree(
+    'flask',
+    tags=[{'name': 'lone', 'description': 'a lone api'}],
+    validation_error_code=400,
+)
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
 api_customize_backend = SpecTree(backend=FlaskPlugin)
@@ -99,7 +103,7 @@ def create_app():
 
     @app.route('/lone', methods=['POST'])
     @api.validate(json=ExampleModel, resp=Response(
-        HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel, HTTP_422=ExampleDeepNestedModel
+        HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel
     ), tags=['lone'])
     def lone_post():
         pass
