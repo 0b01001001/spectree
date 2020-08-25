@@ -74,7 +74,11 @@ def test_spec_generate(name, app):
     assert spec['tags'] == []
 
 
-api = SpecTree('flask', tags=[{'name': 'lone', 'description': 'a lone api'}], validation_error_code=400)
+api = SpecTree(
+    'flask',
+    tags=[{'name': 'lone', 'description': 'a lone api'}],
+    validation_error_code=400,
+)
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
 api_customize_backend = SpecTree(backend=FlaskPlugin)

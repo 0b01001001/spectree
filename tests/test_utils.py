@@ -87,7 +87,6 @@ def test_parse_resp():
     assert resp_spec['400']['description'] == 'Validation Error'
 
 
-
 def test_parse_request():
     assert parse_request(demo_func)['content']['application/json']['schema']['$ref'] \
         == '#/components/schemas/DemoModel'
