@@ -17,8 +17,8 @@ class OpenAPI:
 
 
 class DocPage:
-    def __init__(self, html, spec_url):
-        self.page = html.format(spec_url)
+    def __init__(self, html, config):
+        self.page = html.format(config)
 
     def on_get(self, req, resp):
         resp.content_type = 'text/html'
@@ -54,7 +54,7 @@ class FlaconPlugin(BasePlugin):
         for ui in PAGES:
             self.app.add_route(
                 f'/{self.config.PATH}/{ui}',
-                DocPage(PAGES[ui], self.config.spec_url),
+                DocPage(PAGES[ui], self.config),
             )
 
     def find_routes(self):

@@ -4,7 +4,7 @@ PAGES = {
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ReDoc</title>
+        <title>{0.TITLE}</title>
         <!-- needed for adaptive design -->
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,7 +23,7 @@ PAGES = {
         </style>
     </head>
     <body>
-        <redoc spec-url='{}'></redoc>
+        <redoc spec-url='{0.spec_url}'></redoc>
         <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
     </body>
 </html>""",
@@ -34,7 +34,7 @@ PAGES = {
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Swagger UI</title>
+        <title>{0.TITLE}</title>
         <link rel="stylesheet" type="text/css"
         href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css" >
         <style>
@@ -71,7 +71,7 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset
         window.onload = function() {{
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({{
-            url: "{}",
+            url: "{0.spec_url}",
             dom_id: '#swagger-ui',
             deepLinking: true,
             presets: [
