@@ -64,14 +64,14 @@ class StarlettePlugin(BasePlugin):
             await self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
             req_validation_error = err
-            response = JSONResponse(err.errors(), 422)
+            response = JSONResponse(err.errors(), self.config.VALIDATION_ERROR_CODE)
         except JSONDecodeError as err:
             json_decode_error = err
             self.logger.info(
-                '422 Validation Error',
+                f'{self.config.VALIDATION_ERROR_CODE} Validation Error',
                 extra={'spectree_json_decode_error': str(err)}
             )
-            response = JSONResponse({'error_msg': str(err)}, 422)
+            response = JSONResponse({'error_msg': str(err)}, self.config.VALIDATION_ERROR_CODE)
 
         before(request, response, req_validation_error, instance)
         if req_validation_error or json_decode_error:

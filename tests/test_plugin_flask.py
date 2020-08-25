@@ -54,7 +54,7 @@ api.register(app)
 
 @pytest.fixture(params=[422, 400])
 def client(request):
-    api.config.validation_error_code = request.param
+    api.config.VALIDATION_ERROR_CODE = request.param
     with app.test_client() as client:
         yield client
 

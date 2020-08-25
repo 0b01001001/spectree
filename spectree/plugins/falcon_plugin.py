@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from .base import BasePlugin
 from .page import PAGES
+from ..response import DEFAULT_CODE_DESC
 
 
 class OpenAPI:
@@ -157,7 +158,9 @@ class FlaconPlugin(BasePlugin):
 
         except ValidationError as err:
             req_validation_error = err
-            _resp.status = '422 Unprocessable Entity'
+            code = self.config.VALIDATION_ERROR_CODE
+            desc = DEFAULT_CODE_DESC[f'HTTP_{code}']
+            _resp.status = f'{code} {desc}'
             _resp.media = err.errors()
 
         before(_req, _resp, req_validation_error, _self)

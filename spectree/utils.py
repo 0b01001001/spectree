@@ -79,20 +79,20 @@ def parse_params(func, params, models):
     return params
 
 
-def parse_resp(func):
+def parse_resp(func, code: int):
     """
     get the response spec
 
     If this function does not have explicit ``resp`` but have other models,
-    a ``422 Validation Error`` will be append to the response spec. Since
+    a ``Validation Error`` will be append to the response spec. Since
     this may be triggered in the validation step.
     """
     responses = {}
     if hasattr(func, 'resp'):
         responses = func.resp.generate_spec()
 
-    if '422' not in responses and has_model(func):
-        responses['422'] = {'description': 'Validation Error'}
+    if str(code) not in responses and has_model(func):
+        responses[str(code)] = {'description': 'Validation Error'}
 
     return responses
 
@@ -145,7 +145,7 @@ def default_before_handler(req, resp, req_validation_error, instance):
     """
     if req_validation_error:
         logger.info(
-            '422 Validation Error',
+            'Validation Error',
             extra={
                 'spectree_model': req_validation_error.model.__name__,
                 'spectree_validation': req_validation_error.errors(),
