@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from .default_models import UnprocessableEntityElement
 from .utils import parse_code
 
 
@@ -13,12 +14,15 @@ class Response:
 
     def __init__(self, *codes, **code_models):
         self.codes = []
+        self.default_code_models = {'HTTP_422': UnprocessableEntityElement}
+        all_code_models = {**self.default_code_models, **code_models}
+
         for code in codes:
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
             self.codes.append(code)
 
         self.code_models = {}
-        for code, model in code_models.items():
+        for code, model in all_code_models.items():
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
             if model:
                 assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'

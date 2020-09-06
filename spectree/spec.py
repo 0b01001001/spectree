@@ -98,7 +98,6 @@ class SpecTree:
         :param before: :meth:`spectree.utils.default_before_handler` for specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for specific endpoint
         """
-
         def decorate_validation(func):
             # for sync framework
             @wraps(func)
