@@ -29,7 +29,7 @@ def test_init_response():
     assert resp.find_model(200) is None
     assert DemoModel in resp.models
 
-    assert not Response().has_model()
+    assert Response().has_model()
 
 
 def test_response_spec():

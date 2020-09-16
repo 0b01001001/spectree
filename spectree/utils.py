@@ -91,9 +91,6 @@ def parse_resp(func):
     if hasattr(func, 'resp'):
         responses = func.resp.generate_spec()
 
-    if '422' not in responses and has_model(func):
-        responses['422'] = {'description': 'Validation Error'}
-
     return responses
 
 
