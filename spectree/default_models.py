@@ -1,6 +1,6 @@
 """Default api models definitions."""
 
-from typing import Sequence
+from typing import Sequence, Dict, Any, Optional
 
 from pydantic import Field
 from pydantic.main import BaseModel
@@ -19,6 +19,10 @@ class UnprocessableEntityElement(BaseModel):
     type: str = Field(  # noqa: WPS125
         ...,
         title='Message type',
+    )
+    ctx: Optional[Dict[str, Any]] = Field(
+        ...,
+        title='Error context',
     )
 
 
