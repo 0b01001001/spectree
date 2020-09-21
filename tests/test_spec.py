@@ -104,7 +104,7 @@ def create_app():
     @app.route('/lone', methods=['POST'])
     @api.validate(json=ExampleModel, resp=Response(
         HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel
-    ), tags=['lone'])
+    ), tags=['lone'], deprecated=True)
     def lone_post():
         pass
 
@@ -153,3 +153,12 @@ def test_openapi_tags():
 
     assert spec['tags'][0]['name'] == 'lone'
     assert spec['tags'][0]['description'] == 'a lone api'
+
+
+def test_openapi_deprecated():
+    app = create_app()
+    api.register(app)
+    spec = api.spec
+
+    assert spec['paths']['/lone']['post']['deprecated'] == True
+    assert 'deprecated' not in spec['paths']['/lone']['get']

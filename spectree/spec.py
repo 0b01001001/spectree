@@ -91,7 +91,7 @@ class SpecTree:
             return False
 
     def validate(self,
-                 query=None, json=None, headers=None, cookies=None, resp=None, tags=(),
+                 query=None, json=None, headers=None, cookies=None, resp=None, tags=(), deprecated=False,
                  before=None, after=None):
         """
         - validate query, json, headers in request
@@ -104,6 +104,7 @@ class SpecTree:
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
         :param tags: a tuple of tags string
+        :param deprecated: You can mark specific operations as deprecated to indicate that they should be transitioned out of usage
         :param before: :meth:`spectree.utils.default_before_handler` for specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for specific endpoint
         """
@@ -145,6 +146,9 @@ class SpecTree:
             if tags:
                 validation.tags = tags
 
+            if deprecated:
+                validation.deprecated = True
+
             # register decorator
             validation._decorator = self
             return validation
@@ -179,6 +183,8 @@ class SpecTree:
                     'parameters': parse_params(func, parameters[:], self.models),
                     'responses': parse_resp(func, self.config.VALIDATION_ERROR_CODE),
                 }
+                if hasattr(func, 'deprecated'):
+                    routes[path][method.lower()]['deprecated'] = True
 
                 request_body = parse_request(func)
                 if request_body:
