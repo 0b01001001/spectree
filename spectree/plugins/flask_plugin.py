@@ -32,8 +32,11 @@ class FlaskPlugin(BasePlugin):
         return False
 
     def parse_func(self, route):
-        from flask import current_app
-        func = current_app.view_functions[route.endpoint]
+        if self.blueprint_state:
+            func = self.blueprint_state.app.view_functions[route.endpoint]
+        else:
+            func = self.app.view_functions[route.endpoint]
+        
         for method in route.methods:
             yield method, func
 
