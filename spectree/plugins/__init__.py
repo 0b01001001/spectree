@@ -1,11 +1,11 @@
 from .base import BasePlugin
 from .flask_plugin import FlaskPlugin
-from .falcon_plugin import FlaconPlugin
+from .falcon_plugin import FalconPlugin
 from .starlette_plugin import StarlettePlugin
 
 PLUGINS = {
     'base': BasePlugin,
     'flask': FlaskPlugin,
-    'falcon': FlaconPlugin,
+    'falcon': FalconPlugin,
     'starlette': StarlettePlugin,
 }

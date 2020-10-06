@@ -28,7 +28,7 @@ class DocPage:
 DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 
 
-class FlaconPlugin(BasePlugin):
+class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
         from falcon.routing.compiled import _FIELD_PATTERN
@@ -40,10 +40,10 @@ class FlaconPlugin(BasePlugin):
         self.EXTRACT = r'{\2}'
         # NOTE this regex is copied from werkzeug.routing._converter_args_re and
         # modified to support only int args
-        self.INT_ARGS = re.compile(r'''
+        self.INT_ARGS = re.compile(r"""
             ((?P<name>\w+)\s*=\s*)?
             (?P<value>\d+)\s*
-        ''', re.VERBOSE)
+        """, re.VERBOSE)
         self.INT_ARGS_NAMES = ('num_digits', 'min', 'max')
 
     def register_route(self, app):
