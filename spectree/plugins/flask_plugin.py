@@ -10,10 +10,11 @@ class FlaskPlugin(BasePlugin):
     def find_routes(self):
         from flask import current_app
         if self.blueprint_state:
-            excludes = [f"{self.blueprint_state.blueprint.name}.{ep}"
-                for ep in ["static", "openapi"]+[f"doc_page_{ui}" for ui in PAGES]]
+            excludes = [f'{self.blueprint_state.blueprint.name}.{ep}'
+                        for ep in ['static', 'openapi'] + [f'doc_page_{ui}' for ui in PAGES]]
             for rule in current_app.url_map.iter_rules():
-                if self.blueprint_state.url_prefix and not str(rule).startswith(self.blueprint_state.url_prefix):
+                if self.blueprint_state.url_prefix and \
+                        not str(rule).startswith(self.blueprint_state.url_prefix):
                     continue
                 if rule.endpoint in excludes:
                     continue
@@ -36,7 +37,7 @@ class FlaskPlugin(BasePlugin):
             func = self.blueprint_state.app.view_functions[route.endpoint]
         else:
             func = self.app.view_functions[route.endpoint]
-        
+
         for method in route.methods:
             yield method, func
 
@@ -168,22 +169,23 @@ class FlaskPlugin(BasePlugin):
 
         if isinstance(app, Blueprint):
             def gen_doc_page(ui):
-                state = self.blueprint_state
-                
                 spec_url = self.config.spec_url
-                if state.url_prefix is not None:
-                    spec_url = "/".join((state.url_prefix.rstrip("/"), self.config.spec_url.lstrip("/")))
-                
+                if self.blueprint_state.url_prefix is not None:
+                    spec_url = '/'.join((
+                        self.blueprint_state.url_prefix.rstrip('/'),
+                        self.config.spec_url.lstrip('/'))
+                    )
+
                 return PAGES[ui].format(spec_url)
-            
+
             for ui in PAGES:
                 app.add_url_rule(
                     f'/{self.config.PATH}/{ui}',
                     f'doc_page_{ui}',
                     lambda ui=ui: gen_doc_page(ui)
                 )
-            
-            app.record(lambda state: setattr(self, "blueprint_state", state))
+
+            app.record(lambda state: setattr(self, 'blueprint_state', state))
         else:
             for ui in PAGES:
                 self.app.add_url_rule(
