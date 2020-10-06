@@ -1,4 +1,4 @@
-check: style test
+check: lint test
 
 install:
 	pip install -e .
@@ -20,7 +20,7 @@ package: clean
 publish: package
 	twine upload dist/*
 
-style:
+lint:
 	# stop the build if there are Python syntax errors or undefined names
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 	# exit-zero treats all errors as warnings
