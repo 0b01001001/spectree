@@ -49,7 +49,14 @@ def user_score(name):
     return jsonify(name=request.context.json.name, score=score)
 
 
+@app.route('/api/group/<name>', methods=['GET'])
+@api.validate(resp=Response(HTTP_200=Resp, HTTP_401=None, validate=False), tags=['api', 'test'])
+def group_score(name):
+    score = ["a", "b", "c", "d", "e"]
+    return jsonify(name=name, score=score)
+
 api.register(app)
+
 
 
 @pytest.fixture(params=[422, 400])
@@ -92,6 +99,14 @@ def test_flask_validate(client):
         content_type='application/json',
     )
     assert resp.json['score'] == sorted(resp.json['score'], reverse=False)
+
+
+@pytest.mark.parametrize('client', [200], indirect=True)
+def test_flask_skip_validation(client):
+    resp = client.get('api/group/test')
+    assert resp.status_code == 200
+    assert resp.json['name'] == 'test'
+    assert resp.json['score'] == ["a", "b", "c", "d", "e"]
 
 
 @pytest.mark.parametrize('client', [422], indirect=True)

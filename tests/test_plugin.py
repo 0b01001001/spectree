@@ -10,7 +10,7 @@ from .test_plugin_starlette import api as starlette_api
 def test_plugin_spec(api):
     assert api.spec['tags'] == [{'name': tag} for tag in ('test', 'health', 'api')]
 
-    assert get_paths(api.spec) == ['/api/user/{name}', '/ping']
+    assert get_paths(api.spec) == ['/api/group/{name}', '/api/user/{name}', '/ping']
 
     ping = api.spec['paths']['/ping']['get']
     assert ping['tags'] == ['test', 'health']

@@ -7,25 +7,31 @@ class Response:
     """
     response object
 
-    :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP200'
-    :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`> or None
+    :param args: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP200'
+    :param kwargs: dict of <HTTP status code>: <`pydantic.BaseModel`> or None
+    You can also pass `validate` into the kwargs to disable output validation of this model
     """
 
-    def __init__(self, *codes, **code_models):
+    def __init__(self, *args, **kwargs):
+
+        self.validate = True
         self.codes = []
-        for code in codes:
-            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
-            self.codes.append(code)
+        for item in args:
+            assert item in DEFAULT_CODE_DESC, 'invalid HTTP status code'
+            self.codes.append(item)
 
         self.code_models = {}
-        for code, model in code_models.items():
-            assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
-            if model:
-                assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
-                self.code_models[code] = model
+        for key, value in kwargs.items():
+            if key.lower() == "validate":
+                self.validate = value
             else:
-                self.codes.append(code)
-
+                assert key in DEFAULT_CODE_DESC, 'invalid HTTP status code'
+                if value:
+                    assert issubclass(value, BaseModel), 'invalid `pydantic.BaseModel`'
+                    self.code_models[key] = value
+                else:
+                    self.codes.append(key)
+        
     def has_model(self):
         """
         :returns: boolean -- does this response has models or not
