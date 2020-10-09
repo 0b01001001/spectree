@@ -124,7 +124,7 @@ class FlaskPlugin(BasePlugin):
 
         response = make_response(func(*args, **kwargs))
 
-        if resp and resp.has_model():
+        if resp and resp.has_model() and resp.validate:
             model = resp.find_model(response.status_code)
             if model:
                 try:

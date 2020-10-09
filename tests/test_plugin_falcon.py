@@ -56,10 +56,16 @@ class UserScore:
         assert req.cookies['pub'] == 'abcdefg'
         resp.media = {'name': req.context.json.name, 'score': score}
 
+class GroupScore:
+    name = 'score for a group'
+
+    def on_get(self, req, resp, name):
+        resp.media = {'name': name, 'score': ["a", "b", "c", "d", "e"]}
 
 app = falcon.API()
 app.add_route('/ping', Ping())
 app.add_route('/api/user/{name}', UserScore())
+app.add_route('/api/group/{name}', GroupScore())
 api.register(app)
 
 

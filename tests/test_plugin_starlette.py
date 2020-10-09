@@ -53,13 +53,22 @@ async def user_score(request):
         'score': score
     })
 
+async def group_score(request):
+    return JSONResponse({
+        "name": request.context.json.name,
+        "score": ["a", "b", "c", "d", "e"]
+    })
+
 
 app = Starlette(routes=[
     Route('/ping', Ping),
     Mount('/api', routes=[
         Mount('/user', routes=[
-            Route('/{name}', user_score, methods=['POST']),
-        ])
+            Route('/{name}', user_score, methods=['POST'])
+        ]),
+        Mount('/group', routes=[
+            Route('/{name}', group_score, methods=['GET'])
+        ]),
     ])
 ])
 api.register(app)
