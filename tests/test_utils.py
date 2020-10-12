@@ -98,8 +98,10 @@ def test_parse_params():
         'name': 'uid',
         'in': 'query',
         'required': True,
+        'description': '',
         'schema': {
             'title': 'Uid',
             'type': 'integer',
         }
     }
+    assert params[2]['description'] == 'user name'

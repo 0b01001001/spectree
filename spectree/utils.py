@@ -54,6 +54,7 @@ def parse_params(func, params, models):
                 'in': 'query',
                 'schema': schema,
                 'required': name in query.get('required', []),
+                'description': schema.get('description', ''),
             })
 
     if hasattr(func, 'headers'):
@@ -64,6 +65,7 @@ def parse_params(func, params, models):
                 'in': 'header',
                 'schema': schema,
                 'required': name in headers.get('required', []),
+                'description': schema.get('description', ''),
             })
 
     if hasattr(func, 'cookies'):
@@ -74,6 +76,7 @@ def parse_params(func, params, models):
                 'in': 'cookie',
                 'schema': schema,
                 'required': name in cookies.get('required', []),
+                'description': schema.get('description', ''),
             })
 
     return params
