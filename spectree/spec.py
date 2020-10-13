@@ -118,7 +118,7 @@ class SpecTree:
                     before or self.before, after or self.after,
                     *args, **kwargs)
 
-            validation = async_validate if self.backend_name == 'starlette' else sync_validate
+            validation = async_validate if self.backend.ASYNC else sync_validate
 
             # register
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
