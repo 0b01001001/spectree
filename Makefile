@@ -1,7 +1,7 @@
 check: lint test
 
 install:
-	pip install -e .
+	pip install -e .[flask,falcon,starlette]
 
 test:
 	pytest tests -vv
