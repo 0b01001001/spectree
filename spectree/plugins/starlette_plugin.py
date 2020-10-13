@@ -14,6 +14,8 @@ Route = namedtuple('Route', ['path', 'methods', 'func'])
 
 
 class StarlettePlugin(BasePlugin):
+    ASYNC = True
+
     def __init__(self, spectree):
         super().__init__(spectree)
         from starlette.convertors import CONVERTOR_TYPES
