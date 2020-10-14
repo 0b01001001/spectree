@@ -101,12 +101,17 @@ class FlaskPlugin(BasePlugin):
             elif converter == 'default':
                 schema = {'type': 'string'}
 
-            parameters.append({
+            param_obj = {
                 'name': variable,
                 'in': 'path',
-                'required': True
-            })
-            parameters.update(schema)
+                'required': True,
+            }
+            if self.config.OPENAPI_VERSION == '2.0':
+                param_obj.update(schema)
+            else:
+                param_obj['schema'] = schema
+
+            parameters.append(param_obj)
 
         return ''.join(subs), parameters
 
