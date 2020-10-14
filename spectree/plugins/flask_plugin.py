@@ -104,9 +104,9 @@ class FlaskPlugin(BasePlugin):
             parameters.append({
                 'name': variable,
                 'in': 'path',
-                'required': True,
-                'schema': schema,
+                'required': True
             })
+            parameters.update(schema)
 
         return ''.join(subs), parameters
 
