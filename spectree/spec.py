@@ -163,7 +163,7 @@ class SpecTree:
 
                 routes[path][method.lower()] = {
                     'summary': summary or f'{name} <{method}>',
-                    'operationID': f'{name}__{method.lower()}',
+                    'operationId': f'{name}__{method.lower()}',
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
                     'parameters': parse_params(func, parameters[:], self.models),
@@ -175,7 +175,7 @@ class SpecTree:
                     routes[path][method.lower()]['requestBody'] = request_body
 
         spec = {
-            'openapi': self.config.OPENAPI_VERSION,
+            'swagger' if self.config.OPENAPI_VERSION == '2.0' else 'openapi': self.config.OPENAPI_VERSION,
             'info': {
                 'title': self.config.TITLE,
                 'version': self.config.VERSION,
