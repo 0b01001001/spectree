@@ -7,6 +7,7 @@ from openapi_spec_validator import validate_v3_spec
 from pydantic import BaseModel, StrictFloat, Field
 
 from spectree import Response
+from spectree.response import FileResponse
 from spectree.spec import SpecTree
 from spectree.config import Config
 from spectree.plugins import FlaskPlugin
@@ -108,21 +109,26 @@ def create_app():
     def lone_post():
         pass
 
+    @app.route('/file')
+    @api.validate(resp=FileResponse())
+    def get_file():
+        pass
+
     return app
 
 
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
-    assert get_paths(api.spec) == ['/foo', '/lone']
+    assert get_paths(api.spec) == ['/file', '/foo', '/lone']
 
     app = create_app()
     api_customize_backend.register(app)
-    assert get_paths(api.spec) == ['/foo', '/lone']
+    assert get_paths(api.spec) == ['/file', '/foo', '/lone']
 
     app = create_app()
     api_greedy.register(app)
-    assert get_paths(api_greedy.spec) == ['/bar', '/foo', '/lone']
+    assert get_paths(api_greedy.spec) == ['/bar', '/file', '/foo', '/lone']
 
     app = create_app()
     api_strict.register(app)

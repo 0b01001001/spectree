@@ -76,6 +76,39 @@ class Response:
         return responses
 
 
+class FileResponse:
+
+    def __init__(self, content_type: str = "application/octet-stream"):
+        self.content_type = content_type
+        self.models = []  # cannot provide models to a File response
+
+    def has_model(self):
+        """
+        File response cannot have a model
+        """
+        return False
+
+    def generate_spec(self):
+        responses = {
+            "200": {
+                'description': DEFAULT_CODE_DESC["HTTP_200"],
+                'content': {
+                    self.content_type: {
+                        'schema': {
+                            "type": "string",
+                            "format": "binary"
+                        }
+                    }
+                }
+            },
+            "404": {
+                'description': DEFAULT_CODE_DESC["HTTP_404"]
+            }
+        }
+
+        return responses
+
+
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1
 # https://developer.mozilla.org/sv-SE/docs/Web/HTTP/Status
