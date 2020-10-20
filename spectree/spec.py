@@ -177,7 +177,7 @@ class SpecTree:
 
 
         spec = {
-            'swagger' if self.config.OPENAPI_VERSION == '2.0' else 'openapi': self.config.OPENAPI_VERSION,
+            'openapi': self.config.OPENAPI_VERSION,
             'info': {
                 'title': self.config.TITLE,
                 'version': self.config.VERSION,

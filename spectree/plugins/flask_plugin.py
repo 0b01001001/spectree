@@ -143,6 +143,7 @@ class FlaskPlugin(BasePlugin):
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
+            after(request, response, resp_validation_error, None)
             abort(response)
 
         response = make_response(func(*args, **kwargs))
