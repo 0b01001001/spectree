@@ -101,23 +101,28 @@ class FlaskPlugin(BasePlugin):
             elif converter == 'default':
                 schema = {'type': 'string'}
 
-            param_obj = {
+            parameters.append({
                 'name': variable,
                 'in': 'path',
                 'required': True,
-            }
-            if self.config.OPENAPI_VERSION == '2.0':
-                param_obj.update(schema)
-            else:
-                param_obj['schema'] = schema
-
-            parameters.append(param_obj)
+                'schema': schema,
+            })
 
         return ''.join(subs), parameters
 
     def request_validation(self, request, query, json, headers, cookies):
+        from werkzeug.exceptions import BadRequest
+
         req_query = request.args or {}
-        req_json = request.get_json() or {}
+
+        try:
+            # if content-type is set to application/json but json is passed in below crashes
+            # it is technically intentional by flask, however this can have unexpected results for clients 
+            # that already set these properties incorrectly
+            req_json = request.get_json() or {}
+        except BadRequest:
+            req_json = {}
+
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
