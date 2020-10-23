@@ -101,6 +101,9 @@ class StarlettePlugin(BasePlugin):
         routes = []
 
         def parse_route(app, prefix=''):
+            # :class:`starlette.staticfiles.StaticFiles` doesn't have routes
+            if not app.routes:
+                return
             for route in app.routes:
                 if route.path.startswith(f'/{self.config.PATH}'):
                     continue

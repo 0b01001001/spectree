@@ -60,7 +60,7 @@ if __name__ == '__main__':
         Route('/ping', Ping),
         Mount('/api', routes=[
             Route('/predict/{luck:int}', predict, methods=['POST'])
-        ])
+        ]),
     ])
     api.register(app)
 
