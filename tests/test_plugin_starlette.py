@@ -4,6 +4,7 @@ from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
+from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
 
 from spectree import SpecTree, Response
@@ -60,7 +61,8 @@ app = Starlette(routes=[
         Mount('/user', routes=[
             Route('/{name}', user_score, methods=['POST']),
         ])
-    ])
+    ]),
+    Mount('/static', app=StaticFiles(directory='docs'), name='static'),
 ])
 api.register(app)
 
