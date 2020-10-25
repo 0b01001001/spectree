@@ -11,7 +11,7 @@ api = SpecTree('flask')
 
 
 class Query(BaseModel):
-    text: str
+    text: str = 'default query strings'
 
 
 class Resp(BaseModel):
@@ -25,8 +25,17 @@ class Resp(BaseModel):
 
 class Data(BaseModel):
     uid: str
-    limit: int
+    limit: int = 5
     vip: bool
+
+    class Config:
+        schema_extra = {
+            'example': {
+                'uid': 'very_important_user',
+                'limit': 10,
+                'vip': True,
+            }
+        }
 
 
 class Language(str, Enum):

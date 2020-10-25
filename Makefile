@@ -1,7 +1,7 @@
-check: style test
+check: lint test
 
 install:
-	pip install -e .
+	pip install -e .[flask,falcon,starlette]
 
 test:
 	pytest tests -vv
@@ -20,10 +20,7 @@ package: clean
 publish: package
 	twine upload dist/*
 
-style:
-	# stop the build if there are Python syntax errors or undefined names
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	# exit-zero treats all errors as warnings
-	flake8 . --count --exit-zero --statistics
+lint:
+	flake8 . --count --show-source --statistics
 
 .PHONY: test doc

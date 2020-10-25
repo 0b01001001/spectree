@@ -5,7 +5,7 @@
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/0b01001001/spectree/context:python)
-[![Documentation Status](https://readthedocs.org/projects/spectree/badge/?version=latest)](https://spectree.readthedocs.io/en/latest/?badge=latest)
+[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)](https://0b01001001.github.io/spectree/)
 
 Yet another library to generate OpenAPI document and validate request & response with Python annotations.
 
@@ -92,6 +92,10 @@ Validation errors are logged with INFO level. Details are passed into `extra`. C
 
 Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
 
+> How can I change the response when there is a validation error? Can I record some metrics?
+
+This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or for a specific endpoint validation.
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)
@@ -112,6 +116,15 @@ class Profile(BaseModel):
         lt=150,
         description='user age(Human)'
     )
+
+    class Config:
+        schema_extra = {
+            # provide an example
+            'example': {
+                'name': 'very_important_user',
+                'age': 42,
+            }
+        }
 
 
 class Message(BaseModel):

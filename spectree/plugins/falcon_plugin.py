@@ -1,6 +1,7 @@
-import re
 import inspect
+import re
 from functools import partial
+
 from pydantic import ValidationError
 
 from .base import BasePlugin
@@ -27,7 +28,7 @@ class DocPage:
 DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 
 
-class FlaconPlugin(BasePlugin):
+class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
         from falcon.routing.compiled import _FIELD_PATTERN
@@ -39,10 +40,10 @@ class FlaconPlugin(BasePlugin):
         self.EXTRACT = r'{\2}'
         # NOTE this regex is copied from werkzeug.routing._converter_args_re and
         # modified to support only int args
-        self.INT_ARGS = re.compile(r'''
+        self.INT_ARGS = re.compile(r"""
             ((?P<name>\w+)\s*=\s*)?
             (?P<value>\d+)\s*
-        ''', re.VERBOSE)
+        """, re.VERBOSE)
         self.INT_ARGS_NAMES = ('num_digits', 'min', 'max')
 
     def register_route(self, app):
@@ -134,40 +135,47 @@ class FlaconPlugin(BasePlugin):
 
     def request_validation(self, req, query, json, headers, cookies):
         if query:
-            req.context.query = query(**req.params)
+            req.context.query = query.parse_obj(req.params)
         if headers:
-            req.context.headers = headers(**req.headers)
+            req.context.headers = headers.parse_obj(req.headers)
         if cookies:
-            req.context.cookies = cookies(**req.cookies)
+            req.context.cookies = cookies.parse_obj(req.cookies)
         media = req.media or {}
         if json:
-            req.context.json = json(**media)
+            req.context.json = json.parse_obj(media)
 
-    def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+    def validate(self,
+                 func,
+                 query, json, headers, cookies, resp,
+                 before, after,
+                 *args, **kwargs):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
+        req_validation_error, resp_validation_error = None, None
         try:
             self.request_validation(_req, query, json, headers, cookies)
 
         except ValidationError as err:
-            self.logger.info(
-                '422 Validation Error',
-                extra={
-                    'spectree_model': err.model.__name__,
-                    'spectree_validation': err.errors(),
-                },
-            )
+            req_validation_error = err
             _resp.status = '422 Unprocessable Entity'
             _resp.media = err.errors()
+
+        before(_req, _resp, req_validation_error, _self)
+        if req_validation_error:
             return
-        except Exception:
-            raise
 
         func(*args, **kwargs)
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model:
-                model.validate(_resp.media)
+                try:
+                    model.validate(_resp.media)
+                except ValidationError as err:
+                    resp_validation_error = err
+                    _resp.status = '500 Internal Service Response Validation Error'
+                    _resp.media = err.errors()
+
+        after(_req, _resp, resp_validation_error, _self)
 
     def bypass(self, func, method):
         if not isinstance(func, partial):

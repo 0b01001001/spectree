@@ -104,10 +104,10 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record):
         log_data = {
-            "severity": record.levelname,
-            "path_name": record.pathname,
-            "function_name": record.funcName,
-            "message": record.msg,
+            'severity': record.levelname,
+            'path_name': record.pathname,
+            'function_name': record.funcName,
+            'message': record.msg,
             **self.extra_data(record)
         }
         return json.dumps(log_data)

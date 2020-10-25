@@ -5,13 +5,27 @@ from .page import PAGES
 
 
 class FlaskPlugin(BasePlugin):
+    blueprint_state = None
+
     def find_routes(self):
-        for rule in self.app.url_map.iter_rules():
-            if any(str(rule).startswith(path) for path in (
-                f'/{self.config.PATH}', '/static'
-            )):
-                continue
-            yield rule
+        from flask import current_app
+        if self.blueprint_state:
+            excludes = [f'{self.blueprint_state.blueprint.name}.{ep}'
+                        for ep in ['static', 'openapi'] + [f'doc_page_{ui}' for ui in PAGES]]
+            for rule in current_app.url_map.iter_rules():
+                if self.blueprint_state.url_prefix and \
+                        not str(rule).startswith(self.blueprint_state.url_prefix):
+                    continue
+                if rule.endpoint in excludes:
+                    continue
+                yield rule
+        else:
+            for rule in self.app.url_map.iter_rules():
+                if any(str(rule).startswith(path) for path in (
+                        f'/{self.config.PATH}', '/static'
+                )):
+                    continue
+                yield rule
 
     def bypass(self, func, method):
         if method in ['HEAD', 'OPTIONS']:
@@ -19,7 +33,11 @@ class FlaskPlugin(BasePlugin):
         return False
 
     def parse_func(self, route):
-        func = self.app.view_functions[route.endpoint]
+        if self.blueprint_state:
+            func = self.blueprint_state.app.view_functions[route.endpoint]
+        else:
+            func = self.app.view_functions[route.endpoint]
+
         for method in route.methods:
             yield method, func
 
@@ -98,41 +116,50 @@ class FlaskPlugin(BasePlugin):
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
-            query(**req_query) if query else None,
-            json(**req_json) if json else None,
-            headers(**req_headers) if headers else None,
-            cookies(**req_cookies) if cookies else None,
+            query.parse_obj(req_query) if query else None,
+            json.parse_obj(req_json) if json else None,
+            headers.parse_obj(req_headers) if headers else None,
+            cookies.parse_obj(req_cookies) if cookies else None,
         )
 
-    def validate(self, func, query, json, headers, cookies, resp, *args, **kwargs):
+    def validate(self,
+                 func,
+                 query, json, headers, cookies, resp,
+                 before, after,
+                 *args, **kwargs):
         from flask import request, abort, make_response, jsonify
 
+        response, req_validation_error, resp_validation_error = None, None, None
         try:
             self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
-            self.logger.info(
-                '422 Validation Error',
-                extra={
-                    'spectree_model': err.model.__name__,
-                    'spectree_validation': err.errors(),
-                },
-            )
-            abort(make_response(jsonify(err.errors()), 422))
-        except Exception:
-            raise
+            req_validation_error = err
+            response = make_response(jsonify(err.errors()), 422)
+
+        before(request, response, req_validation_error, None)
+        if req_validation_error:
+            abort(response)
 
         response = make_response(func(*args, **kwargs))
 
         if resp and resp.has_model():
             model = resp.find_model(response.status_code)
             if model:
-                model.validate(response.get_json())
+                try:
+                    model.validate(response.get_json())
+                except ValidationError as err:
+                    resp_validation_error = err
+                    response = make_response(jsonify(
+                        {'message': 'response validation error'}
+                    ), 500)
+
+        after(request, response, resp_validation_error, None)
 
         return response
 
     def register_route(self, app):
         self.app = app
-        from flask import jsonify
+        from flask import jsonify, Blueprint
 
         self.app.add_url_rule(
             self.config.spec_url,
@@ -140,9 +167,29 @@ class FlaskPlugin(BasePlugin):
             lambda: jsonify(self.spectree.spec),
         )
 
-        for ui in PAGES:
-            self.app.add_url_rule(
-                f'/{self.config.PATH}/{ui}',
-                f'doc_page_{ui}',
-                lambda ui=ui: PAGES[ui].format(self.config.spec_url)
-            )
+        if isinstance(app, Blueprint):
+            def gen_doc_page(ui):
+                spec_url = self.config.spec_url
+                if self.blueprint_state.url_prefix is not None:
+                    spec_url = '/'.join((
+                        self.blueprint_state.url_prefix.rstrip('/'),
+                        self.config.spec_url.lstrip('/'))
+                    )
+
+                return PAGES[ui].format(spec_url)
+
+            for ui in PAGES:
+                app.add_url_rule(
+                    f'/{self.config.PATH}/{ui}',
+                    f'doc_page_{ui}',
+                    lambda ui=ui: gen_doc_page(ui)
+                )
+
+            app.record(lambda state: setattr(self, 'blueprint_state', state))
+        else:
+            for ui in PAGES:
+                self.app.add_url_rule(
+                    f'/{self.config.PATH}/{ui}',
+                    f'doc_page_{ui}',
+                    lambda ui=ui: PAGES[ui].format(self.config.spec_url)
+                )

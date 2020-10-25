@@ -1,7 +1,7 @@
 from enum import IntEnum, Enum
 from typing import List
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, Field
 
 
 class Order(IntEnum):
@@ -43,7 +43,7 @@ class Cookies(BaseModel):
 class DemoModel(BaseModel):
     uid: int
     limit: int
-    name: str
+    name: str = Field(..., description='user name')
 
 
 def get_paths(spec):

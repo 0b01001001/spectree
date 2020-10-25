@@ -33,4 +33,4 @@ def test_plugin_spec(api):
         if param['in'] == 'path':
             assert param['name'] == 'name'
         elif param['in'] == 'query':
-            assert param['name'] == 'Query'
+            assert param['name'] == 'order'
