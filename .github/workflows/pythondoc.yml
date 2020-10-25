@@ -10,8 +10,6 @@ on:
       - 'spectree/**'
       - 'docs/**'
       - '.github/workflows/pythondoc.yml'
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
