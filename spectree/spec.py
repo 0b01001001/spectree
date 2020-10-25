@@ -174,7 +174,6 @@ class SpecTree:
                 if request_body:
                     routes[path][method.lower()]['requestBody'] = request_body
 
-
         spec = {
             'openapi': self.config.OPENAPI_VERSION,
             'info': {
