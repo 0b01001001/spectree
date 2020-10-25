@@ -111,18 +111,8 @@ class FlaskPlugin(BasePlugin):
         return ''.join(subs), parameters
 
     def request_validation(self, request, query, json, headers, cookies):
-        from werkzeug.exceptions import BadRequest
-
         req_query = request.args or {}
-
-        try:
-            # if content-type is set to application/json but json is passed in below crashes
-            # it is technically intentional by flask, however this can have unexpected results for clients 
-            # that already set these properties incorrectly
-            req_json = request.get_json() or {}
-        except BadRequest:
-            req_json = {}
-
+        req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
@@ -148,7 +138,7 @@ class FlaskPlugin(BasePlugin):
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
-            after(request, response, resp_validation_error, None)
+            after(request, response, req_validation_error, None)
             abort(response)
 
         response = make_response(func(*args, **kwargs))
