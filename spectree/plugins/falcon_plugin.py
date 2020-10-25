@@ -51,11 +51,11 @@ class FalconPlugin(BasePlugin):
         self.app.add_route(
             self.config.spec_url, OpenAPI(self.spectree.spec)
         )
-        for ui in PAGES:
-            self.app.add_route(
-                f'/{self.config.PATH}/{ui}',
-                DocPage(PAGES[ui], self.config.spec_url),
-            )
+        ui = PAGES.get(self.config.UI, self.config.UI)
+        self.app.add_route(
+            f'/{self.config.PATH}',
+            DocPage(ui, self.config.spec_url),
+        )
 
     def find_routes(self):
         routes = []

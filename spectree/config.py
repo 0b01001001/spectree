@@ -59,5 +59,4 @@ class Config:
                 setattr(self, key, value)
                 self.logger.info(f'[✓] Attribute "{key}" has been updated to "{value}"')
 
-        assert self.UI in self._SUPPORT_UI, 'unsupported UI'
         assert self.MODE in self._SUPPORT_MODE, 'unsupported MODE'
