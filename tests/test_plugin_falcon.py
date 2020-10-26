@@ -111,8 +111,8 @@ def test_falcon_doc(client):
     resp = client.simulate_get('/apidoc/openapi.json')
     assert resp.json == api.spec
 
-    resp = client.simulate_get('/apidoc/redoc')
+    resp = client.simulate_get('/apidoc')
     assert resp.status_code == 200
 
-    resp = client.simulate_get('/apidoc/swagger')
+    resp = client.simulate_get('/apidoc')
     assert resp.status_code == 200

@@ -11,6 +11,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
+    :ivar UI: swagger or redoc
     """
 
     def __init__(self, **kwargs):
