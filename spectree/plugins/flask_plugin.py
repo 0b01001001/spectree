@@ -112,7 +112,7 @@ class FlaskPlugin(BasePlugin):
 
     def request_validation(self, request, query, json, headers, cookies):
         req_query = request.args or {}
-        req_json = request.get_json() or {}
+        req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
@@ -138,6 +138,7 @@ class FlaskPlugin(BasePlugin):
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
+            after(request, response, req_validation_error, None)
             abort(response)
 
         response = make_response(func(*args, **kwargs))

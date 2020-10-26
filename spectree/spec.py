@@ -163,7 +163,7 @@ class SpecTree:
 
                 routes[path][method.lower()] = {
                     'summary': summary or f'{name} <{method}>',
-                    'operationID': f'{name}__{method.lower()}',
+                    'operationId': f'{method.lower()}_{path}',
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
                     'parameters': parse_params(func, parameters[:], self.models),
