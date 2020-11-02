@@ -5,7 +5,8 @@ from pydantic import ValidationError
 
 from spectree.page import PAGES
 
-Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
+Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
+
 
 class FlaskBackend:
     def __init__(self, spectree):
@@ -15,14 +16,15 @@ class FlaskBackend:
 
     def find_routes(self):
         for rule in self.app.url_map.iter_rules():
-            if any(str(rule).startswith(path) for path in (
-                    f'/{self.config.PATH}', '/static'
-            )):
+            if any(
+                str(rule).startswith(path)
+                for path in (f"/{self.config.PATH}", "/static")
+            ):
                 continue
             yield rule
 
     def bypass(self, func, method):
-        if method in ['HEAD', 'OPTIONS']:
+        if method in ["HEAD", "OPTIONS"]:
             return True
         return False
 
@@ -41,7 +43,7 @@ class FlaskBackend:
             if converter is None:
                 subs.append(variable)
                 continue
-            subs.append(f'{{{variable}}}')
+            subs.append(f"{{{variable}}}")
 
             args, kwargs = [], {}
 
@@ -49,56 +51,58 @@ class FlaskBackend:
                 args, kwargs = parse_converter_args(arguments)
 
             schema = None
-            if converter == 'any':
+            if converter == "any":
                 schema = {
-                    'type': 'array',
-                    'items': {
-                        'type': 'string',
-                        'enum': args,
-                    }
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": args,
+                    },
                 }
-            elif converter == 'int':
+            elif converter == "int":
                 schema = {
-                    'type': 'integer',
-                    'format': 'int32',
+                    "type": "integer",
+                    "format": "int32",
                 }
-                if 'max' in kwargs:
-                    schema['maximum'] = kwargs['max']
-                if 'min' in kwargs:
-                    schema['minimum'] = kwargs['min']
-            elif converter == 'float':
+                if "max" in kwargs:
+                    schema["maximum"] = kwargs["max"]
+                if "min" in kwargs:
+                    schema["minimum"] = kwargs["min"]
+            elif converter == "float":
                 schema = {
-                    'type': 'number',
-                    'format': 'float',
+                    "type": "number",
+                    "format": "float",
                 }
-            elif converter == 'uuid':
+            elif converter == "uuid":
                 schema = {
-                    'type': 'string',
-                    'format': 'uuid',
+                    "type": "string",
+                    "format": "uuid",
                 }
-            elif converter == 'path':
+            elif converter == "path":
                 schema = {
-                    'type': 'string',
-                    'format': 'path',
+                    "type": "string",
+                    "format": "path",
                 }
-            elif converter == 'string':
+            elif converter == "string":
                 schema = {
-                    'type': 'string',
+                    "type": "string",
                 }
-                for prop in ['length', 'maxLength', 'minLength']:
+                for prop in ["length", "maxLength", "minLength"]:
                     if prop in kwargs:
                         schema[prop] = kwargs[prop]
-            elif converter == 'default':
-                schema = {'type': 'string'}
+            elif converter == "default":
+                schema = {"type": "string"}
 
-            parameters.append({
-                'name': variable,
-                'in': 'path',
-                'required': True,
-                'schema': schema,
-            })
+            parameters.append(
+                {
+                    "name": variable,
+                    "in": "path",
+                    "required": True,
+                    "schema": schema,
+                }
+            )
 
-        return ''.join(subs), parameters
+        return "".join(subs), parameters
 
     def request_validation(self, request, query, json, headers, cookies):
         req_query = request.args or {}
@@ -112,11 +116,9 @@ class FlaskBackend:
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
-    def validate(self,
-                 func,
-                 query, json, headers, cookies, resp,
-                 before, after,
-                 *args, **kwargs):
+    def validate(
+        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+    ):
         from flask import request, abort, make_response, jsonify
 
         response, req_validation_error, resp_validation_error = None, None, None
@@ -124,7 +126,9 @@ class FlaskBackend:
             self.request_validation(request, query, json, headers, cookies)
         except ValidationError as err:
             req_validation_error = err
-            response = make_response(jsonify(err.errors()), self.config.VALIDATION_ERROR_CODE)
+            response = make_response(
+                jsonify(err.errors()), self.config.VALIDATION_ERROR_CODE
+            )
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
@@ -139,9 +143,9 @@ class FlaskBackend:
                     model.validate(response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = make_response(jsonify(
-                        {'message': 'response validation error'}
-                    ), 500)
+                    response = make_response(
+                        jsonify({"message": "response validation error"}), 500
+                    )
 
         after(request, response, resp_validation_error, None)
 
@@ -153,13 +157,13 @@ class FlaskBackend:
 
         self.app.add_url_rule(
             self.config.spec_url,
-            'openapi',
+            "openapi",
             lambda: jsonify(self.spectree.spec),
         )
 
         for ui in PAGES:
             self.app.add_url_rule(
-                f'/{self.config.PATH}/{ui}',
-                f'doc_page_{ui}',
-                lambda ui=ui: PAGES[ui].format(self.config)
+                f"/{self.config.PATH}/{ui}",
+                f"doc_page_{ui}",
+                lambda ui=ui: PAGES[ui].format(self.config),
             )

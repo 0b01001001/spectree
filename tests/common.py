@@ -24,8 +24,8 @@ class Resp(BaseModel):
 
 
 class Language(str, Enum):
-    en = 'en-US'
-    zh = 'zh-CN'
+    en = "en-US"
+    zh = "zh-CN"
 
 
 class Headers(BaseModel):
@@ -48,8 +48,8 @@ class DemoModel(BaseModel):
 
 def get_paths(spec):
     paths = []
-    for path in spec['paths']:
-        if spec['paths'][path]:
+    for path in spec["paths"]:
+        if spec["paths"][path]:
             paths.append(path)
 
     paths.sort()

@@ -15,17 +15,17 @@ class Config:
     """
 
     def __init__(self, **kwargs):
-        self.PATH = 'apidoc'
-        self.FILENAME = 'openapi.json'
-        self.OPENAPI_VERSION = '3.0.3'
-        self.UI = 'redoc'
-        self._SUPPORT_UI = {'redoc', 'swagger'}
-        self.MODE = 'normal'
-        self._SUPPORT_MODE = {'normal', 'strict', 'greedy'}
+        self.PATH = "apidoc"
+        self.FILENAME = "openapi.json"
+        self.OPENAPI_VERSION = "3.0.3"
+        self.UI = "redoc"
+        self._SUPPORT_UI = {"redoc", "swagger"}
+        self.MODE = "normal"
+        self._SUPPORT_MODE = {"normal", "strict", "greedy"}
         self.VALIDATION_ERROR_CODE = 422
 
-        self.TITLE = 'Service API Document'
-        self.VERSION = '0.1'
+        self.TITLE = "Service API Document"
+        self.VERSION = "0.1"
         self.DOMAIN = None
 
         self.INFO = {}
@@ -37,15 +37,15 @@ class Config:
 
     @property
     def spec_url(self):
-        return f'/{self.PATH}/{self.FILENAME}'
+        return f"/{self.PATH}/{self.FILENAME}"
 
     def __repr__(self):
-        display = '\n{:=^80}\n'.format(self.__class__.__name__)
+        display = "\n{:=^80}\n".format(self.__class__.__name__)
         for k, v in vars(self).items():
-            if not k.startswith('__'):
-                display += '| {:<30} {}\n'.format(k, v)
+            if not k.startswith("__"):
+                display += "| {:<30} {}\n".format(k, v)
 
-        return display + '=' * 80
+        return display + "=" * 80
 
     def update(self, **kwargs):
         """
@@ -64,5 +64,5 @@ class Config:
                 setattr(self, key, value)
                 self.logger.info(f'[✓] Attribute "{key}" has been updated to "{value}"')
 
-        assert self.UI in self._SUPPORT_UI, 'unsupported UI'
-        assert self.MODE in self._SUPPORT_MODE, 'unsupported MODE'
+        assert self.UI in self._SUPPORT_UI, "unsupported UI"
+        assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"
