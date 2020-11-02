@@ -52,7 +52,7 @@ class Cookie(BaseModel):
 
 
 @app.route('/api/predict/<string(length=2):source>/<string(length=2):target>', methods=['POST'])
-@api.validate(query=Query, json=Data, resp=Response('HTTP_403', HTTP_200=Resp), tags=['model'])
+@api.validate(query=Query, body=Data, resp=Response('HTTP_403', HTTP_200=Resp), tags=['model'])
 def predict(source, target):
     """
     predict demo

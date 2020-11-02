@@ -10,7 +10,7 @@ from spectree.utils import (
     parse_name,
 )
 from spectree.spec import SpecTree
-from spectree.response import Response
+from spectree.types import Response, Request
 
 from .common import DemoModel
 
@@ -24,7 +24,7 @@ def undecorated_func():
     pass
 
 
-@api.validate(json=DemoModel, resp=Response(HTTP_200=DemoModel))
+@api.validate(body=Request(model=DemoModel), resp=Response(HTTP_200=DemoModel))
 def demo_func():
     """
     summary

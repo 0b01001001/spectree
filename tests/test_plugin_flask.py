@@ -3,7 +3,7 @@ import pytest
 import json
 from flask import Flask, jsonify, request
 
-from spectree import SpecTree, Response
+from spectree import SpecTree, Response, Request
 
 from .common import Query, Resp, JSON, Headers, Cookies
 
@@ -36,18 +36,18 @@ def ping():
 @app.route("/api/user/<name>", methods=["POST"])
 @api.validate(
     query=Query,
-    json=JSON,
+    body=Request(JSON),
     cookies=Cookies,
     resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=["api", "test"],
     after=api_after_handler,
 )
 def user_score(name):
-    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    score = [randint(0, request.context.body.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=request.context.json.name, score=score)
+    return jsonify(name=request.context.body.name, score=score)
 
 
 @app.route("/api/group/<name>", methods=["GET"])

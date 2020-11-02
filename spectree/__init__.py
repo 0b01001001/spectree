@@ -1,6 +1,6 @@
 import logging
 
-from .response import Response
+from .types import Response, Request
 from .spec import SpecTree
 
 __all__ = ["SpecTree", "Response"]

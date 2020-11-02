@@ -1,3 +1,5 @@
+from typing import Optional, Type
+
 from pydantic import BaseModel
 
 from .utils import parse_code
@@ -99,6 +101,40 @@ class FileResponse:
         }
 
         return responses
+
+
+class Request:
+    def __init__(
+        self,
+        model: Optional[Type[BaseModel]] = None,
+        content_type: str = "application/json",
+        encoding: str = "binary",
+    ):
+        self.content_type = content_type
+        self.model = model
+        self.encoding = encoding
+
+    def has_model(self):
+        return self.model is not None
+
+    def generate_spec(self):
+        if self.content_type == "application/octet-stream":
+            return {
+                "content": {
+                    self.content_type: {"schema": {"type": "str", "format": "binary"}}
+                }
+            }
+
+        else:
+            return {
+                "content": {
+                    self.content_type: {
+                        "schema": {
+                            "$ref": f"#/components/schemas/{self.model.__name__}"
+                        }
+                    }
+                }
+            }
 
 
 # according to https://tools.ietf.org/html/rfc2616#section-10

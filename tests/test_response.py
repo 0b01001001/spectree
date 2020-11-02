@@ -1,6 +1,6 @@
 import pytest
 
-from spectree.response import Response, DEFAULT_CODE_DESC, FileResponse
+from spectree.types import Response, DEFAULT_CODE_DESC, FileResponse, Request
 
 from .common import DemoModel
 
@@ -67,3 +67,11 @@ def test_file_response_spec():
 
     assert pdf_spec["200"]["content"]["application/pdf"]["schema"]["format"] == "binary"
     assert pdf_spec["200"]["content"]["application/pdf"]["schema"]["type"] == "string"
+
+
+def test_file_request_spec():
+    file_request = Request(content_type="application/octet-stream")
+    spec = file_request.generate_spec()
+    assert spec["content"] == {
+        "application/octet-stream": {"schema": {"type": "str", "format": "binary"}}
+    }

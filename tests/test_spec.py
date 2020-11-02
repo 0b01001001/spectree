@@ -6,7 +6,7 @@ from pydantic import BaseModel, StrictFloat, Field
 
 from spectree import Response
 from spectree.flask_backend import FlaskBackend
-from spectree.response import FileResponse
+from spectree.types import FileResponse, Request
 from spectree.spec import SpecTree
 from spectree.config import Config
 
@@ -97,7 +97,7 @@ def create_app():
 
     @app.route("/lone", methods=["POST"])
     @api.validate(
-        json=ExampleModel,
+        body=Request(ExampleModel),
         resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel),
         tags=["lone"],
         deprecated=True,
@@ -108,6 +108,11 @@ def create_app():
     @app.route("/file")
     @api.validate(resp=FileResponse())
     def get_file():
+        pass
+
+    @app.route("/file")
+    @api.validate(body=Request(content_type="application/octet-stream"))
+    def post_file():
         pass
 
     return app

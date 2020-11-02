@@ -1,11 +1,14 @@
 import logging
 from collections import namedtuple
+from typing import Optional, Type
 
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
+from flask import request, abort, make_response, jsonify, Request as FlaskRequest
 
-from spectree.page import PAGES
+from . import Request
+from .page import PAGES
 
-Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
+Context = namedtuple("Context", ["query", "body", "headers", "cookies"])
 
 
 class FlaskBackend:
@@ -104,26 +107,34 @@ class FlaskBackend:
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, headers, cookies):
+    def request_validation(
+        self,
+        request: FlaskRequest,
+        query: Optional[Type[BaseModel]],
+        body: Optional[Request],
+        headers: Optional[Type[BaseModel]],
+        cookies: Optional[Type[BaseModel]],
+    ):
         req_query = request.args or {}
-        req_json = request.get_json() or {}
+        if request.content_type == "application/json":
+            parsed_body = request.get_json() or {}
+        else:
+            parsed_body = request.get_data() or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
             query.parse_obj(req_query) if query else None,
-            json.parse_obj(req_json) if json else None,
+            body.model.parse_obj(parsed_body) if parsed_body else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
     def validate(
-        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+        self, func, query, body, headers, cookies, resp, before, after, *args, **kwargs
     ):
-        from flask import request, abort, make_response, jsonify
-
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, headers, cookies)
+            self.request_validation(request, query, body, headers, cookies)
         except ValidationError as err:
             req_validation_error = err
             response = make_response(

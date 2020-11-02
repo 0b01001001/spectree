@@ -3,6 +3,10 @@ import inspect
 import logging
 
 # parse HTTP status code to get the code
+from typing import Callable, Mapping, Any
+
+from pydantic import BaseModel
+
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
 
 logger = logging.getLogger(__name__)
@@ -24,19 +28,13 @@ def parse_comments(func):
     return doc[0], doc[1].strip()
 
 
-def parse_request(func):
+def parse_request(func: Callable):
     """
-    get json spec
+    Generate spec from body parameter on the view function validation decorator
     """
     data = {}
-    if hasattr(func, "json"):
-        data = {
-            "content": {
-                "application/json": {
-                    "schema": {"$ref": f"#/components/schemas/{func.json}"}
-                }
-            }
-        }
+    if hasattr(func, "body"):
+        return func.body.generate_spec()
     return data
 
 
@@ -45,7 +43,7 @@ def parse_params(func, params, models):
     get spec for (query, headers, cookies)
     """
     if hasattr(func, "query"):
-        query = models[func.query]
+        query = models[func.query.__name__]
         for name, schema in query["properties"].items():
             params.append(
                 {
@@ -57,7 +55,7 @@ def parse_params(func, params, models):
             )
 
     if hasattr(func, "headers"):
-        headers = models[func.headers]
+        headers = models[func.headers.__name__]
         for name, schema in headers["properties"].items():
             params.append(
                 {
@@ -69,7 +67,7 @@ def parse_params(func, params, models):
             )
 
     if hasattr(func, "cookies"):
-        cookies = models[func.cookies]
+        cookies = models[func.cookies.__name__]
         for name, schema in cookies["properties"].items():
             params.append(
                 {

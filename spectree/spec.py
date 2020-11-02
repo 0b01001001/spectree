@@ -5,6 +5,8 @@ from typing import Mapping
 from pydantic import BaseModel
 from inflection import camelize
 from nested_lookup import nested_alter
+
+from . import Request
 from .config import Config
 from .flask_backend import FlaskBackend
 from .utils import (
@@ -102,7 +104,7 @@ class SpecTree:
     def validate(
         self,
         query=None,
-        json=None,
+        body=None,
         headers=None,
         cookies=None,
         resp=None,
@@ -112,12 +114,12 @@ class SpecTree:
         after=None,
     ):
         """
-        - validate query, json, headers in request
+        - validate query, body, headers in request
         - validate response body and status code
         - add tags to this API route
 
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
-        :param json: `pydantic.BaseModel`, JSON format request body
+        :param body: `spectree.Request`, Request body
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
@@ -134,7 +136,7 @@ class SpecTree:
                 return self.backend.validate(
                     func,
                     query,
-                    json,
+                    body,
                     headers,
                     cookies,
                     resp,
@@ -150,7 +152,7 @@ class SpecTree:
                 return await self.backend.validate(
                     func,
                     query,
-                    json,
+                    body,
                     headers,
                     cookies,
                     resp,
@@ -166,14 +168,18 @@ class SpecTree:
 
             # register
             for name, model in zip(
-                ("query", "json", "headers", "cookies"), (query, json, headers, cookies)
+                ("query", "body", "headers", "cookies"), (query, body, headers, cookies)
             ):
                 if model is not None:
-                    assert issubclass(model, BaseModel)
-                    self.models[model.__name__] = self._get_open_api_schema(
-                        model.schema()
-                    )
-                    setattr(validation, name, model.__name__)
+                    if isinstance(model, Request):
+                        _model = model.model
+                    else:
+                        _model = model
+                    if _model:
+                        self.models[_model.__name__] = self._get_open_api_schema(
+                            _model.schema()
+                        )
+                    setattr(validation, name, model)
 
             if resp:
                 for model in resp.models:
