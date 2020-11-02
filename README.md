@@ -1,12 +1,6 @@
 # Spectree
 
 
-[![GitHub Actions](https://github.com/0b01001001/spectree/workflows/Python%20package/badge.svg)](https://github.com/0b01001001/spectree/actions)
-[![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
-[![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/0b01001001/spectree/context:python)
-[![Documentation Status](https://readthedocs.org/projects/spectree/badge/?version=latest)](https://spectree.readthedocs.io/en/latest/?badge=latest)
-
 Yet another library to generate OpenAPI document and validate request & response with Python annotations.
 
 ## Features
@@ -16,8 +10,6 @@ Yet another library to generate OpenAPI document and validate request & response
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
   * Flask [demo](#flask)
-  * Falcon [demo](#falcon)
-  * Starlette [demo](#starlette)
 
 ## Quick Start
 
@@ -28,8 +20,7 @@ install with pip: `pip install spectree`
 Check the [examples](/examples) folder.
 
 * [flask example](/examples/flask_demo.py)
-* [falcon example with logging when validation failed](/examples/falcon_demo.py)
-* [starlette example](examples/starlette_demo.py)
+
 
 ### Step by Step
 
@@ -150,105 +141,6 @@ def user_profile():
 if __name__ == "__main__":
     api.register(app) # if you don't register in api init step
     app.run(port=8000)
-
-```
-
-### Falcon
-
-```py
-import falcon
-from wsgiref import simple_server
-from pydantic import BaseModel, Field, constr
-from spectree import SpecTree, Response
-
-
-class Profile(BaseModel):
-    name: constr(min_length=2, max_length=40)  # Constrained Str
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=150,
-        description='user age(Human)'
-    )
-
-
-class Message(BaseModel):
-    text: str
-
-
-api = SpecTree('falcon')
-
-
-class UserProfile:
-    @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
-    def on_post(self, req, resp):
-        """
-        verify user profile (summary of this endpoint)
-
-        user's name, user's age, ... (long description)
-        """
-        print(req.context.json)  # or `req.media`
-        resp.media = {'text': 'it works'}
-
-
-if __name__ == "__main__":
-    app = falcon.API()
-    app.add_route('/api/user', UserProfile())
-    api.register(app)
-
-    httpd = simple_server.make_server('localhost', 8000, app)
-    httpd.serve_forever()
-
-```
-
-### Starlette
-
-```py
-import uvicorn
-from starlette.applications import Starlette
-from starlette.routing import Route, Mount
-from starlette.responses import JSONResponse
-from pydantic import BaseModel, Field, constr
-from spectree import SpecTree, Response
-
-
-class Profile(BaseModel):
-    name: constr(min_length=2, max_length=40)  # Constrained Str
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=150,
-        description='user age(Human)'
-    )
-
-
-class Message(BaseModel):
-    text: str
-
-
-api = SpecTree('starlette')
-
-
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
-async def user_profile(request):
-    """
-    verify user profile (summary of this endpoint)
-
-    user's name, user's age, ... (long description)
-    """
-    print(request.context.json)  # or await request.json()
-    return JSONResponse({'text': 'it works'})
-
-
-if __name__ == "__main__":
-    app = Starlette(routes=[
-        Mount('api', routes=[
-            Route('/user', user_profile, methods=['POST']),
-        ])
-    ])
-    api.register(app)
-
-    uvicorn.run(app)
 
 ```
 
