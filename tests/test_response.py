@@ -73,5 +73,5 @@ def test_file_request_spec():
     file_request = Request(content_type="application/octet-stream")
     spec = file_request.generate_spec()
     assert spec["content"] == {
-        "application/octet-stream": {"schema": {"type": "str", "format": "binary"}}
+        "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
     }
