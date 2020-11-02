@@ -33,5 +33,9 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
-          pip install flask falcon starlette[full]
+          pip install flask
           make test
+      - name: Check formatting
+        run: |
+          pip install -r requirements/development.txt
+          black --check tests spectree
