@@ -1,13 +1,9 @@
-import pytest
-
 from .common import get_paths
 from .test_plugin_flask import api as flask_api
-from .test_plugin_falcon import api as falcon_api
-from .test_plugin_starlette import api as starlette_api
 
 
-@pytest.mark.parametrize('api', [flask_api, falcon_api, starlette_api])
-def test_plugin_spec(api):
+def test_plugin_spec():
+    api = flask_api
     assert api.spec['tags'] == [{'name': tag} for tag in ('test', 'health', 'api')]
 
     assert get_paths(api.spec) == ['/api/group/{name}', '/api/user/{name}', '/ping']

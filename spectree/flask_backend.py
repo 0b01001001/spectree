@@ -1,10 +1,18 @@
+import logging
+from collections import namedtuple
+
 from pydantic import ValidationError
 
-from .base import BasePlugin, Context
-from .page import PAGES
+from spectree.page import PAGES
 
+Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
 
-class FlaskPlugin(BasePlugin):
+class FlaskBackend:
+    def __init__(self, spectree):
+        self.spectree = spectree
+        self.config = spectree.config
+        self.logger = logging.getLogger(__name__)
+
     def find_routes(self):
         for rule in self.app.url_map.iter_rules():
             if any(str(rule).startswith(path) for path in (

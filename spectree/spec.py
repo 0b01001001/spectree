@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from inflection import camelize
 from nested_lookup import nested_alter
 from .config import Config
-from .plugins import PLUGINS
+from .flask_backend import FlaskBackend
 from .utils import (
     parse_comments, parse_request, parse_params, parse_resp, parse_name,
     default_before_handler, default_after_handler,
@@ -36,7 +36,7 @@ class SpecTree:
     """
 
     def __init__(self,
-                 backend_name='base', backend=None,
+                 backend_name='base', backend=FlaskBackend,
                  app=None,
                  before=default_before_handler, after=default_after_handler,
                  **kwargs):
@@ -44,7 +44,7 @@ class SpecTree:
         self.after = after
         self.config = Config(**kwargs)
         self.backend_name = backend_name
-        self.backend = backend(self) if backend else PLUGINS[backend_name](self)
+        self.backend = backend(self)
         # init
         self.models = {}
         if app:

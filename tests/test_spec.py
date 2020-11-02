@@ -1,16 +1,14 @@
 import pytest
 from flask import Flask
 from typing import List
-import falcon
-from starlette.applications import Starlette
 from openapi_spec_validator import validate_v3_spec
 from pydantic import BaseModel, StrictFloat, Field
 
 from spectree import Response
+from spectree.flask_backend import FlaskBackend
 from spectree.response import FileResponse
 from spectree.spec import SpecTree
 from spectree.config import Config
-from spectree.plugins import FlaskPlugin
 
 from .common import get_paths
 
@@ -36,8 +34,6 @@ class ExampleDeepNestedModel(BaseModel):
 def backend_app():
     return [
         ('flask', Flask(__name__)),
-        ('falcon', falcon.API()),
-        ('starlette', Starlette()),
     ]
 
 
@@ -47,9 +43,6 @@ def test_spectree_init():
 
     assert spec.config.TITLE == conf.TITLE
     assert spec.config.PATH == 'docs'
-
-    with pytest.raises(NotImplementedError):
-        SpecTree(app=conf)
 
 
 @pytest.mark.parametrize('name, app', backend_app())
@@ -82,7 +75,7 @@ api = SpecTree(
 )
 api_strict = SpecTree('flask', mode='strict')
 api_greedy = SpecTree('flask', mode='greedy')
-api_customize_backend = SpecTree(backend=FlaskPlugin)
+api_customize_backend = SpecTree(backend=FlaskBackend)
 
 
 def create_app():
