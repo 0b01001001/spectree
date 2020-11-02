@@ -127,7 +127,7 @@ api = SpecTree('flask')
 
 
 @app.route('/api/user', methods=['POST'])
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+@api.validate(body=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
 def user_profile():
     """
     verify user profile (summary of this endpoint)

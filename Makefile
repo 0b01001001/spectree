@@ -26,4 +26,7 @@ style:
 	# exit-zero treats all errors as warnings
 	flake8 . --count --exit-zero --statistics
 
+format:
+	black tests spectree
+
 .PHONY: test doc
