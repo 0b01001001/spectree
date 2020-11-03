@@ -37,8 +37,11 @@ def test_response_spec():
     spec = resp.generate_spec()
     assert spec['200']['description'] == DEFAULT_CODE_DESC['HTTP_200']
     assert spec['201']['description'] == DEFAULT_CODE_DESC['HTTP_201']
+    assert spec['422']['description'] == DEFAULT_CODE_DESC['HTTP_422']
     assert spec['201']['content']['application/json']['schema']['$ref'].split(
         '/')[-1] == 'DemoModel'
+    assert spec['422']['content']['application/json']['schema']['$ref'].split(
+        '/')[-1] == 'UnprocessableEntity'
 
     assert spec.get(200) is None
     assert spec.get(404) is None

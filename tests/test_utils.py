@@ -72,13 +72,11 @@ def test_has_model():
 
 def test_parse_resp():
     assert parse_resp(undecorated_func) == {}
-    assert parse_resp(demo_class.demo_method) == {
-        '422': {
-            'description': 'Validation Error'
-        }
-    }
     resp_spec = parse_resp(demo_func)
-    assert resp_spec['422']['description'] == 'Validation Error'
+
+    assert resp_spec['422']['description'] == 'Unprocessable Entity'
+    assert resp_spec['422']['content']['application/json']['schema']['$ref'] \
+        == '#/components/schemas/UnprocessableEntity'
     assert resp_spec['200']['content']['application/json']['schema']['$ref'] \
         == '#/components/schemas/DemoModel'
 
