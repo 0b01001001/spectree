@@ -55,12 +55,12 @@ class Ping(HTTPEndpoint):
         return JSONResponse({'msg': 'pong'})
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = Starlette(routes=[
         Route('/ping', Ping),
         Mount('/api', routes=[
             Route('/predict/{luck:int}', predict, methods=['POST'])
-        ])
+        ]),
     ])
     api.register(app)
 

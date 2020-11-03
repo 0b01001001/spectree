@@ -118,7 +118,7 @@ class SpecTree:
                     before or self.before, after or self.after,
                     *args, **kwargs)
 
-            validation = async_validate if self.backend_name == 'starlette' else sync_validate
+            validation = async_validate if self.backend.ASYNC else sync_validate
 
             # register
             for name, model in zip(('query', 'json', 'headers', 'cookies'),
@@ -163,7 +163,7 @@ class SpecTree:
 
                 routes[path][method.lower()] = {
                     'summary': summary or f'{name} <{method}>',
-                    'operationID': f'{name}__{method.lower()}',
+                    'operationId': f'{method.lower()}_{path}',
                     'description': desc or '',
                     'tags': getattr(func, 'tags', []),
                     'parameters': parse_params(func, parameters[:], self.models),

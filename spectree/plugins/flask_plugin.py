@@ -5,13 +5,27 @@ from .page import PAGES
 
 
 class FlaskPlugin(BasePlugin):
+    blueprint_state = None
+
     def find_routes(self):
-        for rule in self.app.url_map.iter_rules():
-            if any(str(rule).startswith(path) for path in (
-                    f'/{self.config.PATH}', '/static'
-            )):
-                continue
-            yield rule
+        from flask import current_app
+        if self.blueprint_state:
+            excludes = [f'{self.blueprint_state.blueprint.name}.{ep}'
+                        for ep in ['static', 'openapi'] + [f'doc_page_{ui}' for ui in PAGES]]
+            for rule in current_app.url_map.iter_rules():
+                if self.blueprint_state.url_prefix and \
+                        not str(rule).startswith(self.blueprint_state.url_prefix):
+                    continue
+                if rule.endpoint in excludes:
+                    continue
+                yield rule
+        else:
+            for rule in self.app.url_map.iter_rules():
+                if any(str(rule).startswith(path) for path in (
+                        f'/{self.config.PATH}', '/static'
+                )):
+                    continue
+                yield rule
 
     def bypass(self, func, method):
         if method in ['HEAD', 'OPTIONS']:
@@ -19,7 +33,11 @@ class FlaskPlugin(BasePlugin):
         return False
 
     def parse_func(self, route):
-        func = self.app.view_functions[route.endpoint]
+        if self.blueprint_state:
+            func = self.blueprint_state.app.view_functions[route.endpoint]
+        else:
+            func = self.app.view_functions[route.endpoint]
+
         for method in route.methods:
             yield method, func
 
@@ -94,7 +112,7 @@ class FlaskPlugin(BasePlugin):
 
     def request_validation(self, request, query, json, headers, cookies):
         req_query = request.args or {}
-        req_json = request.get_json() or {}
+        req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
@@ -120,6 +138,7 @@ class FlaskPlugin(BasePlugin):
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
+            after(request, response, req_validation_error, None)
             abort(response)
 
         response = make_response(func(*args, **kwargs))
@@ -141,7 +160,7 @@ class FlaskPlugin(BasePlugin):
 
     def register_route(self, app):
         self.app = app
-        from flask import jsonify
+        from flask import jsonify, Blueprint
 
         self.app.add_url_rule(
             self.config.spec_url,
@@ -149,9 +168,29 @@ class FlaskPlugin(BasePlugin):
             lambda: jsonify(self.spectree.spec),
         )
 
-        for ui in PAGES:
-            self.app.add_url_rule(
-                f'/{self.config.PATH}/{ui}',
-                f'doc_page_{ui}',
-                lambda ui=ui: PAGES[ui].format(self.config.spec_url)
-            )
+        if isinstance(app, Blueprint):
+            def gen_doc_page(ui):
+                spec_url = self.config.spec_url
+                if self.blueprint_state.url_prefix is not None:
+                    spec_url = '/'.join((
+                        self.blueprint_state.url_prefix.rstrip('/'),
+                        self.config.spec_url.lstrip('/'))
+                    )
+
+                return PAGES[ui].format(spec_url)
+
+            for ui in PAGES:
+                app.add_url_rule(
+                    f'/{self.config.PATH}/{ui}',
+                    f'doc_page_{ui}',
+                    lambda ui=ui: gen_doc_page(ui)
+                )
+
+            app.record(lambda state: setattr(self, 'blueprint_state', state))
+        else:
+            for ui in PAGES:
+                self.app.add_url_rule(
+                    f'/{self.config.PATH}/{ui}',
+                    f'doc_page_{ui}',
+                    lambda ui=ui: PAGES[ui].format(self.config.spec_url)
+                )

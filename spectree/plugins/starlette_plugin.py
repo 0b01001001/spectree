@@ -14,6 +14,8 @@ Route = namedtuple('Route', ['path', 'methods', 'func'])
 
 
 class StarlettePlugin(BasePlugin):
+    ASYNC = True
+
     def __init__(self, spectree):
         super().__init__(spectree)
         from starlette.convertors import CONVERTOR_TYPES
@@ -99,6 +101,9 @@ class StarlettePlugin(BasePlugin):
         routes = []
 
         def parse_route(app, prefix=''):
+            # :class:`starlette.staticfiles.StaticFiles` doesn't have routes
+            if not app.routes:
+                return
             for route in app.routes:
                 if route.path.startswith(f'/{self.config.PATH}'):
                     continue

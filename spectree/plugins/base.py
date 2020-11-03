@@ -10,6 +10,8 @@ class BasePlugin:
 
     :param spectree: :class:`spectree.SpecTree` instance
     """
+    # ASYNC: is it an async framework or not
+    ASYNC = False
 
     def __init__(self, spectree):
         self.spectree = spectree
