@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from flask import Flask
 from typing import List
@@ -6,7 +8,7 @@ from pydantic import BaseModel, StrictFloat, Field
 
 from spectree import Response
 from spectree.flask_backend import FlaskBackend
-from spectree.types import FileResponse, Request
+from spectree.types import FileResponse, Request, MultipartFormRequest
 from spectree.spec import SpecTree
 from spectree.config import Config
 
@@ -110,9 +112,19 @@ def create_app():
     def get_file():
         pass
 
-    @app.route("/file")
-    @api.validate(body=Request(content_type="application/octet-stream"))
+    @app.route("/file", methods=["POST"])
+    @api.validate(
+        body=Request(content_type="application/octet-stream"),
+        resp=Response(HTTP_200=None),
+    )
     def post_file():
+        pass
+
+    @app.route("/multipart-file", methods=["POST"])
+    @api.validate(
+        body=MultipartFormRequest(ExampleModel), resp=Response(HTTP_200=ExampleModel)
+    )
+    def post_multipart_form():
         pass
 
     return app
@@ -121,15 +133,21 @@ def create_app():
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
-    assert get_paths(api.spec) == ["/file", "/foo", "/lone"]
+    assert get_paths(api.spec) == ["/file", "/foo", "/lone", "/multipart-file"]
 
     app = create_app()
     api_customize_backend.register(app)
-    assert get_paths(api.spec) == ["/file", "/foo", "/lone"]
+    assert get_paths(api.spec) == ["/file", "/foo", "/lone", "/multipart-file"]
 
     app = create_app()
     api_greedy.register(app)
-    assert get_paths(api_greedy.spec) == ["/bar", "/file", "/foo", "/lone"]
+    assert get_paths(api_greedy.spec) == [
+        "/bar",
+        "/file",
+        "/foo",
+        "/lone",
+        "/multipart-file",
+    ]
 
     app = create_app()
     api_strict.register(app)

@@ -9,6 +9,7 @@ from nested_lookup import nested_alter
 from . import Request
 from .config import Config
 from .flask_backend import FlaskBackend
+from .types import MultipartFormRequest
 from .utils import (
     parse_comments,
     parse_request,
@@ -171,7 +172,7 @@ class SpecTree:
                 ("query", "body", "headers", "cookies"), (query, body, headers, cookies)
             ):
                 if model is not None:
-                    if isinstance(model, Request):
+                    if isinstance(model, (Request, MultipartFormRequest)):
                         _model = model.model
                     else:
                         _model = model
@@ -233,7 +234,9 @@ class SpecTree:
 
                 request_body = parse_request(func)
                 if request_body:
-                    routes[path][method.lower()]["requestBody"] = request_body
+                    routes[path][method.lower()][
+                        "requestBody"
+                    ] = self._parse_request_body(request_body)
 
         spec = {
             "openapi": self.config.OPENAPI_VERSION,
@@ -324,3 +327,18 @@ class SpecTree:
                 del schema["definitions"]
 
         return nested_alter(definitions, "$ref", _move_schema_reference)
+
+    def _parse_request_body(self, request_body):
+        content_types = list(request_body["content"].keys())
+        if len(content_types) != 1:
+            raise RuntimeError(
+                "Cannot currently handle multiple content types for a single request"
+            )
+        schema = request_body["content"][content_types[0]]["schema"]
+        if "$ref" not in schema.keys():
+            # handle inline schema definitions
+            return {
+                "content": {content_type: {"schema": self._get_open_api_schema(schema)}}
+            }
+        else:
+            return request_body
