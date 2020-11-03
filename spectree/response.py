@@ -1,6 +1,7 @@
 from typing import Sequence, Dict, Any
 from pydantic import Field, BaseModel
 
+from .default_models import UnprocessableEntityElement
 from .utils import parse_code
 
 
@@ -40,6 +41,7 @@ class Response:
 
     def __init__(self, *codes, **code_models):
         self.codes = []
+
         if code_models and 'HTTP_422' not in code_models:
             code_models['HTTP_422'] = UnprocessableEntity
 
@@ -48,7 +50,7 @@ class Response:
             self.codes.append(code)
 
         self.code_models = {}
-        for code, model in code_models.items():
+        for code, model in all_code_models.items():
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
             if model:
                 assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'
