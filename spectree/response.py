@@ -1,7 +1,33 @@
-from pydantic import BaseModel
+from typing import Sequence, Dict, Any
+from pydantic import Field, BaseModel
 
-from .default_models import UnprocessableEntityElement
 from .utils import parse_code
+
+
+class UnprocessableEntityElement(BaseModel):
+    """Model of missing field description."""
+    loc: Sequence[str] = Field(
+        ...,
+        title='Missing field name',
+    )
+    msg: str = Field(
+        ...,
+        title='Error message',
+    )
+    type: str = Field(  # noqa: WPS125
+        ...,
+        title='Error type',
+    )
+    ctx: Dict[str, Any] = Field(
+        None,
+        title='Error context',
+    )
+
+
+class UnprocessableEntity(BaseModel):
+    """Model of 422 Unprocessable Entity error."""
+
+    __root__: Sequence[UnprocessableEntityElement]
 
 
 class Response:
@@ -14,15 +40,16 @@ class Response:
 
     def __init__(self, *codes, **code_models):
         self.codes = []
-        self.default_code_models = {'HTTP_422': UnprocessableEntityElement}
-        all_code_models = {**self.default_code_models, **code_models}
+
+        if code_models and 'HTTP_422' not in code_models:
+            code_models['HTTP_422'] = UnprocessableEntity
 
         for code in codes:
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
             self.codes.append(code)
 
         self.code_models = {}
-        for code, model in all_code_models.items():
+        for code, model in code_models.items():
             assert code in DEFAULT_CODE_DESC, 'invalid HTTP status code'
             if model:
                 assert issubclass(model, BaseModel), 'invalid `pydantic.BaseModel`'

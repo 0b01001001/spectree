@@ -76,7 +76,7 @@ def test_parse_resp():
 
     assert resp_spec['422']['description'] == 'Unprocessable Entity'
     assert resp_spec['422']['content']['application/json']['schema']['$ref'] \
-        == '#/components/schemas/UnprocessableEntityElement'
+        == '#/components/schemas/UnprocessableEntity'
     assert resp_spec['200']['content']['application/json']['schema']['$ref'] \
         == '#/components/schemas/DemoModel'
 
