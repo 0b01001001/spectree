@@ -121,7 +121,9 @@ class Request:
         if self.content_type == "application/octet-stream":
             return {
                 "content": {
-                    self.content_type: {"schema": {"type": "str", "format": "binary"}}
+                    self.content_type: {
+                        "schema": {"type": "string", "format": "binary"}
+                    }
                 }
             }
 
