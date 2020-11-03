@@ -1,6 +1,12 @@
 import pytest
 
-from spectree.types import Response, DEFAULT_CODE_DESC, FileResponse, Request
+from spectree.types import (
+    DEFAULT_CODE_DESC,
+    Response,
+    FileResponse,
+    Request,
+    MultipartFormRequest,
+)
 
 from .common import DemoModel
 
@@ -74,4 +80,40 @@ def test_file_request_spec():
     spec = file_request.generate_spec()
     assert spec["content"] == {
         "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+    }
+
+
+def test_multipart_form_spec():
+    form = MultipartFormRequest(DemoModel, "file")
+    spec = form.generate_spec()
+    assert spec["content"] == {
+        "multipart/form-data": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "uid": {
+                        "type": "integer",
+                        "title": "Uid",
+                    },
+                    "limit": {"type": "integer", "title": "Limit"},
+                    "name": {"type": "string", "title": "Name"},
+                    "file": {"type": "string", "format": "binary"},
+                },
+            }
+        }
+    }
+
+
+def test_multipart_form_no_model():
+    form = MultipartFormRequest()
+    spec = form.generate_spec()
+    assert spec["content"] == {
+        "multipart/form-data": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fileName": {"type": "string", "format": "binary"},
+                },
+            }
+        }
     }

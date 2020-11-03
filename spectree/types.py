@@ -122,11 +122,10 @@ class Request:
             return {
                 "content": {
                     self.content_type: {
-                        "schema": {"type": "string", "format": "binary"}
+                        "schema": {"type": "string", "format": self.encoding}
                     }
                 }
             }
-
         else:
             return {
                 "content": {
@@ -137,6 +136,46 @@ class Request:
                     }
                 }
             }
+
+
+class MultipartFormRequest:
+    def __init__(
+        self,
+        model: Optional[Type[BaseModel]] = None,
+        file_name: str = "fileName",
+        encoding: str = "binary",
+    ):
+        self.content_type = "multipart/form-data"
+        self.model = model
+        self.file_name = file_name
+        self.encoding = encoding
+
+    def has_model(self):
+        return self.model is not None
+
+    def generate_spec(self):
+        model_spec = self.model.schema() if self.model else None
+        if model_spec:
+            additional_properties = model_spec["properties"]
+        else:
+            additional_properties = {}
+
+        return {
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            **additional_properties,
+                            self.file_name: {
+                                "type": "string",
+                                "format": self.encoding,
+                            },
+                        },
+                    }
+                }
+            }
+        }
 
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
