@@ -43,7 +43,7 @@ setup(
         "dev": [
             "pytest>=6",
             "flake8>=3.8",
-            "black>=20",
+            "black>=20.8b1",
             "isort>=5.6",
             "autoflake>=1.4",
         ],
