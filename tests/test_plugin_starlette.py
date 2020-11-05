@@ -60,7 +60,12 @@ app = Starlette(
         Mount(
             "/api",
             routes=[
-                Mount("/user", routes=[Route("/{name}", user_score, methods=["POST"]),])
+                Mount(
+                    "/user",
+                    routes=[
+                        Route("/{name}", user_score, methods=["POST"]),
+                    ],
+                )
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),

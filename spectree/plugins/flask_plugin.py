@@ -65,7 +65,13 @@ class FlaskPlugin(BasePlugin):
 
             schema = None
             if converter == "any":
-                schema = {"type": "array", "items": {"type": "string", "enum": args,}}
+                schema = {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": args,
+                    },
+                }
             elif converter == "int":
                 schema = {
                     "type": "integer",
@@ -101,7 +107,12 @@ class FlaskPlugin(BasePlugin):
                 schema = {"type": "string"}
 
             parameters.append(
-                {"name": variable, "in": "path", "required": True, "schema": schema,}
+                {
+                    "name": variable,
+                    "in": "path",
+                    "required": True,
+                    "schema": schema,
+                }
             )
 
         return "".join(subs), parameters
@@ -157,7 +168,9 @@ class FlaskPlugin(BasePlugin):
         from flask import Blueprint, jsonify
 
         self.app.add_url_rule(
-            self.config.spec_url, "openapi", lambda: jsonify(self.spectree.spec),
+            self.config.spec_url,
+            "openapi",
+            lambda: jsonify(self.spectree.spec),
         )
 
         if isinstance(app, Blueprint):

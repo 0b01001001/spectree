@@ -208,7 +208,10 @@ class SpecTree:
 
         spec = {
             "openapi": self.config.OPENAPI_VERSION,
-            "info": {"title": self.config.TITLE, "version": self.config.VERSION,},
+            "info": {
+                "title": self.config.TITLE,
+                "version": self.config.VERSION,
+            },
             "tags": list(tags.values()),
             "paths": {**routes},
             "components": {"schemas": {**self.models}},

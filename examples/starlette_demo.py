@@ -16,10 +16,14 @@ class Query(BaseModel):
 
 class Resp(BaseModel):
     label: int = Field(
-        ..., ge=0, le=9,
+        ...,
+        ge=0,
+        le=9,
     )
     score: float = Field(
-        ..., gt=0, lt=1,
+        ...,
+        gt=0,
+        lt=1,
     )
 
 

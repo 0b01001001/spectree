@@ -8,21 +8,30 @@ from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree
 
-api = SpecTree("falcon", title="Demo Service", version="0.1.2",)
+api = SpecTree(
+    "falcon",
+    title="Demo Service",
+    version="0.1.2",
+)
 
 
 class Query(BaseModel):
     text: str = Field(
-        ..., max_length=100,
+        ...,
+        max_length=100,
     )
 
 
 class Resp(BaseModel):
     label: int = Field(
-        ..., ge=0, le=9,
+        ...,
+        ge=0,
+        le=9,
     )
     score: float = Field(
-        ..., gt=0, lt=1,
+        ...,
+        gt=0,
+        lt=1,
     )
 
 

@@ -9,16 +9,20 @@ class UnprocessableEntityElement(BaseModel):
     """Model of missing field description."""
 
     loc: Sequence[str] = Field(
-        ..., title="Missing field name",
+        ...,
+        title="Missing field name",
     )
     msg: str = Field(
-        ..., title="Error message",
+        ...,
+        title="Error message",
     )
     type: str = Field(  # noqa: WPS125
-        ..., title="Error type",
+        ...,
+        title="Error type",
     )
     ctx: Dict[str, Any] = Field(
-        None, title="Error context",
+        None,
+        title="Error context",
     )
 
 

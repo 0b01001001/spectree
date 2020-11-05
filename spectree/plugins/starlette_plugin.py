@@ -27,7 +27,8 @@ class StarlettePlugin(BasePlugin):
         from starlette.responses import HTMLResponse, JSONResponse
 
         self.app.add_route(
-            self.config.spec_url, lambda request: JSONResponse(self.spectree.spec),
+            self.config.spec_url,
+            lambda request: JSONResponse(self.spectree.spec),
         )
 
         for ui in PAGES:
@@ -168,7 +169,12 @@ class StarlettePlugin(BasePlugin):
                 schema = {"type": "string"}
 
             parameters.append(
-                {"name": name, "in": "path", "required": True, "schema": schema,}
+                {
+                    "name": name,
+                    "in": "path",
+                    "required": True,
+                    "schema": schema,
+                }
             )
 
         return path, parameters

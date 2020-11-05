@@ -40,8 +40,16 @@ setup(
         "flask": ["flask"],
         "falcon": ["falcon"],
         "starlette": ["starlette", "requests"],
-        "dev": ["pytest", "flake8", "black", "isort", "autoflake"],
+        "dev": [
+            "pytest>=6",
+            "flake8>=3.8",
+            "black>=20",
+            "isort>=5.6",
+            "autoflake>=1.4",
+        ],
     },
     zip_safe=False,
-    entry_points={"console_scripts": [],},
+    entry_points={
+        "console_scripts": [],
+    },
 )

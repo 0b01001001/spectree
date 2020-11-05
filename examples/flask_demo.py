@@ -17,7 +17,9 @@ class Query(BaseModel):
 class Resp(BaseModel):
     label: int
     score: float = Field(
-        ..., gt=0, lt=1,
+        ...,
+        gt=0,
+        lt=1,
     )
 
 
@@ -28,7 +30,11 @@ class Data(BaseModel):
 
     class Config:
         schema_extra = {
-            "example": {"uid": "very_important_user", "limit": 10, "vip": True,}
+            "example": {
+                "uid": "very_important_user",
+                "limit": 10,
+                "vip": True,
+            }
         }
 
 
