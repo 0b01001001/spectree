@@ -1,14 +1,13 @@
 import uvicorn
+from pydantic import BaseModel, Field
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
-from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
-from pydantic import BaseModel, Field
+from starlette.routing import Mount, Route
 
-from spectree import SpecTree, Response
+from spectree import Response, SpecTree
 
-
-api = SpecTree('starlette')
+api = SpecTree("starlette")
 
 
 class Query(BaseModel):
@@ -17,14 +16,10 @@ class Query(BaseModel):
 
 class Resp(BaseModel):
     label: int = Field(
-        ...,
-        ge=0,
-        le=9,
+        ..., ge=0, le=9,
     )
     score: float = Field(
-        ...,
-        gt=0,
-        lt=1,
+        ..., gt=0, lt=1,
     )
 
 
@@ -34,7 +29,7 @@ class Data(BaseModel):
     vip: bool
 
 
-@api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=['api'])
+@api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
 async def predict(request):
     """
     async api
@@ -43,25 +38,27 @@ async def predict(request):
     """
     print(request.path_params)
     print(request.context)
-    return JSONResponse({'label': 5, 'score': 0.5})
+    return JSONResponse({"label": 5, "score": 0.5})
 
 
 class Ping(HTTPEndpoint):
-    @api.validate(tags=['health check', 'api'])
+    @api.validate(tags=["health check", "api"])
     def get(self, request):
         """
         health check
         """
-        return JSONResponse({'msg': 'pong'})
+        return JSONResponse({"msg": "pong"})
 
 
-if __name__ == '__main__':
-    app = Starlette(routes=[
-        Route('/ping', Ping),
-        Mount('/api', routes=[
-            Route('/predict/{luck:int}', predict, methods=['POST'])
-        ]),
-    ])
+if __name__ == "__main__":
+    app = Starlette(
+        routes=[
+            Route("/ping", Ping),
+            Mount(
+                "/api", routes=[Route("/predict/{luck:int}", predict, methods=["POST"])]
+            ),
+        ]
+    )
     api.register(app)
 
-    uvicorn.run(app, log_level='info')
+    uvicorn.run(app, log_level="info")

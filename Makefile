@@ -1,7 +1,9 @@
 check: lint test
 
+SOURCE_FILES=spectree tests examples setup.py
+
 install:
-	pip install -e .[flask,falcon,starlette]
+	pip install -e .[flask,falcon,starlette,dev]
 
 test:
 	pytest tests -vv
@@ -20,7 +22,14 @@ package: clean
 publish: package
 	twine upload dist/*
 
+format:
+	autoflake --in-place --recursive ${SOURCE_FILES}
+	isort --project=spectree ${SOURCE_FILES}
+	black ${SOURCE_FILES}
+
 lint:
-	flake8 . --count --show-source --statistics
+	isort --check --diff --project=spectree ${SOURCE_FILES}
+	black --check --diff ${SOURCE_FILES}
+	flake8 ${SOURCE_FILES} --count --show-source --statistics
 
 .PHONY: test doc

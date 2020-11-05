@@ -1,25 +1,23 @@
-from flask import Flask, request, jsonify, abort
-from pydantic import BaseModel, Field
-from random import random
 from enum import Enum
+from random import random
 
-from spectree import SpecTree, Response
+from flask import Flask, abort, jsonify, request
+from pydantic import BaseModel, Field
 
+from spectree import Response, SpecTree
 
 app = Flask(__name__)
-api = SpecTree('flask')
+api = SpecTree("flask")
 
 
 class Query(BaseModel):
-    text: str = 'default query strings'
+    text: str = "default query strings"
 
 
 class Resp(BaseModel):
     label: int
     score: float = Field(
-        ...,
-        gt=0,
-        lt=1,
+        ..., gt=0, lt=1,
     )
 
 
@@ -30,17 +28,13 @@ class Data(BaseModel):
 
     class Config:
         schema_extra = {
-            'example': {
-                'uid': 'very_important_user',
-                'limit': 10,
-                'vip': True,
-            }
+            "example": {"uid": "very_important_user", "limit": 10, "vip": True,}
         }
 
 
 class Language(str, Enum):
-    en = 'en-US'
-    zh = 'zh-CN'
+    en = "en-US"
+    zh = "zh-CN"
 
 
 class Header(BaseModel):
@@ -51,8 +45,12 @@ class Cookie(BaseModel):
     key: str
 
 
-@app.route('/api/predict/<string(length=2):source>/<string(length=2):target>', methods=['POST'])
-@api.validate(query=Query, json=Data, resp=Response('HTTP_403', HTTP_200=Resp), tags=['model'])
+@app.route(
+    "/api/predict/<string(length=2):source>/<string(length=2):target>", methods=["POST"]
+)
+@api.validate(
+    query=Query, json=Data, resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"]
+)
 def predict(source, target):
     """
     predict demo
@@ -61,26 +59,28 @@ def predict(source, target):
 
     query with ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
     """
-    print(f'=> from {source} to {target}')  # path
-    print(f'JSON: {request.context.json}')  # Data
-    print(f'Query: {request.context.query}')  # Query
+    print(f"=> from {source} to {target}")  # path
+    print(f"JSON: {request.context.json}")  # Data
+    print(f"Query: {request.context.query}")  # Query
     if random() < 0.5:
         abort(403)
 
     return jsonify(label=int(10 * random()), score=random())
 
 
-@app.route('/api/header', methods=['POST'])
-@api.validate(headers=Header, cookies=Cookie, resp=Response('HTTP_203'), tags=['test', 'demo'])
+@app.route("/api/header", methods=["POST"])
+@api.validate(
+    headers=Header, cookies=Cookie, resp=Response("HTTP_203"), tags=["test", "demo"]
+)
 def with_code_header():
     """
     demo for JSON with status code and header
 
     query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
-    return jsonify(language=request.context.headers.Lang), 203, {'X': 233}
+    return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     api.register(app)
     app.run(port=8000)

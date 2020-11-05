@@ -1,7 +1,7 @@
-from enum import IntEnum, Enum
+from enum import Enum, IntEnum
 from typing import List
 
-from pydantic import BaseModel, root_validator, Field
+from pydantic import BaseModel, Field, root_validator
 
 
 class Order(IntEnum):
@@ -24,8 +24,8 @@ class Resp(BaseModel):
 
 
 class Language(str, Enum):
-    en = 'en-US'
-    zh = 'zh-CN'
+    en = "en-US"
+    zh = "zh-CN"
 
 
 class Headers(BaseModel):
@@ -43,13 +43,13 @@ class Cookies(BaseModel):
 class DemoModel(BaseModel):
     uid: int
     limit: int
-    name: str = Field(..., description='user name')
+    name: str = Field(..., description="user name")
 
 
 def get_paths(spec):
     paths = []
-    for path in spec['paths']:
-        if spec['paths'][path]:
+    for path in spec["paths"]:
+        if spec["paths"][path]:
             paths.append(path)
 
     paths.sort()

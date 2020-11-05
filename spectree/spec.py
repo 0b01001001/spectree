@@ -5,8 +5,13 @@ from pydantic import BaseModel
 from .config import Config
 from .plugins import PLUGINS
 from .utils import (
-    parse_comments, parse_request, parse_params, parse_resp, parse_name,
-    default_before_handler, default_after_handler,
+    default_after_handler,
+    default_before_handler,
+    parse_comments,
+    parse_name,
+    parse_params,
+    parse_request,
+    parse_resp,
 )
 
 
@@ -26,11 +31,15 @@ class SpecTree:
     :param kwargs: update default :class:`spectree.config.Config`
     """
 
-    def __init__(self,
-                 backend_name='base', backend=None,
-                 app=None,
-                 before=default_before_handler, after=default_after_handler,
-                 **kwargs):
+    def __init__(
+        self,
+        backend_name="base",
+        backend=None,
+        app=None,
+        before=default_before_handler,
+        after=default_after_handler,
+        **kwargs,
+    ):
         self.before = before
         self.after = after
         self.config = Config(**kwargs)
@@ -56,7 +65,7 @@ class SpecTree:
         """
         get the OpenAPI spec
         """
-        if not hasattr(self, '_spec'):
+        if not hasattr(self, "_spec"):
             self._spec = self._generate_spec()
         return self._spec
 
@@ -69,21 +78,29 @@ class SpecTree:
         :greedy:    collect all the routes
         :strict:    collect all the routes decorated by this instance
         """
-        if self.config.MODE == 'greedy':
+        if self.config.MODE == "greedy":
             return False
-        elif self.config.MODE == 'strict':
-            if getattr(func, '_decorator', None) == self:
+        elif self.config.MODE == "strict":
+            if getattr(func, "_decorator", None) == self:
                 return False
             return True
         else:
-            decorator = getattr(func, '_decorator', None)
+            decorator = getattr(func, "_decorator", None)
             if decorator and decorator != self:
                 return True
             return False
 
-    def validate(self,
-                 query=None, json=None, headers=None, cookies=None, resp=None, tags=(),
-                 before=None, after=None):
+    def validate(
+        self,
+        query=None,
+        json=None,
+        headers=None,
+        cookies=None,
+        resp=None,
+        tags=(),
+        before=None,
+        after=None,
+    ):
         """
         - validate query, json, headers in request
         - validate response body and status code
@@ -105,26 +122,41 @@ class SpecTree:
             def sync_validate(*args, **kwargs):
                 return self.backend.validate(
                     func,
-                    query, json, headers, cookies, resp,
-                    before or self.before, after or self.after,
-                    *args, **kwargs)
+                    query,
+                    json,
+                    headers,
+                    cookies,
+                    resp,
+                    before or self.before,
+                    after or self.after,
+                    *args,
+                    **kwargs,
+                )
 
             # for async framework
             @wraps(func)
             async def async_validate(*args, **kwargs):
                 return await self.backend.validate(
                     func,
-                    query, json, headers, cookies, resp,
-                    before or self.before, after or self.after,
-                    *args, **kwargs)
+                    query,
+                    json,
+                    headers,
+                    cookies,
+                    resp,
+                    before or self.before,
+                    after or self.after,
+                    *args,
+                    **kwargs,
+                )
 
             validation = async_validate if self.backend.ASYNC else sync_validate
 
             # register
-            for name, model in zip(('query', 'json', 'headers', 'cookies'),
-                                   (query, json, headers, cookies)):
+            for name, model in zip(
+                ("query", "json", "headers", "cookies"), (query, json, headers, cookies)
+            ):
                 if model is not None:
-                    assert (issubclass(model, BaseModel))
+                    assert issubclass(model, BaseModel)
                     self.models[model.__name__] = model.schema()
                     setattr(validation, name, model.__name__)
 
@@ -156,36 +188,31 @@ class SpecTree:
 
                 name = parse_name(func)
                 summary, desc = parse_comments(func)
-                func_tags = getattr(func, 'tags', ())
+                func_tags = getattr(func, "tags", ())
                 for tag in func_tags:
                     if tag not in tags:
-                        tags[tag] = {'name': tag}
+                        tags[tag] = {"name": tag}
 
                 routes[path][method.lower()] = {
-                    'summary': summary or f'{name} <{method}>',
-                    'operationId': f'{method.lower()}_{path}',
-                    'description': desc or '',
-                    'tags': getattr(func, 'tags', []),
-                    'parameters': parse_params(func, parameters[:], self.models),
-                    'responses': parse_resp(func),
+                    "summary": summary or f"{name} <{method}>",
+                    "operationId": f"{method.lower()}_{path}",
+                    "description": desc or "",
+                    "tags": getattr(func, "tags", []),
+                    "parameters": parse_params(func, parameters[:], self.models),
+                    "responses": parse_resp(func),
                 }
 
                 request_body = parse_request(func)
                 if request_body:
-                    routes[path][method.lower()]['requestBody'] = request_body
+                    routes[path][method.lower()]["requestBody"] = request_body
 
         spec = {
-            'openapi': self.config.OPENAPI_VERSION,
-            'info': {
-                'title': self.config.TITLE,
-                'version': self.config.VERSION,
-            },
-            'tags': list(tags.values()),
-            'paths': {**routes},
-            'components': {
-                'schemas': {**self.models}
-            },
-            'definitions': self._get_model_definitions()
+            "openapi": self.config.OPENAPI_VERSION,
+            "info": {"title": self.config.TITLE, "version": self.config.VERSION,},
+            "tags": list(tags.values()),
+            "paths": {**routes},
+            "components": {"schemas": {**self.models}},
+            "definitions": self._get_model_definitions(),
         }
         return spec
 
@@ -195,9 +222,9 @@ class SpecTree:
         """
         definitions = {}
         for schema in self.models.values():
-            if 'definitions' in schema:
-                for key, value in schema['definitions'].items():
+            if "definitions" in schema:
+                for key, value in schema["definitions"].items():
                     definitions[key] = value
-                del schema['definitions']
+                del schema["definitions"]
 
         return definitions

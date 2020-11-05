@@ -1,6 +1,6 @@
 PAGES = {
     # https://github.com/Redocly/redoc
-    'redoc': """
+    "redoc": """
 <!DOCTYPE html>
 <html>
     <head>
@@ -28,7 +28,7 @@ PAGES = {
     </body>
 </html>""",
     # https://swagger.io
-    'swagger': """
+    "swagger": """
 <!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang="en">

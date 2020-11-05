@@ -1,9 +1,9 @@
-import re
 import inspect
 import logging
+import re
 
 # parse HTTP status code to get the code
-HTTP_CODE = re.compile(r'^HTTP_(?P<code>\d{3})$')
+HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def parse_comments(func):
     doc = inspect.getdoc(func)
     if doc is None:
         return None, None
-    doc = doc.split('\n', 1)
+    doc = doc.split("\n", 1)
     if len(doc) == 1:
         return doc[0], None
     return doc[0], doc[1].strip()
@@ -29,13 +29,11 @@ def parse_request(func):
     get json spec
     """
     data = {}
-    if hasattr(func, 'json'):
+    if hasattr(func, "json"):
         data = {
-            'content': {
-                'application/json': {
-                    'schema': {
-                        '$ref': f'#/components/schemas/{func.json}'
-                    }
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": f"#/components/schemas/{func.json}"}
                 }
             }
         }
@@ -46,38 +44,44 @@ def parse_params(func, params, models):
     """
     get spec for (query, headers, cookies)
     """
-    if hasattr(func, 'query'):
+    if hasattr(func, "query"):
         query = models[func.query]
-        for name, schema in query['properties'].items():
-            params.append({
-                'name': name,
-                'in': 'query',
-                'schema': schema,
-                'required': name in query.get('required', []),
-                'description': schema.get('description', ''),
-            })
+        for name, schema in query["properties"].items():
+            params.append(
+                {
+                    "name": name,
+                    "in": "query",
+                    "schema": schema,
+                    "required": name in query.get("required", []),
+                    "description": schema.get("description", ""),
+                }
+            )
 
-    if hasattr(func, 'headers'):
+    if hasattr(func, "headers"):
         headers = models[func.headers]
-        for name, schema in headers['properties'].items():
-            params.append({
-                'name': name,
-                'in': 'header',
-                'schema': schema,
-                'required': name in headers.get('required', []),
-                'description': schema.get('description', ''),
-            })
+        for name, schema in headers["properties"].items():
+            params.append(
+                {
+                    "name": name,
+                    "in": "header",
+                    "schema": schema,
+                    "required": name in headers.get("required", []),
+                    "description": schema.get("description", ""),
+                }
+            )
 
-    if hasattr(func, 'cookies'):
+    if hasattr(func, "cookies"):
         cookies = models[func.cookies]
-        for name, schema in cookies['properties'].items():
-            params.append({
-                'name': name,
-                'in': 'cookie',
-                'schema': schema,
-                'required': name in cookies.get('required', []),
-                'description': schema.get('description', ''),
-            })
+        for name, schema in cookies["properties"].items():
+            params.append(
+                {
+                    "name": name,
+                    "in": "cookie",
+                    "schema": schema,
+                    "required": name in cookies.get("required", []),
+                    "description": schema.get("description", ""),
+                }
+            )
 
     return params
 
@@ -91,7 +95,7 @@ def parse_resp(func):
     this may be triggered in the validation step.
     """
     responses = {}
-    if hasattr(func, 'resp'):
+    if hasattr(func, "resp"):
         responses = func.resp.generate_spec()
 
     return responses
@@ -101,10 +105,10 @@ def has_model(func):
     """
     return True if this function have ``pydantic.BaseModel``
     """
-    if any(hasattr(func, x) for x in ('query', 'json', 'headers')):
+    if any(hasattr(func, x) for x in ("query", "json", "headers")):
         return True
 
-    if hasattr(func, 'resp') and func.resp.has_model():
+    if hasattr(func, "resp") and func.resp.has_model():
         return True
 
     return False
@@ -119,7 +123,7 @@ def parse_code(http_code):
     match = HTTP_CODE.match(http_code)
     if not match:
         return None
-    return match.group('code')
+    return match.group("code")
 
 
 def parse_name(func):
@@ -145,10 +149,10 @@ def default_before_handler(req, resp, req_validation_error, instance):
     """
     if req_validation_error:
         logger.info(
-            '422 Validation Error',
+            "422 Validation Error",
             extra={
-                'spectree_model': req_validation_error.model.__name__,
-                'spectree_validation': req_validation_error.errors(),
+                "spectree_model": req_validation_error.model.__name__,
+                "spectree_validation": req_validation_error.errors(),
             },
         )
 
@@ -165,9 +169,9 @@ def default_after_handler(req, resp, resp_validation_error, instance):
     """
     if resp_validation_error:
         logger.info(
-            '500 Response Validation Error',
+            "500 Response Validation Error",
             extra={
-                'spectree_model': resp_validation_error.model.__name__,
-                'spectree_validation': resp_validation_error.errors(),
+                "spectree_model": resp_validation_error.model.__name__,
+                "spectree_validation": resp_validation_error.errors(),
             },
         )
