@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 
-Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
+Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
 
 
 class BasePlugin:
@@ -10,6 +10,7 @@ class BasePlugin:
 
     :param spectree: :class:`spectree.SpecTree` instance
     """
+
     # ASYNC: is it an async framework or not
     ASYNC = False
 

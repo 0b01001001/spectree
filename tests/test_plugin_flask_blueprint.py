@@ -2,50 +2,52 @@ import json
 from random import randint
 
 import pytest
-from flask import Flask, Blueprint, jsonify, request
+from flask import Blueprint, Flask, jsonify, request
 
-from spectree import SpecTree, Response
-from .common import Query, Resp, JSON, Headers, Cookies
+from spectree import Response, SpecTree
+
+from .common import JSON, Cookies, Headers, Query, Resp
 
 
 def before_handler(req, resp, err, _):
     if err:
-        resp.headers['X-Error'] = 'Validation Error'
+        resp.headers["X-Error"] = "Validation Error"
 
 
 def after_handler(req, resp, err, _):
-    resp.headers['X-Validation'] = 'Pass'
+    resp.headers["X-Validation"] = "Pass"
 
 
 def api_after_handler(req, resp, err, _):
-    resp.headers['X-API'] = 'OK'
+    resp.headers["X-API"] = "OK"
 
 
-api = SpecTree('flask', before=before_handler, after=after_handler)
-app = Blueprint('test_blueprint', __name__)
+api = SpecTree("flask", before=before_handler, after=after_handler)
+app = Blueprint("test_blueprint", __name__)
 
 
-@app.route('/ping')
-@api.validate(headers=Headers, tags=['test', 'health'])
+@app.route("/ping")
+@api.validate(headers=Headers, tags=["test", "health"])
 def ping():
     """summary
     description"""
-    return jsonify(msg='pong')
+    return jsonify(msg="pong")
 
 
-@app.route('/api/user/<name>', methods=['POST'])
+@app.route("/api/user/<name>", methods=["POST"])
 @api.validate(
     query=Query,
     json=JSON,
     cookies=Cookies,
     resp=Response(HTTP_200=Resp, HTTP_401=None),
-    tags=['api', 'test'],
-    after=api_after_handler)
+    tags=["api", "test"],
+    after=api_after_handler,
+)
 def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order)
-    assert request.context.cookies.pub == 'abcdefg'
-    assert request.cookies['pub'] == 'abcdefg'
+    assert request.context.cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
 
 
@@ -61,53 +63,51 @@ def client(request):
 
 
 @pytest.mark.parametrize(
-    ('client', 'prefix'),
-    [(None, ''), ('/prefix', '/prefix')],
-    indirect=['client'])
+    ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
+)
 def test_flask_validate(client, prefix):
-    resp = client.get(prefix + '/ping')
+    resp = client.get(prefix + "/ping")
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error') == 'Validation Error'
+    assert resp.headers.get("X-Error") == "Validation Error"
 
-    resp = client.get(prefix + '/ping', headers={'lang': 'en-US'})
-    assert resp.json == {'msg': 'pong'}
-    assert resp.headers.get('X-Error') is None
-    assert resp.headers.get('X-Validation') == 'Pass'
+    resp = client.get(prefix + "/ping", headers={"lang": "en-US"})
+    assert resp.json == {"msg": "pong"}
+    assert resp.headers.get("X-Error") is None
+    assert resp.headers.get("X-Validation") == "Pass"
 
-    resp = client.post(prefix + '/api/user/flask')
+    resp = client.post(prefix + "/api/user/flask")
     assert resp.status_code == 422
-    assert resp.headers.get('X-Error') == 'Validation Error'
+    assert resp.headers.get("X-Error") == "Validation Error"
 
-    client.set_cookie('flask', 'pub', 'abcdefg')
+    client.set_cookie("flask", "pub", "abcdefg")
     resp = client.post(
-        prefix + '/api/user/flask?order=1',
-        data=json.dumps(dict(name='flask', limit=10)),
-        content_type='application/json',
+        prefix + "/api/user/flask?order=1",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
     )
     assert resp.status_code == 200, resp.json
-    assert resp.headers.get('X-Validation') is None
-    assert resp.headers.get('X-API') == 'OK'
-    assert resp.json['name'] == 'flask'
-    assert resp.json['score'] == sorted(resp.json['score'], reverse=True)
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
 
     resp = client.post(
-        prefix + '/api/user/flask?order=0',
-        data=json.dumps(dict(name='flask', limit=10)),
-        content_type='application/json',
+        prefix + "/api/user/flask?order=0",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
     )
-    assert resp.json['score'] == sorted(resp.json['score'], reverse=False)
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
 @pytest.mark.parametrize(
-    ('client', 'prefix'),
-    [(None, ''), ('/prefix', '/prefix')],
-    indirect=['client'])
+    ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
+)
 def test_flask_doc(client, prefix):
-    resp = client.get(prefix + '/apidoc/openapi.json')
+    resp = client.get(prefix + "/apidoc/openapi.json")
     assert resp.json == api.spec
 
-    resp = client.get(prefix + '/apidoc/redoc')
+    resp = client.get(prefix + "/apidoc/redoc")
     assert resp.status_code == 200
 
-    resp = client.get(prefix + '/apidoc/swagger')
+    resp = client.get(prefix + "/apidoc/swagger")
     assert resp.status_code == 200
