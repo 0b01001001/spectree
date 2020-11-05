@@ -39,7 +39,7 @@ setup(
     extras_require={
         "flask": ["flask"],
         "falcon": ["falcon"],
-        "starlette": ["starlette", "requests"],
+        "starlette": ["starlette[full]"],
         "dev": [
             "pytest>=6",
             "flake8>=3.8",
