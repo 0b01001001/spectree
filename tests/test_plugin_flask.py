@@ -98,6 +98,7 @@ def test_flask_validate(client):
         data="name=flask&limit=10",
         content_type="application/x-www-form-urlencoded",
     )
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
 def test_flask_doc(client):
