@@ -119,7 +119,10 @@ class FlaskPlugin(BasePlugin):
 
     def request_validation(self, request, query, json, headers, cookies):
         req_query = request.args or {}
-        req_json = request.get_json(silent=True) or {}
+        if request.content_type == "application/x-www-form-urlencoded":
+            req_json = request.form or {}
+        else:
+            req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(

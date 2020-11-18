@@ -93,6 +93,12 @@ def test_flask_validate(client):
     )
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
+    resp = client.post(
+        "/api/user/flask?order=0",
+        data="name=flask&limit=10",
+        content_type="application/x-www-form-urlencoded",
+    )
+
 
 def test_flask_doc(client):
     resp = client.get("/apidoc/openapi.json")
