@@ -1,5 +1,4 @@
 from pydantic import ValidationError
-from werkzeug.datastructures import FileStorage
 
 from .base import BasePlugin, Context
 from .page import PAGES
