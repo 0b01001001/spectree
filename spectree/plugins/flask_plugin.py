@@ -6,6 +6,7 @@ from .page import PAGES
 
 class FlaskPlugin(BasePlugin):
     blueprint_state = None
+    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def find_routes(self):
         from flask import current_app
@@ -119,8 +120,12 @@ class FlaskPlugin(BasePlugin):
 
     def request_validation(self, request, query, json, headers, cookies):
         req_query = request.args or {}
-        if request.content_type == "application/x-www-form-urlencoded":
+        if request.mimetype in self.FORM_MIMETYPE:
             req_json = request.form or {}
+            if request.files:
+                req_json = dict(
+                    list(request.form.items()) + list(request.files.items())
+                )
         else:
             req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
