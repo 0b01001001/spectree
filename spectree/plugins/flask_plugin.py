@@ -131,10 +131,10 @@ class FlaskPlugin(BasePlugin):
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
-            query.parse_obj(req_query) if query else None,
-            json.parse_obj(req_json) if json else None,
-            headers.parse_obj(req_headers) if headers else None,
-            cookies.parse_obj(req_cookies) if cookies else None,
+            query.parse_obj(req_query.items()) if query else None,
+            json.parse_obj(req_json.items()) if json else None,
+            headers.parse_obj(req_headers.items()) if headers else None,
+            cookies.parse_obj(req_cookies.items()) if cookies else None,
         )
 
     def validate(
