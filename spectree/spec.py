@@ -157,12 +157,16 @@ class SpecTree:
             ):
                 if model is not None:
                     assert issubclass(model, BaseModel)
-                    self.models[model.__name__] = model.schema()
+                    self.models[model.__name__] = model.schema(
+                        ref_template="#/components/schemas/{model}"
+                    )
                     setattr(validation, name, model.__name__)
 
             if resp:
                 for model in resp.models:
-                    self.models[model.__name__] = model.schema()
+                    self.models[model.__name__] = model.schema(
+                        ref_template="#/components/schemas/{model}"
+                    )
                 validation.resp = resp
 
             if tags:
@@ -214,8 +218,7 @@ class SpecTree:
             },
             "tags": list(tags.values()),
             "paths": {**routes},
-            "components": {"schemas": {**self.models}},
-            "definitions": self._get_model_definitions(),
+            "components": {"schemas": {**self.models, **self._get_model_definitions()}},
         }
         return spec
 
