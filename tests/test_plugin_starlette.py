@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict
 
 
 def before_handler(req, resp, err, instance):
@@ -32,7 +32,12 @@ api = SpecTree("starlette", before=before_handler, after=after_handler)
 class Ping(HTTPEndpoint):
     name = "Ping"
 
-    @api.validate(headers=Headers, tags=["test", "health"], after=method_handler)
+    @api.validate(
+        headers=Headers,
+        resp=Response(HTTP_200=StrDict),
+        tags=["test", "health"],
+        after=method_handler,
+    )
     def get(self, request):
         """summary
         description"""

@@ -6,7 +6,7 @@ from falcon import testing
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict
 
 
 def before_handler(req, resp, err, instance):
@@ -40,6 +40,7 @@ class UserScore:
     def extra_method(self):
         pass
 
+    @api.validate(resp=Response(HTTP_200=StrDict))
     def on_get(self, req, resp, name):
         self.extra_method()
         resp.media = {"name": name}

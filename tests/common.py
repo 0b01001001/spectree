@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel, Field, root_validator
 
@@ -16,6 +16,10 @@ class Query(BaseModel):
 class JSON(BaseModel):
     name: str
     limit: int
+
+
+class StrDict(BaseModel):
+    __root__: Dict[str, str]
 
 
 class Resp(BaseModel):
