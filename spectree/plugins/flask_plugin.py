@@ -160,7 +160,7 @@ class FlaskPlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model:
                 try:
-                    model.validate(response.get_json())
+                    model.parse_obj(response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
                     response = make_response(

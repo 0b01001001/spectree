@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict
 
 
 def before_handler(req, resp, err, _):
@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 
 @app.route("/ping")
-@api.validate(headers=Headers, tags=["test", "health"])
+@api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
 def ping():
     """summary
     description"""
