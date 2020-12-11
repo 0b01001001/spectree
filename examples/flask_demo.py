@@ -63,7 +63,8 @@ def predict(source, target):
 
     demo for `query`, `data`, `resp`, `x`
 
-    query with ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
+    query with
+    ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
     """
     print(f"=> from {source} to {target}")  # path
     print(f"JSON: {request.context.json}")  # Data

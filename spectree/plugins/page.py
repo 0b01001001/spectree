@@ -1,6 +1,6 @@
 PAGES = {
     # https://github.com/Redocly/redoc
-    "redoc": """
+    "redoc": """  # noqa: E501
 <!DOCTYPE html>
 <html>
     <head>

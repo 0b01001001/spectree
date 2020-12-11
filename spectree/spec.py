@@ -21,11 +21,13 @@ class SpecTree:
 
     :param str backend_name: choose from ('flask', 'falcon', 'starlette')
     :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
-    :param app: backend framework application instance (you can also register to it later)
-    :param before: a callback function of the form :meth:`spectree.utils.default_before_handler`
+    :param app: backend framework application instance (can be registered later)
+    :param before: a callback function of the form
+        :meth:`spectree.utils.default_before_handler`
         ``func(req, resp, req_validation_error, instance)``
         that will be called after the request validation before the endpoint function
-    :param after: a callback function of the form :meth:`spectree.utils.default_after_handler`
+    :param after: a callback function of the form
+        :meth:`spectree.utils.default_after_handler`
         ``func(req, resp, resp_validation_error, instance)``
         that will be called after the response validation
     :param kwargs: update default :class:`spectree.config.Config`
@@ -112,8 +114,10 @@ class SpecTree:
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
         :param tags: a tuple of tags string
-        :param before: :meth:`spectree.utils.default_before_handler` for specific endpoint
-        :param after: :meth:`spectree.utils.default_after_handler` for specific endpoint
+        :param before: :meth:`spectree.utils.default_before_handler` for
+            specific endpoint
+        :param after: :meth:`spectree.utils.default_after_handler` for
+            specific endpoint
         """
 
         def decorate_validation(func):
