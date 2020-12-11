@@ -88,7 +88,7 @@ class StarlettePlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model:
                 try:
-                    model.validate(json_loads(response.body))
+                    model.parse_obj(json_loads(response.body))
                 except ValidationError as err:
                     resp_validation_error = err
                     response = JSONResponse(err.errors(), 500)

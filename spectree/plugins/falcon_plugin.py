@@ -168,7 +168,7 @@ class FalconPlugin(BasePlugin):
             model = resp.find_model(_resp.status[:3])
             if model:
                 try:
-                    model.validate(_resp.media)
+                    model.parse_obj(_resp.media)
                 except ValidationError as err:
                     resp_validation_error = err
                     _resp.status = "500 Internal Service Response Validation Error"
