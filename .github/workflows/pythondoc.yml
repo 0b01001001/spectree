@@ -38,8 +38,8 @@ jobs:
         remote_repo="https://${GITHUB_ACTOR}:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
         remote_branch=gh-pages
         git init
-        git config user.name "github-actions-bot"
-        git config user.email "github-actions-bot@users.noreply.github.com"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add .
         git commit -m "Deploy GitHub Pages"
         git push --force "${remote_repo}" master:${remote_branch}
