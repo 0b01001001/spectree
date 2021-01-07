@@ -17,7 +17,11 @@ def test_plugin_spec(api):
 
     assert api.spec["tags"] == [{"name": tag} for tag in ("test", "health", "api")]
 
-    assert get_paths(api.spec) == ["/api/user/{name}", "/ping"]
+    assert get_paths(api.spec) == [
+        "/api/user/{name}",
+        "/api/user_annotated/{name}",
+        "/ping",
+    ]
 
     ping = api.spec["paths"]["/ping"]["get"]
     assert ping["tags"] == ["test", "health"]

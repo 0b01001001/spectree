@@ -26,7 +26,9 @@ def method_handler(req, resp, err, instance):
     resp.headers["X-Name"] = instance.name
 
 
-api = SpecTree("starlette", before=before_handler, after=after_handler)
+api = SpecTree(
+    "starlette", before=before_handler, after=after_handler, annotations=True
+)
 
 
 class Ping(HTTPEndpoint):
@@ -59,6 +61,18 @@ async def user_score(request):
     return JSONResponse({"name": request.context.json.name, "score": score})
 
 
+@api.validate(
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=["api", "test"],
+)
+async def user_score_annotated(request, query: Query, json: JSON, cookies: Cookies):
+    score = [randint(0, json.limit) for _ in range(5)]
+    score.sort(reverse=query.order)
+    assert cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return JSONResponse({"name": json.name, "score": score})
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -70,7 +84,13 @@ app = Starlette(
                     routes=[
                         Route("/{name}", user_score, methods=["POST"]),
                     ],
-                )
+                ),
+                Mount(
+                    "/user_annotated",
+                    routes=[
+                        Route("/{name}", user_score_annotated, methods=["POST"]),
+                    ],
+                ),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -96,29 +116,30 @@ def test_starlette_validate(client):
     assert resp.headers.get("X-Name") == "Ping"
     assert resp.headers.get("X-Validation") is None
 
-    resp = client.post("/api/user/starlette")
-    assert resp.status_code == 422
-    assert resp.headers.get("X-Error") == "Validation Error"
+    for fragment in ("user", "user_annotated"):
+        resp = client.post(f"/api/{fragment}/starlette")
+        assert resp.status_code == 422
+        assert resp.headers.get("X-Error") == "Validation Error"
 
-    resp = client.post(
-        "/api/user/starlette?order=1",
-        json=dict(name="starlette", limit=10),
-        cookies=dict(pub="abcdefg"),
-    )
-    resp_body = resp.json()
-    assert resp_body["name"] == "starlette"
-    assert resp_body["score"] == sorted(resp_body["score"], reverse=True)
-    assert resp.headers.get("X-Validation") == "Pass"
+        resp = client.post(
+            f"/api/{fragment}/starlette?order=1",
+            json=dict(name="starlette", limit=10),
+            cookies=dict(pub="abcdefg"),
+        )
+        resp_body = resp.json()
+        assert resp_body["name"] == "starlette"
+        assert resp_body["score"] == sorted(resp_body["score"], reverse=True)
+        assert resp.headers.get("X-Validation") == "Pass"
 
-    resp = client.post(
-        "/api/user/starlette?order=0",
-        json=dict(name="starlette", limit=10),
-        cookies=dict(pub="abcdefg"),
-    )
-    resp_body = resp.json()
-    assert resp_body["name"] == "starlette"
-    assert resp_body["score"] == sorted(resp_body["score"], reverse=False)
-    assert resp.headers.get("X-Validation") == "Pass"
+        resp = client.post(
+            f"/api/{fragment}/starlette?order=0",
+            json=dict(name="starlette", limit=10),
+            cookies=dict(pub="abcdefg"),
+        )
+        resp_body = resp.json()
+        assert resp_body["name"] == "starlette"
+        assert resp_body["score"] == sorted(resp_body["score"], reverse=False)
+        assert resp.headers.get("X-Validation") == "Pass"
 
 
 def test_starlette_doc(client):

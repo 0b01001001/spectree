@@ -22,7 +22,7 @@ def api_after_handler(req, resp, err, _):
     resp.headers["X-API"] = "OK"
 
 
-api = SpecTree("flask", before=before_handler, after=after_handler)
+api = SpecTree("flask", before=before_handler, after=after_handler, annotations=True)
 app = Flask(__name__)
 app.config["TESTING"] = True
 
@@ -50,6 +50,20 @@ def user_score(name):
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
+
+
+@app.route("/api/user_annotated/<name>", methods=["POST"])
+@api.validate(
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=["api", "test"],
+    after=api_after_handler,
+)
+def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
+    score = [randint(0, json.limit) for _ in range(5)]
+    score.sort(reverse=query.order)
+    assert cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return jsonify(name=json.name, score=score)
 
 
 # INFO: ensures that spec is calculated and cached _after_ registering
@@ -83,30 +97,31 @@ def test_flask_validate(client):
     assert resp.headers.get("X-Error") == "Validation Error"
 
     client.set_cookie("flask", "pub", "abcdefg")
-    resp = client.post(
-        "/api/user/flask?order=1",
-        data=json.dumps(dict(name="flask", limit=10)),
-        content_type="application/json",
-    )
-    assert resp.status_code == 200, resp.json
-    assert resp.headers.get("X-Validation") is None
-    assert resp.headers.get("X-API") == "OK"
-    assert resp.json["name"] == "flask"
-    assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
+    for fragment in ("user", "user_annotated"):
+        resp = client.post(
+            f"/api/{fragment}/flask?order=1",
+            data=json.dumps(dict(name="flask", limit=10)),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200, resp.json
+        assert resp.headers.get("X-Validation") is None
+        assert resp.headers.get("X-API") == "OK"
+        assert resp.json["name"] == "flask"
+        assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
 
-    resp = client.post(
-        "/api/user/flask?order=0",
-        data=json.dumps(dict(name="flask", limit=10)),
-        content_type="application/json",
-    )
-    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+        resp = client.post(
+            f"/api/{fragment}/flask?order=0",
+            data=json.dumps(dict(name="flask", limit=10)),
+            content_type="application/json",
+        )
+        assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
-    resp = client.post(
-        "/api/user/flask?order=0",
-        data="name=flask&limit=10",
-        content_type="application/x-www-form-urlencoded",
-    )
-    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+        resp = client.post(
+            f"/api/{fragment}/flask?order=0",
+            data="name=flask&limit=10",
+            content_type="application/x-www-form-urlencoded",
+        )
+        assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
 def test_flask_doc(client):

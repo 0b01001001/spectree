@@ -147,6 +147,10 @@ class FlaskPlugin(BasePlugin):
         response, req_validation_error, resp_validation_error = None, None, None
         try:
             self.request_validation(request, query, json, headers, cookies)
+            if self.config.ANNOTATIONS:
+                for name in ("query", "json", "headers", "cookies"):
+                    if func.__annotations__.get(name):
+                        kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
             response = make_response(jsonify(err.errors()), 422)

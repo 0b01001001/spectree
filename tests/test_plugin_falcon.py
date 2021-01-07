@@ -20,7 +20,7 @@ def after_handler(req, resp, err, instance):
     print(resp.get_header("X-Name"))
 
 
-api = SpecTree("falcon", before=before_handler, after=after_handler)
+api = SpecTree("falcon", before=before_handler, after=after_handler, annotations=True)
 
 
 class Ping:
@@ -60,9 +60,33 @@ class UserScore:
         resp.media = {"name": req.context.json.name, "score": score}
 
 
+class UserScoreAnnotated:
+    name = "sorted random score"
+
+    def extra_method(self):
+        pass
+
+    @api.validate(resp=Response(HTTP_200=StrDict))
+    def on_get(self, req, resp, name):
+        self.extra_method()
+        resp.media = {"name": name}
+
+    @api.validate(
+        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        tags=["api", "test"],
+    )
+    def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
+        score = [randint(0, req.context.json.limit) for _ in range(5)]
+        score.sort(reverse=req.context.query.order)
+        assert req.context.cookies.pub == "abcdefg"
+        assert req.cookies["pub"] == "abcdefg"
+        resp.media = {"name": req.context.json.name, "score": score}
+
+
 app = falcon.API()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
+app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 api.register(app)
 
 
