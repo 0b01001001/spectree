@@ -1,6 +1,6 @@
 PAGES = {
     # https://github.com/Redocly/redoc
-    "redoc": """  # noqa: E501
+    "redoc": """
 <!DOCTYPE html>
 <html>
     <head>
@@ -26,7 +26,7 @@ PAGES = {
         <redoc spec-url='{}'></redoc>
         <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
     </body>
-</html>""",
+</html>""",  # noqa: E501
     # https://swagger.io
     "swagger": """
 <!-- HTML for static distribution bundle build -->
