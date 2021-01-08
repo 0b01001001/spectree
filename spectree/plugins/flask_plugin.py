@@ -1,4 +1,3 @@
-from flask import current_app
 from pydantic import ValidationError
 
 from .base import BasePlugin, Context
@@ -10,6 +9,7 @@ class FlaskPlugin(BasePlugin):
     FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def find_routes(self):
+        from flask import current_app
 
         if self.blueprint_state:
             excludes = [
@@ -39,6 +39,8 @@ class FlaskPlugin(BasePlugin):
         return False
 
     def parse_func(self, route):
+        from flask import current_app
+
         if self.blueprint_state:
             func = self.blueprint_state.app.view_functions[route.endpoint]
         else:
