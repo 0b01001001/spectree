@@ -24,6 +24,13 @@ def api_after_handler(req, resp, err, _):
 
 api = SpecTree("flask", before=before_handler, after=after_handler)
 app = Flask(__name__)
+app.config["TESTING"] = True
+
+
+@pytest.fixture
+def flask_ctx():
+    with app.app_context():
+        yield app
 
 
 @app.route("/ping")
