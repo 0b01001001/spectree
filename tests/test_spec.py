@@ -38,7 +38,11 @@ def test_register(name, app):
 @pytest.mark.parametrize("name, app", backend_app())
 def test_spec_generate(name, app):
     api = SpecTree(name, app=app, title=f"{name}")
-    spec = api.spec
+    if name == "flask":
+        with app.app_context():
+            spec = api.spec
+    else:
+        spec = api.spec
 
     assert spec["info"]["title"] == name
     assert spec["paths"] == {}
@@ -77,19 +81,23 @@ def create_app():
 def test_spec_bypass_mode():
     app = create_app()
     api.register(app)
-    assert get_paths(api.spec) == ["/foo", "/lone"]
+    with app.app_context():
+        assert get_paths(api.spec) == ["/foo", "/lone"]
 
     app = create_app()
     api_customize_backend.register(app)
-    assert get_paths(api.spec) == ["/foo", "/lone"]
+    with app.app_context():
+        assert get_paths(api.spec) == ["/foo", "/lone"]
 
     app = create_app()
     api_greedy.register(app)
-    assert get_paths(api_greedy.spec) == ["/bar", "/foo", "/lone"]
+    with app.app_context():
+        assert get_paths(api_greedy.spec) == ["/bar", "/foo", "/lone"]
 
     app = create_app()
     api_strict.register(app)
-    assert get_paths(api_strict.spec) == ["/bar"]
+    with app.app_context():
+        assert get_paths(api_strict.spec) == ["/bar"]
 
 
 def test_two_endpoints_with_the_same_path():

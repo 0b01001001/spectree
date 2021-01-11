@@ -24,6 +24,7 @@ def api_after_handler(req, resp, err, _):
 
 api = SpecTree("flask", before=before_handler, after=after_handler)
 app = Flask(__name__)
+app.config["TESTING"] = True
 
 
 @app.route("/ping")
@@ -49,6 +50,13 @@ def user_score(name):
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
+
+
+# INFO: ensures that spec is calculated and cached _after_ registering
+# view functions for validations. This enables tests to access `api.spec`
+# without app_context.
+with app.app_context():
+    api.spec
 
 
 api.register(app)
