@@ -27,12 +27,6 @@ app = Flask(__name__)
 app.config["TESTING"] = True
 
 
-@pytest.fixture
-def flask_ctx():
-    with app.app_context():
-        yield app
-
-
 @app.route("/ping")
 @api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
 def ping():
@@ -56,6 +50,13 @@ def user_score(name):
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
+
+
+# INFO: ensures that spec is calculated and cached _after_ registering
+# view functions for validations. This enables tests to access `api.spec`
+# without app_context.
+with app.app_context():
+    api.spec
 
 
 api.register(app)

@@ -3,12 +3,11 @@ import pytest
 from .common import JSON, Cookies, Headers, Query, Resp, get_paths
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
-from .test_plugin_flask import flask_ctx  # noqa: F401
 from .test_plugin_starlette import api as starlette_api
 
 
 @pytest.mark.parametrize("api", [flask_api, falcon_api, starlette_api])
-def test_plugin_spec(api, flask_ctx):  # noqa: F811
+def test_plugin_spec(api):
     models = {
         m.__name__: m.schema(ref_template="#/components/schemas/{model}")
         for m in (Query, JSON, Resp, Cookies, Headers)
