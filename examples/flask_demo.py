@@ -2,6 +2,7 @@ from enum import Enum
 from random import random
 
 from flask import Flask, abort, jsonify, request
+from flask.views import MethodView
 from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree
@@ -88,6 +89,13 @@ def with_code_header():
     return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
 
 
+class UserAPI(MethodView):
+    @api.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
+    def post(self):
+        return jsonify(label=int(10 * random()), score=random())
+
+
 if __name__ == "__main__":
+    app.add_url_rule("/api/user", view_func=UserAPI.as_view("user_id"))
     api.register(app)
     app.run(port=8000)

@@ -47,6 +47,13 @@ class FlaskPlugin(BasePlugin):
             func = current_app.view_functions[route.endpoint]
 
         for method in route.methods:
+            # view class: https://flask.palletsprojects.com/en/1.1.x/views/
+            if getattr(func, "view_class", None):
+                cls = getattr(func, "view_class")
+                func = getattr(cls, method.lower(), None)
+                if not func:
+                    continue
+                yield method, func
             yield method, func
 
     def parse_path(self, route):
