@@ -21,6 +21,7 @@ class Config:
         self._SUPPORT_UI = {"redoc", "swagger"}
         self.MODE = "normal"
         self._SUPPORT_MODE = {"normal", "strict", "greedy"}
+        self.ANNOTATIONS = False
 
         self.TITLE = "Service API Document"
         self.VERSION = "0.1"

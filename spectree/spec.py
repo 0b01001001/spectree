@@ -155,6 +155,16 @@ class SpecTree:
 
             validation = async_validate if self.backend.ASYNC else sync_validate
 
+            if self.config.ANNOTATIONS:
+                nonlocal query
+                query = func.__annotations__.get("query", query)
+                nonlocal json
+                json = func.__annotations__.get("json", json)
+                nonlocal headers
+                headers = func.__annotations__.get("headers", headers)
+                nonlocal cookies
+                cookies = func.__annotations__.get("cookies", cookies)
+
             # register
             for name, model in zip(
                 ("query", "json", "headers", "cookies"), (query, json, headers, cookies)

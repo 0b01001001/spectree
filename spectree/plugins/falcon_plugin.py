@@ -153,6 +153,10 @@ class FalconPlugin(BasePlugin):
         req_validation_error, resp_validation_error = None, None
         try:
             self.request_validation(_req, query, json, headers, cookies)
+            if self.config.ANNOTATIONS:
+                for name in ("query", "json", "headers", "cookies"):
+                    if func.__annotations__.get(name):
+                        kwargs[name] = getattr(_req.context, name)
 
         except ValidationError as err:
             req_validation_error = err
