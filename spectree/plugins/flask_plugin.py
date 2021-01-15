@@ -17,8 +17,10 @@ class FlaskPlugin(BasePlugin):
                 for ep in ["static", "openapi"] + [f"doc_page_{ui}" for ui in PAGES]
             ]
             for rule in current_app.url_map.iter_rules():
-                if self.blueprint_state.url_prefix and not str(rule).startswith(
+                if (
                     self.blueprint_state.url_prefix
+                    and not str(rule).startswith(self.blueprint_state.url_prefix)
+                    or str(rule).startswith("/static")
                 ):
                     continue
                 if rule.endpoint in excludes:

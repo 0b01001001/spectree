@@ -51,7 +51,26 @@ def user_score(name):
     return jsonify(name=request.context.json.name, score=score)
 
 
+@app.route("/api/user_annotated/<name>", methods=["POST"])
+@api.validate(
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=["api", "test"],
+    after=api_after_handler,
+)
+def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
+    score = [randint(0, json.limit) for _ in range(5)]
+    score.sort(reverse=query.order)
+    assert cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return jsonify(name=json.name, score=score)
+
+
 api.register(app)
+
+flask_app = Flask(__name__)
+flask_app.register_blueprint(app)
+with flask_app.app_context():
+    api.spec
 
 
 @pytest.fixture
