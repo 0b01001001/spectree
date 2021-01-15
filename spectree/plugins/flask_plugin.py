@@ -17,8 +17,10 @@ class FlaskPlugin(BasePlugin):
                 for ep in ["static", "openapi"] + [f"doc_page_{ui}" for ui in PAGES]
             ]
             for rule in current_app.url_map.iter_rules():
-                if self.blueprint_state.url_prefix and not str(rule).startswith(
+                if (
                     self.blueprint_state.url_prefix
+                    and not str(rule).startswith(self.blueprint_state.url_prefix)
+                    or str(rule).startswith("/static")
                 ):
                     continue
                 if rule.endpoint in excludes:
@@ -46,8 +48,16 @@ class FlaskPlugin(BasePlugin):
         else:
             func = current_app.view_functions[route.endpoint]
 
-        for method in route.methods:
-            yield method, func
+        # view class: https://flask.palletsprojects.com/en/1.1.x/views/
+        if getattr(func, "view_class", None):
+            cls = getattr(func, "view_class")
+            for method in route.methods:
+                view = getattr(cls, method.lower(), None)
+                if view:
+                    yield method, view
+        else:
+            for method in route.methods:
+                yield method, func
 
     def parse_path(self, route):
         from werkzeug.routing import parse_converter_args, parse_rule
