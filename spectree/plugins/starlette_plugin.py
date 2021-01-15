@@ -65,6 +65,10 @@ class StarlettePlugin(BasePlugin):
 
         try:
             await self.request_validation(request, query, json, headers, cookies)
+            if self.config.ANNOTATIONS:
+                for name in ("query", "json", "headers", "cookies"):
+                    if func.__annotations__.get(name):
+                        kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
             response = JSONResponse(err.errors(), 422)

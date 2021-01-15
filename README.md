@@ -51,6 +51,9 @@ Check the [examples](/examples) folder.
 
 If the request doesn't pass the validation, it will return a 422 with JSON error message(ctx, loc, msg, type).
 
+### Opt-in type annotation feature
+This library also supports injection of validated fields into view function arguments along with parameter annotation based type declaration. This works well with linters that can take advantage of typing features like mypy. See examples section below.
+
 ## How To
 
 > How to add summary and description to endpoints?
@@ -65,7 +68,7 @@ Check the [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/) document
 
 Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
 
-You can update the config when init the spectree like: 
+You can update the config when init the spectree like:
 
 ```py
 SpecTree('flask', title='Demo API', version='v1.0', path='doc')
@@ -153,6 +156,25 @@ if __name__ == "__main__":
 
 ```
 
+#### Flask example with type annotation
+
+```python
+# opt in into annotations feature
+api = SpecTree("flask", annotations=True)
+
+
+@app.route('/api/user', methods=['POST'])
+@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+def user_profile(json: Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(json) # or `request.json`
+    return jsonify(text='it works')
+```
+
 ### Falcon
 
 ```py
@@ -199,6 +221,25 @@ if __name__ == "__main__":
     httpd = simple_server.make_server('localhost', 8000, app)
     httpd.serve_forever()
 
+```
+
+#### Falcon with type annotations
+
+```python
+# opt in into annotations feature
+api = SpecTree("flask", annotations=True)
+
+
+class UserProfile:
+    @api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+    def on_post(self, req, resp, json: Profile):
+        """
+        verify user profile (summary of this endpoint)
+
+        user's name, user's age, ... (long description)
+        """
+        print(req.context.json)  # or `req.media`
+        resp.media = {'text': 'it works'}
 ```
 
 ### Starlette
@@ -251,6 +292,25 @@ if __name__ == "__main__":
     uvicorn.run(app)
 
 ```
+
+#### Starlette example with type annotations
+
+```python
+# opt in into annotations feature
+api = SpecTree("flask", annotations=True)
+
+
+@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+async def user_profile(request, json=Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(request.context.json)  # or await request.json()
+    return JSONResponse({'text': 'it works'})
+```
+
 
 ## FAQ
 
