@@ -51,6 +51,10 @@ Check the [examples](/examples) folder.
 
 If the request doesn't pass the validation, it will return a 422 with JSON error message(ctx, loc, msg, type).
 
+### Falcon response validation
+
+For falcon response, this library only validates against media as it is the serializable object. Response.body(deprecated in falcon 3.0 and replaced by text) is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`
+
 ### Opt-in type annotation feature
 This library also supports injection of validated fields into view function arguments along with parameter annotation based type declaration. This works well with linters that can take advantage of typing features like mypy. See examples section below.
 
@@ -227,7 +231,7 @@ if __name__ == "__main__":
 
 ```python
 # opt in into annotations feature
-api = SpecTree("flask", annotations=True)
+api = SpecTree("falcon", annotations=True)
 
 
 class UserProfile:
