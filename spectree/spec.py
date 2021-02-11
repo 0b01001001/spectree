@@ -102,6 +102,7 @@ class SpecTree:
         tags=(),
         before=None,
         after=None,
+        explicit_name=None,
     ):
         """
         - validate query, json, headers in request
@@ -118,6 +119,7 @@ class SpecTree:
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
             specific endpoint
+        :param explicit_name: str, if you want to explicit name your endpoint
         """
 
         def decorate_validation(func):
@@ -185,6 +187,9 @@ class SpecTree:
 
             if tags:
                 validation.tags = tags
+
+            if explicit_name:
+                validation.explicit_name = explicit_name
 
             # register decorator
             validation._decorator = self

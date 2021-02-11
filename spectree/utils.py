@@ -134,6 +134,8 @@ def parse_name(func):
         * decorated functions
         * decorated class methods
     """
+    if hasattr(func, "explicit_name"):
+        return func.explicit_name
     return func.__name__
 
 
