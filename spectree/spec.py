@@ -1,3 +1,4 @@
+from copy import deepcopy
 from functools import wraps
 
 from pydantic import BaseModel
@@ -232,9 +233,19 @@ class SpecTree:
             },
             "tags": list(tags.values()),
             "paths": {**routes},
-            "components": {"schemas": {**self.models, **self._get_model_definitions()}},
+            "components": self._get_components(),
         }
         return spec
+
+    def _get_components(self):
+        """
+        Return components
+        """
+        # Need of deep copy to avoid loss of models in case of multiple specs.
+        models = deepcopy(self.models)
+        for schema in models.values():
+            schema.pop("definitions", None)
+        return {"schemas": {**models, **self._get_model_definitions()}}
 
     def _get_model_definitions(self):
         """
@@ -245,6 +256,5 @@ class SpecTree:
             if "definitions" in schema:
                 for key, value in schema["definitions"].items():
                     definitions[key] = value
-                del schema["definitions"]
 
         return definitions
