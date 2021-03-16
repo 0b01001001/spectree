@@ -229,6 +229,7 @@ class SpecTree:
             "info": {
                 "title": self.config.TITLE,
                 "version": self.config.VERSION,
+                "description": self.config.DESCRIPTION,
             },
             "tags": list(tags.values()),
             "paths": {**routes},

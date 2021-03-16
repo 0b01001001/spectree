@@ -24,6 +24,7 @@ class Config:
         self.ANNOTATIONS = False
 
         self.TITLE = "Service API Document"
+        self.DESCRIPTION = None
         self.VERSION = "0.1"
         self.DOMAIN = None
 
