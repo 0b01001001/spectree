@@ -2,7 +2,6 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
-from json import loads as json_loads
 
 from pydantic import ValidationError
 
@@ -42,7 +41,7 @@ class StarlettePlugin(BasePlugin):
     async def request_validation(self, request, query, json, headers, cookies):
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
-            json.parse_obj(json_loads(await request.body() or "{}")) if json else None,
+            json.parse_raw(await request.body() or "{}") if json else None,
             headers.parse_obj(request.headers) if headers else None,
             cookies.parse_obj(request.cookies) if cookies else None,
         )
@@ -57,11 +56,7 @@ class StarlettePlugin(BasePlugin):
         instance = args[0] if "." in func.__qualname__ else None
         request = args[1] if "." in func.__qualname__ else args[0]
         response = None
-        req_validation_error, resp_validation_error, json_decode_error = (
-            None,
-            None,
-            None,
-        )
+        req_validation_error = resp_validation_error = json_decode_error = None
 
         try:
             await self.request_validation(request, query, json, headers, cookies)
@@ -92,7 +87,7 @@ class StarlettePlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model:
                 try:
-                    model.parse_obj(json_loads(response.body))
+                    model.parse_raw(response.body)
                 except ValidationError as err:
                     resp_validation_error = err
                     response = JSONResponse(err.errors(), 500)
