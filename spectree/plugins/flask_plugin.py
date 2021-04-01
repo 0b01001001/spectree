@@ -79,11 +79,8 @@ class FlaskPlugin(BasePlugin):
             schema = None
             if converter == "any":
                 schema = {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": args,
-                    },
+                    "type": "string",
+                    "enum": args,
                 }
             elif converter == "int":
                 schema = {
