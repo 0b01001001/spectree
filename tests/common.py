@@ -50,6 +50,11 @@ class DemoModel(BaseModel):
     name: str = Field(..., description="user name")
 
 
+class DemoQuery(BaseModel):
+    names1: List[str] = Field(...)
+    names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")
+
+
 def get_paths(spec):
     paths = []
     for path in spec["paths"]:
