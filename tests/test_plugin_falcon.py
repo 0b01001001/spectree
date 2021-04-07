@@ -96,16 +96,22 @@ def client():
 
 
 def test_falcon_validate(client):
-    resp = client.simulate_request("GET", "/ping")
+    resp = client.simulate_request(
+        "GET", "/ping", headers={"Content-Type": "plain/text"}
+    )
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error", resp.headers
 
-    resp = client.simulate_request("GET", "/ping", headers={"lang": "en-US"})
+    resp = client.simulate_request(
+        "GET", "/ping", headers={"lang": "en-US", "Content-Type": "plain/text"}
+    )
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Name") == "health check"
 
-    resp = client.simulate_request("GET", "/api/user/falcon")
+    resp = client.simulate_request(
+        "GET", "/api/user/falcon", headers={"Content-Type": "plain/text"}
+    )
     assert resp.json == {"name": "falcon"}
 
     resp = client.simulate_request("POST", "/api/user/falcon")
