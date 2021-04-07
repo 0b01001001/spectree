@@ -57,6 +57,7 @@ class Ping:
         health check
         """
         self.check()
+        logger.debug("ping <> pong")
         resp.media = {"msg": "pong"}
 
 
@@ -95,7 +96,6 @@ class Classification:
 
 class JSONFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
         lr = logging.LogRecord(None, None, "", 0, "", (), None, None)
         self.default_keys = [key for key in lr.__dict__]
 
