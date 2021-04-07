@@ -1,4 +1,7 @@
-import falcon
+try:
+    from falcon import App as FalconApp
+except ImportError:
+    from falcon import API as FalconApp
 import pytest
 from flask import Flask
 from starlette.applications import Starlette
@@ -13,7 +16,7 @@ from .common import get_paths
 def backend_app():
     return [
         ("flask", Flask(__name__)),
-        ("falcon", falcon.API()),
+        ("falcon", FalconApp()),
         ("starlette", Starlette()),
     ]
 
