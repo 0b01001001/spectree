@@ -12,7 +12,7 @@ from spectree.utils import (
     parse_resp,
 )
 
-from .common import DemoModel
+from .common import DemoModel, DemoQuery
 
 api = SpecTree()
 
@@ -28,6 +28,16 @@ def demo_func():
     summary
 
     description"""
+
+
+@api.validate(query=DemoQuery)
+def demo_func_with_query():
+    """
+    a summary
+
+    a description
+    """
+    pass
 
 
 class DemoClass:
@@ -104,9 +114,36 @@ def test_parse_params():
         "in": "query",
         "required": True,
         "description": "",
-        "schema": {
-            "title": "Uid",
-            "type": "integer",
-        },
+        "schema": {"title": "Uid", "type": "integer"},
     }
     assert params[2]["description"] == "user name"
+
+
+def test_parse_params_with_route_param_keywords():
+    models = {
+        "DemoQuery": DemoQuery.schema(ref_template="#/components/schemas/{model}")
+    }
+    params = parse_params(demo_func_with_query, [], models)
+    assert params == [
+        {
+            "name": "names1",
+            "in": "query",
+            "required": True,
+            "description": "",
+            "schema": {"title": "Names1", "type": "array", "items": {"type": "string"}},
+        },
+        {
+            "name": "names2",
+            "in": "query",
+            "required": True,
+            "description": "",
+            "schema": {
+                "title": "Names2",
+                "type": "array",
+                "items": {"type": "string"},
+                "non_keyword": "dummy",
+            },
+            "style": "matrix",
+            "explode": True,
+        },
+    ]

@@ -44,44 +44,27 @@ def parse_params(func, params, models):
     """
     get spec for (query, headers, cookies)
     """
-    if hasattr(func, "query"):
-        query = models[func.query]
-        for name, schema in query["properties"].items():
-            params.append(
-                {
-                    "name": name,
-                    "in": "query",
-                    "schema": schema,
-                    "required": name in query.get("required", []),
-                    "description": schema.get("description", ""),
-                }
-            )
+    attr_to_spec_key = {"query": "query", "headers": "header", "cookies": "cookie"}
+    route_param_keywords = ("explode", "style", "allowReserved")
 
-    if hasattr(func, "headers"):
-        headers = models[func.headers]
-        for name, schema in headers["properties"].items():
-            params.append(
-                {
-                    "name": name,
-                    "in": "header",
-                    "schema": schema,
-                    "required": name in headers.get("required", []),
-                    "description": schema.get("description", ""),
+    for attr in attr_to_spec_key:
+        if hasattr(func, attr):
+            model = models[getattr(func, attr)]
+            for name, schema in model["properties"].items():
+                # Route parameters keywords taken out of schema level
+                extra = {
+                    kw: schema.pop(kw) for kw in route_param_keywords if kw in schema
                 }
-            )
-
-    if hasattr(func, "cookies"):
-        cookies = models[func.cookies]
-        for name, schema in cookies["properties"].items():
-            params.append(
-                {
-                    "name": name,
-                    "in": "cookie",
-                    "schema": schema,
-                    "required": name in cookies.get("required", []),
-                    "description": schema.get("description", ""),
-                }
-            )
+                params.append(
+                    {
+                        "name": name,
+                        "in": attr_to_spec_key[attr],
+                        "schema": schema,
+                        "required": name in model.get("required", []),
+                        "description": schema.get("description", ""),
+                        **extra,
+                    }
+                )
 
     return params
 
