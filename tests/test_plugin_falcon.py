@@ -1,6 +1,10 @@
 from random import randint
 
-import falcon
+try:
+    from falcon import App
+except ImportError:
+    from falcon import API as App
+
 import pytest
 from falcon import testing
 
@@ -83,7 +87,7 @@ class UserScoreAnnotated:
         resp.media = {"name": req.context.json.name, "score": score}
 
 
-app = falcon.API()
+app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
@@ -97,20 +101,20 @@ def client():
 
 def test_falcon_validate(client):
     resp = client.simulate_request(
-        "GET", "/ping", headers={"Content-Type": "plain/text"}
+        "GET", "/ping", headers={"Content-Type": "text/plain"}
     )
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error", resp.headers
 
     resp = client.simulate_request(
-        "GET", "/ping", headers={"lang": "en-US", "Content-Type": "plain/text"}
+        "GET", "/ping", headers={"lang": "en-US", "Content-Type": "text/plain"}
     )
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Name") == "health check"
 
     resp = client.simulate_request(
-        "GET", "/api/user/falcon", headers={"Content-Type": "plain/text"}
+        "GET", "/api/user/falcon", headers={"Content-Type": "text/plain"}
     )
     assert resp.json == {"name": "falcon"}
 
