@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
 
 def before_handler(req, resp, err, instance):
@@ -51,7 +51,7 @@ class Ping(HTTPEndpoint):
     json=JSON,
     cookies=Cookies,
     resp=Response(HTTP_200=Resp, HTTP_401=None),
-    tags=["api", "test"],
+    tags=[api_tag, "test"],
 )
 async def user_score(request):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
@@ -63,7 +63,7 @@ async def user_score(request):
 
 @api.validate(
     resp=Response(HTTP_200=Resp, HTTP_401=None),
-    tags=["api", "test"],
+    tags=[api_tag, "test"],
 )
 async def user_score_annotated(request, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]

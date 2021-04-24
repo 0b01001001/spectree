@@ -7,7 +7,7 @@ from flask.views import MethodView
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
 
 def before_handler(req, resp, err, _):
@@ -44,7 +44,7 @@ class User(MethodView):
         json=JSON,
         cookies=Cookies,
         resp=Response(HTTP_200=Resp, HTTP_401=None),
-        tags=["api", "test"],
+        tags=[api_tag, "test"],
         after=api_after_handler,
     )
     def post(self, name):
@@ -58,7 +58,7 @@ class User(MethodView):
 class UserAnnotated(MethodView):
     @api.validate(
         resp=Response(HTTP_200=Resp, HTTP_401=None),
-        tags=["api", "test"],
+        tags=[api_tag, "test"],
         after=api_after_handler,
     )
     def post(self, name, query: Query, json: JSON, cookies: Cookies):
