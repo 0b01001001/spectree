@@ -6,13 +6,15 @@ from wsgiref import simple_server
 import falcon
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree
+from spectree import Response, SpecTree, Tag
 
 api = SpecTree(
     "falcon",
     title="Demo Service",
     version="0.1.2",
 )
+
+demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
 
 
 class Query(BaseModel):
@@ -51,7 +53,7 @@ class Ping:
     def check(self):
         pass
 
-    @api.validate(tags=["demo"])
+    @api.validate(tags=[demo])
     def on_get(self, req, resp):
         """
         health check
@@ -66,7 +68,7 @@ class Classification:
     classification demo
     """
 
-    @api.validate(tags=["demo"])
+    @api.validate(tags=[demo])
     def on_get(self, req, resp, source, target):
         """
         API summary

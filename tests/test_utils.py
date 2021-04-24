@@ -37,7 +37,6 @@ def demo_func_with_query():
 
     a description
     """
-    pass
 
 
 class DemoClass:
