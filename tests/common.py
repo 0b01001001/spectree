@@ -3,6 +3,10 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field, root_validator
 
+from spectree import Tag
+
+api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
+
 
 class Order(IntEnum):
     asce = 1

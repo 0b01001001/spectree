@@ -10,7 +10,7 @@ from falcon import testing
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
 
 def before_handler(req, resp, err, instance):
@@ -54,7 +54,7 @@ class UserScore:
         json=JSON,
         cookies=Cookies,
         resp=Response(HTTP_200=Resp, HTTP_401=None),
-        tags=["api", "test"],
+        tags=[api_tag, "test"],
     )
     def on_post(self, req, resp, name):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
@@ -77,7 +77,7 @@ class UserScoreAnnotated:
 
     @api.validate(
         resp=Response(HTTP_200=Resp, HTTP_401=None),
-        tags=["api", "test"],
+        tags=[api_tag, "test"],
     )
     def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
