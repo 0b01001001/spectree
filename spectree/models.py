@@ -1,11 +1,11 @@
 from typing import Any, Dict, Sequence
 
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class ExternalDocs(BaseModel):
     description: str = ""
-    url: AnyUrl
+    url: str
 
 
 class Tag(BaseModel):
