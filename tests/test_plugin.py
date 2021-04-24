@@ -19,7 +19,18 @@ def test_plugin_spec(api):
     for name, schema in models.items():
         assert api.spec["components"]["schemas"][name] == schema
 
-    assert api.spec["tags"] == [{"name": tag} for tag in ("test", "health", "api")]
+    assert api.spec["tags"] == [
+        {"name": "test"},
+        {"name": "health"},
+        {
+            "description": "🐱",
+            "externalDocs": {
+                "description": "",
+                "url": "https://pypi.org",
+            },
+            "name": "API",
+        },
+    ]
 
     assert get_paths(api.spec) == [
         "/api/user/{name}",
@@ -35,7 +46,7 @@ def test_plugin_spec(api):
     assert ping["operationId"] == "get_/ping"
 
     user = api.spec["paths"]["/api/user/{name}"]["post"]
-    assert user["tags"] == ["api", "test"]
+    assert user["tags"] == ["API", "test"]
     assert (
         user["requestBody"]["content"]["application/json"]["schema"]["$ref"]
         == "#/components/schemas/JSON"

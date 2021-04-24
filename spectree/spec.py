@@ -3,6 +3,7 @@ from functools import wraps
 from pydantic import BaseModel
 
 from .config import Config
+from .models import Tag
 from .plugins import PLUGINS
 from .utils import (
     default_after_handler,
@@ -113,7 +114,7 @@ class SpecTree:
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
-        :param tags: a tuple of tags string
+        :param tags: a tuple of strings or :class:`spectree.models.Tag`
         :param before: :meth:`spectree.utils.default_before_handler` for
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
@@ -208,14 +209,16 @@ class SpecTree:
                 summary, desc = parse_comments(func)
                 func_tags = getattr(func, "tags", ())
                 for tag in func_tags:
-                    if tag not in tags:
-                        tags[tag] = {"name": tag}
+                    if str(tag) not in tags:
+                        tags[str(tag)] = (
+                            tag.dict() if isinstance(tag, Tag) else {"name": tag}
+                        )
 
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": f"{method.lower()}_{path}",
                     "description": desc or "",
-                    "tags": getattr(func, "tags", []),
+                    "tags": [str(x) for x in getattr(func, "tags", ())],
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }

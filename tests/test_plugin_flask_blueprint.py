@@ -6,7 +6,7 @@ from flask import Blueprint, Flask, jsonify, request
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
 
 def before_handler(req, resp, err, _):
@@ -40,7 +40,7 @@ def ping():
     json=JSON,
     cookies=Cookies,
     resp=Response(HTTP_200=Resp, HTTP_401=None),
-    tags=["api", "test"],
+    tags=[api_tag, "test"],
     after=api_after_handler,
 )
 def user_score(name):
@@ -54,7 +54,7 @@ def user_score(name):
 @app.route("/api/user_annotated/<name>", methods=["POST"])
 @api.validate(
     resp=Response(HTTP_200=Resp, HTTP_401=None),
-    tags=["api", "test"],
+    tags=[api_tag, "test"],
     after=api_after_handler,
 )
 def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
