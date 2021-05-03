@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, Sequence
 
 from pydantic import BaseModel, Field
@@ -44,3 +45,19 @@ class UnprocessableEntity(BaseModel):
     """Model of 422 Unprocessable Entity error."""
 
     __root__: Sequence[UnprocessableEntityElement]
+
+
+class SecureType(str, Enum):
+    HTTP = "http"
+    API_KEY = "apiKey"
+    OAUTH_TWO = "oauth2"
+    OPEN_ID_CONNECT = "openIdConnect"
+
+
+class SecuritySchemesData(BaseModel):
+    type: SecureType = Field(..., description="Secure scheme type")
+    name: str = None
+    field_in: str = Field(None, alias="in")
+    scheme: str = None
+    openIdConnectUrl: str = None
+    flows: dict = None
