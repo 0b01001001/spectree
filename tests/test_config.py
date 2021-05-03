@@ -3,36 +3,15 @@ from pydantic import ValidationError
 
 from spectree.config import Config
 
-# data from example - https://swagger.io/docs/specification/authentication/
-SECURITY_SCHEMAS = {
-    "auth_apiKey": {"type": "apiKey", "name": "Authorization", "in": "header"},
-    "auth_BasicAuth": {"type": "http", "scheme": "basic"},
-    "auth_BearerAuth": {"type": "http", "scheme": "basic"},
-    "auth_openID": {
-        "type": "openIdConnect",
-        "openIdConnectUrl": "https://example.com/.well-known/openid-configuration",
-    },
-    "auth_oauth2": {
-        "type": "oauth2",
-        "flows": {
-            "authorizationCode": {
-                "authorizationUrl": "https://example.com/oauth/authorize",
-                "tokenUrl": "https://example.com/oauth/token",
-                "scopes": {
-                    "read": "Grants read access",
-                    "write": "Grants write access",
-                    "admin": "Grants access to admin operations",
-                },
-            },
-        },
-    },
-}
+from .common import SECURITY_SCHEMAS
 
 
 @pytest.fixture
 def config():
     return Config()
 
+def test_update_config_print(config):
+    config.__repr__()
 
 def test_update_config(config):
     default = Config()

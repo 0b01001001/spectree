@@ -4,6 +4,7 @@ from typing import Dict, List
 from pydantic import BaseModel, Field, root_validator
 
 from spectree import Tag
+from spectree.models import SecuritySchemesData
 
 api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
 
@@ -67,3 +68,39 @@ def get_paths(spec):
 
     paths.sort()
     return paths
+
+
+# data from example - https://swagger.io/docs/specification/authentication/
+SECURITY_SCHEMAS = {
+    "auth_apiKey": SecuritySchemesData(
+        **{"type": "apiKey", "name": "Authorization", "in": "header"}
+    ).dict(exclude_none=True),
+    "auth_BasicAuth": SecuritySchemesData(**{"type": "http", "scheme": "basic"}).dict(
+        exclude_none=True
+    ),
+    "auth_BearerAuth": SecuritySchemesData(**{"type": "http", "scheme": "basic"}).dict(
+        exclude_none=True
+    ),
+    "auth_openID": SecuritySchemesData(
+        **{
+            "type": "openIdConnect",
+            "openIdConnectUrl": "https://example.com/.well-known/openid-configuration",
+        }
+    ).dict(exclude_none=True),
+    "auth_oauth2": SecuritySchemesData(
+        **{
+            "type": "oauth2",
+            "flows": {
+                "authorizationCode": {
+                    "authorizationUrl": "https://example.com/oauth/authorize",
+                    "tokenUrl": "https://example.com/oauth/token",
+                    "scopes": {
+                        "read": "Grants read access",
+                        "write": "Grants write access",
+                        "admin": "Grants access to admin operations",
+                    },
+                },
+            },
+        }
+    ).dict(exclude_none=True),
+}

@@ -1,15 +1,23 @@
 import pytest
 
-from .common import JSON, Cookies, Headers, Query, Resp, get_paths
+from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp, get_paths
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
+from .test_plugin_flask import api_secure as flask_api_secure
 from .test_plugin_flask_blueprint import api as flask_bp_api
 from .test_plugin_flask_view import api as flask_view_api
 from .test_plugin_starlette import api as starlette_api
 
 
 @pytest.mark.parametrize(
-    "api", [flask_api, flask_bp_api, flask_view_api, falcon_api, starlette_api]
+    "api",
+    [
+        flask_api,
+        flask_bp_api,
+        flask_view_api,
+        falcon_api,
+        starlette_api,
+    ],
 )
 def test_plugin_spec(api):
     models = {
@@ -59,3 +67,33 @@ def test_plugin_spec(api):
             assert param["name"] == "name"
         elif param["in"] == "query":
             assert param["name"] == "order"
+
+
+def test_secure_spec():
+    assert (
+        flask_api_secure.spec["components"]["securitySchemes"].keys()
+        == SECURITY_SCHEMAS.keys()
+    )
+
+    paths = flask_api_secure.spec["paths"]
+    # iter paths
+    for path, path_data in paths.items():
+        security = path_data["get"]["security"]
+        # check empty-secure path
+        if path == "/no-secure-ping":
+            assert security == [{}]
+        else:
+            # iter secure names and params
+            for secure_key, secure_value in security[0].items():
+                # check secure names valid
+                assert secure_key in [*SECURITY_SCHEMAS.keys()]
+
+                # check if flow exist
+                if secure_value:
+                    assert set(secure_value).issubset(
+                        [
+                            *SECURITY_SCHEMAS[secure_key]["flows"]["authorizationCode"][
+                                "scopes"
+                            ].keys()
+                        ]
+                    )
