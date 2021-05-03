@@ -11,6 +11,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
+    :ivar AUTH_METHODS: OpenAPI `securitySchemes` JSON
     """
 
     def __init__(self, **kwargs):
@@ -27,6 +28,8 @@ class Config:
         self.DESCRIPTION = None
         self.VERSION = "0.1"
         self.DOMAIN = None
+
+        self.AUTH_METHODS = None
 
         self.logger = logging.getLogger(__name__)
 
