@@ -10,8 +10,6 @@ from .common import SECURITY_SCHEMAS
 def config():
     return Config()
 
-def test_update_config_print(config):
-    config.__repr__()
 
 def test_update_config(config):
     default = Config()
