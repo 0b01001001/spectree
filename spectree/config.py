@@ -1,5 +1,7 @@
 import logging
 
+from .models import SecuritySchemesData
+
 
 class Config:
     """
@@ -66,3 +68,6 @@ class Config:
 
         assert self.UI in self._SUPPORT_UI, "unsupported UI"
         assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"
+        if self.AUTH_METHODS:
+            for value in self.AUTH_METHODS.values():
+                SecuritySchemesData(**value)
