@@ -84,14 +84,10 @@ class SpecTree:
         if self.config.MODE == "greedy":
             return False
         elif self.config.MODE == "strict":
-            if getattr(func, "_decorator", None) == self:
-                return False
-            return True
+            return getattr(func, "_decorator", None) != self
         else:
             decorator = getattr(func, "_decorator", None)
-            if decorator and decorator != self:
-                return True
-            return False
+            return bool(decorator and decorator != self)
 
     def validate(
         self,

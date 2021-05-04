@@ -91,10 +91,7 @@ def has_model(func):
     if any(hasattr(func, x) for x in ("query", "json", "headers")):
         return True
 
-    if hasattr(func, "resp") and func.resp.has_model():
-        return True
-
-    return False
+    return bool(hasattr(func, "resp") and func.resp.has_model())
 
 
 def parse_code(http_code):
