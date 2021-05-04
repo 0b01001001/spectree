@@ -36,9 +36,7 @@ class FlaskPlugin(BasePlugin):
                 yield rule
 
     def bypass(self, func, method):
-        if method in ["HEAD", "OPTIONS"]:
-            return True
-        return False
+        return method in ["HEAD", "OPTIONS"]
 
     def parse_func(self, route):
         from flask import current_app

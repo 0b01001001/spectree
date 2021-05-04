@@ -35,7 +35,7 @@ class Response:
         """
         :returns: boolean -- does this response has models or not
         """
-        return True if self.code_models else False
+        return bool(self.code_models)
 
     def find_model(self, code):
         """
