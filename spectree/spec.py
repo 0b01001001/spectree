@@ -101,7 +101,7 @@ class SpecTree:
         cookies=None,
         resp=None,
         tags=(),
-        security={},
+        security=None,
         before=None,
         after=None,
     ):
