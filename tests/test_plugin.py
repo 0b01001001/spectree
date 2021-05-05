@@ -70,10 +70,9 @@ def test_plugin_spec(api):
 
 
 def test_secure_spec():
-    assert (
-        flask_api_secure.spec["components"]["securitySchemes"].keys()
-        == SECURITY_SCHEMAS.keys()
-    )
+    assert [*flask_api_secure.spec["components"]["securitySchemes"].keys()] == [
+        scheme.name for scheme in SECURITY_SCHEMAS
+    ]
 
     paths = flask_api_secure.spec["paths"]
     # iter paths
@@ -86,14 +85,14 @@ def test_secure_spec():
             # iter secure names and params
             for secure_key, secure_value in security[0].items():
                 # check secure names valid
-                assert secure_key in [*SECURITY_SCHEMAS.keys()]
+                assert secure_key in [scheme.name for scheme in SECURITY_SCHEMAS]
 
                 # check if flow exist
                 if secure_value:
-                    assert set(secure_value).issubset(
-                        [
-                            *SECURITY_SCHEMAS[secure_key]["flows"]["authorizationCode"][
-                                "scopes"
-                            ].keys()
-                        ]
-                    )
+                    scopes = [
+                        scheme.data.flows["authorizationCode"]["scopes"]
+                        for scheme in SECURITY_SCHEMAS
+                        if scheme.name == secure_key
+                    ]
+
+                    assert set(secure_value).issubset(*scopes)

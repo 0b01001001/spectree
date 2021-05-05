@@ -35,7 +35,7 @@ api = SpecTree("flask", before=before_handler, after=after_handler, annotations=
 app = Flask(__name__)
 app.config["TESTING"] = True
 
-api_secure = SpecTree("flask", auth_methods=SECURITY_SCHEMAS)
+api_secure = SpecTree("flask", security_schemes=SECURITY_SCHEMAS)
 app_secure = Flask(__name__)
 app_secure.config["TESTING"] = True
 
