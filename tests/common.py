@@ -3,8 +3,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field, root_validator
 
-from spectree import Tag
-from spectree.models import SecuritySchemesData
+from spectree import SecurityScheme, Tag
 
 api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
 
@@ -71,24 +70,23 @@ def get_paths(spec):
 
 
 # data from example - https://swagger.io/docs/specification/authentication/
-SECURITY_SCHEMAS = {
-    "auth_apiKey": SecuritySchemesData(
-        **{"type": "apiKey", "name": "Authorization", "in": "header"}
-    ).dict(exclude_none=True),
-    "auth_BasicAuth": SecuritySchemesData(**{"type": "http", "scheme": "basic"}).dict(
-        exclude_none=True
+SECURITY_SCHEMAS = [
+    SecurityScheme(
+        name="auth_apiKey",
+        data={"type": "apiKey", "name": "Authorization", "in": "header"},
     ),
-    "auth_BearerAuth": SecuritySchemesData(**{"type": "http", "scheme": "basic"}).dict(
-        exclude_none=True
-    ),
-    "auth_openID": SecuritySchemesData(
-        **{
+    SecurityScheme(name="auth_BasicAuth", data={"type": "http", "scheme": "basic"}),
+    SecurityScheme(name="auth_BearerAuth", data={"type": "http", "scheme": "basic"}),
+    SecurityScheme(
+        name="auth_openID",
+        data={
             "type": "openIdConnect",
             "openIdConnectUrl": "https://example.com/.well-known/openid-configuration",
-        }
-    ).dict(exclude_none=True),
-    "auth_oauth2": SecuritySchemesData(
-        **{
+        },
+    ),
+    SecurityScheme(
+        name="auth_oauth2",
+        data={
             "type": "oauth2",
             "flows": {
                 "authorizationCode": {
@@ -101,6 +99,6 @@ SECURITY_SCHEMAS = {
                     },
                 },
             },
-        }
-    ).dict(exclude_none=True),
-}
+        },
+    ),
+]
