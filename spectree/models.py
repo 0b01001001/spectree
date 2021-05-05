@@ -1,7 +1,11 @@
+import re
 from enum import Enum
 from typing import Any, Dict, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+
+# OpenAPI names validation regexp
+OAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
 
 
 class ExternalDocs(BaseModel):
@@ -54,10 +58,38 @@ class SecureType(str, Enum):
     OPEN_ID_CONNECT = "openIdConnect"
 
 
-class SecuritySchemesData(BaseModel):
+class SecuritySchemeData(BaseModel):
+    """
+    Security scheme data
+    """
+
     type: SecureType = Field(..., description="Secure scheme type")
     name: str = None
     field_in: str = Field(None, alias="in")
     scheme: str = None
     openIdConnectUrl: str = None
     flows: dict = None
+
+    class Config:
+        validate_assignment = True
+
+
+class SecurityScheme(BaseModel):
+    """
+    Named security scheme
+    """
+
+    name: str = Field(
+        ...,
+        description="Custom security scheme name. Can only contain - [A-Za-z0-9-._]",
+    )
+    data: SecuritySchemeData = Field(..., description="Security scheme data")
+
+    @validator("name")
+    def check_db_name(cls, value: str):
+        if not OAPI_NAME_RE.fullmatch(value):
+            raise ValueError("Name not match OpenAPI rules")
+        return value
+
+    class Config:
+        validate_assignment = True
