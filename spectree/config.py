@@ -14,7 +14,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
-    :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON
+    :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON with list of auth configs
     """
 
     def __init__(self, **kwargs):
