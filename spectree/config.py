@@ -1,6 +1,7 @@
 import logging
+from typing import List, Optional
 
-from .models import SecuritySchemesData
+from .models import SecurityScheme
 
 
 class Config:
@@ -13,7 +14,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
-    :ivar AUTH_METHODS: OpenAPI `securitySchemes` JSON
+    :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON
     """
 
     def __init__(self, **kwargs):
@@ -31,7 +32,7 @@ class Config:
         self.VERSION = "0.1"
         self.DOMAIN = None
 
-        self.AUTH_METHODS = None
+        self.SECURITY_SCHEMES: Optional[List[SecurityScheme]] = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -68,6 +69,3 @@ class Config:
 
         assert self.UI in self._SUPPORT_UI, "unsupported UI"
         assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"
-        if self.AUTH_METHODS:
-            for value in self.AUTH_METHODS.values():
-                SecuritySchemesData(**value)
