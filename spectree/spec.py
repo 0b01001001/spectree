@@ -190,8 +190,8 @@ class SpecTree:
             if tags:
                 validation.tags = tags
 
-            validation.security = security
-
+            # if security not exist - set empty dict
+            validation.security = security or {}
             # register decorator
             validation._decorator = self
             return validation
@@ -224,7 +224,7 @@ class SpecTree:
                     "operationId": f"{method.lower()}_{path}",
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
-                    "security": [getattr(func, "security", None)],
+                    "security": [getattr(func, "security", {})],
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
