@@ -76,7 +76,7 @@ SECURITY_SCHEMAS = [
         data={"type": "apiKey", "name": "Authorization", "in": "header"},
     ),
     SecurityScheme(name="auth_BasicAuth", data={"type": "http", "scheme": "basic"}),
-    SecurityScheme(name="auth_BearerAuth", data={"type": "http", "scheme": "basic"}),
+    SecurityScheme(name="auth_BearerAuth", data={"type": "http", "scheme": "bearer"}),
     SecurityScheme(
         name="auth_openID",
         data={
@@ -101,4 +101,31 @@ SECURITY_SCHEMAS = [
             },
         },
     ),
+]
+WRONG_SECURITY_SCHEMAS_DATA = [
+    {
+        "name": "auth_apiKey_name",
+        "data": {"type": "apiKey", "name": "Authorization"},
+    },
+    {
+        "name": "auth_apiKey_in",
+        "data": {"type": "apiKey", "in": "header"},
+    },
+    {
+        "name": "auth_BasicAuth_scheme",
+        "data": {"type": "http"},
+    },
+    {
+        "name": "auth_openID_openIdConnectUrl",
+        "data": {"type": "openIdConnect"},
+    },
+    {
+        "name": "auth_oauth2_flows",
+        "data": {"type": "oauth2"},
+    },
+    {
+        "name": "empty_Data",
+        "data": {},
+    },
+    {"name": "wrong_Data", "data": {"x": "y"}},
 ]
