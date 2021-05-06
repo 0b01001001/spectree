@@ -5,7 +5,7 @@ from typing import Any, Dict, Sequence
 from pydantic import BaseModel, Field, validator
 
 # OpenAPI names validation regexp
-OAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
+OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
 
 
 class ExternalDocs(BaseModel):
@@ -87,7 +87,7 @@ class SecurityScheme(BaseModel):
 
     @validator("name")
     def check_db_name(cls, value: str):
-        if not OAPI_NAME_RE.fullmatch(value):
+        if not OpenAPI_NAME_RE.fullmatch(value):
             raise ValueError("Name not match OpenAPI rules")
         return value
 
