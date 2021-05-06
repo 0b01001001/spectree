@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from spectree import SecurityScheme
 from spectree.config import Config
 
-from .common import SECURITY_SCHEMAS
+from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
 
 
 @pytest.fixture
@@ -80,3 +80,10 @@ def test_update_security_scheme_wrong_name(
 
     with pytest.raises(ValidationError):
         secure_item.name = symbol + secure_item.name
+
+
+@pytest.mark.parametrize(("secure_item"), WRONG_SECURITY_SCHEMAS_DATA)
+def test_update_security_scheme_wrong_data(config, secure_item: dict):
+    # update and validate each schema type
+    with pytest.raises(ValidationError):
+        SecurityScheme(**secure_item)
