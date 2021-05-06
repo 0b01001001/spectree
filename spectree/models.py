@@ -79,7 +79,10 @@ class SecuritySchemeData(BaseModel):
     """
 
     type: SecureType = Field(..., description="Secure scheme type")
-    description: str = None
+    description: str = Field(
+        None,
+        description="A short description for security scheme.",
+    )
     name: str = Field(
         None,
         description="The name of the header, query or cookie parameter to be used.",
