@@ -61,11 +61,12 @@ class Response:
             responses[parse_code(code)] = {"description": DEFAULT_CODE_DESC[code]}
 
         for code, model in self.code_models.items():
+            model_name = f"{model.__module__}.{model.__name__}"
             responses[parse_code(code)] = {
                 "description": DEFAULT_CODE_DESC[code],
                 "content": {
                     "application/json": {
-                        "schema": {"$ref": f"#/components/schemas/{model.__name__}"}
+                        "schema": {"$ref": f"#/components/schemas/{model_name}"}
                     }
                 },
             }
