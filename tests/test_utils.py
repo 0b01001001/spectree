@@ -85,25 +85,27 @@ def test_parse_resp():
     assert resp_spec["422"]["description"] == "Unprocessable Entity"
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/UnprocessableEntity"
+        == "#/components/schemas/spectree.models.UnprocessableEntity"
     )
     assert (
         resp_spec["200"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/DemoModel"
+        == "#/components/schemas/tests.common.DemoModel"
     )
 
 
 def test_parse_request():
     assert (
         parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/DemoModel"
+        == "#/components/schemas/tests.common.DemoModel"
     )
     assert parse_request(demo_class.demo_method) == {}
 
 
 def test_parse_params():
     models = {
-        "DemoModel": DemoModel.schema(ref_template="#/components/schemas/{model}")
+        "tests.common.DemoModel": DemoModel.schema(
+            ref_template="#/components/schemas/{model}"
+        )
     }
     assert parse_params(demo_func, [], models) == []
     params = parse_params(demo_class.demo_method, [], models)
@@ -120,7 +122,9 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        "DemoQuery": DemoQuery.schema(ref_template="#/components/schemas/{model}")
+        "tests.common.DemoQuery": DemoQuery.schema(
+            ref_template="#/components/schemas/{model}"
+        )
     }
     params = parse_params(demo_func_with_query, [], models)
     assert params == [

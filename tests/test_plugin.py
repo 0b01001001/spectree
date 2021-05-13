@@ -13,7 +13,9 @@ from .test_plugin_starlette import api as starlette_api
 )
 def test_plugin_spec(api):
     models = {
-        m.__name__: m.schema(ref_template="#/components/schemas/{model}")
+        f"{m.__module__}.{m.__name__}": m.schema(
+            ref_template="#/components/schemas/{model}"
+        )
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():
@@ -49,7 +51,7 @@ def test_plugin_spec(api):
     assert user["tags"] == ["API", "test"]
     assert (
         user["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/JSON"
+        == "#/components/schemas/tests.common.JSON"
     )
     assert len(user["responses"]) == 3
 

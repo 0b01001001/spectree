@@ -168,14 +168,16 @@ class SpecTree:
             ):
                 if model is not None:
                     assert issubclass(model, BaseModel)
-                    self.models[model.__name__] = model.schema(
+                    model_key = f"{model.__module__}.{model.__name__}"
+                    self.models[model_key] = model.schema(
                         ref_template="#/components/schemas/{model}"
                     )
-                    setattr(validation, name, model.__name__)
+                    setattr(validation, name, model_key)
 
             if resp:
                 for model in resp.models:
-                    self.models[model.__name__] = model.schema(
+                    model_key = f"{model.__module__}.{model.__name__}"
+                    self.models[model_key] = model.schema(
                         ref_template="#/components/schemas/{model}"
                     )
                 validation.resp = resp

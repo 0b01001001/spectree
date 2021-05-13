@@ -40,11 +40,11 @@ def test_response_spec():
     assert spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     assert (
         spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        == "DemoModel"
+        == "tests.common.DemoModel"
     )
     assert (
         spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        == "UnprocessableEntity"
+        == "spectree.models.UnprocessableEntity"
     )
 
     assert spec.get(200) is None
