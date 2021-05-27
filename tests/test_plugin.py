@@ -14,11 +14,12 @@ from .test_plugin_starlette import api as starlette_api
 def test_plugin_spec(api):
     models = {
         f"{m.__module__}.{m.__name__}": m.schema(
-            ref_template="#/components/schemas/{model}"
+            ref_template=f"#/components/schemas/{m.__module__}.{m.__name__}.{{model}}"
         )
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():
+        schema.pop("definitions", None)
         assert api.spec["components"]["schemas"][name] == schema
 
     assert api.spec["tags"] == [
