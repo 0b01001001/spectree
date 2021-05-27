@@ -1,3 +1,4 @@
+from copy import deepcopy
 from functools import wraps
 
 from pydantic import BaseModel
@@ -169,16 +170,16 @@ class SpecTree:
                 if model is not None:
                     assert issubclass(model, BaseModel)
                     model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = model.schema(
-                        ref_template="#/components/schemas/{model}"
+                    self.models[model_key] = deepcopy(
+                        model.schema(ref_template="#/components/schemas/{model}")
                     )
                     setattr(validation, name, model_key)
 
             if resp:
                 for model in resp.models:
                     model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = model.schema(
-                        ref_template="#/components/schemas/{model}"
+                    self.models[model_key] = deepcopy(
+                        model.schema(ref_template="#/components/schemas/{model}")
                     )
                 validation.resp = resp
 
