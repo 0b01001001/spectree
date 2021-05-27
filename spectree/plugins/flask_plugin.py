@@ -11,29 +11,21 @@ class FlaskPlugin(BasePlugin):
     def find_routes(self):
         from flask import current_app
 
-        if self.blueprint_state:
-            excludes = [
-                f"{self.blueprint_state.blueprint.name}.{ep}"
-                for ep in ["static", "openapi"] + [f"doc_page_{ui}" for ui in PAGES]
-            ]
-            for rule in current_app.url_map.iter_rules():
-                if (
-                    self.blueprint_state.url_prefix
-                    and not str(rule).startswith(self.blueprint_state.url_prefix)
-                    or str(rule).startswith("/static")
-                ):
-                    continue
-                if rule.endpoint in excludes:
-                    continue
-                yield rule
-        else:
-            for rule in current_app.url_map.iter_rules():
-                if any(
-                    str(rule).startswith(path)
-                    for path in (f"/{self.config.PATH}", "/static")
-                ):
-                    continue
-                yield rule
+        for rule in current_app.url_map.iter_rules():
+            if any(
+                str(rule).startswith(path)
+                for path in (f"/{self.config.PATH}", "/static")
+            ):
+                continue
+            if rule.endpoint.startswith("openapi"):
+                continue
+            if (
+                self.blueprint_state
+                and self.blueprint_state.url_prefix
+                and str(rule).startswith(self.blueprint_state.url_prefix)
+            ):
+                continue
+            yield rule
 
     def bypass(self, func, method):
         return method in ["HEAD", "OPTIONS"]
@@ -186,9 +178,9 @@ class FlaskPlugin(BasePlugin):
         from flask import Blueprint, jsonify
 
         app.add_url_rule(
-            self.config.spec_url,
-            "openapi",
-            lambda: jsonify(self.spectree.spec),
+            rule=self.config.spec_url,
+            endpoint=f"openapi_{self.config.PATH}",
+            view_func=lambda: jsonify(self.spectree.spec),
         )
 
         if isinstance(app, Blueprint):
@@ -207,16 +199,16 @@ class FlaskPlugin(BasePlugin):
 
             for ui in PAGES:
                 app.add_url_rule(
-                    f"/{self.config.PATH}/{ui}",
-                    f"doc_page_{ui}",
-                    lambda ui=ui: gen_doc_page(ui),
+                    rule=f"/{self.config.PATH}/{ui}",
+                    endpoint=f"openapi_{self.config.PATH}_{ui}",
+                    view_func=lambda ui=ui: gen_doc_page(ui),
                 )
 
             app.record(lambda state: setattr(self, "blueprint_state", state))
         else:
             for ui in PAGES:
                 app.add_url_rule(
-                    f"/{self.config.PATH}/{ui}",
-                    f"doc_page_{ui}",
-                    lambda ui=ui: PAGES[ui].format(self.config.spec_url),
+                    rule=f"/{self.config.PATH}/{ui}",
+                    endpoint=f"openapi_{self.config.PATH}_{ui}",
+                    view_func=lambda ui=ui: PAGES[ui].format(self.config.spec_url),
                 )
