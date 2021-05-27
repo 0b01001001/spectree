@@ -171,7 +171,9 @@ class SpecTree:
                     assert issubclass(model, BaseModel)
                     model_key = f"{model.__module__}.{model.__name__}"
                     self.models[model_key] = deepcopy(
-                        model.schema(ref_template="#/components/schemas/{model}")
+                        model.schema(
+                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
+                        )
                     )
                     setattr(validation, name, model_key)
 
@@ -179,7 +181,9 @@ class SpecTree:
                 for model in resp.models:
                     model_key = f"{model.__module__}.{model.__name__}"
                     self.models[model_key] = deepcopy(
-                        model.schema(ref_template="#/components/schemas/{model}")
+                        model.schema(
+                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
+                        )
                     )
                 validation.resp = resp
 
@@ -244,10 +248,10 @@ class SpecTree:
         handle nested models
         """
         definitions = {}
-        for schema in self.models.values():
+        for name, schema in self.models.items():
             if "definitions" in schema:
                 for key, value in schema["definitions"].items():
-                    definitions[key] = value
+                    definitions[f"{name}.{key}"] = value
                 del schema["definitions"]
 
         return definitions
