@@ -98,6 +98,7 @@ class SpecTree:
         cookies=None,
         resp=None,
         tags=(),
+        security=None,
         before=None,
         after=None,
     ):
@@ -105,6 +106,7 @@ class SpecTree:
         - validate query, json, headers in request
         - validate response body and status code
         - add tags to this API route
+        - add security to this API route
 
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
@@ -112,6 +114,7 @@ class SpecTree:
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
         :param tags: a tuple of strings or :class:`spectree.models.Tag`
+        :param security: dict with security config for current route and method
         :param before: :meth:`spectree.utils.default_before_handler` for
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
@@ -190,6 +193,8 @@ class SpecTree:
             if tags:
                 validation.tags = tags
 
+            # if security not exist - set empty dict
+            validation.security = security or {}
             # register decorator
             validation._decorator = self
             return validation
@@ -222,6 +227,7 @@ class SpecTree:
                     "operationId": f"{method.lower()}_{path}",
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
+                    "security": [getattr(func, "security", {})],
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
@@ -239,7 +245,15 @@ class SpecTree:
             },
             "tags": list(tags.values()),
             "paths": {**routes},
-            "components": {"schemas": {**self.models, **self._get_model_definitions()}},
+            "components": {
+                "schemas": {**self.models, **self._get_model_definitions()},
+                "securitySchemes": {
+                    scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
+                    for scheme in self.config.SECURITY_SCHEMES
+                }
+                if self.config.SECURITY_SCHEMES
+                else None,
+            },
         }
         return spec
 
