@@ -93,11 +93,15 @@ class SecuritySchemeData(BaseModel):
     scheme: str = Field(None, description="The name of the HTTP Authorization scheme.")
     bearerFormat: dict = Field(
         None,
-        description="A hint to the client to identify how the bearer token is formatted.",
+        description=(
+            "A hint to the client to identify how the bearer token is formatted."
+        ),
     )
     flows: dict = Field(
         None,
-        description="Containing configuration information for the flow types supported.",
+        description=(
+            "Containing configuration information for the flow types supported."
+        ),
     )
     openIdConnectUrl: str = Field(
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
@@ -111,7 +115,8 @@ class SecuritySchemeData(BaseModel):
 
         if not set(type_req_fields[values["type"]]).issubset(exist_fields):
             raise ValueError(
-                f"For `{values['type']}` type `{', '.join(type_req_fields[values['type']])}` field(s) is required."
+                f"For `{values['type']}` type "
+                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required."
             )
         return values
 
