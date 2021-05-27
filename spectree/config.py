@@ -1,4 +1,7 @@
 import logging
+from typing import List, Optional
+
+from .models import SecurityScheme
 
 
 class Config:
@@ -11,6 +14,7 @@ class Config:
     :ivar TITLE: service name
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
+    :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON with list of auth configs
     """
 
     def __init__(self, **kwargs):
@@ -27,6 +31,8 @@ class Config:
         self.DESCRIPTION = None
         self.VERSION = "0.1"
         self.DOMAIN = None
+
+        self.SECURITY_SCHEMES: Optional[List[SecurityScheme]] = None
 
         self.logger = logging.getLogger(__name__)
 
