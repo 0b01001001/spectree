@@ -6,6 +6,9 @@ install:
 	pip install -e .[flask,falcon,starlette,dev]
 
 test:
+	pip install falcon --upgrade
+	pytest tests -vv
+	pip uninstall falcon -y && pip install falcon==2.0.0
 	pytest tests -vv
 
 doc:
