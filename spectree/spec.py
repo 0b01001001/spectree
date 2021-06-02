@@ -252,7 +252,7 @@ class SpecTree:
                     for scheme in self.config.SECURITY_SCHEMES
                 }
                 if self.config.SECURITY_SCHEMES
-                else None,
+                else {},
             },
         }
         return spec
