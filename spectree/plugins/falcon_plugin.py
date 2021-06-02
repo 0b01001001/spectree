@@ -31,10 +31,11 @@ DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
 class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
-        from falcon import HTTPUnsupportedMediaType
+        from falcon import HTTPUnsupportedMediaType, MediaNotFoundError
         from falcon.routing.compiled import _FIELD_PATTERN
 
         self.UnsupportedMediaType = HTTPUnsupportedMediaType
+        self.MediaNotFoundError = MediaNotFoundError
         self.FIELD_PATTERN = _FIELD_PATTERN
         # NOTE from `falcon.routing.compiled.CompiledRouterNode`
         self.ESCAPE = r"[\.\(\)\[\]\?\$\*\+\^\|]"
@@ -145,7 +146,7 @@ class FalconPlugin(BasePlugin):
             req.context.cookies = cookies.parse_obj(req.cookies)
         try:
             media = req.media
-        except self.UnsupportedMediaType:
+        except (self.UnsupportedMediaType, self.MediaNotFoundError):
             media = None
         if json:
             req.context.json = json.parse_obj(media)
