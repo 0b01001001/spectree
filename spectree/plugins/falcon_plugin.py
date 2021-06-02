@@ -189,9 +189,6 @@ class FalconPlugin(BasePlugin):
         after(_req, _resp, resp_validation_error, _self)
 
     def bypass(self, func, method):
-        if not isinstance(func, partial):
-            return False
-        if inspect.ismethod(func.func):
-            return False
-        # others are <cyfunction>
-        return True
+        if isinstance(func, partial):
+            return True
+        return inspect.isfunction(func)
