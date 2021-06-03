@@ -3,8 +3,8 @@ import pytest
 from spectree.response import Response
 from spectree.spec import SpecTree
 from spectree.utils import (
-    has_model,
     get_model_path_key,
+    has_model,
     parse_code,
     parse_comments,
     parse_name,

@@ -1,6 +1,7 @@
 import pytest
 
 from spectree.utils import get_model_key, get_model_path_key, get_model_schema
+
 from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp, get_paths
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api

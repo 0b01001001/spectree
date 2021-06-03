@@ -2,8 +2,8 @@ import inspect
 import json
 import logging
 import re
-
 from hashlib import sha1
+
 from pydantic import BaseModel
 
 # parse HTTP status code to get the code
