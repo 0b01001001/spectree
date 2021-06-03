@@ -196,9 +196,7 @@ class SpecTree:
         """
 
         model_key = get_model_key(model=model)
-        self.models[model_key] = deepcopy(
-            get_model_schema(model=model)
-        )
+        self.models[model_key] = deepcopy(get_model_schema(model=model))
 
         return model_key
 

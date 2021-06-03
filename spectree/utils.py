@@ -180,7 +180,9 @@ def get_model_path_key(model_path: str):
 
     model_path_parts = model_path.rsplit(".", 1)
     if len(model_path_parts) > 1:
-        model_path_key = f"{hash_module_path(module_path=model_path_parts[0])}.{model_path_parts[1]}"
+        model_path_key = (
+            f"{hash_module_path(module_path=model_path_parts[0])}.{model_path_parts[1]}"
+        )
     else:
         model_path_key = model_path_parts[0]
 
@@ -203,7 +205,7 @@ def get_model_schema(model):
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from request or response
     """
-    assert(issubclass(model, BaseModel))
+    assert issubclass(model, BaseModel)
 
     return model.schema(
         ref_template=f"#/components/schemas/{get_model_key(model)}.{{model}}"
