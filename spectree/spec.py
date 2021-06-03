@@ -1,5 +1,6 @@
 from copy import deepcopy
 from functools import wraps
+from hashlib import sha1
 
 from pydantic import BaseModel
 
@@ -171,23 +172,12 @@ class SpecTree:
                 ("query", "json", "headers", "cookies"), (query, json, headers, cookies)
             ):
                 if model is not None:
-                    assert issubclass(model, BaseModel)
-                    model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = deepcopy(
-                        model.schema(
-                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
-                        )
-                    )
+                    model_key = self._add_model(model=model)
                     setattr(validation, name, model_key)
 
             if resp:
                 for model in resp.models:
-                    model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = deepcopy(
-                        model.schema(
-                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
-                        )
-                    )
+                    self._add_model(model=model)
                 validation.resp = resp
 
             if tags:
@@ -200,6 +190,22 @@ class SpecTree:
             return validation
 
         return decorate_validation
+
+    def _add_model(self, model) -> str:
+        """
+        unified model processing
+        """
+        assert(issubclass(model, BaseModel))
+
+        model_path = f"{model.__module__}.{model.__name__}"
+        model_key = sha1(model_path.encode()).hexdigest()[:7]
+        self.models[model_key] = deepcopy(
+            model.schema(
+                ref_template=f"#/components/schemas/{model_key}.{{model}}"
+            )
+        )
+
+        return model_key
 
     def _generate_spec(self):
         """
