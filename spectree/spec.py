@@ -1,8 +1,5 @@
 from copy import deepcopy
 from functools import wraps
-from hashlib import sha1
-
-from pydantic import BaseModel
 
 from .config import Config
 from .models import Tag
@@ -10,6 +7,8 @@ from .plugins import PLUGINS
 from .utils import (
     default_after_handler,
     default_before_handler,
+    get_model_key,
+    get_model_schema,
     parse_comments,
     parse_name,
     parse_params,
@@ -195,14 +194,10 @@ class SpecTree:
         """
         unified model processing
         """
-        assert(issubclass(model, BaseModel))
 
-        model_path = f"{model.__module__}.{model.__name__}"
-        model_key = sha1(model_path.encode()).hexdigest()[:7]
+        model_key = get_model_key(model=model)
         self.models[model_key] = deepcopy(
-            model.schema(
-                ref_template=f"#/components/schemas/{model_key}.{{model}}"
-            )
+            get_model_schema(model=model)
         )
 
         return model_key

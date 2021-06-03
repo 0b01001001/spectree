@@ -4,6 +4,7 @@ from spectree.response import Response
 from spectree.spec import SpecTree
 from spectree.utils import (
     has_model,
+    get_model_path_key,
     parse_code,
     parse_comments,
     parse_name,
@@ -85,25 +86,25 @@ def test_parse_resp():
     assert resp_spec["422"]["description"] == "Unprocessable Entity"
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/spectree.models.UnprocessableEntity"
+        == f"#/components/schemas/{get_model_path_key('spectree.models.UnprocessableEntity')}"
     )
     assert (
         resp_spec["200"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/tests.common.DemoModel"
+        == f"#/components/schemas/{get_model_path_key('tests.common.DemoModel')}"
     )
 
 
 def test_parse_request():
     assert (
         parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/tests.common.DemoModel"
+        == f"#/components/schemas/{get_model_path_key('tests.common.DemoModel')}"
     )
     assert parse_request(demo_class.demo_method) == {}
 
 
 def test_parse_params():
     models = {
-        "tests.common.DemoModel": DemoModel.schema(
+        get_model_path_key("tests.common.DemoModel"): DemoModel.schema(
             ref_template="#/components/schemas/{model}"
         )
     }
@@ -122,7 +123,7 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        "tests.common.DemoQuery": DemoQuery.schema(
+        get_model_path_key("tests.common.DemoQuery"): DemoQuery.schema(
             ref_template="#/components/schemas/{model}"
         )
     }

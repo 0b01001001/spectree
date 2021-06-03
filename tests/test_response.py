@@ -1,6 +1,7 @@
 import pytest
 
 from spectree.response import DEFAULT_CODE_DESC, Response
+from spectree.utils import get_model_path_key
 
 from .common import DemoModel
 
@@ -40,11 +41,11 @@ def test_response_spec():
     assert spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     assert (
         spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        == "tests.common.DemoModel"
+        == get_model_path_key("tests.common.DemoModel")
     )
     assert (
         spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        == "spectree.models.UnprocessableEntity"
+        == get_model_path_key("spectree.models.UnprocessableEntity")
     )
 
     assert spec.get(200) is None
