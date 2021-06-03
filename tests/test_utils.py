@@ -84,20 +84,23 @@ def test_parse_resp():
     resp_spec = parse_resp(demo_func)
 
     assert resp_spec["422"]["description"] == "Unprocessable Entity"
+    model_path_key = get_model_path_key("spectree.models.UnprocessableEntity")
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
-        == f"#/components/schemas/{get_model_path_key('spectree.models.UnprocessableEntity')}"
+        == f"#/components/schemas/{model_path_key}"
     )
+    model_path_key = get_model_path_key("tests.common.DemoModel")
     assert (
         resp_spec["200"]["content"]["application/json"]["schema"]["$ref"]
-        == f"#/components/schemas/{get_model_path_key('tests.common.DemoModel')}"
+        == f"#/components/schemas/{model_path_key}"
     )
 
 
 def test_parse_request():
+    model_path_key = get_model_path_key("tests.common.DemoModel")
     assert (
         parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
-        == f"#/components/schemas/{get_model_path_key('tests.common.DemoModel')}"
+        == f"#/components/schemas/{model_path_key}"
     )
     assert parse_request(demo_class.demo_method) == {}
 

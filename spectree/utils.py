@@ -1,5 +1,4 @@
 import inspect
-import json
 import logging
 import re
 from hashlib import sha1
@@ -173,16 +172,16 @@ def hash_module_path(module_path: str):
 
 def get_model_path_key(model_path: str):
     """
-    generate short hashed prefix for module path (instead of its path to avoid code-structure leaking)
+    generate short hashed prefix for module path (instead of its path to avoid
+    code-structure leaking)
 
     :param modelpath: `str` model path in string
     """
 
     model_path_parts = model_path.rsplit(".", 1)
     if len(model_path_parts) > 1:
-        model_path_key = (
-            f"{hash_module_path(module_path=model_path_parts[0])}.{model_path_parts[1]}"
-        )
+        hashed_module_path = hash_module_path(module_path=model_path_parts[0])
+        model_path_key = f"{hashed_module_path}.{model_path_parts[1]}"
     else:
         model_path_key = model_path_parts[0]
 
@@ -191,9 +190,11 @@ def get_model_path_key(model_path: str):
 
 def get_model_key(model: BaseModel):
     """
-    generate model name prefixed by short hashed path (instead of its path to avoid code-structure leaking)
+    generate model name prefixed by short hashed path (instead of its path to
+    avoid code-structure leaking)
 
-    :param model: `pydantic.BaseModel` query, json, headers or cookies from request or response
+    :param model: `pydantic.BaseModel` query, json, headers or cookies from
+    request or response
     """
 
     return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
@@ -201,9 +202,11 @@ def get_model_key(model: BaseModel):
 
 def get_model_schema(model):
     """
-    return a dictionary representing the model as JSON Schema with using hashed prefix in ref
+    return a dictionary representing the model as JSON Schema with using hashed
+    prefix in ref
 
-    :param model: `pydantic.BaseModel` query, json, headers or cookies from request or response
+    :param model: `pydantic.BaseModel` query, json, headers or cookies from
+    request or response
     """
     assert issubclass(model, BaseModel)
 
