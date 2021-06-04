@@ -1,14 +1,14 @@
 from copy import deepcopy
 from functools import wraps
 
-from pydantic import BaseModel
-
 from .config import Config
 from .models import Tag
 from .plugins import PLUGINS
 from .utils import (
     default_after_handler,
     default_before_handler,
+    get_model_key,
+    get_model_schema,
     parse_comments,
     parse_name,
     parse_params,
@@ -171,23 +171,12 @@ class SpecTree:
                 ("query", "json", "headers", "cookies"), (query, json, headers, cookies)
             ):
                 if model is not None:
-                    assert issubclass(model, BaseModel)
-                    model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = deepcopy(
-                        model.schema(
-                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
-                        )
-                    )
+                    model_key = self._add_model(model=model)
                     setattr(validation, name, model_key)
 
             if resp:
                 for model in resp.models:
-                    model_key = f"{model.__module__}.{model.__name__}"
-                    self.models[model_key] = deepcopy(
-                        model.schema(
-                            ref_template=f"#/components/schemas/{model_key}.{{model}}"
-                        )
-                    )
+                    self._add_model(model=model)
                 validation.resp = resp
 
             if tags:
@@ -200,6 +189,16 @@ class SpecTree:
             return validation
 
         return decorate_validation
+
+    def _add_model(self, model) -> str:
+        """
+        unified model processing
+        """
+
+        model_key = get_model_key(model=model)
+        self.models[model_key] = deepcopy(get_model_schema(model=model))
+
+        return model_key
 
     def _generate_spec(self):
         """

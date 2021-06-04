@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from .models import UnprocessableEntity
-from .utils import parse_code
+from .utils import get_model_key, parse_code
 
 
 class Response:
@@ -61,7 +61,7 @@ class Response:
             responses[parse_code(code)] = {"description": DEFAULT_CODE_DESC[code]}
 
         for code, model in self.code_models.items():
-            model_name = f"{model.__module__}.{model.__name__}"
+            model_name = get_model_key(model=model)
             responses[parse_code(code)] = {
                 "description": DEFAULT_CODE_DESC[code],
                 "content": {
