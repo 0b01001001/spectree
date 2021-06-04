@@ -1,5 +1,7 @@
 import pytest
 
+from spectree.utils import get_model_key, get_model_path_key, get_model_schema
+
 from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp, get_paths
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
@@ -21,9 +23,7 @@ from .test_plugin_starlette import api as starlette_api
 )
 def test_plugin_spec(api):
     models = {
-        f"{m.__module__}.{m.__name__}": m.schema(
-            ref_template=f"#/components/schemas/{m.__module__}.{m.__name__}.{{model}}"
-        )
+        get_model_key(model=m): get_model_schema(model=m)
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():
@@ -60,7 +60,7 @@ def test_plugin_spec(api):
     assert user["tags"] == ["API", "test"]
     assert (
         user["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-        == "#/components/schemas/tests.common.JSON"
+        == f"#/components/schemas/{get_model_path_key('tests.common.JSON')}"
     )
     assert len(user["responses"]) == 3
 

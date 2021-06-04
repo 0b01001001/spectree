@@ -1,6 +1,9 @@
 import inspect
 import logging
 import re
+from hashlib import sha1
+
+from pydantic import BaseModel
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -155,3 +158,58 @@ def default_after_handler(req, resp, resp_validation_error, instance):
                 "spectree_validation": resp_validation_error.errors(),
             },
         )
+
+
+def hash_module_path(module_path: str):
+    """
+    generate short hashed prefix for module path
+
+    :param modelpath: `str` module path
+    """
+
+    return sha1(module_path.encode()).hexdigest()[:7]
+
+
+def get_model_path_key(model_path: str):
+    """
+    generate short hashed prefix for module path (instead of its path to avoid
+    code-structure leaking)
+
+    :param modelpath: `str` model path in string
+    """
+
+    model_path_parts = model_path.rsplit(".", 1)
+    if len(model_path_parts) > 1:
+        hashed_module_path = hash_module_path(module_path=model_path_parts[0])
+        model_path_key = f"{hashed_module_path}.{model_path_parts[1]}"
+    else:
+        model_path_key = model_path_parts[0]
+
+    return model_path_key
+
+
+def get_model_key(model: BaseModel):
+    """
+    generate model name prefixed by short hashed path (instead of its path to
+    avoid code-structure leaking)
+
+    :param model: `pydantic.BaseModel` query, json, headers or cookies from
+    request or response
+    """
+
+    return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
+
+
+def get_model_schema(model):
+    """
+    return a dictionary representing the model as JSON Schema with using hashed
+    prefix in ref
+
+    :param model: `pydantic.BaseModel` query, json, headers or cookies from
+    request or response
+    """
+    assert issubclass(model, BaseModel)
+
+    return model.schema(
+        ref_template=f"#/components/schemas/{get_model_key(model)}.{{model}}"
+    )
