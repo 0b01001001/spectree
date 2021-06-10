@@ -66,7 +66,8 @@ class Response:
                 "description": DEFAULT_CODE_DESC[code],
                 "content": {
                     "application/json": {
-                        "schema": {"$ref": f"#/components/schemas/{model_name}"}
+                        "schema": {"$ref": f"#/components/schemas/{model_name}"},
+                        "examples": model.schema().get("examples", {}),
                     }
                 },
             }
