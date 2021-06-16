@@ -5,6 +5,7 @@ from spectree.utils import get_model_key, get_model_path_key, get_model_schema
 from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp, get_paths
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
+from .test_plugin_flask import api_global_secure as flask_api_global_secure
 from .test_plugin_flask import api_secure as flask_api_secure
 from .test_plugin_flask_blueprint import api as flask_bp_api
 from .test_plugin_flask_view import api as flask_view_api
@@ -80,10 +81,10 @@ def test_secure_spec():
     paths = flask_api_secure.spec["paths"]
     # iter paths
     for path, path_data in paths.items():
-        security = path_data["get"]["security"]
+        security = path_data["get"].get("security")
         # check empty-secure path
         if path == "/no-secure-ping":
-            assert security == [{}]
+            assert security is None
         else:
             # iter secure names and params
             for secure_key, secure_value in security[0].items():
@@ -99,3 +100,29 @@ def test_secure_spec():
                     ]
 
                     assert set(secure_value).issubset(*scopes)
+
+
+def test_secure_global_spec():
+    assert [*flask_api_global_secure.spec["components"]["securitySchemes"].keys()] == [
+        scheme.name for scheme in SECURITY_SCHEMAS
+    ]
+
+    paths = flask_api_global_secure.spec["paths"]
+    global_security = flask_api_global_secure.spec["security"]
+
+    assert global_security == [{"auth_apiKey": []}]
+
+    # iter paths
+    for path, path_data in paths.items():
+        security = path_data["get"].get("security")
+        # check empty-secure path
+        if path == "/no-secure-override-ping":
+            # check if it is defined overridden no auth specification
+            assert security == []
+        elif path == "/oauth2-flows-override-ping":
+            # check if it is defined overridden security specification
+            assert security == [{"auth_oauth2": ["admin", "read"]}]
+        else:
+            # check if local security specification is missing,
+            # when was not specified explicitly
+            assert security is None
