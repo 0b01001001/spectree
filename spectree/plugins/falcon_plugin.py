@@ -211,8 +211,10 @@ class FalconPlugin(BasePlugin):
             return True
         return inspect.isfunction(func)
 
+
 class FalconAsgiPlugin(FalconPlugin):
     """Light wrapper around default Falcon plug-in to support Falcon 3.0 ASGI apps"""
+
     ASYNC = True
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
