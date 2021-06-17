@@ -22,7 +22,11 @@ class DocPage:
 
     def on_get(self, req, resp):
         resp.content_type = "text/html"
-        resp.body = self.page
+        # resp.body is deprecated in Falcon 3
+        if hasattr(resp, "text"):
+            resp.text = self.page
+        else:
+            resp.body = self.page
 
 
 class OpenAPIAsgi(OpenAPI):
