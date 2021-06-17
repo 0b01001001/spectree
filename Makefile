@@ -1,9 +1,14 @@
-check: style test
+check: lint test
+
+SOURCE_FILES=spectree tests examples setup.py
 
 install:
-	pip install -e .
+	pip install -e .[flask,falcon,starlette,dev]
 
 test:
+	pip install falcon --upgrade
+	pytest tests -vv
+	pip uninstall falcon -y && pip install falcon==2.0.0
 	pytest tests -vv
 
 doc:
@@ -20,10 +25,14 @@ package: clean
 publish: package
 	twine upload dist/*
 
-style:
-	# stop the build if there are Python syntax errors or undefined names
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	# exit-zero treats all errors as warnings
-	flake8 . --count --exit-zero --statistics
+format:
+	autoflake --in-place --recursive ${SOURCE_FILES}
+	isort --project=spectree ${SOURCE_FILES}
+	black ${SOURCE_FILES}
+
+lint:
+	isort --check --diff --project=spectree ${SOURCE_FILES}
+	black --check --diff ${SOURCE_FILES}
+	flake8 ${SOURCE_FILES} --count --show-source --statistics
 
 .PHONY: test doc

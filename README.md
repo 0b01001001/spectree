@@ -5,7 +5,7 @@
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/0b01001001/spectree/context:python)
-[![Documentation Status](https://readthedocs.org/projects/spectree/badge/?version=latest)](https://spectree.readthedocs.io/en/latest/?badge=latest)
+[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)](https://0b01001001.github.io/spectree/)
 
 Yet another library to generate OpenAPI document and validate request & response with Python annotations.
 
@@ -42,6 +42,7 @@ Check the [examples](/examples) folder.
    * `cookies`
    * `resp`
    * `tags`
+   * `security`
 4. access these data with `context(query, json, headers, cookies)` (of course, you can access these from the original place where the framework offered)
    * flask: `request.context`
    * falcon: `req.context`
@@ -50,6 +51,13 @@ Check the [examples](/examples) folder.
 6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
 
 If the request doesn't pass the validation, it will return a 422 with JSON error message(ctx, loc, msg, type).
+
+### Falcon response validation
+
+For falcon response, this library only validates against media as it is the serializable object. Response.body(deprecated in falcon 3.0 and replaced by text) is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`
+
+### Opt-in type annotation feature
+This library also supports injection of validated fields into view function arguments along with parameter annotation based type declaration. This works well with linters that can take advantage of typing features like mypy. See examples section below.
 
 ## How To
 
@@ -65,7 +73,7 @@ Check the [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/) document
 
 Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
 
-You can update the config when init the spectree like: 
+You can update the config when init the spectree like:
 
 ```py
 SpecTree('flask', title='Demo API', version='v1.0', path='doc')
@@ -80,6 +88,112 @@ Response(HTTP_200=None, HTTP_403=ForbidModel)
 Response('HTTP_200') # equals to Response(HTTP_200=None)
 ```
 
+> How to secure API endpoints?
+
+For secure API endpoints it is needed to define `security_schemes` argument in `SpecTree` constructor. `security_schemes` argument needs to contain array of `SecurityScheme` objects. Then there are two ways to enforce security:
+
+1. You can enforce security on individual API endpoints by defining the `security` argument in the `api.validate` decorator of relevant function / method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in following example:
+```py
+api = SpecTree(security_schemes=[
+        SecurityScheme(
+            name="auth_apiKey",
+            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        ),
+        SecurityScheme(
+            name="auth_oauth2",
+            data={
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://example.com/oauth/authorize",
+                        "tokenUrl": "https://example.com/oauth/token",
+                        "scopes": {
+                            "read": "Grants read access",
+                            "write": "Grants write access",
+                            "admin": "Grants access to admin operations",
+                        },
+                    },
+                },
+            },
+        ),
+        # ...
+    ],
+    # ...
+)
+
+
+# Not secured API endpoint
+@api.validate(
+    resp=Response(HTTP_200=None),
+)
+def foo():
+    ...
+
+
+# API endpoint secured by API key type or OAuth2 type
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={"auth_apiKey": [], "auth_oauth2": ["read", "write"]},  # Local security type
+)
+def bar():
+    ...
+```
+2. You can enforce security on whole API by defining `security` argument in the `SpecTree` constructor (this corresponds to define security section on the root level in `OpenAPI`). It is possible to override global security by defining local security, as well as override to no security on some API endpoint, in `security` argument of `api.validate` decorator of relevant function / method as was described in previous point. It is also shown in following small example:
+```py
+api = SpecTree(security_schemes=[
+        SecurityScheme(
+            name="auth_apiKey",
+            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        ),
+        SecurityScheme(
+            name="auth_oauth2",
+            data={
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://example.com/oauth/authorize",
+                        "tokenUrl": "https://example.com/oauth/token",
+                        "scopes": {
+                            "read": "Grants read access",
+                            "write": "Grants write access",
+                            "admin": "Grants access to admin operations",
+                        },
+                    },
+                },
+            },
+        ),
+        # ...
+    ],
+    security={"auth_apiKey": []},  # Global security type
+    # ...
+)
+
+# Force no security
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={}, # Locally overridden security type
+)
+def foo():
+    ...
+
+
+# Force another type of security than global one
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={"auth_oauth2": ["read"]}, # Locally overridden security type
+)
+def bar():
+    ...
+
+
+# Use the global security
+@api.validate(
+    resp=Response(HTTP_200=None),
+)
+def foobar():
+    ...
+```
+
 > What should I return when I'm using the library?
 
 No need to change anything. Just return what the framework required.
@@ -91,6 +205,10 @@ Validation errors are logged with INFO level. Details are passed into `extra`. C
 > How can I write a customized plugin for another backend framework?
 
 Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
+
+> How can I change the response when there is a validation error? Can I record some metrics?
+
+This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or for a specific endpoint validation.
 
 ## Demo
 
@@ -112,6 +230,15 @@ class Profile(BaseModel):
         lt=150,
         description='user age(Human)'
     )
+
+    class Config:
+        schema_extra = {
+            # provide an example
+            'example': {
+                'name': 'very_important_user',
+                'age': 42,
+            }
+        }
 
 
 class Message(BaseModel):
@@ -138,6 +265,25 @@ if __name__ == "__main__":
     api.register(app) # if you don't register in api init step
     app.run(port=8000)
 
+```
+
+#### Flask example with type annotation
+
+```python
+# opt in into annotations feature
+api = SpecTree("flask", annotations=True)
+
+
+@app.route('/api/user', methods=['POST'])
+@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+def user_profile(json: Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(json) # or `request.json`
+    return jsonify(text='it works')
 ```
 
 ### Falcon
@@ -186,6 +332,25 @@ if __name__ == "__main__":
     httpd = simple_server.make_server('localhost', 8000, app)
     httpd.serve_forever()
 
+```
+
+#### Falcon with type annotations
+
+```python
+# opt in into annotations feature
+api = SpecTree("falcon", annotations=True)
+
+
+class UserProfile:
+    @api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+    def on_post(self, req, resp, json: Profile):
+        """
+        verify user profile (summary of this endpoint)
+
+        user's name, user's age, ... (long description)
+        """
+        print(req.context.json)  # or `req.media`
+        resp.media = {'text': 'it works'}
 ```
 
 ### Starlette
@@ -238,6 +403,25 @@ if __name__ == "__main__":
     uvicorn.run(app)
 
 ```
+
+#### Starlette example with type annotations
+
+```python
+# opt in into annotations feature
+api = SpecTree("flask", annotations=True)
+
+
+@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+async def user_profile(request, json=Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(request.context.json)  # or await request.json()
+    return JSONResponse({'text': 'it works'})
+```
+
 
 ## FAQ
 

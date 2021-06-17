@@ -1,13 +1,13 @@
 import uvicorn
-from starlette.applications import Starlette
-from starlette.routing import Route, Mount
-from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field
+from starlette.applications import Starlette
+from starlette.endpoints import HTTPEndpoint
+from starlette.responses import JSONResponse
+from starlette.routing import Mount, Route
 
-from spectree import SpecTree, Response
+from spectree import Response, SpecTree
 
-
-api = SpecTree('starlette')
+api = SpecTree("starlette")
 
 
 class Query(BaseModel):
@@ -33,7 +33,7 @@ class Data(BaseModel):
     vip: bool
 
 
-@api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=['api'])
+@api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
 async def predict(request):
     """
     async api
@@ -42,24 +42,27 @@ async def predict(request):
     """
     print(request.path_params)
     print(request.context)
-    return JSONResponse({'label': 5, 'score': 0.5})
+    return JSONResponse({"label": 5, "score": 0.5})
 
 
-@api.validate(tags=['health check', 'api'])
-def ping(request):
-    """
-    health check
-    """
-    return JSONResponse({'msg': 'pong'})
+class Ping(HTTPEndpoint):
+    @api.validate(tags=["health check", "api"])
+    def get(self, request):
+        """
+        health check
+        """
+        return JSONResponse({"msg": "pong"})
 
 
 if __name__ == "__main__":
-    app = Starlette(routes=[
-        Route('/ping', ping),
-        Mount('/api', routes=[
-            Route('/predict/{luck:int}', predict, methods=['POST'])
-        ])
-    ])
+    app = Starlette(
+        routes=[
+            Route("/ping", Ping),
+            Mount(
+                "/api", routes=[Route("/predict/{luck:int}", predict, methods=["POST"])]
+            ),
+        ]
+    )
     api.register(app)
 
-    uvicorn.run(app, log_level='info')
+    uvicorn.run(app, log_level="info")

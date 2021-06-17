@@ -1,7 +1,7 @@
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
-Context = namedtuple('Context', ['query', 'json', 'headers', 'cookies'])
+Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
 
 
 class BasePlugin:
@@ -10,9 +10,8 @@ class BasePlugin:
 
     :param spectree: :class:`spectree.SpecTree` instance
     """
-    # Class constant that marks whether this class's validation uses async/await; override for
-    #  async frameworks
-    IS_ASYNC = False
+    # ASYNC: is it an async framework or not
+    ASYNC = False
 
     def __init__(self, spectree):
         self.spectree = spectree
