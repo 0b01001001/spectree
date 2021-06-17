@@ -16,7 +16,7 @@ Yet another library to generate OpenAPI document and validate request & response
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
   * Flask [demo](#flask)
-  * Falcon [demo](#falcon)
+  * Falcon [demo](#falcon) (including ASGI under Falcon 3+)
   * Starlette [demo](#starlette)
 
 ## Quick Start
