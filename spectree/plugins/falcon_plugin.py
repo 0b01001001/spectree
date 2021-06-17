@@ -230,7 +230,7 @@ class FalconAsgiPlugin(FalconPlugin):
             media = await req.get_media()
         except self.UnsupportedMediaType:
             media = None
-        if json:
+        if json and media:
             req.context.json = json.parse_obj(media)
 
     async def validate(
