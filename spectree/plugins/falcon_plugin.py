@@ -259,10 +259,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if req_validation_error:
             return
 
-        if inspect.iscoroutinefunction(func):
-            await func(*args, **kwargs)
-        else:
-            func(*args, **kwargs)
+        await func(*args, **kwargs)
 
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
