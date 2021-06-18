@@ -230,11 +230,11 @@ class FalconAsgiPlugin(FalconPlugin):
             req.context.headers = headers(**req.headers)
         if cookies:
             req.context.cookies = cookies(**req.cookies)
-        try:
-            media = await req.get_media()
-        except self.UnsupportedMediaType:
-            media = None
-        if json and media:
+        if json:
+            try:
+                media = await req.get_media()
+            except self.UnsupportedMediaType:
+                media = None
             req.context.json = json.parse_obj(media)
 
     async def validate(
