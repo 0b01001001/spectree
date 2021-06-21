@@ -182,8 +182,7 @@ class SpecTree:
             if tags:
                 validation.tags = tags
 
-            # if security not exist - set empty dict
-            validation.security = security or {}
+            validation.security = security
             # register decorator
             validation._decorator = self
             return validation
@@ -223,15 +222,20 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
+                security = getattr(func, "security", None)
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": f"{method.lower()}_{path}",
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
-                    "security": [getattr(func, "security", {})],
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
+                if security is not None:
+                    routes[path][method.lower()]["security"] = [
+                        {security_name: security_config}
+                        for security_name, security_config in security.items()
+                    ]
 
                 request_body = parse_request(func)
                 if request_body:
@@ -259,6 +263,12 @@ class SpecTree:
                 else {},
             },
         }
+
+        if self.config.SECURITY:
+            spec["security"] = [
+                {security_name: security_config}
+                for security_name, security_config in self.config.SECURITY.items()
+            ]
         return spec
 
     def _get_model_definitions(self):

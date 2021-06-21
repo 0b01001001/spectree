@@ -42,6 +42,7 @@ Check the [examples](/examples) folder.
    * `cookies`
    * `resp`
    * `tags`
+   * `security`
 4. access these data with `context(query, json, headers, cookies)` (of course, you can access these from the original place where the framework offered)
    * flask: `request.context`
    * falcon: `req.context`
@@ -85,6 +86,112 @@ To build a response for the endpoint, you need to declare the status code with f
 ```py
 Response(HTTP_200=None, HTTP_403=ForbidModel)
 Response('HTTP_200') # equals to Response(HTTP_200=None)
+```
+
+> How to secure API endpoints?
+
+For secure API endpoints it is needed to define `security_schemes` argument in `SpecTree` constructor. `security_schemes` argument needs to contain array of `SecurityScheme` objects. Then there are two ways to enforce security:
+
+1. You can enforce security on individual API endpoints by defining the `security` argument in the `api.validate` decorator of relevant function / method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in following example:
+```py
+api = SpecTree(security_schemes=[
+        SecurityScheme(
+            name="auth_apiKey",
+            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        ),
+        SecurityScheme(
+            name="auth_oauth2",
+            data={
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://example.com/oauth/authorize",
+                        "tokenUrl": "https://example.com/oauth/token",
+                        "scopes": {
+                            "read": "Grants read access",
+                            "write": "Grants write access",
+                            "admin": "Grants access to admin operations",
+                        },
+                    },
+                },
+            },
+        ),
+        # ...
+    ],
+    # ...
+)
+
+
+# Not secured API endpoint
+@api.validate(
+    resp=Response(HTTP_200=None),
+)
+def foo():
+    ...
+
+
+# API endpoint secured by API key type or OAuth2 type
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={"auth_apiKey": [], "auth_oauth2": ["read", "write"]},  # Local security type
+)
+def bar():
+    ...
+```
+2. You can enforce security on whole API by defining `security` argument in the `SpecTree` constructor (this corresponds to define security section on the root level in `OpenAPI`). It is possible to override global security by defining local security, as well as override to no security on some API endpoint, in `security` argument of `api.validate` decorator of relevant function / method as was described in previous point. It is also shown in following small example:
+```py
+api = SpecTree(security_schemes=[
+        SecurityScheme(
+            name="auth_apiKey",
+            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        ),
+        SecurityScheme(
+            name="auth_oauth2",
+            data={
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://example.com/oauth/authorize",
+                        "tokenUrl": "https://example.com/oauth/token",
+                        "scopes": {
+                            "read": "Grants read access",
+                            "write": "Grants write access",
+                            "admin": "Grants access to admin operations",
+                        },
+                    },
+                },
+            },
+        ),
+        # ...
+    ],
+    security={"auth_apiKey": []},  # Global security type
+    # ...
+)
+
+# Force no security
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={}, # Locally overridden security type
+)
+def foo():
+    ...
+
+
+# Force another type of security than global one
+@api.validate(
+    resp=Response(HTTP_200=None),
+    security={"auth_oauth2": ["read"]}, # Locally overridden security type
+)
+def bar():
+    ...
+
+
+# Use the global security
+@api.validate(
+    resp=Response(HTTP_200=None),
+)
+def foobar():
+    ...
 ```
 
 > What should I return when I'm using the library?

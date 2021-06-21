@@ -15,6 +15,7 @@ class Config:
     :ivar VERSION: service version
     :ivar DOMAIN: service host domain
     :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON with list of auth configs
+    :ivar SECURITY: OpenAPI `security` JSON at the global level
     """
 
     def __init__(self, **kwargs):
@@ -33,6 +34,7 @@ class Config:
         self.DOMAIN = None
 
         self.SECURITY_SCHEMES: Optional[List[SecurityScheme]] = None
+        self.SECURITY = {}
 
         self.logger = logging.getLogger(__name__)
 

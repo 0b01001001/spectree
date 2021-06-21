@@ -39,6 +39,12 @@ api_secure = SpecTree("flask", security_schemes=SECURITY_SCHEMAS)
 app_secure = Flask(__name__)
 app_secure.config["TESTING"] = True
 
+api_global_secure = SpecTree(
+    "flask", security_schemes=SECURITY_SCHEMAS, security={"auth_apiKey": []}
+)
+app_global_secure = Flask(__name__)
+app_global_secure.config["TESTING"] = True
+
 
 @app.route("/ping")
 @api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
@@ -214,3 +220,49 @@ with app_secure.app_context():
     api_secure.spec
 
 api_secure.register(app_secure)
+
+
+"""
+Global secure params check
+"""
+
+
+@app_global_secure.route("/global-secure-ping", methods=["GET"])
+@api_global_secure.validate(
+    resp=Response(HTTP_200=StrDict),
+)
+def global_auth_ping():
+    """
+    global auth type
+    """
+    return jsonify(msg="pong")
+
+
+@app_global_secure.route("/no-secure-override-ping", methods=["GET"])
+@api_global_secure.validate(
+    security={},
+    resp=Response(HTTP_200=StrDict),
+)
+def global_no_secure_ping():
+    """
+    No auth type is set to override
+    """
+    return jsonify(msg="pong")
+
+
+@app_global_secure.route("/oauth2-flows-override-ping", methods=["GET"])
+@api_global_secure.validate(
+    security={"auth_oauth2": ["admin", "read"]},
+    resp=Response(HTTP_200=StrDict),
+)
+def global_oauth_two_ping():
+    """
+    oauth2 auth type with flow to override
+    """
+    return jsonify(msg="pong")
+
+
+with app_global_secure.app_context():
+    api_global_secure.spec
+
+api_global_secure.register(app_global_secure)
