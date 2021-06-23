@@ -22,6 +22,7 @@ def test_update_config(config):
     assert config.FILENAME == default.FILENAME
     assert config.TITLE == "demo"
     assert config.VERSION == "latest"
+    assert config.SERVERS == []
     assert config.SECURITY_SCHEMES is None
 
     config.update(unknown="missing")

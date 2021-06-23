@@ -264,6 +264,11 @@ class SpecTree:
             },
         }
 
+        if self.config.SERVERS:
+            spec["servers"] = [
+                server.dict() for server in self.config.SERVERS
+            ]
+
         if self.config.SECURITY:
             spec["security"] = [
                 {security_name: security_config}

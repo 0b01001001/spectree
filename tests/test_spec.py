@@ -7,6 +7,7 @@ from flask import Flask
 from starlette.applications import Starlette
 
 from spectree.config import Config
+from spectree.models import Server
 from spectree.plugins import FlaskPlugin
 from spectree.spec import SpecTree
 
@@ -19,6 +20,17 @@ def backend_app():
         ("falcon", FalconApp()),
         ("starlette", Starlette()),
     ]
+
+
+def _get_spec(name, app, **kwargs):
+    api = SpecTree(name, app=app, title=f"{name}", **kwargs)
+    if name == "flask":
+        with app.app_context():
+            spec = api.spec
+    else:
+        spec = api.spec
+
+    return spec
 
 
 def test_spectree_init():
@@ -40,15 +52,54 @@ def test_register(name, app):
 
 @pytest.mark.parametrize("name, app", backend_app())
 def test_spec_generate(name, app):
-    api = SpecTree(name, app=app, title=f"{name}")
-    if name == "flask":
-        with app.app_context():
-            spec = api.spec
-    else:
-        spec = api.spec
+    spec = _get_spec(name, app)
 
     assert spec["info"]["title"] == name
     assert spec["paths"] == {}
+
+
+@pytest.mark.parametrize("name, app", backend_app())
+def test_spec_servers_empty(name, app):
+    spec = _get_spec(name, app)
+
+    assert "servers" not in spec
+
+
+@pytest.mark.parametrize("name, app", backend_app())
+def test_spec_servers_only(name, app):
+    server1_url = "http://foo/bar"
+    server2_url = "/foo/bar/"
+    spec = _get_spec(
+        name, app, servers=[Server(url=server1_url), Server(url=server2_url)]
+    )
+
+    assert spec["servers"] == [
+        {"url": server1_url, "description": None, "variables": None},
+        {"url": server2_url, "description": None, "variables": None},
+    ]
+
+
+@pytest.mark.parametrize("name, app", backend_app())
+def test_spec_servers_full(name, app):
+    server1 = {"url": "http://foo/bar", "description": "Foo Bar"}
+    server2 = {"url": "http://bar/foo/{lang}", "variables": {"lang": "en"}}
+    spec = _get_spec(
+        name,
+        app,
+        servers=[
+            Server(**server1),
+            Server(**server2),
+        ],
+    )
+
+    assert spec["servers"] == [
+        {
+            "url": server.get("url"),
+            "description": server.get("description", None),
+            "variables": server.get("variables", None),
+        }
+        for server in [server1, server2]
+    ]
 
 
 api = SpecTree("flask")
