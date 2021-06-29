@@ -225,11 +225,11 @@ class FalconAsgiPlugin(FalconPlugin):
 
     async def request_validation(self, req, query, json, headers, cookies):
         if query:
-            req.context.query = query(**req.params)
+            req.context.query = query.parse_obj(req.params)
         if headers:
-            req.context.headers = headers(**req.headers)
+            req.context.headers = headers.parse_obj(req.headers)
         if cookies:
-            req.context.cookies = cookies(**req.cookies)
+            req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
             try:
                 media = await req.get_media()
