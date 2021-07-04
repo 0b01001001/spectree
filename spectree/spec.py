@@ -21,7 +21,7 @@ class SpecTree:
     """
     Interface
 
-    :param str backend_name: choose from ('flask', 'falcon', 'starlette')
+    :param str backend_name: choose from ('flask', 'falcon', 'falcon-asgi', 'starlette')
     :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
     :param app: backend framework application instance (can be registered later)
     :param before: a callback function of the form
@@ -255,14 +255,17 @@ class SpecTree:
             "paths": {**routes},
             "components": {
                 "schemas": {**self.models, **self._get_model_definitions()},
-                "securitySchemes": {
-                    scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
-                    for scheme in self.config.SECURITY_SCHEMES
-                }
-                if self.config.SECURITY_SCHEMES
-                else {},
             },
         }
+
+        if self.config.SERVERS:
+            spec["servers"] = [server.dict() for server in self.config.SERVERS]
+
+        if self.config.SECURITY_SCHEMES:
+            spec["components"]["securitySchemes"] = {
+                scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
+                for scheme in self.config.SECURITY_SCHEMES
+            }
 
         if self.config.SECURITY:
             spec["security"] = [

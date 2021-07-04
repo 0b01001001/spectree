@@ -143,3 +143,28 @@ class SecurityScheme(BaseModel):
 
     class Config:
         validate_assignment = True
+
+
+class Server(BaseModel):
+    """
+    Servers section of OAS
+    """
+
+    url: str = Field(
+        ...,
+        description="""URL or path of API server
+
+        (may be parametrized with using \"variables\" section - for more information,
+        see: https://swagger.io/docs/specification/api-host-and-base-path/ )""",
+    )
+    description: str = Field(
+        None,
+        description="Custom server description for server URL",
+    )
+    variables: dict = Field(
+        None,
+        description="Variables for customizing server URL",
+    )
+
+    class Config:
+        validate_assignment = True

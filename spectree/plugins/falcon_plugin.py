@@ -22,13 +22,33 @@ class DocPage:
 
     def on_get(self, req, resp):
         resp.content_type = "text/html"
-        resp.body = self.page
+        # resp.body is deprecated in Falcon 3
+        if hasattr(resp, "text"):
+            resp.text = self.page
+        else:
+            resp.body = self.page
 
 
-DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI)]
+class OpenAPIAsgi(OpenAPI):
+    async def on_get(self, req, resp):
+        super().on_get(req, resp)
+
+
+class DocPageAsgi(DocPage):
+    async def on_get(self, req, resp):
+        super().on_get(req, resp)
+
+
+DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)]
+
+HTTP_422 = "422 Unprocessable Entity"
+HTTP_500 = "500 Internal Service Response Validation Error"
 
 
 class FalconPlugin(BasePlugin):
+    OPEN_API_ROUTE_CLASS = OpenAPI
+    DOC_PAGE_ROUTE_CLASS = DocPage
+
     def __init__(self, spectree):
         super().__init__(spectree)
         try:
@@ -56,11 +76,13 @@ class FalconPlugin(BasePlugin):
 
     def register_route(self, app):
         self.app = app
-        self.app.add_route(self.config.spec_url, OpenAPI(self.spectree.spec))
+        self.app.add_route(
+            self.config.spec_url, self.OPEN_API_ROUTE_CLASS(self.spectree.spec)
+        )
         for ui in PAGES:
             self.app.add_route(
                 f"/{self.config.PATH}/{ui}",
-                DocPage(PAGES[ui], self.config.spec_url),
+                self.DOC_PAGE_ROUTE_CLASS(PAGES[ui], self.config.spec_url),
             )
 
     def find_routes(self):
@@ -168,7 +190,7 @@ class FalconPlugin(BasePlugin):
 
         except ValidationError as err:
             req_validation_error = err
-            _resp.status = "422 Unprocessable Entity"
+            _resp.status = HTTP_422
             _resp.media = err.errors()
 
         before(_req, _resp, req_validation_error, _self)
@@ -183,7 +205,7 @@ class FalconPlugin(BasePlugin):
                     model.parse_obj(_resp.media)
                 except ValidationError as err:
                     resp_validation_error = err
-                    _resp.status = "500 Internal Service Response Validation Error"
+                    _resp.status = HTTP_500
                     _resp.media = err.errors()
 
         after(_req, _resp, resp_validation_error, _self)
@@ -192,3 +214,61 @@ class FalconPlugin(BasePlugin):
         if isinstance(func, partial):
             return True
         return inspect.isfunction(func)
+
+
+class FalconAsgiPlugin(FalconPlugin):
+    """Light wrapper around default Falcon plug-in to support Falcon 3.0 ASGI apps"""
+
+    ASYNC = True
+    OPEN_API_ROUTE_CLASS = OpenAPIAsgi
+    DOC_PAGE_ROUTE_CLASS = DocPageAsgi
+
+    async def request_validation(self, req, query, json, headers, cookies):
+        if query:
+            req.context.query = query.parse_obj(req.params)
+        if headers:
+            req.context.headers = headers.parse_obj(req.headers)
+        if cookies:
+            req.context.cookies = cookies.parse_obj(req.cookies)
+        if json:
+            try:
+                media = await req.get_media()
+            except self.UnsupportedMediaType:
+                media = None
+            req.context.json = json.parse_obj(media)
+
+    async def validate(
+        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+    ):
+        # falcon endpoint method arguments: (self, req, resp)
+        _self, _req, _resp = args[:3]
+        req_validation_error, resp_validation_error = None, None
+        try:
+            await self.request_validation(_req, query, json, headers, cookies)
+            if self.config.ANNOTATIONS:
+                for name in ("query", "json", "headers", "cookies"):
+                    if func.__annotations__.get(name):
+                        kwargs[name] = getattr(_req.context, name)
+
+        except ValidationError as err:
+            req_validation_error = err
+            _resp.status = HTTP_422
+            _resp.media = err.errors()
+
+        before(_req, _resp, req_validation_error, _self)
+        if req_validation_error:
+            return
+
+        await func(*args, **kwargs)
+
+        if resp and resp.has_model():
+            model = resp.find_model(_resp.status[:3])
+            if model:
+                try:
+                    model.parse_obj(_resp.media)
+                except ValidationError as err:
+                    resp_validation_error = err
+                    _resp.status = HTTP_500
+                    _resp.media = err.errors()
+
+        after(_req, _resp, resp_validation_error, _self)

@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from .models import SecurityScheme
+from .models import SecurityScheme, Server
 
 
 class Config:
@@ -32,6 +32,7 @@ class Config:
         self.DESCRIPTION = None
         self.VERSION = "0.1"
         self.DOMAIN = None
+        self.SERVERS: Optional[List[Server]] = []
 
         self.SECURITY_SCHEMES: Optional[List[SecurityScheme]] = None
         self.SECURITY = {}
