@@ -220,7 +220,7 @@ def get_security(security):
     return the correct format of security
     """
     if security is None or not security:
-        return []
+        return None
 
     if isinstance(security, dict):
         security = [security]

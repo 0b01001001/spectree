@@ -232,8 +232,7 @@ class SpecTree:
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
-                if security is not None:
-                    routes[path][method.lower()]["security"] = get_security(security)
+                routes[path][method.lower()]["security"] = get_security(security)
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
@@ -264,8 +263,7 @@ class SpecTree:
                 for scheme in self.config.SECURITY_SCHEMES
             }
 
-        if self.config.SECURITY:
-            spec["security"] = get_security(self.config.SECURITY)
+        spec["security"] = get_security(self.config.SECURITY)
         return spec
 
     def _get_model_definitions(self):

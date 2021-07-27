@@ -118,7 +118,7 @@ def test_secure_global_spec():
         # check empty-secure path
         if path == "/no-secure-override-ping":
             # check if it is defined overridden no auth specification
-            assert security == []
+            assert security is None
         elif path == "/oauth2-flows-override-ping":
             # check if it is defined overridden security specification
             assert security == [{"auth_oauth2": ["admin", "read"]}]
