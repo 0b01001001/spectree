@@ -213,3 +213,16 @@ def get_model_schema(model):
     return model.schema(
         ref_template=f"#/components/schemas/{get_model_key(model)}.{{model}}"
     )
+
+
+def get_security(security):
+    """
+    return the correct format of security
+    """
+    if security is None or not security:
+        return None
+
+    if isinstance(security, dict):
+        security = [security]
+
+    return security

@@ -14,7 +14,7 @@ with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
 
 setup(
     name="spectree",
-    version="0.6.0",
+    version="0.6.1",
     author="Keming Yang",
     author_email="kemingy94@gmail.com",
     description=(
