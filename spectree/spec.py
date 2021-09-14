@@ -223,7 +223,6 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
-                security = getattr(func, "security", None)
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": f"{method.lower()}_{path}",
@@ -232,7 +231,9 @@ class SpecTree:
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
-                routes[path][method.lower()]["security"] = get_security(security)
+                security = getattr(func, "security", None)
+                if security is not None:
+                    routes[path][method.lower()]["security"] = get_security(security)
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body

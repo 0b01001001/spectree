@@ -75,6 +75,10 @@ SECURITY_SCHEMAS = [
         name="auth_apiKey",
         data={"type": "apiKey", "name": "Authorization", "in": "header"},
     ),
+    SecurityScheme(
+        name="auth_apiKey_backup",
+        data={"type": "apiKey", "name": "Authorization", "in": "header"},
+    ),
     SecurityScheme(name="auth_BasicAuth", data={"type": "http", "scheme": "basic"}),
     SecurityScheme(name="auth_BearerAuth", data={"type": "http", "scheme": "bearer"}),
     SecurityScheme(
