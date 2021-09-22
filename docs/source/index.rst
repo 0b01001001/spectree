@@ -21,7 +21,7 @@ Features
 -  Current support:
 
    -  Flask
-   -  Falcon
+   -  Falcon (including Falcon ASGI)
    -  Starlette
 
 Quick Start

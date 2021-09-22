@@ -9,6 +9,7 @@ from .utils import (
     default_before_handler,
     get_model_key,
     get_model_schema,
+    get_security,
     parse_comments,
     parse_name,
     parse_params,
@@ -21,7 +22,7 @@ class SpecTree:
     """
     Interface
 
-    :param str backend_name: choose from ('flask', 'falcon', 'starlette')
+    :param str backend_name: choose from ('flask', 'falcon', 'falcon-asgi', 'starlette')
     :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
     :param app: backend framework application instance (can be registered later)
     :param before: a callback function of the form
@@ -182,8 +183,7 @@ class SpecTree:
             if tags:
                 validation.tags = tags
 
-            # if security not exist - set empty dict
-            validation.security = security or {}
+            validation.security = security
             # register decorator
             validation._decorator = self
             return validation
@@ -228,11 +228,12 @@ class SpecTree:
                     "operationId": f"{method.lower()}_{path}",
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
-                    "security": [getattr(func, "security", {})],
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
-
+                security = getattr(func, "security", None)
+                if security is not None:
+                    routes[path][method.lower()]["security"] = get_security(security)
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
@@ -251,14 +252,21 @@ class SpecTree:
             "paths": {**routes},
             "components": {
                 "schemas": {**self.models, **self._get_model_definitions()},
-                "securitySchemes": {
-                    scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
-                    for scheme in self.config.SECURITY_SCHEMES
-                }
-                if self.config.SECURITY_SCHEMES
-                else {},
             },
         }
+
+        if self.config.SERVERS:
+            spec["servers"] = [
+                server.dict(exclude_none=True) for server in self.config.SERVERS
+            ]
+
+        if self.config.SECURITY_SCHEMES:
+            spec["components"]["securitySchemes"] = {
+                scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
+                for scheme in self.config.SECURITY_SCHEMES
+            }
+
+        spec["security"] = get_security(self.config.SECURITY)
         return spec
 
     def _get_model_definitions(self):
