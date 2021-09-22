@@ -255,7 +255,9 @@ class SpecTree:
         }
 
         if self.config.SERVERS:
-            spec["servers"] = [server.dict() for server in self.config.SERVERS]
+            spec["servers"] = [
+                server.dict(exclude_none=True) for server in self.config.SERVERS
+            ]
 
         if self.config.SECURITY_SCHEMES:
             spec["components"]["securitySchemes"] = {

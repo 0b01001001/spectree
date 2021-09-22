@@ -74,8 +74,8 @@ def test_spec_servers_only(name, app):
     )
 
     assert spec["servers"] == [
-        {"url": server1_url, "description": None, "variables": None},
-        {"url": server2_url, "description": None, "variables": None},
+        {"url": server1_url},
+        {"url": server2_url},
     ]
 
 
@@ -92,14 +92,20 @@ def test_spec_servers_full(name, app):
         ],
     )
 
-    assert spec["servers"] == [
-        {
+    expected = []
+    for server in [server1, server2]:
+        expected_item = {
             "url": server.get("url"),
-            "description": server.get("description", None),
-            "variables": server.get("variables", None),
         }
-        for server in [server1, server2]
-    ]
+        description = server.get("description", None)
+        if description:
+            expected_item["description"] = description
+        variables = server.get("variables", None)
+        if variables:
+            expected_item["variables"] = variables
+        expected.append(expected_item)
+
+    assert spec["servers"] == expected
 
 
 api = SpecTree("flask")
