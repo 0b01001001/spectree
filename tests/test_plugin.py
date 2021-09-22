@@ -118,11 +118,17 @@ def test_secure_global_spec():
         # check empty-secure path
         if path == "/no-secure-override-ping":
             # check if it is defined overridden no auth specification
-            assert security is None
+            assert security == []
         elif path == "/oauth2-flows-override-ping":
             # check if it is defined overridden security specification
             assert security == [{"auth_oauth2": ["admin", "read"]}]
-        else:
+        elif path == "/global-secure-ping":
             # check if local security specification is missing,
             # when was not specified explicitly
             assert security is None
+        elif path == "/security_and":
+            # check if AND operation is supported
+            assert security == [{"auth_apiKey": [], "auth_apiKey_backup": []}]
+        elif path == "/security_or":
+            # check if OR operation is supported
+            assert security == [{"auth_apiKey": []}, {"auth_apiKey_backup": []}]
