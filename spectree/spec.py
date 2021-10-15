@@ -100,6 +100,7 @@ class SpecTree:
         resp=None,
         tags=(),
         security=None,
+        deprecated=False,
         before=None,
         after=None,
     ):
@@ -116,6 +117,7 @@ class SpecTree:
         :param resp: `spectree.Response`
         :param tags: a tuple of strings or :class:`spectree.models.Tag`
         :param security: dict with security config for current route and method
+        :param deprecated: bool if endpoint is marked as deprecated
         :param before: :meth:`spectree.utils.default_before_handler` for
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
@@ -184,6 +186,7 @@ class SpecTree:
                 validation.tags = tags
 
             validation.security = security
+            validation.deprecated = deprecated
             # register decorator
             validation._decorator = self
             return validation
@@ -223,7 +226,6 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
-                security = getattr(func, "security", None)
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": f"{method.lower()}_{path}",
@@ -232,7 +234,15 @@ class SpecTree:
                     "parameters": parse_params(func, parameters[:], self.models),
                     "responses": parse_resp(func),
                 }
-                routes[path][method.lower()]["security"] = get_security(security)
+
+                security = getattr(func, "security", None)
+                if security is not None:
+                    routes[path][method.lower()]["security"] = get_security(security)
+
+                deprecated = getattr(func, "deprecated", False)
+                if deprecated:
+                    routes[path][method.lower()]["deprecated"] = deprecated
+
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
@@ -255,7 +265,9 @@ class SpecTree:
         }
 
         if self.config.SERVERS:
-            spec["servers"] = [server.dict() for server in self.config.SERVERS]
+            spec["servers"] = [
+                server.dict(exclude_none=True) for server in self.config.SERVERS
+            ]
 
         if self.config.SECURITY_SCHEMES:
             spec["components"]["securitySchemes"] = {

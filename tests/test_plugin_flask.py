@@ -262,6 +262,30 @@ def global_oauth_two_ping():
     return jsonify(msg="pong")
 
 
+@app_global_secure.route("/security_and", methods=["GET"])
+@api_global_secure.validate(
+    security={"auth_apiKey": [], "auth_apiKey_backup": []},
+    resp=Response(HTTP_200=StrDict),
+)
+def global_security_and():
+    """
+    global auth AND
+    """
+    return jsonify(msg="pong")
+
+
+@app_global_secure.route("/security_or", methods=["GET"])
+@api_global_secure.validate(
+    security=[{"auth_apiKey": []}, {"auth_apiKey_backup": []}],
+    resp=Response(HTTP_200=StrDict),
+)
+def global_security_or():
+    """
+    global auth OR
+    """
+    return jsonify(msg="pong")
+
+
 with app_global_secure.app_context():
     api_global_secure.spec
 
