@@ -91,7 +91,7 @@ class SecuritySchemeData(BaseModel):
         None, alias="in", description="The location of the API key."
     )
     scheme: str = Field(None, description="The name of the HTTP Authorization scheme.")
-    bearerFormat: dict = Field(
+    bearerFormat: str = Field(
         None,
         description=(
             "A hint to the client to identify how the bearer token is formatted."
