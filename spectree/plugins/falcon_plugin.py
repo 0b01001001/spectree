@@ -41,7 +41,6 @@ class DocPageAsgi(DocPage):
 
 DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)]
 
-HTTP_422 = "422 Unprocessable Entity"
 HTTP_500 = "500 Internal Service Response Validation Error"
 
 
@@ -178,7 +177,18 @@ class FalconPlugin(BasePlugin):
             req.context.json = json.parse_obj(media)
 
     def validate(
-        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+        self,
+        func,
+        query,
+        json,
+        headers,
+        cookies,
+        resp,
+        before,
+        after,
+        validation_error_status,
+        *args,
+        **kwargs,
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
@@ -192,7 +202,7 @@ class FalconPlugin(BasePlugin):
 
         except ValidationError as err:
             req_validation_error = err
-            _resp.status = HTTP_422
+            _resp.status = f"{validation_error_status} Validation Error"
             _resp.media = err.errors()
 
         before(_req, _resp, req_validation_error, _self)
@@ -242,7 +252,18 @@ class FalconAsgiPlugin(FalconPlugin):
             req.context.json = json.parse_obj(media)
 
     async def validate(
-        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+        self,
+        func,
+        query,
+        json,
+        headers,
+        cookies,
+        resp,
+        before,
+        after,
+        validation_error_status,
+        *args,
+        **kwargs,
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
@@ -256,7 +277,7 @@ class FalconAsgiPlugin(FalconPlugin):
 
         except ValidationError as err:
             req_validation_error = err
-            _resp.status = HTTP_422
+            _resp.status = f"{validation_error_status} Validation Error"
             _resp.media = err.errors()
 
         before(_req, _resp, req_validation_error, _self)
