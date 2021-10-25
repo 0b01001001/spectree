@@ -107,6 +107,21 @@ demo_class = DemoClass()
             "description first line description second line description third line",
             id="large-multi-line-docstring-with-whitespace-line",
         ),
+        pytest.param(
+            "summary first line\nsummary second line\ftruncated part",
+            "summary first line summary second line",
+            None,
+            id="multi-line-docstring-without-empty-line-and-truncation-char",
+        ),
+        pytest.param(
+            "summary first line\nsummary second line\nsummary third line"
+            "\n\t   \n"
+            "description first line\ndescription second line\ndescription third line"
+            "\ftruncated part",
+            "summary first line summary second line summary third line",
+            "description first line description second line description third line",
+            id="large-multi-line-docstring-with-whitespace-line-and-truncation-char",
+        ),
     ],
 )
 def test_parse_comments(docstring, expected_summary, expected_description):
