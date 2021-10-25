@@ -2,7 +2,7 @@ from copy import deepcopy
 from functools import wraps
 
 from .config import Config
-from .models import Tag
+from .models import Tag, ValidationError
 from .plugins import PLUGINS
 from .utils import (
     default_after_handler,
@@ -194,6 +194,9 @@ class SpecTree:
                     setattr(validation, name, model_key)
 
             if resp:
+                # Make sure that the endpoint specific status code and data model for
+                # validation errors shows up in the response spec.
+                resp.add_model(validation_error_status, ValidationError, replace=False)
                 for model in resp.models:
                     self._add_model(model=model)
                 validation.resp = resp

@@ -24,8 +24,8 @@ class Tag(BaseModel):
         return self.name
 
 
-class UnprocessableEntityElement(BaseModel):
-    """Model of missing field description."""
+class ValidationErrorElement(BaseModel):
+    """Model of a validation error response element."""
 
     loc: Sequence[str] = Field(
         ...,
@@ -45,10 +45,10 @@ class UnprocessableEntityElement(BaseModel):
     )
 
 
-class UnprocessableEntity(BaseModel):
-    """Model of 422 Unprocessable Entity error."""
+class ValidationError(BaseModel):
+    """Model of a validation error response."""
 
-    __root__: Sequence[UnprocessableEntityElement]
+    __root__: Sequence[ValidationErrorElement]
 
 
 class SecureType(str, Enum):

@@ -1,6 +1,7 @@
+from typing import Type
+
 from pydantic import BaseModel
 
-from .models import UnprocessableEntity
 from .utils import get_model_key, parse_code
 
 
@@ -15,9 +16,6 @@ class Response:
     def __init__(self, *codes, **code_models):
         self.codes = []
 
-        if code_models and "HTTP_422" not in code_models:
-            code_models["HTTP_422"] = UnprocessableEntity
-
         for code in codes:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             self.codes.append(code)
@@ -30,6 +28,21 @@ class Response:
                 self.code_models[code] = model
             else:
                 self.codes.append(code)
+
+    def add_model(
+        self, code: int, model: Type[BaseModel], replace: bool = True
+    ) -> None:
+        """Add data *model* for the specified status *code*.
+
+        :param code: An HTTP status code.
+        :param model: A `pydantic.BaseModel`.
+        :param replace: If `True` and a data *model* already exists for the given
+            status *code* it will be replaced, if `False` the existing data *model*
+            will be retained.
+        """
+        if not replace and self.find_model(code):
+            return
+        self.code_models[f"HTTP_{code}"] = model
 
     def has_model(self):
         """

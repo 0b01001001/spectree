@@ -178,7 +178,7 @@ def test_parse_resp():
     resp_spec = parse_resp(demo_func)
 
     assert resp_spec["422"]["description"] == "Unprocessable Entity"
-    model_path_key = get_model_path_key("spectree.models.UnprocessableEntity")
+    model_path_key = get_model_path_key("spectree.models.ValidationError")
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
