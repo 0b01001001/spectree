@@ -50,6 +50,7 @@ app_global_secure.config["TESTING"] = True
 @api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
 def ping():
     """summary
+
     description"""
     return jsonify(msg="pong")
 

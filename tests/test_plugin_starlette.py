@@ -42,6 +42,7 @@ class Ping(HTTPEndpoint):
     )
     def get(self, request):
         """summary
+
         description"""
         return JSONResponse({"msg": "pong"})
 
