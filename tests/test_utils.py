@@ -20,6 +20,7 @@ api = SpecTree()
 
 def undecorated_func():
     """summary
+
     description"""
 
 
@@ -44,6 +45,7 @@ class DemoClass:
     @api.validate(query=DemoModel)
     def demo_method(self):
         """summary
+
         description
         """
 
@@ -51,11 +53,103 @@ class DemoClass:
 demo_class = DemoClass()
 
 
-def test_comments():
-    assert parse_comments(lambda x: x) == (None, None)
-    assert parse_comments(undecorated_func) == ("summary", "description")
-    assert parse_comments(demo_func) == ("summary", "description")
-    assert parse_comments(demo_class.demo_method) == ("summary", "description")
+@pytest.mark.parametrize(
+    "docstring, expected_summary, expected_description",
+    [
+        pytest.param(None, None, None, id="no-docstring"),
+        pytest.param("", "", None, id="empty-docstring"),
+        pytest.param("   ", "", None, id="all-whitespace-docstring"),
+        pytest.param("summary", "summary", None, id="single-line-docstring"),
+        pytest.param(
+            "   summary   ", "summary", None, id="single-line-docstring-with-whitespace"
+        ),
+        pytest.param(
+            "summary first line\nsummary second line",
+            "summary first line summary second line",
+            None,
+            id="multi-line-docstring-without-empty-line",
+        ),
+        pytest.param(
+            "  summary first line \n summary second line  ",
+            "summary first line  summary second line",
+            None,
+            id="multi-line-docstring-without-empty-line-whitespace",
+        ),
+        pytest.param(
+            "summary\n\ndescription",
+            "summary",
+            "description",
+            id="multi-line-docstring-with-empty-line",
+        ),
+        pytest.param(
+            "   summary   \n\n   description  ",
+            "summary",
+            "description",
+            id="multi-line-docstring-with-empty-line-whitespace",
+        ),
+        pytest.param(
+            "summary\n\t   \ndescription",
+            "summary",
+            "description",
+            id="multi-line-docstring-with-whitespace-line",
+        ),
+        pytest.param(
+            "summary\n  \n  \n  \n  \n  \ndescription",
+            "summary",
+            "description",
+            id="multi-line-docstring-with-multiple-whitespace-lines",
+        ),
+        pytest.param(
+            "summary first line\nsummary second line\nsummary third line"
+            "\n\t   \n"
+            "description first line\ndescription second line\ndescription third line",
+            "summary first line summary second line summary third line",
+            "description first line description second line description third line",
+            id="large-multi-line-docstring-with-whitespace-line",
+        ),
+        pytest.param(
+            "summary first line\nsummary second line\ftruncated part",
+            "summary first line summary second line",
+            None,
+            id="multi-line-docstring-without-empty-line-and-truncation-char",
+        ),
+        pytest.param(
+            "summary first line\nsummary second line\nsummary third line"
+            "\n\t   \n"
+            "description first line\ndescription second line\ndescription third line"
+            "\ftruncated part",
+            "summary first line summary second line summary third line",
+            "description first line description second line description third line",
+            id="large-multi-line-docstring-with-whitespace-line-and-truncation-char",
+        ),
+    ],
+)
+def test_parse_comments(docstring, expected_summary, expected_description):
+    def func():
+        pass
+
+    func.__doc__ = docstring
+
+    assert parse_comments(func) == (expected_summary, expected_description)
+
+
+@pytest.mark.parametrize(
+    "func, expected_summary, expected_description",
+    [
+        pytest.param(lambda x: x, None, None, id="lambda"),
+        pytest.param(
+            undecorated_func, "summary", "description", id="undecorated-function"
+        ),
+        pytest.param(demo_func, "summary", "description", id="decorated-function"),
+        pytest.param(
+            demo_class.demo_method, "summary", "description", id="class-method"
+        ),
+    ],
+)
+def test_parse_comments_with_different_callable_types(
+    func, expected_summary, expected_description
+):
+    assert parse_comments(func) == (expected_summary, expected_description)
 
 
 def test_parse_code():

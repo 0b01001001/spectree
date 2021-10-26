@@ -2,6 +2,7 @@ import inspect
 import logging
 import re
 from hashlib import sha1
+from typing import Any, Callable, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -11,20 +12,38 @@ HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
 logger = logging.getLogger(__name__)
 
 
-def parse_comments(func):
-    """
-    parse function comments
+def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[str]]:
+    """Parse function docstring into a summary and description string.
 
-    First line of comments will be saved as summary, and the rest
-    will be saved as description.
+    The first few lines of the docstring up to the first empty line will be extracted
+    as the summary, and the rest of the docstring, following the empty line will become
+    the description.
+
+    If the function's docstring also contains parameter documentation, you can avoid
+    parsing it as part of the summary or description by prefixing it with the `"\\\\f"`
+    form feed character. Everything after the `"\\\\f"` character will be ignored in the
+    docstring.
+
+    :param func: The callable whose docstring should be parsed.
+    :returns: A two element tuple with the summary and the description strings.
     """
-    doc = inspect.getdoc(func)
-    if doc is None:
+    docstring = inspect.getdoc(func)
+    if docstring is None:
         return None, None
-    doc = doc.split("\n", 1)
-    if len(doc) == 1:
-        return doc[0], None
-    return doc[0], doc[1].strip()
+
+    docstring = re.split("\f", docstring, maxsplit=1)[0]
+
+    docstring_parts = re.split(r"\n\s*\n", docstring, maxsplit=1)
+    for i in range(len(docstring_parts)):
+        docstring_parts[i] = docstring_parts[i].strip()
+        docstring_parts[i] = re.sub("\n+", " ", docstring_parts[i])
+
+    summary = docstring_parts[0]
+    description = None
+    if len(docstring_parts) > 1:
+        description = docstring_parts[1]
+
+    return summary, description
 
 
 def parse_request(func):
