@@ -51,13 +51,13 @@ class FalconPlugin(BasePlugin):
 
     def __init__(self, spectree):
         super().__init__(spectree)
-        try:
-            from falcon import HTTPUnsupportedMediaType as UnsupportedMediaType
-        except ImportError:
-            from falcon import MediaNotFoundError as UnsupportedMediaType
+
+        from falcon import HTTP_400, HTTP_415, HTTPError
         from falcon.routing.compiled import _FIELD_PATTERN
 
-        self.UnsupportedMediaType = UnsupportedMediaType
+        # used to detect falcon 3.0 request media parse error
+        self.FALCON_HTTP_ERROR = HTTPError
+        self.FALCON_MEDIA_ERROR_CODE = (HTTP_400, HTTP_415)
         self.FIELD_PATTERN = _FIELD_PATTERN
         # NOTE from `falcon.routing.compiled.CompiledRouterNode`
         self.ESCAPE = r"[\.\(\)\[\]\?\$\*\+\^\|]"
@@ -170,7 +170,9 @@ class FalconPlugin(BasePlugin):
             req.context.cookies = cookies.parse_obj(req.cookies)
         try:
             media = req.media
-        except self.UnsupportedMediaType:
+        except self.FALCON_HTTP_ERROR as err:
+            if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                raise
             media = None
         if json:
             req.context.json = json.parse_obj(media)
@@ -233,7 +235,9 @@ class FalconAsgiPlugin(FalconPlugin):
         if json:
             try:
                 media = await req.get_media()
-            except self.UnsupportedMediaType:
+            except self.FALCON_HTTP_ERROR as err:
+                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                    raise
                 media = None
             req.context.json = json.parse_obj(media)
 
