@@ -33,6 +33,7 @@ class Ping:
     @api.validate(headers=Headers, tags=["test", "health"])
     def on_get(self, req, resp):
         """summary
+
         description
         """
         resp.media = {"msg": "pong"}

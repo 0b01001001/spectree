@@ -34,6 +34,7 @@ class Ping(MethodView):
     )
     def get(self):
         """summary
+
         description"""
         return jsonify(msg="pong")
 
