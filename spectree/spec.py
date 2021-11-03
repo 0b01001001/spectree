@@ -2,7 +2,7 @@ from copy import deepcopy
 from functools import wraps
 
 from .config import Config
-from .models import Tag
+from .models import Tag, ValidationError
 from .plugins import PLUGINS
 from .utils import (
     default_after_handler,
@@ -33,6 +33,9 @@ class SpecTree:
         :meth:`spectree.utils.default_after_handler`
         ``func(req, resp, resp_validation_error, instance)``
         that will be called after the response validation
+    :param validation_error_status: The default response status code to use in the
+        event of a validation error. This value can be overridden for specific endpoints
+        if needed.
     :param kwargs: update default :class:`spectree.config.Config`
     """
 
@@ -43,10 +46,12 @@ class SpecTree:
         app=None,
         before=default_before_handler,
         after=default_after_handler,
+        validation_error_status=422,
         **kwargs,
     ):
         self.before = before
         self.after = after
+        self.validation_error_status = validation_error_status
         self.config = Config(**kwargs)
         self.backend_name = backend_name
         self.backend = backend(self) if backend else PLUGINS[backend_name](self)
@@ -103,6 +108,7 @@ class SpecTree:
         deprecated=False,
         before=None,
         after=None,
+        validation_error_status=None,
     ):
         """
         - validate query, json, headers in request
@@ -122,7 +128,15 @@ class SpecTree:
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
             specific endpoint
+        :param validation_error_status: The response status code to use for the
+            specific endpoint, in the event of a validation error. If not specified,
+            the global `validation_error_status` is used instead, defined
+            in :meth:`spectree.spec.SpecTree`.
         """
+        # If the status code for validation errors is not overridden on the level of
+        # the view function, use the globally set status code for validation errors.
+        if not validation_error_status:
+            validation_error_status = self.validation_error_status
 
         def decorate_validation(func):
             # for sync framework
@@ -137,6 +151,7 @@ class SpecTree:
                     resp,
                     before or self.before,
                     after or self.after,
+                    validation_error_status,
                     *args,
                     **kwargs,
                 )
@@ -153,6 +168,7 @@ class SpecTree:
                     resp,
                     before or self.before,
                     after or self.after,
+                    validation_error_status,
                     *args,
                     **kwargs,
                 )
@@ -178,6 +194,9 @@ class SpecTree:
                     setattr(validation, name, model_key)
 
             if resp:
+                # Make sure that the endpoint specific status code and data model for
+                # validation errors shows up in the response spec.
+                resp.add_model(validation_error_status, ValidationError, replace=False)
                 for model in resp.models:
                     self._add_model(model=model)
                 validation.resp = resp

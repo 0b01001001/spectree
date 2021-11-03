@@ -47,7 +47,18 @@ class StarlettePlugin(BasePlugin):
         )
 
     async def validate(
-        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+        self,
+        func,
+        query,
+        json,
+        headers,
+        cookies,
+        resp,
+        before,
+        after,
+        validation_error_status,
+        *args,
+        **kwargs,
     ):
         from starlette.responses import JSONResponse
 
@@ -66,13 +77,14 @@ class StarlettePlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = JSONResponse(err.errors(), 422)
+            response = JSONResponse(err.errors(), validation_error_status)
         except JSONDecodeError as err:
             json_decode_error = err
             self.logger.info(
-                "422 Validation Error", extra={"spectree_json_decode_error": str(err)}
+                f"{validation_error_status} Validation Error",
+                extra={"spectree_json_decode_error": str(err)},
             )
-            response = JSONResponse({"error_msg": str(err)}, 422)
+            response = JSONResponse({"error_msg": str(err)}, validation_error_status)
 
         before(request, response, req_validation_error, instance)
         if req_validation_error or json_decode_error:

@@ -137,7 +137,18 @@ class FlaskPlugin(BasePlugin):
         )
 
     def validate(
-        self, func, query, json, headers, cookies, resp, before, after, *args, **kwargs
+        self,
+        func,
+        query,
+        json,
+        headers,
+        cookies,
+        resp,
+        before,
+        after,
+        validation_error_status,
+        *args,
+        **kwargs,
     ):
         from flask import abort, jsonify, make_response, request
 
@@ -150,7 +161,7 @@ class FlaskPlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = make_response(jsonify(err.errors()), 422)
+            response = make_response(jsonify(err.errors()), validation_error_status)
 
         before(request, response, req_validation_error, None)
         if req_validation_error:

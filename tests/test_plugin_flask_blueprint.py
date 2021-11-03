@@ -119,6 +119,85 @@ def test_flask_validate(client, prefix):
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
+class TestFlaskValidationErrorResponseStatus:
+    @pytest.fixture
+    def app_client(self, request):
+        api_kwargs = {}
+        if request.param["global_validation_error_status"]:
+            api_kwargs["validation_error_status"] = request.param[
+                "global_validation_error_status"
+            ]
+        api = SpecTree("flask", **api_kwargs)
+        app = Blueprint("test_blueprint", __name__)
+
+        @app.route("/ping")
+        @api.validate(
+            headers=Headers,
+            resp=Response(HTTP_200=StrDict),
+            tags=["test", "health"],
+            validation_error_status=request.param["validation_error_status_override"],
+        )
+        def ping():
+            """summary
+            description"""
+            return jsonify(msg="pong")
+
+        api.register(app)
+
+        flask_app = Flask(__name__)
+        flask_app.register_blueprint(app)
+        with flask_app.app_context():
+            api.spec
+
+        with flask_app.test_client() as client:
+            yield client
+
+    @pytest.mark.parametrize(
+        "app_client, expected_status_code",
+        [
+            pytest.param(
+                {
+                    "global_validation_error_status": None,
+                    "validation_error_status_override": None,
+                },
+                422,
+                id="default-global-status-without-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": None,
+                    "validation_error_status_override": 400,
+                },
+                400,
+                id="default-global-status-with-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": 418,
+                    "validation_error_status_override": None,
+                },
+                418,
+                id="overridden-global-status-without-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": 400,
+                    "validation_error_status_override": 418,
+                },
+                418,
+                id="overridden-global-status-with-override",
+            ),
+        ],
+        indirect=["app_client"],
+    )
+    def test_validation_error_response_status_code(
+        self, app_client, expected_status_code
+    ):
+        resp = app_client.get("/ping")
+
+        assert resp.status_code == expected_status_code
+
+
 @pytest.mark.parametrize(
     ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
 )

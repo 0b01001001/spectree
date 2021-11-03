@@ -143,6 +143,85 @@ def test_starlette_validate(client):
         assert resp.headers.get("X-Validation") == "Pass"
 
 
+class TestStarletteValidationErrorResponseStatus:
+    @pytest.fixture
+    def app_client(self, request):
+        api_kwargs = {}
+        if request.param["global_validation_error_status"]:
+            api_kwargs["validation_error_status"] = request.param[
+                "global_validation_error_status"
+            ]
+        api = SpecTree("starlette", **api_kwargs)
+
+        class Ping(HTTPEndpoint):
+            name = "Ping"
+
+            @api.validate(
+                headers=Headers,
+                resp=Response(HTTP_200=StrDict),
+                tags=["test", "health"],
+                after=method_handler,
+                validation_error_status=request.param[
+                    "validation_error_status_override"
+                ],
+            )
+            def get(self, request):
+                """summary
+                description"""
+                return JSONResponse({"msg": "pong"})
+
+        app = Starlette(routes=[Route("/ping", Ping)])
+        api.register(app)
+
+        with TestClient(app) as client:
+            yield client
+
+    @pytest.mark.parametrize(
+        "app_client, expected_status_code",
+        [
+            pytest.param(
+                {
+                    "global_validation_error_status": None,
+                    "validation_error_status_override": None,
+                },
+                422,
+                id="default-global-status-without-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": None,
+                    "validation_error_status_override": 400,
+                },
+                400,
+                id="default-global-status-with-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": 418,
+                    "validation_error_status_override": None,
+                },
+                418,
+                id="overridden-global-status-without-override",
+            ),
+            pytest.param(
+                {
+                    "global_validation_error_status": 400,
+                    "validation_error_status_override": 418,
+                },
+                418,
+                id="overridden-global-status-with-override",
+            ),
+        ],
+        indirect=["app_client"],
+    )
+    def test_validation_error_response_status_code(
+        self, app_client, expected_status_code
+    ):
+        resp = app_client.get("/ping")
+
+        assert resp.status_code == expected_status_code
+
+
 def test_starlette_doc(client):
     resp = client.get("/apidoc/openapi.json")
     assert resp.json() == api.spec
