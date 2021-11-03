@@ -93,6 +93,11 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 For secure API endpoints it is needed to define `security_schemes` argument in `SpecTree` constructor. `security_schemes` argument needs to contain array of `SecurityScheme` objects. Then there are two ways to enforce security:
 
 1. You can enforce security on individual API endpoints by defining the `security` argument in the `api.validate` decorator of relevant function / method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in following example:
+
+<details>
+<summary>Click to expand the code example:</summary>
+<p>
+
 ```py
 api = SpecTree(security_schemes=[
         SecurityScheme(
@@ -138,7 +143,17 @@ def foo():
 def bar():
     ...
 ```
+
+</p>
+</details>
+
+
 2. You can enforce security on whole API by defining `security` argument in the `SpecTree` constructor (this corresponds to define security section on the root level in `OpenAPI`). It is possible to override global security by defining local security, as well as override to no security on some API endpoint, in `security` argument of `api.validate` decorator of relevant function / method as was described in previous point. It is also shown in following small example:
+
+<details>
+<summary>Click to expand the code example:</summary>
+<p>
+
 ```py
 api = SpecTree(security_schemes=[
         SecurityScheme(
@@ -194,6 +209,9 @@ def foobar():
     ...
 ```
 
+</p>
+</details>
+
 > What should I return when I'm using the library?
 
 No need to change anything. Just return what the framework required.
@@ -209,6 +227,10 @@ Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need.
 > How can I change the response when there is a validation error? Can I record some metrics?
 
 This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or for a specific endpoint validation.
+
+> How to change the default `ValidationError` status code?
+
+You can change the `validation_error_status` in SpecTree (global) or in a specific endpoint (local). This also take effect in the OpenAPI documentation.
 
 ## Demo
 
