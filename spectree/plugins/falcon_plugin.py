@@ -5,7 +5,6 @@ from functools import partial
 from pydantic import ValidationError
 
 from .base import BasePlugin
-from .page import PAGES
 
 
 class OpenAPI:
@@ -18,7 +17,7 @@ class OpenAPI:
 
 class DocPage:
     def __init__(self, html, spec_url):
-        self.page = html.format(spec_url)
+        self.page = html.format(spec_url=spec_url)
 
     def on_get(self, req, resp):
         resp.content_type = "text/html"
@@ -78,10 +77,12 @@ class FalconPlugin(BasePlugin):
         self.app.add_route(
             self.config.spec_url, self.OPEN_API_ROUTE_CLASS(self.spectree.spec)
         )
-        for ui in PAGES:
+        for ui in self.config.PAGE_TEMPLATES:
             self.app.add_route(
                 f"/{self.config.PATH}/{ui}",
-                self.DOC_PAGE_ROUTE_CLASS(PAGES[ui], self.config.spec_url),
+                self.DOC_PAGE_ROUTE_CLASS(
+                    self.config.PAGE_TEMPLATES[ui], self.config.spec_url
+                ),
             )
 
     def find_routes(self):

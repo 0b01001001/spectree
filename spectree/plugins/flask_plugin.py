@@ -1,7 +1,6 @@
 from pydantic import ValidationError
 
 from .base import BasePlugin, Context
-from .page import PAGES
 
 
 class FlaskPlugin(BasePlugin):
@@ -206,9 +205,9 @@ class FlaskPlugin(BasePlugin):
                         )
                     )
 
-                return PAGES[ui].format(spec_url)
+                return self.config.PAGE_TEMPLATES[ui].format(spec_url=spec_url)
 
-            for ui in PAGES:
+            for ui in self.config.PAGE_TEMPLATES:
                 app.add_url_rule(
                     rule=f"/{self.config.PATH}/{ui}",
                     endpoint=f"openapi_{self.config.PATH}_{ui}",
@@ -217,9 +216,11 @@ class FlaskPlugin(BasePlugin):
 
             app.record(lambda state: setattr(self, "blueprint_state", state))
         else:
-            for ui in PAGES:
+            for ui in self.config.PAGE_TEMPLATES:
                 app.add_url_rule(
                     rule=f"/{self.config.PATH}/{ui}",
                     endpoint=f"openapi_{self.config.PATH}_{ui}",
-                    view_func=lambda ui=ui: PAGES[ui].format(self.config.spec_url),
+                    view_func=lambda ui=ui: self.config.PAGE_TEMPLATES[ui].format(
+                        spec_url=self.config.spec_url
+                    ),
                 )
