@@ -224,6 +224,14 @@ Validation errors are logged with the INFO level. Details are passed into `extra
 
 Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
 
+> How to use a customized template page?
+
+```py
+SpecTree(page_templates={"page_name": "customized page contains {spec_url} for rendering"})
+```
+
+In the above example, the key "page_name" will be used in the URL to access this page "/apidoc/page_name". The value should be a string that contains `{spec_url}` which will be used to access the OpenAPI JSON file.
+
 > How can I change the response when there is a validation error? Can I record some metrics?
 
 This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or a specific endpoint validation.
