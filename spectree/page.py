@@ -1,4 +1,4 @@
-PAGES = {
+DEFAULT_PAGE_TEMPLATES = {
     # https://github.com/Redocly/redoc
     "redoc": """
 <!DOCTYPE html>
@@ -23,7 +23,7 @@ PAGES = {
         </style>
     </head>
     <body>
-        <redoc spec-url='{}'></redoc>
+        <redoc spec-url='{spec_url}'></redoc>
         <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
     </body>
 </html>""",  # noqa: E501
@@ -71,7 +71,7 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset
         window.onload = function() {{
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({{
-            url: "{}",
+            url: "{spec_url}",
             dom_id: '#swagger-ui',
             deepLinking: true,
             presets: [

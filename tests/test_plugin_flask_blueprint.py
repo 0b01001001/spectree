@@ -119,89 +119,121 @@ def test_flask_validate(client, prefix):
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
-class TestFlaskValidationErrorResponseStatus:
-    @pytest.fixture
-    def app_client(self, request):
-        api_kwargs = {}
-        if request.param["global_validation_error_status"]:
-            api_kwargs["validation_error_status"] = request.param[
-                "global_validation_error_status"
-            ]
-        api = SpecTree("flask", **api_kwargs)
-        app = Blueprint("test_blueprint", __name__)
-
-        @app.route("/ping")
-        @api.validate(
-            headers=Headers,
-            resp=Response(HTTP_200=StrDict),
-            tags=["test", "health"],
-            validation_error_status=request.param["validation_error_status_override"],
+@pytest.fixture
+def test_client_and_api(request):
+    api_args = ["flask"]
+    api_kwargs = {}
+    endpoint_kwargs = {
+        "headers": Headers,
+        "resp": Response(HTTP_200=StrDict),
+        "tags": ["test", "health"],
+    }
+    register_blueprint_kwargs = {}
+    if hasattr(request, "param"):
+        api_args.extend(request.param.get("api_args", ()))
+        api_kwargs.update(request.param.get("api_kwargs", {}))
+        endpoint_kwargs.update(request.param.get("endpoint_kwargs", {}))
+        register_blueprint_kwargs.update(
+            request.param.get("register_blueprint_kwargs", {})
         )
-        def ping():
-            """summary
-            description"""
-            return jsonify(msg="pong")
 
-        api.register(app)
+    api = SpecTree(*api_args, **api_kwargs)
+    app = Blueprint("test_blueprint", __name__)
 
-        flask_app = Flask(__name__)
-        flask_app.register_blueprint(app)
-        with flask_app.app_context():
-            api.spec
+    @app.route("/ping")
+    @api.validate(**endpoint_kwargs)
+    def ping():
+        """summary
 
-        with flask_app.test_client() as client:
-            yield client
+        description"""
+        return jsonify(msg="pong")
 
-    @pytest.mark.parametrize(
-        "app_client, expected_status_code",
-        [
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": None,
-                },
-                422,
-                id="default-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": 400,
-                },
-                400,
-                id="default-global-status-with-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 418,
-                    "validation_error_status_override": None,
-                },
-                418,
-                id="overridden-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 400,
-                    "validation_error_status_override": 418,
-                },
-                418,
-                id="overridden-global-status-with-override",
-            ),
-        ],
-        indirect=["app_client"],
-    )
-    def test_validation_error_response_status_code(
-        self, app_client, expected_status_code
-    ):
-        resp = app_client.get("/ping")
+    api.register(app)
 
-        assert resp.status_code == expected_status_code
+    flask_app = Flask(__name__)
+    flask_app.register_blueprint(app, **register_blueprint_kwargs)
+
+    with flask_app.app_context():
+        api.spec
+    api.register(app)
+
+    with flask_app.test_client() as test_client:
+        yield test_client, api
 
 
 @pytest.mark.parametrize(
-    ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
+    "test_client_and_api, expected_status_code",
+    [
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {}},
+            422,
+            id="default-global-status-without-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {"validation_error_status": 400}},
+            400,
+            id="default-global-status-with-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {"validation_error_status": 418}, "endpoint_kwargs": {}},
+            418,
+            id="overridden-global-status-without-override",
+        ),
+        pytest.param(
+            {
+                "api_kwargs": {"validation_error_status": 400},
+                "endpoint_kwargs": {"validation_error_status": 418},
+            },
+            418,
+            id="overridden-global-status-with-override",
+        ),
+    ],
+    indirect=["test_client_and_api"],
 )
-def test_flask_doc(client, prefix):
+def test_validation_error_response_status_code(
+    test_client_and_api, expected_status_code
+):
+    app_client, _ = test_client_and_api
+
+    resp = app_client.get("/ping")
+
+    assert resp.status_code == expected_status_code
+
+
+@pytest.mark.parametrize(
+    "test_client_and_api, expected_doc_pages",
+    [
+        pytest.param({}, ["redoc", "swagger"], id="default-page-templates"),
+        pytest.param(
+            {"api_kwargs": {"page_templates": {"custom_page": "{spec_url}"}}},
+            ["custom_page"],
+            id="custom-page-templates",
+        ),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_flask_doc(test_client_and_api, expected_doc_pages):
+    client, api = test_client_and_api
+
+    resp = client.get("/apidoc/openapi.json")
+    assert resp.json == api.spec
+
+    for doc_page in expected_doc_pages:
+        resp = client.get(f"/apidoc/{doc_page}")
+        assert resp.status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("test_client_and_api", "prefix"),
+    [
+        ({"register_blueprint_kwargs": {}}, ""),
+        ({"register_blueprint_kwargs": {"url_prefix": "/prefix"}}, "/prefix"),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_flask_doc_prefix(test_client_and_api, prefix):
+    client, api = test_client_and_api
+
     resp = client.get(prefix + "/apidoc/openapi.json")
     assert resp.json == api.spec
 

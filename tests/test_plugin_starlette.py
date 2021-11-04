@@ -143,91 +143,96 @@ def test_starlette_validate(client):
         assert resp.headers.get("X-Validation") == "Pass"
 
 
-class TestStarletteValidationErrorResponseStatus:
-    @pytest.fixture
-    def app_client(self, request):
-        api_kwargs = {}
-        if request.param["global_validation_error_status"]:
-            api_kwargs["validation_error_status"] = request.param[
-                "global_validation_error_status"
-            ]
-        api = SpecTree("starlette", **api_kwargs)
+@pytest.fixture
+def test_client_and_api(request):
+    api_args = ["starlette"]
+    api_kwargs = {}
+    endpoint_kwargs = {
+        "headers": Headers,
+        "resp": Response(HTTP_200=StrDict),
+        "tags": ["test", "health"],
+    }
+    if hasattr(request, "param"):
+        api_args.extend(request.param.get("api_args", ()))
+        api_kwargs.update(request.param.get("api_kwargs", {}))
+        endpoint_kwargs.update(request.param.get("endpoint_kwargs", {}))
 
-        class Ping(HTTPEndpoint):
-            name = "Ping"
+    api = SpecTree(*api_args, **api_kwargs)
 
-            @api.validate(
-                headers=Headers,
-                resp=Response(HTTP_200=StrDict),
-                tags=["test", "health"],
-                after=method_handler,
-                validation_error_status=request.param[
-                    "validation_error_status_override"
-                ],
-            )
-            def get(self, request):
-                """summary
-                description"""
-                return JSONResponse({"msg": "pong"})
+    class Ping(HTTPEndpoint):
+        name = "Ping"
 
-        app = Starlette(routes=[Route("/ping", Ping)])
-        api.register(app)
+        @api.validate(**endpoint_kwargs)
+        def get(self, request):
+            """summary
 
-        with TestClient(app) as client:
-            yield client
+            description"""
+            return JSONResponse({"msg": "pong"})
 
-    @pytest.mark.parametrize(
-        "app_client, expected_status_code",
-        [
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": None,
-                },
-                422,
-                id="default-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": 400,
-                },
-                400,
-                id="default-global-status-with-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 418,
-                    "validation_error_status_override": None,
-                },
-                418,
-                id="overridden-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 400,
-                    "validation_error_status_override": 418,
-                },
-                418,
-                id="overridden-global-status-with-override",
-            ),
-        ],
-        indirect=["app_client"],
-    )
-    def test_validation_error_response_status_code(
-        self, app_client, expected_status_code
-    ):
-        resp = app_client.get("/ping")
+    app = Starlette(routes=[Route("/ping", Ping)])
+    api.register(app)
 
-        assert resp.status_code == expected_status_code
+    with TestClient(app) as client:
+        yield client, api
 
 
-def test_starlette_doc(client):
+@pytest.mark.parametrize(
+    "test_client_and_api, expected_status_code",
+    [
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {}},
+            422,
+            id="default-global-status-without-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {"validation_error_status": 400}},
+            400,
+            id="default-global-status-with-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {"validation_error_status": 418}, "endpoint_kwargs": {}},
+            418,
+            id="overridden-global-status-without-override",
+        ),
+        pytest.param(
+            {
+                "api_kwargs": {"validation_error_status": 400},
+                "endpoint_kwargs": {"validation_error_status": 418},
+            },
+            418,
+            id="overridden-global-status-with-override",
+        ),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_validation_error_response_status_code(
+    test_client_and_api, expected_status_code
+):
+    app_client, _ = test_client_and_api
+
+    resp = app_client.get("/ping")
+
+    assert resp.status_code == expected_status_code
+
+
+@pytest.mark.parametrize(
+    "test_client_and_api, expected_doc_pages",
+    [
+        pytest.param({}, ["redoc", "swagger"], id="default-page-templates"),
+        pytest.param(
+            {"api_kwargs": {"page_templates": {"custom_page": "{spec_url}"}}},
+            ["custom_page"],
+            id="custom-page-templates",
+        ),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_flask_doc(test_client_and_api, expected_doc_pages):
+    client, api = test_client_and_api
+
     resp = client.get("/apidoc/openapi.json")
     assert resp.json() == api.spec
 
-    resp = client.get("/apidoc/redoc")
-    assert resp.status_code == 200
-
-    resp = client.get("/apidoc/swagger")
-    assert resp.status_code == 200
+    for doc_page in expected_doc_pages:
+        resp = client.get(f"/apidoc/{doc_page}")
+        assert resp.status_code == 200

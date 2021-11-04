@@ -6,7 +6,6 @@ from json import JSONDecodeError
 from pydantic import ValidationError
 
 from .base import BasePlugin, Context
-from .page import PAGES
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
@@ -30,11 +29,11 @@ class StarlettePlugin(BasePlugin):
             lambda request: JSONResponse(self.spectree.spec),
         )
 
-        for ui in PAGES:
+        for ui in self.config.PAGE_TEMPLATES:
             self.app.add_route(
                 f"/{self.config.PATH}/{ui}",
                 lambda request, ui=ui: HTMLResponse(
-                    PAGES[ui].format(self.config.spec_url)
+                    self.config.PAGE_TEMPLATES[ui].format(spec_url=self.config.spec_url)
                 ),
             )
 

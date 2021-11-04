@@ -145,92 +145,99 @@ def test_falcon_validate(client):
     assert resp.headers.get("X-Name") == "sorted random score"
 
 
-class TestFalconValidationErrorResponseStatus:
-    @pytest.fixture
-    def app_client(self, request):
-        api_kwargs = {}
-        if request.param["global_validation_error_status"]:
-            api_kwargs["validation_error_status"] = request.param[
-                "global_validation_error_status"
-            ]
-        api = SpecTree("falcon", **api_kwargs)
+@pytest.fixture
+def test_client_and_api(request):
+    api_args = ["falcon"]
+    api_kwargs = {}
+    endpoint_kwargs = {
+        "headers": Headers,
+        "resp": Response(HTTP_200=StrDict),
+        "tags": ["test", "health"],
+    }
+    if hasattr(request, "param"):
+        api_args.extend(request.param.get("api_args", ()))
+        api_kwargs.update(request.param.get("api_kwargs", {}))
+        endpoint_kwargs.update(request.param.get("endpoint_kwargs", {}))
 
-        class Ping:
-            name = "health check"
+    api = SpecTree(*api_args, **api_kwargs)
 
-            @api.validate(
-                headers=Headers,
-                tags=["test", "health"],
-                validation_error_status=request.param[
-                    "validation_error_status_override"
-                ],
-            )
-            def on_get(self, req, resp):
-                """summary
-                description
-                """
-                resp.media = {"msg": "pong"}
+    class Ping:
+        name = "health check"
 
-        app = App()
-        app.add_route("/ping", Ping())
-        api.register(app)
+        @api.validate(**endpoint_kwargs)
+        def on_get(self, req, resp):
+            """summary
 
-        return testing.TestClient(app)
+            description
+            """
+            resp.media = {"msg": "pong"}
 
-    @pytest.mark.parametrize(
-        "app_client, expected_status_code",
-        [
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": None,
-                },
-                422,
-                id="default-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": None,
-                    "validation_error_status_override": 400,
-                },
-                400,
-                id="default-global-status-with-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 418,
-                    "validation_error_status_override": None,
-                },
-                418,
-                id="overridden-global-status-without-override",
-            ),
-            pytest.param(
-                {
-                    "global_validation_error_status": 400,
-                    "validation_error_status_override": 418,
-                },
-                418,
-                id="overridden-global-status-with-override",
-            ),
-        ],
-        indirect=["app_client"],
+    app = App()
+    app.add_route("/ping", Ping())
+    api.register(app)
+
+    return testing.TestClient(app), api
+
+
+@pytest.mark.parametrize(
+    "test_client_and_api, expected_status_code",
+    [
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {}},
+            422,
+            id="default-global-status-without-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {}, "endpoint_kwargs": {"validation_error_status": 400}},
+            400,
+            id="default-global-status-with-override",
+        ),
+        pytest.param(
+            {"api_kwargs": {"validation_error_status": 418}, "endpoint_kwargs": {}},
+            418,
+            id="overridden-global-status-without-override",
+        ),
+        pytest.param(
+            {
+                "api_kwargs": {"validation_error_status": 400},
+                "endpoint_kwargs": {"validation_error_status": 418},
+            },
+            418,
+            id="overridden-global-status-with-override",
+        ),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_validation_error_response_status_code(
+    test_client_and_api, expected_status_code
+):
+    app_client, _ = test_client_and_api
+
+    resp = app_client.simulate_request(
+        "GET", "/ping", headers={"Content-Type": "text/plain"}
     )
-    def test_validation_error_response_status_code(
-        self, app_client, expected_status_code
-    ):
-        resp = app_client.simulate_request(
-            "GET", "/ping", headers={"Content-Type": "text/plain"}
-        )
 
-        assert resp.status_code == expected_status_code
+    assert resp.status_code == expected_status_code
 
 
-def test_falcon_doc(client):
+@pytest.mark.parametrize(
+    "test_client_and_api, expected_doc_pages",
+    [
+        pytest.param({}, ["redoc", "swagger"], id="default-page-templates"),
+        pytest.param(
+            {"api_kwargs": {"page_templates": {"custom_page": "{spec_url}"}}},
+            ["custom_page"],
+            id="custom-page-templates",
+        ),
+    ],
+    indirect=["test_client_and_api"],
+)
+def test_flask_doc(test_client_and_api, expected_doc_pages):
+    client, api = test_client_and_api
+
     resp = client.simulate_get("/apidoc/openapi.json")
     assert resp.json == api.spec
 
-    resp = client.simulate_get("/apidoc/redoc")
-    assert resp.status_code == 200
-
-    resp = client.simulate_get("/apidoc/swagger")
-    assert resp.status_code == 200
+    for doc_page in expected_doc_pages:
+        resp = client.simulate_get(f"/apidoc/{doc_page}")
+        assert resp.status_code == 200
