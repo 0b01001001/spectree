@@ -22,8 +22,6 @@ class Config:
         self.PATH = "apidoc"
         self.FILENAME = "openapi.json"
         self.OPENAPI_VERSION = "3.0.3"
-        self.UI = "redoc"
-        self._SUPPORT_UI = {"redoc", "swagger"}
         self.MODE = "normal"
         self._SUPPORT_MODE = {"normal", "strict", "greedy"}
         self.ANNOTATIONS = False
@@ -70,5 +68,4 @@ class Config:
                 setattr(self, key, value)
                 self.logger.info(f'[✓] Attribute "{key}" has been updated to "{value}"')
 
-        assert self.UI in self._SUPPORT_UI, "unsupported UI"
         assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"

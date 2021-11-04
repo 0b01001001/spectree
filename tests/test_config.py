@@ -30,15 +30,6 @@ def test_update_config(config):
         assert config.unknown
 
 
-def test_update_ui(config):
-    config.update(ui="swagger")
-    assert config.UI == "swagger"
-
-    with pytest.raises(AssertionError) as e:
-        config.update(ui="python")
-    assert "UI" in str(e.value)
-
-
 def test_update_mode(config):
     config.update(mode="greedy")
     assert config.MODE == "greedy"
