@@ -46,6 +46,7 @@ def test_plugin_spec(api):
 
     assert get_paths(api.spec) == [
         "/api/user/{name}",
+        "/api/user/{name}/address/{address_id}",
         "/api/user_annotated/{name}",
         "/ping",
     ]
@@ -65,12 +66,18 @@ def test_plugin_spec(api):
     )
     assert len(user["responses"]) == 3
 
-    params = user["parameters"]
-    for param in params:
-        if param["in"] == "path":
-            assert param["name"] == "name"
-        elif param["in"] == "query":
-            assert param["name"] == "order"
+    user_address = api.spec["paths"]["/api/user/{name}/address/{address_id}"]["get"]
+    params = user_address["parameters"]
+    assert params[0]["in"] == "path"
+    assert params[0]["name"] == "name"
+    assert params[0]["description"] == "The name that uniquely identifies the user."
+
+    assert params[1]["in"] == "path"
+    assert params[1]["name"] == "address_id"
+    assert params[1]["description"] == ""
+
+    assert params[2]["in"] == "query"
+    assert params[2]["name"] == "order"
 
 
 def test_secure_spec():

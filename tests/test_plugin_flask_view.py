@@ -70,12 +70,29 @@ class UserAnnotated(MethodView):
         return jsonify(name=json.name, score=score)
 
 
+class UserAddress(MethodView):
+    @api.validate(
+        query=Query,
+        path_parameter_descriptions={
+            "name": "The name that uniquely identifies the user.",
+            "non-existent-param": "description",
+        },
+    )
+    def get(self, name, address_id):
+        return None
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
     "/api/user_annotated/<name>",
     view_func=UserAnnotated.as_view("user_annotated"),
     methods=["POST"],
+)
+app.add_url_rule(
+    "/api/user/<name>/address/<address_id>",
+    view_func=UserAddress.as_view("user_address"),
+    methods=["GET"],
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

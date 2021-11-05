@@ -48,9 +48,11 @@ class BasePlugin:
         """
         raise NotImplementedError
 
-    def parse_path(self, route):
+    def parse_path(self, route, path_parameter_descriptions):
         """
         :param route: API routes
+        :param path_parameter_descriptions: A dictionary of path parameter names and
+            their description.
 
         parse URI path to get the variables in path
         """

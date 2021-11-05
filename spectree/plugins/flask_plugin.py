@@ -48,7 +48,7 @@ class FlaskPlugin(BasePlugin):
             for method in route.methods:
                 yield method, func
 
-    def parse_path(self, route):
+    def parse_path(self, route, path_parameter_descriptions):
         from werkzeug.routing import parse_converter_args, parse_rule
 
         subs = []
@@ -105,12 +105,18 @@ class FlaskPlugin(BasePlugin):
             elif converter == "default":
                 schema = {"type": "string"}
 
+            description = (
+                path_parameter_descriptions.get(variable, "")
+                if path_parameter_descriptions
+                else ""
+            )
             parameters.append(
                 {
                     "name": variable,
                     "in": "path",
                     "required": True,
                     "schema": schema,
+                    "description": description,
                 }
             )
 

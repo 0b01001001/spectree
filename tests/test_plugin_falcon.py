@@ -88,10 +88,25 @@ class UserScoreAnnotated:
         resp.media = {"name": req.context.json.name, "score": score}
 
 
+class UserAddress:
+    name = "user's address"
+
+    @api.validate(
+        query=Query,
+        path_parameter_descriptions={
+            "name": "The name that uniquely identifies the user.",
+            "non-existent-param": "description",
+        },
+    )
+    def on_get(self, req, resp, name, address_id):
+        return None
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
+app.add_route("/api/user/{name}/address/{address_id}", UserAddress())
 api.register(app)
 
 
