@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
 
@@ -226,16 +227,14 @@ class SpecTree:
         """
         generate OpenAPI spec according to routes and decorators
         """
-        routes, tags = {}, {}
+        routes = defaultdict(dict)
+        tags = {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
-            routes[path] = routes.get(path, {})
-            path_is_empty = True
             for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
-                path_is_empty = False
                 name = parse_name(func)
                 summary, desc = parse_comments(func)
                 func_tags = getattr(func, "tags", ())
@@ -265,9 +264,6 @@ class SpecTree:
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
-
-            if path_is_empty:
-                del routes[path]
 
         spec = {
             "openapi": self.config.OPENAPI_VERSION,
