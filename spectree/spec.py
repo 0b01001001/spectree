@@ -84,7 +84,7 @@ class SpecTree:
         """
         bypass rules for routes (mode defined in config)
 
-        :normal:    collect all the routes that are not decorated by other
+        :normal:    collect all the routes exclude those decorated by other
                     `SpecTree` instance
         :greedy:    collect all the routes
         :strict:    collect all the routes decorated by this instance
