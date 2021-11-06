@@ -154,7 +154,7 @@ class StarlettePlugin(BasePlugin):
         for method in route.methods or ["GET"]:
             yield method, route.func
 
-    def parse_path(self, route):
+    def parse_path(self, route, path_parameter_descriptions):
         from starlette.routing import compile_path
 
         _, path, variables = compile_path(route.path)
@@ -178,12 +178,18 @@ class StarlettePlugin(BasePlugin):
             elif typ == "str":
                 schema = {"type": "string"}
 
+            description = (
+                path_parameter_descriptions.get(name, "")
+                if path_parameter_descriptions
+                else ""
+            )
             parameters.append(
                 {
                     "name": name,
                     "in": "path",
                     "required": True,
                     "schema": schema,
+                    "description": description,
                 }
             )
 

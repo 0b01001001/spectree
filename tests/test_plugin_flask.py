@@ -86,6 +86,18 @@ def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     return jsonify(name=json.name, score=score)
 
 
+@app.route("/api/user/<name>/address/<address_id>", methods=["GET"])
+@api.validate(
+    query=Query,
+    path_parameter_descriptions={
+        "name": "The name that uniquely identifies the user.",
+        "non-existent-param": "description",
+    },
+)
+def user_address(name, address_id):
+    return None
+
+
 # INFO: ensures that spec is calculated and cached _after_ registering
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.

@@ -103,7 +103,7 @@ class FalconPlugin(BasePlugin):
     def parse_func(self, route):
         return route.method_map.items()
 
-    def parse_path(self, route):
+    def parse_path(self, route, path_parameter_descriptions):
         subs, parameters = [], []
         for segment in route.uri_template.strip("/").split("/"):
             matches = self.FIELD_PATTERN.finditer(segment)
@@ -150,12 +150,18 @@ class FalconPlugin(BasePlugin):
                     # no converter specified or customized converters
                     schema = {"type": "string"}
 
+                description = (
+                    path_parameter_descriptions.get(variable, "")
+                    if path_parameter_descriptions
+                    else ""
+                )
                 parameters.append(
                     {
                         "name": variable,
                         "in": "path",
                         "required": True,
                         "schema": schema,
+                        "description": description,
                     }
                 )
 

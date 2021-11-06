@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
 
@@ -109,6 +110,7 @@ class SpecTree:
         before=None,
         after=None,
         validation_error_status=None,
+        path_parameter_descriptions=None,
     ):
         """
         - validate query, json, headers in request
@@ -132,6 +134,8 @@ class SpecTree:
             specific endpoint, in the event of a validation error. If not specified,
             the global `validation_error_status` is used instead, defined
             in :meth:`spectree.spec.SpecTree`.
+        :param path_parameter_descriptions: A dictionary of path parameter names and
+            their description.
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
@@ -206,6 +210,7 @@ class SpecTree:
 
             validation.security = security
             validation.deprecated = deprecated
+            validation.path_parameter_descriptions = path_parameter_descriptions
             # register decorator
             validation._decorator = self
             return validation
@@ -226,16 +231,20 @@ class SpecTree:
         """
         generate OpenAPI spec according to routes and decorators
         """
-        routes, tags = {}, {}
+        routes = defaultdict(dict)
+        tags = {}
         for route in self.backend.find_routes():
-            path, parameters = self.backend.parse_path(route)
-            routes[path] = routes.get(path, {})
-            path_is_empty = True
             for method, func in self.backend.parse_func(route):
+                path_parameter_descriptions = getattr(
+                    func, "path_parameter_descriptions", None
+                )
+                path, parameters = self.backend.parse_path(
+                    route, path_parameter_descriptions
+                )
+
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
-                path_is_empty = False
                 name = parse_name(func)
                 summary, desc = parse_comments(func)
                 func_tags = getattr(func, "tags", ())
@@ -265,9 +274,6 @@ class SpecTree:
                 request_body = parse_request(func)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
-
-            if path_is_empty:
-                del routes[path]
 
         spec = {
             "openapi": self.config.OPENAPI_VERSION,
