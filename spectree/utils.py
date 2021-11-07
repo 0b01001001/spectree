@@ -2,7 +2,7 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, Type
 
 from pydantic import BaseModel
 
@@ -207,7 +207,7 @@ def get_model_path_key(model_path: str):
     return model_path_key
 
 
-def get_model_key(model: BaseModel):
+def get_model_key(model: Type[BaseModel]) -> str:
     """
     generate model name prefixed by short hashed path (instead of its path to
     avoid code-structure leaking)
