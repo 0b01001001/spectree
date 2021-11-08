@@ -1,33 +1,58 @@
-from typing import Type
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
 
 from .utils import get_model_key, parse_code
+
+OptionalModelType = Optional[Type[BaseModel]]
 
 
 class Response:
     """
     response object
 
-    :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP200'
-    :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`> or None
+    :param codes: list of HTTP status code, format('HTTP_[0-9]_{3}'), 'HTTP_200'
+    :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`> or None or
+        a two element tuple of (<`pydantic.BaseModel`> or None) as the first item and
+        a custom status code description string as the second item.
     """
 
-    def __init__(self, *codes, **code_models):
-        self.codes = []
+    def __init__(
+        self,
+        *codes: str,
+        **code_models: Union[OptionalModelType, Tuple[OptionalModelType, str]],
+    ) -> None:
+        self.codes: List[str] = []
 
         for code in codes:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             self.codes.append(code)
 
-        self.code_models = {}
-        for code, model in code_models.items():
+        self.code_models: Dict[str, Type[BaseModel]] = {}
+        self.code_descriptions: Dict[str, Optional[str]] = {}
+        for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
+            model = model_and_description
+            description = None
+            if isinstance(model_and_description, tuple):
+                assert len(model_and_description) == 2, (
+                    "unexpected number of arguments for a tuple of "
+                    "`pydantic.BaseModel` and HTTP status code description"
+                )
+                model = model_and_description[0]
+                description: Optional[str] = model_and_description[1]
+
             if model:
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
+                assert description is None or isinstance(
+                    description, str
+                ), "invalid HTTP status code description"
                 self.code_models[code] = model
             else:
                 self.codes.append(code)
+
+            if description:
+                self.code_descriptions[code] = description
 
     def add_model(
         self, code: int, model: Type[BaseModel], replace: bool = True
@@ -44,39 +69,49 @@ class Response:
             return
         self.code_models[f"HTTP_{code}"] = model
 
-    def has_model(self):
+    def has_model(self) -> bool:
         """
         :returns: boolean -- does this response has models or not
         """
         return bool(self.code_models)
 
-    def find_model(self, code):
+    def find_model(self, code: int) -> Optional[Type[BaseModel]]:
         """
         :param code: ``r'\\d{3}'``
         """
         return self.code_models.get(f"HTTP_{code}")
 
+    def get_code_description(self, code: str) -> str:
+        """Get the description of the given status code.
+
+        :param code: Status code string, format('HTTP_[0-9]_{3}'), 'HTTP_200'.
+        :returns: The status code's description.
+        """
+        return self.code_descriptions.get(code) or DEFAULT_CODE_DESC[code]
+
     @property
-    def models(self):
+    def models(self) -> Iterable[Type[BaseModel]]:
         """
         :returns:  dict_values -- all the models in this response
         """
         return self.code_models.values()
 
-    def generate_spec(self):
+    def generate_spec(self) -> Dict[str, Any]:
         """
         generate the spec for responses
 
         :returns: JSON
         """
-        responses = {}
+        responses: Dict[str, Any] = {}
         for code in self.codes:
-            responses[parse_code(code)] = {"description": DEFAULT_CODE_DESC[code]}
+            responses[parse_code(code)] = {
+                "description": self.get_code_description(code)
+            }
 
         for code, model in self.code_models.items():
             model_name = get_model_key(model=model)
             responses[parse_code(code)] = {
-                "description": DEFAULT_CODE_DESC[code],
+                "description": self.get_code_description(code),
                 "content": {
                     "application/json": {
                         "schema": {"$ref": f"#/components/schemas/{model_name}"}
