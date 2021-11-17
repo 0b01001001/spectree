@@ -86,6 +86,8 @@ To build a response for the endpoint, you need to declare the status code with f
 ```py
 Response(HTTP_200=None, HTTP_403=ForbidModel)
 Response('HTTP_200') # equals to Response(HTTP_200=None)
+# with custom code description
+Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
 
 > How to secure API endpoints?
