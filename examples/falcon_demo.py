@@ -1,4 +1,3 @@
-import json
 import logging
 from random import random
 from wsgiref import simple_server
@@ -7,7 +6,6 @@ import falcon
 from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree, Tag
-
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
