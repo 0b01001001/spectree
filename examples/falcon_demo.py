@@ -1,4 +1,3 @@
-import json
 import logging
 from random import random
 from wsgiref import simple_server
@@ -8,10 +7,15 @@ from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree, Tag
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
+
+
 api = SpecTree(
     "falcon",
     title="Demo Service",
     version="0.1.2",
+    unknown="test",
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
@@ -86,45 +90,14 @@ class Classification:
 
         demo for `query`, `data`, `resp`, `x`
         """
-        print(f"{source} => {target}")
-        print(req.context.query)
-        print(req.context.json)
+        logger.debug(f"{source} => {target}")
+        logger.info(req.context.query)
+        logger.info(req.context.json)
         if random() < 0.5:
             resp.status = falcon.HTTP_403
             resp.media = {"loc": "unknown", "msg": "bad luck", "typ": "random"}
             return
         resp.media = {"label": int(10 * random()), "score": random()}
-
-
-class JSONFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        lr = logging.LogRecord(None, None, "", 0, "", (), None, None)
-        self.default_keys = [key for key in lr.__dict__]
-
-    def extra_data(self, record):
-        return {
-            key: getattr(record, key)
-            for key in record.__dict__
-            if key not in self.default_keys
-        }
-
-    def format(self, record):
-        log_data = {
-            "severity": record.levelname,
-            "path_name": record.pathname,
-            "function_name": record.funcName,
-            "message": record.msg,
-            **self.extra_data(record),
-        }
-        return json.dumps(log_data)
-
-
-logger = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(JSONFormatter())
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
 
 
 if __name__ == "__main__":
