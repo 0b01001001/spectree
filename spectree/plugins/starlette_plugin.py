@@ -80,7 +80,8 @@ class StarlettePlugin(BasePlugin):
         except JSONDecodeError as err:
             json_decode_error = err
             self.logger.info(
-                f"{validation_error_status} Validation Error",
+                "%s Validation Error",
+                validation_error_status,
                 extra={"spectree_json_decode_error": str(err)},
             )
             response = JSONResponse({"error_msg": str(err)}, validation_error_status)

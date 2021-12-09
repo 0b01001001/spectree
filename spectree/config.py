@@ -71,9 +71,11 @@ class Config:
         for key, value in kwargs.items():
             key = key.upper()
             if not hasattr(self, key):
-                self.logger.info(f'[✗] Ignore unknown attribute "{key}"')
+                self.logger.info("[✗] Ignore unknown attribute '%s'", key)
             else:
                 setattr(self, key, value)
-                self.logger.info(f'[✓] Attribute "{key}" has been updated to "{value}"')
+                self.logger.info(
+                    "[✓] Attribute '%s' has been updated to '%s'", key, value
+                )
 
         assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"
