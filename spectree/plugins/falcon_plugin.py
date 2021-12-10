@@ -188,16 +188,17 @@ class FalconPlugin(BasePlugin):
                 # Compare first part of content_type with media types
                 if part.content_type.split('/')[0] == 'text':
                     data[part.name] = part.text
-                elif part.content_type.split('/')[0] in ['image', 'application']:
+                elif part.content_type.split('/')[0] in ['image', 'application', 'audio']:
                     data[part.name] = {
                         "filename": part.filename,
                         "name": part.name,
-                        "content_length": len(part.data),
+                        # "content_length": len(part.data),  # FIXME: raises error if file is too big
+                        "content_length": 0,  # TODO: replace placeholder
                         "mimetype": part.content_type,
-                        "stream": part.data
+                        "stream": part.stream.read()
                     }
                 # TODO: add support for other media types?
-                # TODO: handle unsupported media types?
+                # TODO: or handle unsupported media types?
             req.context.form_data = form_data.parse_obj(data)
 
     def validate(

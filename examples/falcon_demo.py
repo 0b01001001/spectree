@@ -6,7 +6,7 @@ from wsgiref import simple_server
 import falcon
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree, Tag
+from spectree import Response, SpecTree, Tag, models
 
 api = SpecTree(
     "falcon",
@@ -47,6 +47,16 @@ class Data(BaseModel):
     uid: str
     limit: int
     vip: bool
+
+
+class File(BaseModel):
+    uid: str
+    file: models.BaseFile = Field(..., type='file')
+
+
+class FileResp(BaseModel):
+    filename: str
+    content_length: int
 
 
 class Ping:
@@ -96,6 +106,22 @@ class Classification:
         resp.media = {"label": int(10 * random()), "score": random()}
 
 
+class FileUpload:
+    """
+    file-handling demo
+    """
+
+    @api.validate(form_data=File, resp=Response(HTTP_200=FileResp))
+    def on_post(self, req, resp):
+        """
+        post multipart/form-data demo
+
+        demo for 'form_data'
+        """
+        img_data = req.context.form_data.file
+        resp.media = {"filename": img_data.filename, "content_length": img_data.content_length}
+
+
 class JSONFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,7 +157,10 @@ if __name__ == "__main__":
     app = falcon.API()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
+    app.add_route("/api/upload-file", FileUpload())
     api.register(app)
 
     httpd = simple_server.make_server("localhost", 8000, app)
+    print("Swagger documentation: http://localhost:8000/apidoc/swagger\n"
+          "Redoc documentation: http://localhost:8000/apidoc/redoc")
     httpd.serve_forever()

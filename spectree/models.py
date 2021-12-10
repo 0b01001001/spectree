@@ -171,17 +171,6 @@ class Server(BaseModel):
 
 
 class BaseFile(BaseModel):
-    """
-    Inherit your model from this model and explicitly specify the field type as in the example below,
-    so that it will be possible to load the image with Swagger.
-
-    Example:
-        >>> from pydantic import BaseModel, Field
-        >>> from spectree.models import BaseFile
-        >>> class Image(BaseModel):
-        ...     image: BaseFile = Field(type='file')
-        ...     likes: int
-    """
     filename: str
     name: str
     content_length: int
