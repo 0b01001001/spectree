@@ -145,6 +145,8 @@ class SpecTree:
             validation_error_status = self.validation_error_status
 
         if json and form_data:
+            # TODO: how to resolve conflict between json and form_data?
+            # TODO: Maybe replace 'form_data' with 'request_body' as it is done in 'drf-yasg'?
             raise ValueError("You should provide either 'json' or 'form_data'.")
 
         def decorate_validation(func):

@@ -182,6 +182,23 @@ class FalconPlugin(BasePlugin):
             media = None
         if json:
             req.context.json = json.parse_obj(media)
+        elif form_data:
+            data = {}
+            for part in media:
+                # Compare first part of content_type with media types
+                if part.content_type.split('/')[0] == 'text':
+                    data[part.name] = part.text
+                elif part.content_type.split('/')[0] in ['image', 'application']:
+                    data[part.name] = {
+                        "filename": part.filename,
+                        "name": part.name,
+                        "content_length": len(part.data),
+                        "mimetype": part.content_type,
+                        "stream": part.data
+                    }
+                # TODO: add support for other media types?
+                # TODO: handle unsupported media types?
+            req.context.form_data = form_data.parse_obj(data)
 
     def validate(
         self,
