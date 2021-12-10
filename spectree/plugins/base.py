@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     # to avoid cyclic import
     from ..spec import SpecTree
 
-Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
+Context = namedtuple("Context", ["query", "json", "form", "headers", "cookies"])
 
 
 BackendRoute = TypeVar("BackendRoute")

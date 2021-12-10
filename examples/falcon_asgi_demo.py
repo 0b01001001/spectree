@@ -1,8 +1,7 @@
 import logging
 from random import random
-from wsgiref import simple_server
 
-import falcon
+import falcon.asgi
 from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree, Tag, models
@@ -12,13 +11,10 @@ logger = logging.getLogger()
 
 
 api = SpecTree(
-    "falcon",
+    "falcon-asgi",
     title="Demo Service",
     version="0.1.2",
-    description="This is a demo service.",
-    terms_of_service="https://github.io",
-    contact={"name": "John", "email": "hello@github.com", "url": "https://github.com"},
-    license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+    unknown="test",
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
@@ -70,7 +66,7 @@ class Ping:
         pass
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp):
+    async def on_get(self, req, resp):
         """
         health check
         """
@@ -85,7 +81,7 @@ class Classification:
     """
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp, source, target):
+    async def on_get(self, req, resp, source, target):
         """
         API summary
 
@@ -96,7 +92,7 @@ class Classification:
     @api.validate(
         query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck)
     )
-    def on_post(self, req, resp, source, target):
+    async def on_post(self, req, resp, source, target):
         """
         post demo
 
@@ -118,7 +114,7 @@ class FileUpload:
     """
 
     @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-    def on_post(self, req, resp):
+    async def on_post(self, req, resp):
         """
         post multipart/form-data demo
 
@@ -128,50 +124,8 @@ class FileUpload:
         resp.media = {"filename": file.filename}
 
 
-class JSONFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        lr = logging.LogRecord(None, None, "", 0, "", (), None, None)
-        self.default_keys = [key for key in lr.__dict__]
-
-    def extra_data(self, record):
-        return {
-            key: getattr(record, key)
-            for key in record.__dict__
-            if key not in self.default_keys
-        }
-
-    def format(self, record):
-        log_data = {
-            "severity": record.levelname,
-            "path_name": record.pathname,
-            "function_name": record.funcName,
-            "message": record.msg,
-            **self.extra_data(record),
-        }
-        return json.dumps(log_data)
-
-
-logger = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(JSONFormatter())
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
-
-
-if __name__ == "__main__":
-    """
-    cmd:
-        http :8000/ping
-        http ':8000/api/zh/en?text=hi' uid=neo limit=1 vip=true
-    """
-    app = falcon.App()
-    app.add_route("/ping", Ping())
-    app.add_route("/api/{source}/{target}", Classification())
-    app.add_route("/api/upload-file", FileUpload())
-    api.register(app)
-
-    httpd = simple_server.make_server("localhost", 8002, app)
-    logger.info("Swagger documentation: %s/swagger" % "http://localhost:8000/apidoc")
-    logger.info("Redoc documentation: %s/redoc" % "http://localhost:8000/apidoc")
-    httpd.serve_forever()
+app = falcon.asgi.App()
+app.add_route("/ping", Ping())
+app.add_route("/api/{source}/{target}", Classification())
+app.add_route("/api/upload-file", FileUpload())
+api.register(app)

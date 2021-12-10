@@ -27,6 +27,7 @@ def PydanticResponse(content):
 
 class StarlettePlugin(BasePlugin):
     ASYNC = True
+    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def __init__(self, spectree):
         super().__init__(spectree)
@@ -55,11 +56,11 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def request_validation(self, request, query, json, headers, cookies):
-        use_json = json and request.method not in ("GET", "DELETE")
+    async def request_validation(self, request, query, json, form_data, headers, cookies):
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
             json.parse_raw(await request.body() or "{}") if use_json else None,
+            form_data.parse_obj(await response.form() or "{}") if form_data and data else None,
             headers.parse_obj(request.headers) if headers else None,
             cookies.parse_obj(request.cookies) if cookies else None,
         )
@@ -69,6 +70,7 @@ class StarlettePlugin(BasePlugin):
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form_data,
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],

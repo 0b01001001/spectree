@@ -72,6 +72,14 @@ def parse_request(func: Any) -> Dict[str, Any]:
                 }
             }
         }
+    elif hasattr(func, "form"):
+        data = {
+            "content": {
+                "multipart/form-data": {
+                    "schema": {"$ref": f"#/components/schemas/{func.form}"}
+                }
+            }
+        }
     return data
 
 

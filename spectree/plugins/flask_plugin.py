@@ -132,7 +132,7 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, headers, cookies):
+    def request_validation(self, request, query, json, form_data, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
@@ -142,11 +142,13 @@ class FlaskPlugin(BasePlugin):
         req_query = get_multidict_items(request.args) or {}
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
+        req_form = request.form or {}  # or MultiDict() ?
         use_json = json and request.method not in ("GET", "DELETE")
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
             json.parse_obj(self._fill_json(request)) if use_json else None,
+            form_data.parse_obj(req_form.items()) if form else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
@@ -168,6 +170,7 @@ class FlaskPlugin(BasePlugin):
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form_data,
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],

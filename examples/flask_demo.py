@@ -5,7 +5,7 @@ from flask import Flask, abort, jsonify, request
 from flask.views import MethodView
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree
+from spectree import Response, SpecTree, models
 
 app = Flask(__name__)
 api = SpecTree("flask")
@@ -37,6 +37,16 @@ class Data(BaseModel):
                 "vip": True,
             }
         }
+
+
+class File(BaseModel):
+    uid: str
+    file: models.BaseFile
+
+
+class FileResp(BaseModel):
+    filename: str
+    content_length: int
 
 
 class Language(str, Enum):
@@ -87,6 +97,19 @@ def with_code_header():
     query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
     return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
+
+
+
+@app.route("/api/upload-file", methods=["POST"])
+@api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+def with_file():
+    """
+    post multipart/form-data demo
+
+    demo for 'form'
+    """
+    file_data = request.context.form.file
+    return jsonify(filename=file_data.filename, content_length=file_data.content_length)
 
 
 class UserAPI(MethodView):
