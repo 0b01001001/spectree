@@ -59,6 +59,14 @@ def parse_request(func):
                 }
             }
         }
+    elif hasattr(func, "form_data"):
+        data = {
+            "content": {
+                "multipart/form-data": {
+                    "schema": {"$ref": f"#/components/schemas/{func.form_data}"}
+                }
+            }
+        }
     return data
 
 

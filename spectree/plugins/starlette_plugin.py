@@ -37,7 +37,7 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def request_validation(self, request, query, json, headers, cookies):
+    async def request_validation(self, request, query, json, form_data, headers, cookies):
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
             json.parse_raw(await request.body() or "{}") if json else None,
@@ -50,6 +50,7 @@ class StarlettePlugin(BasePlugin):
         func,
         query,
         json,
+        form_data,
         headers,
         cookies,
         resp,
@@ -69,7 +70,7 @@ class StarlettePlugin(BasePlugin):
         req_validation_error = resp_validation_error = json_decode_error = None
 
         try:
-            await self.request_validation(request, query, json, headers, cookies)
+            await self.request_validation(request, query, json, form_data, headers, cookies)
             if self.config.ANNOTATIONS:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):

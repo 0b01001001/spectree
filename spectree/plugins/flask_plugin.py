@@ -122,7 +122,7 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, headers, cookies):
+    def request_validation(self, request, query, json, form_data, headers, cookies):
         req_query = request.args or {}
         if request.mimetype in self.FORM_MIMETYPE:
             req_json = request.form or {}
@@ -146,6 +146,7 @@ class FlaskPlugin(BasePlugin):
         func,
         query,
         json,
+        form_data,
         headers,
         cookies,
         resp,
@@ -159,7 +160,7 @@ class FlaskPlugin(BasePlugin):
 
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, headers, cookies)
+            self.request_validation(request, query, json, form_data, headers, cookies)
             if self.config.ANNOTATIONS:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):

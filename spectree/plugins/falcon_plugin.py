@@ -167,7 +167,7 @@ class FalconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def request_validation(self, req, query, json, headers, cookies):
+    def request_validation(self, req, query, json, form_data, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -188,6 +188,7 @@ class FalconPlugin(BasePlugin):
         func,
         query,
         json,
+        form_data,
         headers,
         cookies,
         resp,
@@ -201,7 +202,7 @@ class FalconPlugin(BasePlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            self.request_validation(_req, query, json, headers, cookies)
+            self.request_validation(_req, query, json, form_data, headers, cookies)
             if self.config.ANNOTATIONS:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):
@@ -242,7 +243,7 @@ class FalconAsgiPlugin(FalconPlugin):
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
 
-    async def request_validation(self, req, query, json, headers, cookies):
+    async def request_validation(self, req, query, json, form_data, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -263,6 +264,7 @@ class FalconAsgiPlugin(FalconPlugin):
         func,
         query,
         json,
+        form_data,
         headers,
         cookies,
         resp,
@@ -276,7 +278,7 @@ class FalconAsgiPlugin(FalconPlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            await self.request_validation(_req, query, json, headers, cookies)
+            await self.request_validation(_req, query, json, form_data, headers, cookies)
             if self.config.ANNOTATIONS:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):

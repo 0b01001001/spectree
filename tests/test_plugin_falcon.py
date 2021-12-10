@@ -1,5 +1,7 @@
 from random import randint
 
+import falcon
+
 try:
     from falcon import App
 except ImportError:
@@ -256,3 +258,13 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
     for doc_page in expected_doc_pages:
         resp = client.simulate_get(f"/apidoc/{doc_page}")
         assert resp.status_code == 200
+
+
+def test_error_json_with_form_data(test_client_and_api):
+    with pytest.raises(Exception) as e_info:
+        class AdminClass:
+            @api.validate(json=JSON, form_data=JSON)
+            def on_post(self, req, resp, name):
+                pass
+
+    assert e_info.value.args[0] == "You should provide either 'json' or 'form_data'."
