@@ -116,15 +116,15 @@ class FileUpload:
     file-handling demo
     """
 
-    @api.validate(form_data=File, resp=Response(HTTP_200=FileResp))
+    @api.validate(form_data=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
     def on_post(self, req, resp):
         """
         post multipart/form-data demo
 
         demo for 'form_data'
         """
-        img_data = req.context.form_data.file
-        resp.media = {"filename": img_data.filename, "content_length": img_data.content_length}
+        file_data = req.context.form_data.file
+        resp.media = {"filename": file_data.filename, "content_length": file_data.content_length}
 
 
 if __name__ == "__main__":
@@ -138,3 +138,17 @@ if __name__ == "__main__":
     print("Swagger documentation: http://localhost:8000/apidoc/swagger\n"
           "Redoc documentation: http://localhost:8000/apidoc/redoc")
     httpd.serve_forever()
+    """
+    Привет!
+    Попытался сделать поддержку загрузки файлов через Swagger, и у меня даже кое-как получилось, но в силу своей
+    неопытности у меня появилось много проблем и вопросов:
+    Проблемы:
+    Поменять тип поля в pydantic получилось только с помощью Field(type='file').
+    
+    Вопросы:
+    1. Как динамически понять тип данных ожидаемого запроса в функции "parse_request" (для генерации соответсвующей формы в Swagger/Redoc)?
+    К примеру, в модуле 'drf-yasg' они парсят объекты класса if view explicitly sets its parser classes to include only form parsers
+    [Ссылка](https://github.com/axnsan12/drf-yasg/blob/master/src/drf_yasg/utils.py#L366)
+    2. Возможно ли понять "content_length" потока данных без его считывания? Нужен ли вообще этот параметр?
+    
+    """
