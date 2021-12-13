@@ -138,17 +138,3 @@ if __name__ == "__main__":
     print("Swagger documentation: http://localhost:8000/apidoc/swagger\n"
           "Redoc documentation: http://localhost:8000/apidoc/redoc")
     httpd.serve_forever()
-    """
-    Привет!
-    Попытался сделать поддержку загрузки файлов через Swagger, и у меня даже кое-как получилось, но в силу своей
-    неопытности у меня появилось много проблем и вопросов:
-    Проблемы:
-    Поменять тип поля в pydantic получилось только с помощью Field(type='file').
-    
-    Вопросы:
-    1. Как динамически понять тип данных ожидаемого запроса в функции "parse_request" (для генерации соответсвующей формы в Swagger/Redoc)?
-    К примеру, в модуле 'drf-yasg' они парсят объекты класса if view explicitly sets its parser classes to include only form parsers
-    [Ссылка](https://github.com/axnsan12/drf-yasg/blob/master/src/drf_yasg/utils.py#L366)
-    2. Возможно ли понять "content_length" потока данных без его считывания? Нужен ли вообще этот параметр ?
-    3. Если файл слишком большой, куда его сохранять во время валидации? BufferIO, TemporaryFile ?
-    """
