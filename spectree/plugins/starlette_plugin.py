@@ -49,9 +49,9 @@ class StarlettePlugin(BasePlugin):
                     data[key] = {
                         "filename": value.filename,
                         "name": key,
-                        "content_length": 0,  # TODO: replace placeholder with something that will work
-                        "mimetype": value.content_type,
-                        "stream": value.file.read()  # FIXME: takes a long time if the file is large
+                        "content_type": value.content_type,
+                        "stream": value.file.read(),  # FIXME: takes a long time if the file is large
+                        "content_length": value.file.tell(),
                     }
                 else:
                     data[key] = value

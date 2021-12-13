@@ -174,7 +174,7 @@ class BaseFile(BaseModel):
     filename: str
     name: str
     content_length: int
-    mimetype: str
+    content_type: str
     stream: bytes
 
     class Config:

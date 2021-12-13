@@ -126,10 +126,7 @@ class FlaskPlugin(BasePlugin):
         req_query = request.args or {}
         if request.mimetype in self.FORM_MIMETYPE:
             req_json = request.form or {}
-            # if request.files:
-            #     req_json = dict(
-            #         list(request.form.items()) + list(request.files.items())
-            #     )
+
             for key, file in request.files.items():  # TODO: My eyes bleed. How to improve this loop?
                 req_json = dict(
                     list(request.form.items())
@@ -137,9 +134,9 @@ class FlaskPlugin(BasePlugin):
                 req_json.update({key: {
                     "filename": file.filename,
                     "name": file.name,
-                    "content_length": file.content_length,  # FIXME: always 0
-                    "mimetype": file.content_type,
-                    "stream": file.stream.read()
+                    "content_type": file.content_type,
+                    "stream": file.stream.read(),
+                    "content_length": file.stream.tell(),
                 }})
         else:
             req_json = request.get_json(silent=True) or {}

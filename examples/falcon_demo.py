@@ -1,4 +1,3 @@
-import json
 import logging
 from random import random
 from wsgiref import simple_server

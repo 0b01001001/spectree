@@ -193,9 +193,10 @@ class FalconPlugin(BasePlugin):
                         "filename": part.filename,
                         "name": part.name,
                         # "content_length": len(part.data),  # FIXME: raises error if file is too big
+                        # sadly, BufferedReader don't have 'tell' method
                         "content_length": 0,  # TODO: replace placeholder with something that will work
-                        "mimetype": part.content_type,
-                        "stream": part.stream.read()
+                        "content_type": part.content_type,
+                        "stream": part.stream.read(),
                     }
                 # TODO: add support for other media types?
                 # TODO: OR handle unsupported media types?
