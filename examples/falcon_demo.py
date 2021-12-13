@@ -56,7 +56,7 @@ class Data(BaseModel):
 
 class File(BaseModel):
     uid: str
-    file: models.BaseFile = Field(..., type='file')
+    file: models.BaseFile
 
 
 class FileResp(BaseModel):
@@ -149,6 +149,6 @@ if __name__ == "__main__":
     1. Как динамически понять тип данных ожидаемого запроса в функции "parse_request" (для генерации соответсвующей формы в Swagger/Redoc)?
     К примеру, в модуле 'drf-yasg' они парсят объекты класса if view explicitly sets its parser classes to include only form parsers
     [Ссылка](https://github.com/axnsan12/drf-yasg/blob/master/src/drf_yasg/utils.py#L366)
-    2. Возможно ли понять "content_length" потока данных без его считывания? Нужен ли вообще этот параметр?
-    
+    2. Возможно ли понять "content_length" потока данных без его считывания? Нужен ли вообще этот параметр ?
+    3. Если файл слишком большой, куда его сохранять во время валидации? BufferIO, TemporaryFile ?
     """

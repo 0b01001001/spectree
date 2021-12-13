@@ -5,7 +5,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-from spectree import Response, SpecTree
+from spectree import Response, SpecTree, models
 
 api = SpecTree("starlette")
 
@@ -33,6 +33,16 @@ class Data(BaseModel):
     vip: bool
 
 
+class File(BaseModel):
+    uid: str
+    file: models.BaseFile
+
+
+class FileResp(BaseModel):
+    filename: str
+    content_length: int
+
+
 @api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
 async def predict(request):
     """
@@ -43,6 +53,17 @@ async def predict(request):
     print(request.path_params)
     print(request.context)
     return JSONResponse({"label": 5, "score": 0.5})
+
+
+@api.validate(form_data=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+async def file_upload(request):
+    """
+    post multipart/form-data demo
+
+    demo for 'form_data'
+    """
+    file_data = request.context.form_data.file
+    return JSONResponse({"filename": file_data.filename, "content_length": file_data.content_length})
 
 
 class Ping(HTTPEndpoint):
@@ -59,7 +80,10 @@ if __name__ == "__main__":
         routes=[
             Route("/ping", Ping),
             Mount(
-                "/api", routes=[Route("/predict/{luck:int}", predict, methods=["POST"])]
+                "/api", routes=[
+                    Route("/predict/{luck:int}", predict, methods=["POST"]),
+                    Route("/file-upload", file_upload, methods=["POST"])
+                ]
             ),
         ]
     )

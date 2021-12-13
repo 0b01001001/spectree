@@ -41,7 +41,7 @@ class Data(BaseModel):
 
 class File(BaseModel):
     uid: str
-    file: models.BaseFile = Field(..., type='file')
+    file: models.BaseFile
 
 
 class FileResp(BaseModel):

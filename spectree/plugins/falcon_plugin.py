@@ -182,9 +182,9 @@ class FalconPlugin(BasePlugin):
             media = None
         if json:
             req.context.json = json.parse_obj(media)
-        elif form_data:
+        elif form_data and media is not None:
             data = {}
-            for part in media:
+            for part in media:  # TODO: add support for falcon 2.0 (media is always None for 'multipart/form-data')
                 # Compare first part of content_type with media types
                 if part.content_type.split('/')[0] == 'text':
                     data[part.name] = part.text
@@ -193,12 +193,12 @@ class FalconPlugin(BasePlugin):
                         "filename": part.filename,
                         "name": part.name,
                         # "content_length": len(part.data),  # FIXME: raises error if file is too big
-                        "content_length": 0,  # TODO: replace placeholder
+                        "content_length": 0,  # TODO: replace placeholder with something that will work
                         "mimetype": part.content_type,
                         "stream": part.stream.read()
                     }
                 # TODO: add support for other media types?
-                # TODO: or handle unsupported media types?
+                # TODO: OR handle unsupported media types?
             req.context.form_data = form_data.parse_obj(data)
 
     def validate(

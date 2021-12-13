@@ -176,3 +176,8 @@ class BaseFile(BaseModel):
     content_length: int
     mimetype: str
     stream: bytes
+
+    class Config:
+        schema_extra = {
+            'type': 'file'
+        }

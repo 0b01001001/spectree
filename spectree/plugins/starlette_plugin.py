@@ -13,6 +13,7 @@ Route = namedtuple("Route", ["path", "methods", "func"])
 
 class StarlettePlugin(BasePlugin):
     ASYNC = True
+    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def __init__(self, spectree):
         super().__init__(spectree)
@@ -38,9 +39,27 @@ class StarlettePlugin(BasePlugin):
             )
 
     async def request_validation(self, request, query, json, form_data, headers, cookies):
+        data = {}
+        if request.headers.get('content-type', '').split(";")[0] in self.FORM_MIMETYPE:
+            from starlette.datastructures import UploadFile
+            form = await request.form()  # FIXME: can raise AssertionError if 'python-multipart' is not installed
+
+            for key, value in form.items():
+                if isinstance(value, UploadFile):
+                    data[key] = {
+                        "filename": value.filename,
+                        "name": key,
+                        "content_length": 0,  # TODO: replace placeholder with something that will work
+                        "mimetype": value.content_type,
+                        "stream": value.file.read()  # FIXME: takes a long time if the file is large
+                    }
+                else:
+                    data[key] = value
+
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
             json.parse_raw(await request.body() or "{}") if json else None,
+            form_data.parse_obj(data or "{}") if form_data and data else None,
             headers.parse_obj(request.headers) if headers else None,
             cookies.parse_obj(request.cookies) if cookies else None,
         )
