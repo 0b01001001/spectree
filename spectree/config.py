@@ -39,11 +39,17 @@ class Config:
 
         self.logger = logging.getLogger(__name__)
 
+        self.API_VERSIONS = [""]
+        self.API_URL = "api"
+
         self.update(**kwargs)
 
     @property
     def spec_url(self):
         return f"/{self.PATH}/{self.FILENAME}"
+
+    def get_version_url(self, version: str):
+        return f"/{self.PATH}{ '/' + version if version else ''}/{self.FILENAME}"
 
     def __repr__(self):
         display = "\n{:=^80}\n".format(self.__class__.__name__)

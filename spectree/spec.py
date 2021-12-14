@@ -1,3 +1,4 @@
+import re
 from copy import deepcopy
 from functools import wraps
 
@@ -203,12 +204,18 @@ class SpecTree:
 
         return model_key
 
-    def _generate_spec(self):
+    def _generate_spec(self, version=None):
         """
         generate OpenAPI spec according to routes and decorators
         """
         routes, tags = {}, {}
         for route in self.backend.find_routes():
+            regex_check = re.match(fr'/{self.config.API_URL}/v\d+/', str(route))
+            if not version and regex_check:
+                continue
+            elif version and not regex_check:
+                continue
+
             path, parameters = self.backend.parse_path(route)
             routes[path] = routes.get(path, {})
             path_is_empty = True

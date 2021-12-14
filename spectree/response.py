@@ -15,8 +15,9 @@ class Response:
     def __init__(self, *codes, **code_models):
         self.codes = []
 
-        if code_models and "HTTP_422" not in code_models:
-            code_models["HTTP_422"] = UnprocessableEntity
+        # remove response code 422
+        # if code_models and "HTTP_422" not in code_models:
+        #     code_models["HTTP_422"] = UnprocessableEntity
 
         for code in codes:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"

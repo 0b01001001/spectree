@@ -81,7 +81,8 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset
             plugins: [
             SwaggerUIBundle.plugins.DownloadUrl
             ],
-            layout: "StandaloneLayout"
+            layout: "StandaloneLayout",
+            defaultModelsExpandDepth: -1
         }})
         // End Swagger UI call region
 
