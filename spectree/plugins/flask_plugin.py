@@ -122,30 +122,34 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, form_data, headers, cookies):
+    def request_validation(self, request, query, json, form, headers, cookies):
         req_query = request.args or {}
-        if request.mimetype in self.FORM_MIMETYPE:
-            req_json = request.form or {}
-
-            for key, file in request.files.items():  # TODO: My eyes bleed. How to improve this loop?
-                req_json = dict(
-                    list(request.form.items())
-                )
-                req_json.update({key: {
-                    "filename": file.filename,
-                    "name": file.name,
-                    "content_type": file.content_type,
-                    "stream": file.stream.read(),
-                    "content_length": file.stream.tell(),
-                }})
-        else:
-            req_json = request.get_json(silent=True) or {}
+        req_json = request.get_json(silent=True) or {}
+        req_form = request.form or {}  # or MultiDict() ?
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
+
+        if request.mimetype in self.FORM_MIMETYPE:
+            body = form or json or None
+            if body:
+                form_dict = {}
+                for k, v in body.schema().get('properties', {}).items():
+                    if v.get('type') == 'array':
+                        value = req_form.getlist(k)
+                    else:
+                        value = req_form.get(k)
+                    if value is not None:
+                        form_dict[k] = value
+                form_dict.update(**request.files.to_dict())
+                if form:
+                    req_form = form_dict
+                elif json:
+                    req_json = form_dict
+
         request.context = Context(
             query.parse_obj(req_query.items()) if query else None,
             json.parse_obj(req_json.items()) if json else None,
-            form_data.parse_obj(req_json.items()) if form_data else None,
+            form.parse_obj(req_form.items()) if form else None,
             headers.parse_obj(req_headers.items()) if headers else None,
             cookies.parse_obj(req_cookies.items()) if cookies else None,
         )
@@ -155,7 +159,7 @@ class FlaskPlugin(BasePlugin):
         func,
         query,
         json,
-        form_data,
+        form,
         headers,
         cookies,
         resp,
@@ -169,7 +173,7 @@ class FlaskPlugin(BasePlugin):
 
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, form_data, headers, cookies)
+            self.request_validation(request, query, json, form, headers, cookies)
             if self.config.ANNOTATIONS:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):

@@ -102,7 +102,7 @@ class SpecTree:
         query=None,
         json=None,
         headers=None,
-        form_data=None,
+        form=None,
         cookies=None,
         resp=None,
         tags=(),
@@ -121,7 +121,7 @@ class SpecTree:
 
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
-        :param form_data: `pydantic.BaseModel`, form-data request body
+        :param form: `pydantic.BaseModel`, form-data request body
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
@@ -144,10 +144,10 @@ class SpecTree:
         if not validation_error_status:
             validation_error_status = self.validation_error_status
 
-        if json and form_data:
-            # TODO: how to resolve conflict between json and form_data?
-            # TODO: Maybe replace 'form_data' with 'request_body' as it is done in 'drf-yasg'?
-            raise ValueError("You should provide either 'json' or 'form_data'.")
+        if json and form:
+            # TODO: how to resolve conflict between json and form?
+            # TODO: Maybe replace 'form' with 'request_body' as it is done in 'drf-yasg'?
+            raise ValueError("You should provide either 'json' or 'form'.")
 
         def decorate_validation(func):
             # for sync framework
@@ -157,7 +157,7 @@ class SpecTree:
                     func,
                     query,
                     json,
-                    form_data,
+                    form,
                     headers,
                     cookies,
                     resp,
@@ -175,7 +175,7 @@ class SpecTree:
                     func,
                     query,
                     json,
-                    form_data,
+                    form,
                     headers,
                     cookies,
                     resp,
@@ -193,8 +193,8 @@ class SpecTree:
                 query = func.__annotations__.get("query", query)
                 nonlocal json
                 json = func.__annotations__.get("json", json)
-                nonlocal form_data
-                form_data = func.__annotations__.get("form_data", form_data)
+                nonlocal form
+                form = func.__annotations__.get("form", form)
                 nonlocal headers
                 headers = func.__annotations__.get("headers", headers)
                 nonlocal cookies
@@ -202,7 +202,7 @@ class SpecTree:
 
             # register
             for name, model in zip(
-                ("query", "json", "form_data", "headers", "cookies"), (query, json, form_data, headers, cookies)
+                ("query", "json", "form", "headers", "cookies"), (query, json, form, headers, cookies)
             ):
                 if model is not None:
                     model_key = self._add_model(model=model)

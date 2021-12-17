@@ -99,15 +99,16 @@ def with_code_header():
     return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
 
 
+
 @app.route("/api/upload-file", methods=["POST"])
-@api.validate(form_data=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+@api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 def with_file():
     """
     post multipart/form-data demo
 
-    demo for 'form_data'
+    demo for 'form'
     """
-    file_data = request.context.form_data.file
+    file_data = request.context.form.file
     return jsonify(filename=file_data.filename, content_length=file_data.content_length)
 
 

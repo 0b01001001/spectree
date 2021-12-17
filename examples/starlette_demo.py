@@ -40,7 +40,6 @@ class File(BaseModel):
 
 class FileResp(BaseModel):
     filename: str
-    content_length: int
 
 
 @api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
@@ -55,15 +54,15 @@ async def predict(request):
     return JSONResponse({"label": 5, "score": 0.5})
 
 
-@api.validate(form_data=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+@api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 async def file_upload(request):
     """
     post multipart/form-data demo
 
-    demo for 'form_data'
+    demo for 'form'
     """
-    file_data = request.context.form_data.file
-    return JSONResponse({"filename": file_data.filename, "content_length": file_data.content_length})
+    file_data = request.context.form.file
+    return JSONResponse({"filename": file_data.filename})
 
 
 class Ping(HTTPEndpoint):

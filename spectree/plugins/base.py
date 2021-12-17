@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 
-Context = namedtuple("Context", ["query", "json", "form_data", "headers", "cookies"])
+Context = namedtuple("Context", ["query", "json", "form", "headers", "cookies"])
 
 
 class BasePlugin:

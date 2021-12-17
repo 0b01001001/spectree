@@ -1,8 +1,7 @@
 import logging
 from random import random
-from wsgiref import simple_server
 
-import falcon
+import falcon.asgi
 from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree, Tag, models
@@ -12,7 +11,7 @@ logger = logging.getLogger()
 
 
 api = SpecTree(
-    "falcon",
+    "falcon-asgi",
     title="Demo Service",
     version="0.1.2",
     unknown="test",
@@ -67,7 +66,7 @@ class Ping:
         pass
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp):
+    async def on_get(self, req, resp):
         """
         health check
         """
@@ -82,7 +81,7 @@ class Classification:
     """
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp, source, target):
+    async def on_get(self, req, resp, source, target):
         """
         API summary
 
@@ -93,7 +92,7 @@ class Classification:
     @api.validate(
         query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck)
     )
-    def on_post(self, req, resp, source, target):
+    async def on_post(self, req, resp, source, target):
         """
         post demo
 
@@ -115,7 +114,7 @@ class FileUpload:
     """
 
     @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-    def on_post(self, req, resp):
+    async def on_post(self, req, resp):
         """
         post multipart/form-data demo
 
@@ -125,14 +124,8 @@ class FileUpload:
         resp.media = {"filename": file.filename}
 
 
-if __name__ == "__main__":
-    app = falcon.API()
-    app.add_route("/ping", Ping())
-    app.add_route("/api/{source}/{target}", Classification())
-    app.add_route("/api/upload-file", FileUpload())
-    api.register(app)
-
-    httpd = simple_server.make_server("localhost", 8002, app)
-    logger.info("Swagger documentation: %s/swagger" % "http://localhost:8000/apidoc")
-    logger.info("Redoc documentation: %s/redoc" % "http://localhost:8000/apidoc")
-    httpd.serve_forever()
+app = falcon.asgi.App()
+app.add_route("/ping", Ping())
+app.add_route("/api/{source}/{target}", Classification())
+app.add_route("/api/upload-file", FileUpload())
+api.register(app)
