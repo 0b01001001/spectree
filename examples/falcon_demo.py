@@ -5,7 +5,7 @@ from wsgiref import simple_server
 import falcon
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree, Tag, models
+from spectree import BaseFile, Response, SpecTree, Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -57,12 +57,13 @@ class Data(BaseModel):
 
 
 class File(BaseModel):
-    uid: str
-    file: models.BaseFile
+    uid: str = None
+    file: BaseFile
 
 
 class FileResp(BaseModel):
     filename: str
+    type: str
 
 
 class Ping:
@@ -125,7 +126,7 @@ class FileUpload:
         demo for 'form'
         """
         file = req.context.form.file
-        resp.media = {"filename": file.filename}
+        resp.media = {"filename": file.filename, "type": file.type}
 
 
 class JSONFormatter(logging.Formatter):
@@ -171,7 +172,5 @@ if __name__ == "__main__":
     app.add_route("/api/upload-file", FileUpload())
     api.register(app)
 
-    httpd = simple_server.make_server("localhost", 8002, app)
-    logger.info("Swagger documentation: %s/swagger" % "http://localhost:8000/apidoc")
-    logger.info("Redoc documentation: %s/redoc" % "http://localhost:8000/apidoc")
+    httpd = simple_server.make_server("localhost", 8000, app)
     httpd.serve_forever()

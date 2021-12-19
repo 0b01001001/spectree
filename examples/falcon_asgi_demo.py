@@ -2,9 +2,10 @@ import logging
 from random import random
 
 import falcon.asgi
+import uvicorn
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree, Tag, models
+from spectree import BaseFile, Response, SpecTree, Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -53,12 +54,13 @@ class Data(BaseModel):
 
 
 class File(BaseModel):
-    uid: str
-    file: models.BaseFile
+    uid: str = None
+    file: BaseFile
 
 
 class FileResp(BaseModel):
     filename: str
+    type: str
 
 
 class Ping:
@@ -121,11 +123,14 @@ class FileUpload:
         demo for 'form'
         """
         file = req.context.form.file
-        resp.media = {"filename": file.filename}
+        resp.media = {"filename": file.filename, "type": file.type}
 
 
-app = falcon.asgi.App()
-app.add_route("/ping", Ping())
-app.add_route("/api/{source}/{target}", Classification())
-app.add_route("/api/upload-file", FileUpload())
-api.register(app)
+if __name__ == "__main__":
+    app = falcon.asgi.App()
+    app.add_route("/ping", Ping())
+    app.add_route("/api/{source}/{target}", Classification())
+    app.add_route("/api/upload-file", FileUpload())
+    api.register(app)
+
+    uvicorn.run(app, log_level="info")

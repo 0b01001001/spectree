@@ -140,9 +140,9 @@ class FlaskPlugin(BasePlugin):
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
         req_query = get_multidict_items(request.args) or {}
+        req_form = request.form or {}  # or MultiDict() ?
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
-        req_form = request.form or {}  # or MultiDict() ?
         use_json = json and request.method not in ("GET", "DELETE")
 
         request.context = Context(

@@ -5,7 +5,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-from spectree import Response, SpecTree, models
+from spectree import BaseFile, Response, SpecTree
 
 # from spectree.plugins.starlette_plugin import PydanticResponse
 
@@ -36,12 +36,13 @@ class Data(BaseModel):
 
 
 class File(BaseModel):
-    uid: str
-    file: models.BaseFile
+    uid: str = None
+    file: BaseFile
 
 
 class FileResp(BaseModel):
     filename: str
+    type: str
 
 
 @api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
@@ -64,8 +65,8 @@ async def file_upload(request):
 
     demo for 'form'
     """
-    file_data = request.context.form.file
-    return JSONResponse({"filename": file_data.filename})
+    file = request.context.form.file
+    return JSONResponse({"filename": file.filename, "type": file.type})
 
 
 class Ping(HTTPEndpoint):
@@ -87,10 +88,11 @@ if __name__ == "__main__":
         routes=[
             Route("/ping", Ping),
             Mount(
-                "/api", routes=[
+                "/api",
+                routes=[
                     Route("/predict/{luck:int}", predict, methods=["POST"]),
-                    Route("/file-upload", file_upload, methods=["POST"])
-                ]
+                    Route("/file-upload", file_upload, methods=["POST"]),
+                ],
             ),
         ]
     )

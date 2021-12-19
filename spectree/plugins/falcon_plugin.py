@@ -1,9 +1,10 @@
-import inspect
-import re
 import cgi
-from io import BytesIO
+import inspect
+import io
+import re
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional
+from io import BytesIO
 
 from pydantic import ValidationError
 
@@ -177,12 +178,12 @@ class FalconPlugin(BasePlugin):
             return [self.parse_field(subfield) for subfield in field]
 
         # When file name isn't ascii FieldStorage will not consider it.
-        encoded = field.disposition_options.get('filename*')
+        encoded = field.disposition_options.get("filename*")
         if encoded:
             encoding, filename = encoded.split("''")
             field.filename = filename
             field.file = BytesIO(field.file.read().encode(encoding))
-        if getattr(field, 'filename', False):
+        if getattr(field, "filename", False):
             return field
 
         # This is not a file, thus get flat value (not FieldStorage instance).
@@ -205,7 +206,8 @@ class FalconPlugin(BasePlugin):
             req.context.json = json.parse_obj(media)
         elif form:
             # This must be done to avoid a bug in cgi.FieldStorage.
-            req.env.setdefault('QUERY_STRING', '')
+            # https://gist.github.com/kgriffs/fe371bfbb2d63211889b
+            req.env.setdefault("QUERY_STRING", "")
 
             try:
                 _form = cgi.FieldStorage(fp=req.stream, environ=req.env)  # TODO: rename
@@ -284,22 +286,6 @@ class FalconAsgiPlugin(FalconPlugin):
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
 
-    async def async_parse_field(self, field):
-        if isinstance(field, list):
-            return [self.parse_field(subfield) for subfield in field]
-
-        # When file name isn't ascii FieldStorage will not consider it.
-        encoded = field.disposition_options.get('filename*')
-        if encoded:
-            encoding, filename = encoded.split("''")
-            field.filename = filename
-            field.file = BytesIO(await field.file.read().encode(encoding))
-        if getattr(field, 'filename', False):
-            return field
-
-        # This is not a file, thus get flat value (not FieldStorage instance).
-        return field.value
-
     async def request_validation(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
@@ -317,16 +303,23 @@ class FalconAsgiPlugin(FalconPlugin):
             req.context.json = json.parse_obj(media)
         elif form:
             # This must be done to avoid a bug in cgi.FieldStorage.
-            req.scope.setdefault('QUERY_STRING', '')
+            req.scope.setdefault("QUERY_STRING", "")
+            # For WSGI compatibility
+            # https://asgi.readthedocs.io/en/latest/specs/www.html#wsgi-compatibility
+            req.scope.setdefault("REQUEST_METHOD", req.method)
 
             try:
-                _form = cgi.FieldStorage(fp=req.stream, environ=req.scope)  # TODO: rename
+                _form = cgi.FieldStorage(
+                    fp=io.BytesIO(await req.stream.read()),
+                    environ=req.scope,
+                    headers=req.headers,
+                )
             except ValueError:  # Invalid boundary?
                 raise
 
             req_form = {}
             for key in _form:
-                req_form[key] = await self.async_parse_field(_form[key])
+                req_form[key] = self.parse_field(_form[key])
 
             req.context.form = form.parse_obj(req_form)
 

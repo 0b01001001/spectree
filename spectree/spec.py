@@ -192,20 +192,17 @@ class SpecTree:
             )
 
             if self.config.annotations:
-                nonlocal query
+                nonlocal query, json, form, headers, cookies
                 query = func.__annotations__.get("query", query)
-                nonlocal json
                 json = func.__annotations__.get("json", json)
-                nonlocal form
                 form = func.__annotations__.get("form", form)
-                nonlocal headers
                 headers = func.__annotations__.get("headers", headers)
-                nonlocal cookies
                 cookies = func.__annotations__.get("cookies", cookies)
 
             # register
             for name, model in zip(
-                ("query", "json", "form", "headers", "cookies"), (query, json, form, headers, cookies)
+                ("query", "json", "form", "headers", "cookies"),
+                (query, json, form, headers, cookies),
             ):
                 if model is not None:
                     model_key = self._add_model(model=model)
