@@ -5,7 +5,7 @@ from flask import Flask, abort, jsonify, request
 from flask.views import MethodView
 from pydantic import BaseModel, Field
 
-from spectree import Response, SpecTree, models
+from spectree import BaseFile, Response, SpecTree
 
 app = Flask(__name__)
 api = SpecTree("flask")
@@ -40,13 +40,13 @@ class Data(BaseModel):
 
 
 class File(BaseModel):
-    uid: str
-    file: models.BaseFile
+    uid: str = None
+    file: BaseFile
 
 
 class FileResp(BaseModel):
     filename: str
-    content_length: int
+    type: str
 
 
 class Language(str, Enum):
@@ -99,7 +99,6 @@ def with_code_header():
     return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
 
 
-
 @app.route("/api/upload-file", methods=["POST"])
 @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 def with_file():
@@ -108,8 +107,8 @@ def with_file():
 
     demo for 'form'
     """
-    file_data = request.context.form.file
-    return jsonify(filename=file_data.filename, content_length=file_data.content_length)
+    file = request.context.form.file
+    return jsonify(filename=file.filename, type=file.content_type)
 
 
 class UserAPI(MethodView):

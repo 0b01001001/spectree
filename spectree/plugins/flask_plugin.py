@@ -133,8 +133,8 @@ class FlaskPlugin(BasePlugin):
             body = form or json or None
             if body:
                 form_dict = {}
-                for k, v in body.schema().get('properties', {}).items():
-                    if v.get('type') == 'array':
+                for k, v in body.schema().get("properties", {}).items():
+                    if v.get("type") == "array":
                         value = req_form.getlist(k)
                     else:
                         value = req_form.get(k)

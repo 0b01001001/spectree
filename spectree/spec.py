@@ -145,8 +145,6 @@ class SpecTree:
             validation_error_status = self.validation_error_status
 
         if json and form:
-            # TODO: how to resolve conflict between json and form?
-            # TODO: Maybe replace 'form' with 'request_body' as it is done in 'drf-yasg'?
             raise ValueError("You should provide either 'json' or 'form'.")
 
         def decorate_validation(func):
@@ -189,20 +187,17 @@ class SpecTree:
             validation = async_validate if self.backend.ASYNC else sync_validate
 
             if self.config.ANNOTATIONS:
-                nonlocal query
+                nonlocal query, json, form, headers, cookies
                 query = func.__annotations__.get("query", query)
-                nonlocal json
                 json = func.__annotations__.get("json", json)
-                nonlocal form
                 form = func.__annotations__.get("form", form)
-                nonlocal headers
                 headers = func.__annotations__.get("headers", headers)
-                nonlocal cookies
                 cookies = func.__annotations__.get("cookies", cookies)
 
             # register
             for name, model in zip(
-                ("query", "json", "form", "headers", "cookies"), (query, json, form, headers, cookies)
+                ("query", "json", "form", "headers", "cookies"),
+                (query, json, form, headers, cookies),
             ):
                 if model is not None:
                     model_key = self._add_model(model=model)
