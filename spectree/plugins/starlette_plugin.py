@@ -29,11 +29,11 @@ class StarlettePlugin(BasePlugin):
             lambda request: JSONResponse(self.spectree.spec),
         )
 
-        for ui in self.config.PAGE_TEMPLATES:
+        for ui in self.config.page_templates:
             self.app.add_route(
-                f"/{self.config.PATH}/{ui}",
+                f"/{self.config.path}/{ui}",
                 lambda request, ui=ui: HTMLResponse(
-                    self.config.PAGE_TEMPLATES[ui].format(spec_url=self.config.spec_url)
+                    self.config.page_templates[ui].format(spec_url=self.config.spec_url)
                 ),
             )
 
@@ -70,7 +70,7 @@ class StarlettePlugin(BasePlugin):
 
         try:
             await self.request_validation(request, query, json, headers, cookies)
-            if self.config.ANNOTATIONS:
+            if self.config.annotations:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(request.context, name)
@@ -116,7 +116,7 @@ class StarlettePlugin(BasePlugin):
             if not app.routes:
                 return
             for route in app.routes:
-                if route.path.startswith(f"/{self.config.PATH}"):
+                if route.path.startswith(f"/{self.config.path}"):
                     continue
 
                 func = route.app
