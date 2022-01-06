@@ -1,4 +1,4 @@
-# Spectree
+# SpecTree
 
 
 [![GitHub Actions](https://github.com/0b01001001/spectree/workflows/Python%20package/badge.svg)](https://github.com/0b01001001/spectree/actions)
