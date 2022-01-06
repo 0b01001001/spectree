@@ -13,7 +13,7 @@ class FlaskPlugin(BasePlugin):
         for rule in current_app.url_map.iter_rules():
             if any(
                 str(rule).startswith(path)
-                for path in (f"/{self.config.PATH}", "/static")
+                for path in (f"/{self.config.path}", "/static")
             ):
                 continue
             if rule.endpoint.startswith("openapi"):
@@ -160,7 +160,7 @@ class FlaskPlugin(BasePlugin):
         response, req_validation_error, resp_validation_error = None, None, None
         try:
             self.request_validation(request, query, json, headers, cookies)
-            if self.config.ANNOTATIONS:
+            if self.config.annotations:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(request.context, name)
@@ -195,7 +195,7 @@ class FlaskPlugin(BasePlugin):
 
         app.add_url_rule(
             rule=self.config.spec_url,
-            endpoint=f"openapi_{self.config.PATH}",
+            endpoint=f"openapi_{self.config.path}",
             view_func=lambda: jsonify(self.spectree.spec),
         )
 
@@ -211,22 +211,22 @@ class FlaskPlugin(BasePlugin):
                         )
                     )
 
-                return self.config.PAGE_TEMPLATES[ui].format(spec_url=spec_url)
+                return self.config.page_templates[ui].format(spec_url=spec_url)
 
-            for ui in self.config.PAGE_TEMPLATES:
+            for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.PATH}/{ui}",
-                    endpoint=f"openapi_{self.config.PATH}_{ui}",
+                    rule=f"/{self.config.path}/{ui}",
+                    endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
 
             app.record(lambda state: setattr(self, "blueprint_state", state))
         else:
-            for ui in self.config.PAGE_TEMPLATES:
+            for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.PATH}/{ui}",
-                    endpoint=f"openapi_{self.config.PATH}_{ui}",
-                    view_func=lambda ui=ui: self.config.PAGE_TEMPLATES[ui].format(
+                    rule=f"/{self.config.path}/{ui}",
+                    endpoint=f"openapi_{self.config.path}_{ui}",
+                    view_func=lambda ui=ui: self.config.page_templates[ui].format(
                         spec_url=self.config.spec_url
                     ),
                 )

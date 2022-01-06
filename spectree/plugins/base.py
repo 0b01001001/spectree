@@ -1,6 +1,8 @@
 import logging
 from collections import namedtuple
 
+from spectree.config import Configuration
+
 Context = namedtuple("Context", ["query", "json", "headers", "cookies"])
 
 
@@ -16,7 +18,7 @@ class BasePlugin:
 
     def __init__(self, spectree):
         self.spectree = spectree
-        self.config = spectree.config
+        self.config: Configuration = spectree.config
         self.logger = logging.getLogger(__name__)
 
     def register_route(self, app):

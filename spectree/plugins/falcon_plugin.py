@@ -77,11 +77,11 @@ class FalconPlugin(BasePlugin):
         self.app.add_route(
             self.config.spec_url, self.OPEN_API_ROUTE_CLASS(self.spectree.spec)
         )
-        for ui in self.config.PAGE_TEMPLATES:
+        for ui in self.config.page_templates:
             self.app.add_route(
-                f"/{self.config.PATH}/{ui}",
+                f"/{self.config.path}/{ui}",
                 self.DOC_PAGE_ROUTE_CLASS(
-                    self.config.PAGE_TEMPLATES[ui], self.config.spec_url
+                    self.config.page_templates[ui], self.config.spec_url
                 ),
             )
 
@@ -202,7 +202,7 @@ class FalconPlugin(BasePlugin):
         req_validation_error, resp_validation_error = None, None
         try:
             self.request_validation(_req, query, json, headers, cookies)
-            if self.config.ANNOTATIONS:
+            if self.config.annotations:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)
@@ -277,7 +277,7 @@ class FalconAsgiPlugin(FalconPlugin):
         req_validation_error, resp_validation_error = None, None
         try:
             await self.request_validation(_req, query, json, headers, cookies)
-            if self.config.ANNOTATIONS:
+            if self.config.annotations:
                 for name in ("query", "json", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)

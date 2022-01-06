@@ -15,7 +15,8 @@ api = SpecTree(
     "falcon",
     title="Demo Service",
     version="0.1.2",
-    unknown="test",
+    contact={"name": "John", "email": "hello@github.com", "url": "https://github.com"},
+    license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})

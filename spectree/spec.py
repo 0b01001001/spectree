@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
 
-from .config import Config
+from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
 from .plugins import PLUGINS
 from .utils import (
@@ -37,7 +37,7 @@ class SpecTree:
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
         if needed.
-    :param kwargs: update default :class:`spectree.config.Config`
+    :param kwargs: init :class:`spectree.config.Configuration`
     """
 
     def __init__(
@@ -53,7 +53,7 @@ class SpecTree:
         self.before = before
         self.after = after
         self.validation_error_status = validation_error_status
-        self.config = Config(**kwargs)
+        self.config: Configuration = Configuration.parse_obj(kwargs)
         self.backend_name = backend_name
         self.backend = backend(self) if backend else PLUGINS[backend_name](self)
         # init
@@ -89,9 +89,9 @@ class SpecTree:
         :greedy:    collect all the routes
         :strict:    collect all the routes decorated by this instance
         """
-        if self.config.MODE == "greedy":
+        if self.config.mode == ModeEnum.greedy:
             return False
-        elif self.config.MODE == "strict":
+        elif self.config.mode == ModeEnum.strict:
             return getattr(func, "_decorator", None) != self
         else:
             decorator = getattr(func, "_decorator", None)
@@ -179,7 +179,7 @@ class SpecTree:
 
             validation = async_validate if self.backend.ASYNC else sync_validate
 
-            if self.config.ANNOTATIONS:
+            if self.config.annotations:
                 nonlocal query
                 query = func.__annotations__.get("query", query)
                 nonlocal json
@@ -276,12 +276,18 @@ class SpecTree:
                     routes[path][method.lower()]["requestBody"] = request_body
 
         spec = {
-            "openapi": self.config.OPENAPI_VERSION,
-            "info": {
-                "title": self.config.TITLE,
-                "version": self.config.VERSION,
-                "description": self.config.DESCRIPTION,
-            },
+            "openapi": self.config.openapi_version,
+            "info": self.config.dict(
+                exclude_none=True,
+                include={
+                    "title",
+                    "version",
+                    "description",
+                    "termsOfService",
+                    "contact",
+                    "license",
+                },
+            ),
             "tags": list(tags.values()),
             "paths": {**routes},
             "components": {
@@ -289,18 +295,18 @@ class SpecTree:
             },
         }
 
-        if self.config.SERVERS:
+        if self.config.servers:
             spec["servers"] = [
-                server.dict(exclude_none=True) for server in self.config.SERVERS
+                server.dict(exclude_none=True) for server in self.config.servers
             ]
 
-        if self.config.SECURITY_SCHEMES:
+        if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
                 scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
-                for scheme in self.config.SECURITY_SCHEMES
+                for scheme in self.config.security_schemes
             }
 
-        spec["security"] = get_security(self.config.SECURITY)
+        spec["security"] = get_security(self.config.security)
         return spec
 
     def _get_model_definitions(self):

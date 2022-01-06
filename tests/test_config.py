@@ -4,56 +4,77 @@ import pytest
 from pydantic import ValidationError
 
 from spectree import SecurityScheme
-from spectree.config import Config
+from spectree.config import Configuration
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
 
 
-@pytest.fixture
-def config():
-    return Config()
+def test_config_license():
+    config = Configuration(license={"name": "MIT"})
+    assert config.license.name == "MIT"
+
+    config = Configuration(
+        license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"}
+    )
+    assert config.license.name == "MIT"
+    assert config.license.url == "https://opensource.org/licenses/MIT"
+
+    with pytest.raises(ValidationError):
+        config = Configuration(license={"name": "MIT", "url": "url"})
 
 
-def test_update_config(config):
-    default = Config()
+def test_config_contact():
+    config = Configuration(contact={"name": "John"})
+    assert config.contact.name == "John"
 
-    config.update(title="demo", version="latest")
-    assert config.DOMAIN is None
-    assert config.FILENAME == default.FILENAME
-    assert config.TITLE == "demo"
-    assert config.VERSION == "latest"
-    assert config.SERVERS == []
-    assert config.SECURITY_SCHEMES is None
+    config = Configuration(contact={"name": "John", "url": "https://example.com"})
+    assert config.contact.name == "John"
+    assert config.contact.url == "https://example.com"
 
-    config.update(unknown="missing")
-    with pytest.raises(AttributeError):
-        assert config.unknown
+    config = Configuration(contact={"name": "John", "email": "hello@github.com"})
+    assert config.contact.name == "John"
+    assert config.contact.email == "hello@github.com"
+
+    with pytest.raises(ValidationError):
+        config = Configuration(contact={"name": "John", "url": "url"})
+
+    with pytest.raises(ValidationError):
+        config = Configuration(contact={"name": "John", "email": "hello"})
 
 
-def test_update_mode(config):
-    config.update(mode="greedy")
-    assert config.MODE == "greedy"
+def test_config_case():
+    # lower case
+    config = Configuration(title="Demo")
+    assert config.title == "Demo"
 
-    with pytest.raises(AssertionError) as e:
-        config.update(mode="true")
-    assert "MODE" in str(e.value)
+    # upper case
+    config = Configuration(TITLE="Demo")
+    assert config.title == "Demo"
+
+    # capitalized
+    config = Configuration(Title="Demo")
+    assert config.title == "Demo"
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
-def test_update_security_scheme(config, secure_item: SecurityScheme):
+def test_update_security_scheme(secure_item: SecurityScheme):
     # update and validate each schema type
-    config.update(security_schemes={secure_item.name: secure_item.data})
-    assert config.SECURITY_SCHEMES == {secure_item.name: secure_item.data}
+    config = Configuration(
+        security_schemes=[{"name": secure_item.name, "data": secure_item.data}]
+    )
+    assert config.security_schemes == [
+        {"name": secure_item.name, "data": secure_item.data}
+    ]
 
 
-def test_update_security_schemes(config):
+def test_update_security_schemes():
     # update and validate ALL schemas types
-    config.update(security_schemes=SECURITY_SCHEMAS)
-    assert config.SECURITY_SCHEMES == SECURITY_SCHEMAS
+    config = Configuration(security_schemes=SECURITY_SCHEMAS)
+    assert config.security_schemes == SECURITY_SCHEMAS
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
-def test_update_security_scheme_wrong_type(config, secure_item: SecurityScheme):
+def test_update_security_scheme_wrong_type(secure_item: SecurityScheme):
     # update and validate each schema type
     with pytest.raises(ValidationError):
         secure_item.data.type += "_wrong"
@@ -63,9 +84,7 @@ def test_update_security_scheme_wrong_type(config, secure_item: SecurityScheme):
     "symbol", [symb for symb in string.punctuation if symb not in "-._"]
 )
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
-def test_update_security_scheme_wrong_name(
-    config, secure_item: SecurityScheme, symbol: str
-):
+def test_update_security_scheme_wrong_name(secure_item: SecurityScheme, symbol: str):
     # update and validate each schema name
     with pytest.raises(ValidationError):
         secure_item.name += symbol
@@ -75,7 +94,7 @@ def test_update_security_scheme_wrong_name(
 
 
 @pytest.mark.parametrize(("secure_item"), WRONG_SECURITY_SCHEMAS_DATA)
-def test_update_security_scheme_wrong_data(config, secure_item: dict):
+def test_update_security_scheme_wrong_data(secure_item: dict):
     # update and validate each schema type
     with pytest.raises(ValidationError):
         SecurityScheme(**secure_item)

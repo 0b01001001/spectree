@@ -1,81 +1,57 @@
-import logging
-from typing import List, Optional
+from enum import Enum
+from typing import Dict, List, Optional
+
+from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
 
 
-class Config:
-    """
-    :ivar MODE: mode for route. **normal** includes undecorated routes and
-        routes decorated by this instance. **strict** only includes routes
-        decorated by this instance. **greedy** includes all the routes.
-    :ivar PATH: path for API document page
-    :ivar OPENAPI_VERSION: OpenAPI version
-    :ivar TITLE: service name
-    :ivar VERSION: service version
-    :ivar DOMAIN: service host domain
-    :ivar SECURITY_SCHEMES: OpenAPI `securitySchemes` JSON with list of auth configs
-    :ivar SECURITY: OpenAPI `security` JSON at the global level
-    :ivar PAGE_TEMPLATES: A dictionary of documentation page templates. The key is the
-        name of the template, that is also used in the URL path, while the value is used
-        to render the documentation page content. (Each page template should contain a
-        `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
-        the rendered documentation page.
-    """
+class ModeEnum(str, Enum):
+    normal = "normal"
+    strict = "strict"
+    greedy = "greedy"
 
-    def __init__(self, **kwargs):
-        self.PATH = "apidoc"
-        self.FILENAME = "openapi.json"
-        self.OPENAPI_VERSION = "3.0.3"
-        self.MODE = "normal"
-        self._SUPPORT_MODE = {"normal", "strict", "greedy"}
-        self.ANNOTATIONS = False
 
-        self.TITLE = "Service API Document"
-        self.DESCRIPTION = None
-        self.VERSION = "0.1"
-        self.DOMAIN = None
-        self.SERVERS: Optional[List[Server]] = []
+class Contact(BaseModel):
+    name: str
+    url: AnyUrl = ""
+    email: EmailStr = ""
 
-        self.SECURITY_SCHEMES: Optional[List[SecurityScheme]] = None
-        self.SECURITY = {}
 
-        self.PAGE_TEMPLATES = DEFAULT_PAGE_TEMPLATES
+class License(BaseModel):
+    name: str
+    url: AnyUrl = ""
 
-        self.logger = logging.getLogger(__name__)
 
-        self.update(**kwargs)
+class Configuration(BaseSettings):
+    # OpenAPI configurations
+    title: str = "Service API Document"
+    description: str = None
+    version: str = "0.1.0"
+    terms_of_service: AnyUrl = None
+    contact: Contact = None
+    license: License = None
+
+    # SpecTree configurations
+    path: str = "apidoc"
+    filename: str = "openapi.json"
+    openapi_version: str = "3.0.3"
+    mode: ModeEnum = ModeEnum.normal
+    page_templates = DEFAULT_PAGE_TEMPLATES
+    annotations = False
+    servers: Optional[List[Server]] = []
+    security_schemes: Optional[List[SecurityScheme]] = None
+    security: Dict = {}
+
+    class Config:
+        env_prefix = "spectree_"
+        validate_assignment = True
+
+    @root_validator(pre=True)
+    def convert_to_lower_case(cls, values):
+        return {k.lower(): v for k, v in values.items()}
 
     @property
-    def spec_url(self):
-        return f"/{self.PATH}/{self.FILENAME}"
-
-    def __repr__(self):
-        display = "\n{:=^80}\n".format(self.__class__.__name__)
-        for k, v in vars(self).items():
-            if not k.startswith("__"):
-                display += "| {:<30} {}\n".format(k, v)
-
-        return display + "=" * 80
-
-    def update(self, **kwargs):
-        """
-        update config from key-value pairs
-
-        :param kwargs: key(case insensitive)-value pairs for config
-
-        If the key is not in attributes, it will be ignored. Otherwise, the
-        corresponding attribute will be updated. (Logging Level: INFO)
-        """
-        for key, value in kwargs.items():
-            key = key.upper()
-            if not hasattr(self, key):
-                self.logger.info("[✗] Ignore unknown attribute '%s'", key)
-            else:
-                setattr(self, key, value)
-                self.logger.info(
-                    "[✓] Attribute '%s' has been updated to '%s'", key, value
-                )
-
-        assert self.MODE in self._SUPPORT_MODE, "unsupported MODE"
+    def spec_url(self) -> str:
+        return f"/{self.path}/{self.filename}"
