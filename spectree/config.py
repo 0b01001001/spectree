@@ -8,18 +8,13 @@ from .page import DEFAULT_PAGE_TEMPLATES
 
 
 class ModeEnum(str, Enum):
-    """
-    the mode of the SpecTree validator
+    """the mode of the SpecTree validator"""
 
-        **normal**: includes undecorated routes and routes decorated by this instance
-
-        **strict**: only includes routes decorated by this instance
-
-        **greedy**: includes all the routes
-    """
-
+    #: includes undecorated routes and routes decorated by this instance
     normal = "normal"
+    #: only includes routes decorated by this instance
     strict = "strict"
+    #: includes all the routes
     greedy = "greedy"
 
 
