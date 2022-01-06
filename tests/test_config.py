@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from spectree import SecurityScheme
-from spectree.config import Configuration, ModeEnum
+from spectree.config import Configuration
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
 
