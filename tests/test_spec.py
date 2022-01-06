@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from starlette.applications import Starlette
 
 from spectree import Response
-from spectree.config import Config
+from spectree.config import Configuration
 from spectree.models import Server, ValidationError
 from spectree.plugins import FlaskPlugin
 from spectree.spec import SpecTree
@@ -38,10 +38,10 @@ def _get_spec(name, app, **kwargs):
 
 def test_spectree_init():
     spec = SpecTree(path="docs")
-    conf = Config()
+    conf = Configuration()
 
-    assert spec.config.TITLE == conf.TITLE
-    assert spec.config.PATH == "docs"
+    assert spec.config.title == conf.title
+    assert spec.config.path == "docs"
 
     with pytest.raises(NotImplementedError):
         SpecTree(app=conf)
