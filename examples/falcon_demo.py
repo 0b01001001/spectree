@@ -15,6 +15,7 @@ api = SpecTree(
     "falcon",
     title="Demo Service",
     version="0.1.2",
+    terms_of_service="https://github.io",
     contact={"name": "John", "email": "hello@github.com", "url": "https://github.com"},
     license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
 )
