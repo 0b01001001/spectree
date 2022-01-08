@@ -88,3 +88,19 @@ class Configuration(BaseSettings):
     @property
     def spec_url(self) -> str:
         return f"/{self.path}/{self.filename}"
+
+    def openapi_info(self) -> Dict:
+        info = self.dict(
+            include={
+                "title",
+                "description",
+                "version",
+                "terms_of_service",
+                "contact",
+                "license",
+            },
+            exclude_none=True,
+        )
+        if info.get("terms_of_service") is not None:
+            info["termsOfService"] = info.pop("terms_of_service")
+        return info
