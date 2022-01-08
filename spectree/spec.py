@@ -277,17 +277,7 @@ class SpecTree:
 
         spec = {
             "openapi": self.config.openapi_version,
-            "info": self.config.dict(
-                exclude_none=True,
-                include={
-                    "title",
-                    "version",
-                    "description",
-                    "termsOfService",
-                    "contact",
-                    "license",
-                },
-            ),
+            "info": self.config.openapi_info(),
             "tags": list(tags.values()),
             "paths": {**routes},
             "components": {
