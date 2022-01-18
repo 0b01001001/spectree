@@ -21,7 +21,7 @@ class FlaskPlugin(BasePlugin):
             if (
                 self.blueprint_state
                 and self.blueprint_state.url_prefix
-                and str(rule).startswith(self.blueprint_state.url_prefix)
+                and not str(rule).startswith(self.blueprint_state.url_prefix)
             ):
                 continue
             yield rule
