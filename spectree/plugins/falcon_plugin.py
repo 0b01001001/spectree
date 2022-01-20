@@ -16,8 +16,8 @@ class OpenAPI:
 
 
 class DocPage:
-    def __init__(self, html, spec_url):
-        self.page = html.format(spec_url=spec_url)
+    def __init__(self, html, spec_url, spec_path):
+        self.page = html.format(spec_url=spec_url, spec_path=spec_path)
 
     def on_get(self, req, resp):
         resp.content_type = "text/html"
@@ -81,7 +81,9 @@ class FalconPlugin(BasePlugin):
             self.app.add_route(
                 f"/{self.config.path}/{ui}",
                 self.DOC_PAGE_ROUTE_CLASS(
-                    self.config.page_templates[ui], self.config.spec_url
+                    self.config.page_templates[ui],
+                    self.config.spec_url,
+                    self.config.path,
                 ),
             )
 

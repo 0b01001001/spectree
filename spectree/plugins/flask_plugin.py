@@ -216,7 +216,9 @@ class FlaskPlugin(BasePlugin):
                         )
                     )
 
-                return self.config.page_templates[ui].format(spec_url=spec_url)
+                return self.config.page_templates[ui].format(
+                    spec_url=spec_url, spec_path=self.config.path
+                )
 
             for ui in self.config.page_templates:
                 app.add_url_rule(
@@ -232,6 +234,6 @@ class FlaskPlugin(BasePlugin):
                     rule=f"/{self.config.path}/{ui}",
                     endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: self.config.page_templates[ui].format(
-                        spec_url=self.config.spec_url
+                        spec_url=self.config.spec_url, spec_path=self.config.path
                     ),
                 )

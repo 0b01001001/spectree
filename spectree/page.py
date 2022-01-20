@@ -69,6 +69,8 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></scri
 src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
         <script>
         window.onload = function() {{
+        var full = location.protocol + '//' + location.hostname +
+            (location.port ? ':' + location.port : '');
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({{
             url: "{spec_url}",
@@ -81,6 +83,7 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset
             plugins: [
             SwaggerUIBundle.plugins.DownloadUrl
             ],
+            oauth2RedirectUrl: full + "/{spec_path}/swagger",
             layout: "StandaloneLayout"
         }})
         // End Swagger UI call region
