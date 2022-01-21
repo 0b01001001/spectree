@@ -35,6 +35,7 @@ security_schemes = [
                     "scopes": {
                         "https://www.googleapis.com/auth/tasks.readonly": "tasks",
                     },
+                    "clientId": "client_id",
                 },
             },
         },
@@ -46,6 +47,7 @@ api = SpecTree(
     "flask",
     security_schemes=security_schemes,
     SECURITY={"test_secure": []},
+    client_id="client_id",
 )
 
 
