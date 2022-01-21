@@ -86,6 +86,17 @@ src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset
             oauth2RedirectUrl: full + "/{spec_path}/swagger",
             layout: "StandaloneLayout"
         }})
+        ui.initOAuth({{
+            clientId: "{client_id}",
+            clientSecret: "{client_secret}",
+            realm: "{realm}",
+            appName: "{app_name}",
+            scopeSeparator: "{scope_separator}",
+            additionalQueryStringParams: {additional_query_string_params},
+            useBasicAuthenticationWithAccessCodeGrant:
+                {use_basic_authentication_with_access_code_grant},
+            usePkceWithAuthorizationCodeGrant: {use_pkce_with_authorization_code_grant}
+        }})
         // End Swagger UI call region
 
         window.ui = ui
