@@ -35,7 +35,6 @@ security_schemes = [
                     "scopes": {
                         "https://www.googleapis.com/auth/tasks.readonly": "tasks",
                     },
-                    "clientId": "client_id",
                 },
             },
         },
