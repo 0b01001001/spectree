@@ -225,7 +225,7 @@ class FlaskPlugin(BasePlugin):
             for ui in self.config.page_templates:
                 app.add_url_rule(
                     rule=f"/{self.config.path}/{ui}",
-                    endpoint=f"openapi_{self.config.path}_{ui}",
+                    endpoint=f"openapi_{self.config.path}_{ui.replace('.', '_')}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
 
