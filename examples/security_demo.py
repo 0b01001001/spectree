@@ -30,12 +30,10 @@ security_schemes = [
             "type": "oauth2",
             "flows": {
                 "authorizationCode": {
-                    "authorizationUrl": "https://example.com/oauth/authorize",
-                    "tokenUrl": "https://example.com/oauth/token",
+                    "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+                    "tokenUrl": "https://sts.googleapis.com",
                     "scopes": {
-                        "read": "Grants read access",
-                        "write": "Grants write access",
-                        "admin": "Grants access to admin operations",
+                        "https://www.googleapis.com/auth/tasks.readonly": "tasks",
                     },
                 },
             },
@@ -48,6 +46,7 @@ api = SpecTree(
     "flask",
     security_schemes=security_schemes,
     SECURITY={"test_secure": []},
+    client_id="client_id",
 )
 
 

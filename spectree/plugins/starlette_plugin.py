@@ -33,7 +33,11 @@ class StarlettePlugin(BasePlugin):
             self.app.add_route(
                 f"/{self.config.path}/{ui}",
                 lambda request, ui=ui: HTMLResponse(
-                    self.config.page_templates[ui].format(spec_url=self.config.spec_url)
+                    self.config.page_templates[ui].format(
+                        spec_url=self.config.spec_url,
+                        spec_path=self.config.path,
+                        **self.config.swagger_oauth2_config(),
+                    )
                 ),
             )
 
