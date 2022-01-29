@@ -15,11 +15,11 @@ from .test_plugin_starlette import api as starlette_api
 @pytest.mark.parametrize(
     "api",
     [
-        flask_api,
-        flask_bp_api,
-        flask_view_api,
-        falcon_api,
-        starlette_api,
+        pytest.param(flask_api, id="flask"),
+        pytest.param(flask_bp_api, id="flask_blueprint"),
+        pytest.param(flask_view_api, id="flask_view"),
+        pytest.param(starlette_api, id="starlette"),
+        pytest.param(falcon_api, id="falcon"),
     ],
 )
 def test_plugin_spec(api):

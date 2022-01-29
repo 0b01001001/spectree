@@ -6,7 +6,7 @@ from flask import Blueprint, Flask, jsonify, request
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
+from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag, get_paths
 
 
 def before_handler(req, resp, err, _):
@@ -254,3 +254,7 @@ def test_flask_doc_prefix(test_client_and_api, prefix):
 
     resp = client.get(prefix + "/apidoc/swagger")
     assert resp.status_code == 200
+
+    assert get_paths(api.spec) == [
+        prefix + "/ping",
+    ]
