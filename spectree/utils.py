@@ -35,6 +35,7 @@ def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[st
 
     docstring_parts = re.split(r"\n\s*\n", docstring)
     for i in range(len(docstring_parts)):
+        docstring_parts[i] = docstring_parts[i].rstrip()
         docstring_parts[i] = docstring_parts[i].replace("\n", " ")
 
     summary = docstring_parts[0]

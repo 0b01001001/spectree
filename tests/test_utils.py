@@ -122,6 +122,38 @@ demo_class = DemoClass()
             "description first line description second line description third line",
             id="large-multi-line-docstring-with-whitespace-line-and-truncation-char",
         ),
+        pytest.param(
+            "summary first line\nsummary second line\n"
+            "\t   \n"
+            "description first line   \ndescription second line\n"
+            "\t   \n"
+            "description second paragraph   \n"
+            "\n \n \n"
+            "description third paragraph\ndescription third paragraph second line",
+            "summary first line summary second line",
+            "description first line    description second line"
+            "\n\n"
+            "description second paragraph"
+            "\n\n"
+            "description third paragraph description third paragraph second line",
+            id="large-multi-line-docstring-with-multiple-paragraphs",
+        ),
+        pytest.param(
+            "\tcode block while indented\n"
+            "\t\n"
+            "\tdescription first paragraph\n"
+            "\t\n"
+            "\t\tcode block\n"
+            "\t\n"
+            "\tdescription third paragraph\n",
+            "code block while indented",
+            "description first paragraph"
+            "\n\n"
+            "        code block"
+            "\n\n"
+            "description third paragraph",
+            id="multi-line-docstring-with-code-block",
+        ),
     ],
 )
 def test_parse_comments(docstring, expected_summary, expected_description):
