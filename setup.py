@@ -14,7 +14,7 @@ with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
 
 setup(
     name="spectree",
-    version="0.7.2",
+    version="0.7.3",
     license="Apache-2.0",
     author="Keming Yang",
     author_email="kemingy94@gmail.com",
@@ -46,11 +46,11 @@ setup(
         "falcon": ["falcon"],
         "starlette": ["starlette[full]"],
         "dev": [
-            "pytest>=6",
-            "flake8>=3.8",
-            "black>=20.8b1",
-            "isort>=5.6",
-            "autoflake>=1.4",
+            "pytest~=7.0",
+            "flake8~=3.8",
+            "black~=22.1",
+            "isort~=5.6",
+            "autoflake~=1.4",
         ],
     },
     zip_safe=False,
