@@ -26,7 +26,7 @@ publish: package
 	twine upload dist/*
 
 format:
-	autoflake --in-place --recursive ${SOURCE_FILES}
+	autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports ${SOURCE_FILES}
 	isort --project=spectree ${SOURCE_FILES}
 	black ${SOURCE_FILES}
 
