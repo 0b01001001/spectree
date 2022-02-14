@@ -20,7 +20,7 @@ clean:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 package: clean
-	python setup.py sdist bdist_wheel
+	python -m build
 
 publish: package
 	twine upload dist/*
