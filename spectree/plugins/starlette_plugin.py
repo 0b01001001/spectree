@@ -63,12 +63,14 @@ class StarlettePlugin(BasePlugin):
         *args,
         **kwargs,
     ):
+        from starlette.requests import Request
         from starlette.responses import JSONResponse
 
-        # NOTE: If func is a `HTTPEndpoint`, it should have '.' in its ``__qualname__``
-        # This is not elegant. But it seems `inspect` doesn't work here.
-        instance = args[0] if "." in func.__qualname__ else None
-        request = args[1] if "." in func.__qualname__ else args[0]
+        if isinstance(args[0], Request):
+            instance, request = None, args[0]
+        else:
+            instance, request = args[:2]
+
         response = None
         req_validation_error = resp_validation_error = json_decode_error = None
 
