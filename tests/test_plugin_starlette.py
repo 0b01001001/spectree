@@ -74,17 +74,6 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
     return JSONResponse({"name": json.name, "score": score})
 
 
-@api.validate(
-    query=Query,
-    path_parameter_descriptions={
-        "name": "The name that uniquely identifies the user.",
-        "non-existent-param": "description",
-    },
-)
-def user_address(request):
-    return None
-
-
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -95,11 +84,6 @@ app = Starlette(
                     "/user",
                     routes=[
                         Route("/{name}", user_score, methods=["POST"]),
-                        Route(
-                            "/{name}/address/{address_id}",
-                            user_address,
-                            methods=["GET"],
-                        ),
                     ],
                 ),
                 Mount(
@@ -113,6 +97,22 @@ app = Starlette(
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
     ]
 )
+
+
+def inner_register_func():
+    @app.route("/api/user/{name}/address/{address_id}")
+    @api.validate(
+        query=Query,
+        path_parameter_descriptions={
+            "name": "The name that uniquely identifies the user.",
+            "non-existent-param": "description",
+        },
+    )
+    def user_address(request):
+        return None
+
+
+inner_register_func()
 api.register(app)
 
 
