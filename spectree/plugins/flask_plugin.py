@@ -132,18 +132,16 @@ class FlaskPlugin(BasePlugin):
         if request.mimetype in self.FORM_MIMETYPE:
             req_json = request.form or {}
             if request.files:
-                req_json = dict(
-                    list(request.form.items()) + list(request.files.items())
-                )
+                req_json = {**req_json, **request.files}
         else:
             req_json = request.get_json(silent=True) or {}
         req_headers = request.headers or {}
         req_cookies = request.cookies or {}
         request.context = Context(
-            query.parse_obj(req_query.items()) if query else None,
-            json.parse_obj(req_json.items()) if json else None,
-            headers.parse_obj(req_headers.items()) if headers else None,
-            cookies.parse_obj(req_cookies.items()) if cookies else None,
+            query.parse_obj(req_query) if query else None,
+            json.parse_obj(req_json) if json else None,
+            headers.parse_obj(req_headers) if headers else None,
+            cookies.parse_obj(req_cookies) if cookies else None,
         )
 
     def validate(
