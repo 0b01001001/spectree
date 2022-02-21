@@ -245,3 +245,17 @@ def get_security(security):
         security = [security]
 
     return security
+
+
+def get_multidict_items(multidict):
+    """
+    return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
+    """
+    res = {}
+    for key in multidict:
+        if len(multidict.getlist(key)) > 1:
+            res[key] = multidict.getlist(key)
+        else:
+            res[key] = multidict.get(key)
+
+    return res

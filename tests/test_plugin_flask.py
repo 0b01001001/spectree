@@ -144,6 +144,7 @@ def test_flask_validate(client):
             data=json.dumps(dict(name="flask", limit=10)),
             content_type="application/json",
         )
+        assert resp.status_code == 200, resp.json
         assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
         resp = client.post(
@@ -151,6 +152,7 @@ def test_flask_validate(client):
             data="name=flask&limit=10",
             content_type="application/x-www-form-urlencoded",
         )
+        assert resp.status_code == 200, resp.json
         assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
