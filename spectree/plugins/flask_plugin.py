@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 
+from ..utils import get_multidict_items
 from .base import BasePlugin, Context
 
 
@@ -128,15 +129,25 @@ class FlaskPlugin(BasePlugin):
         return "".join(subs), parameters
 
     def request_validation(self, request, query, json, headers, cookies):
-        req_query = request.args or {}
+        """
+        req_query: werkzeug.datastructures.ImmutableMultiDict
+        req_json: dict
+        req_headers: werkzeug.datastructures.EnvironHeaders
+        req_cookies: werkzeug.datastructures.ImmutableMultiDict
+        """
+        req_query = get_multidict_items(request.args) or {}
         if request.mimetype in self.FORM_MIMETYPE:
-            req_json = request.form or {}
+            req_json = get_multidict_items(request.form) or {}
             if request.files:
-                req_json = {**req_json, **request.files}
+                req_json = {
+                    **req_json,
+                    **get_multidict_items(request.files),
+                }
         else:
             req_json = request.get_json(silent=True) or {}
-        req_headers = request.headers or {}
-        req_cookies = request.cookies or {}
+        req_headers = dict(iter(request.headers)) or {}
+        req_cookies = get_multidict_items(request.cookies) or {}
+
         request.context = Context(
             query.parse_obj(req_query) if query else None,
             json.parse_obj(req_json) if json else None,
