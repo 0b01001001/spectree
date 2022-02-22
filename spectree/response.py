@@ -11,10 +11,23 @@ class Response:
     """
     response object
 
-    :param codes: list of HTTP status code, format('HTTP_[0-9]_{3}'), 'HTTP_200'
+    :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP_200'
     :param code_models: dict of <HTTP status code>: <`pydantic.BaseModel`> or None or
         a two element tuple of (<`pydantic.BaseModel`> or None) as the first item and
         a custom status code description string as the second item.
+
+    examples:
+
+        >>> from spectree.response import Response
+        >>> from pydantic import BaseModel
+        ...
+        >>> class User(BaseModel):
+        ...     id: int
+        ...
+        >>> response = Response(HTTP_200)
+        >>> response = Response(HTTP_200=None)
+        >>> response = Response(HTTP_200=User)
+        >>> response = Response(HTTP_200=(User, "status code description"))
     """
 
     def __init__(

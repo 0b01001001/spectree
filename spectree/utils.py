@@ -213,7 +213,7 @@ def get_model_key(model: Type[BaseModel]) -> str:
     avoid code-structure leaking)
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
-    request or response
+        request or response
     """
 
     return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
@@ -225,7 +225,7 @@ def get_model_schema(model):
     prefix in ref
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
-    request or response
+        request or response
     """
     assert issubclass(model, BaseModel)
 
