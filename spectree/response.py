@@ -55,7 +55,11 @@ class Response:
                 self.code_descriptions[code] = description
 
     def add_model(
-        self, code: int, model: Type[BaseModel], replace: bool = True
+        self,
+        code: int,
+        model: Type[BaseModel],
+        replace: bool = True,
+        description: Optional[str] = None,
     ) -> None:
         """Add data *model* for the specified status *code*.
 
@@ -64,10 +68,14 @@ class Response:
         :param replace: If `True` and a data *model* already exists for the given
             status *code* it will be replaced, if `False` the existing data *model*
             will be retained.
+        :param description: The description string for the code.
         """
         if not replace and self.find_model(code):
             return
-        self.code_models[f"HTTP_{code}"] = model
+        code_name = f"HTTP_{code}"
+        self.code_models[code_name] = model
+        if description:
+            self.code_descriptions[code_name] = description
 
     def has_model(self) -> bool:
         """
