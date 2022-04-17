@@ -1,6 +1,6 @@
 import logging
 from collections import namedtuple
-from typing import TYPE_CHECKING, Any, Callable, Generic, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, Mapping, Optional, TypeVar
 
 from ..config import Configuration
 
@@ -58,7 +58,9 @@ class BasePlugin(Generic[BackendRoute]):
         """
         raise NotImplementedError
 
-    def parse_path(self, route: Any, path_parameter_descriptions: Mapping[str, str]):
+    def parse_path(
+        self, route: Any, path_parameter_descriptions: Optional[Mapping[str, str]]
+    ):
         """
         :param route: API routes
         :param path_parameter_descriptions: A dictionary of path parameter names and

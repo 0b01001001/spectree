@@ -1,12 +1,13 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, Dict, Sequence, Type
+from typing import Any, Callable, Dict, Mapping, Sequence, Type
 
-from ._types import ModelType
+from ._types import FunctionDecorator, ModelType
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
 from .plugins import PLUGINS, BasePlugin
+from .response import Response
 from .utils import (
     default_after_handler,
     default_before_handler,
@@ -102,18 +103,18 @@ class SpecTree:
     def validate(
         self,
         query: ModelType = None,
-        json=None,
-        headers=None,
-        cookies=None,
-        resp=None,
+        json: ModelType = None,
+        headers: ModelType = None,
+        cookies: ModelType = None,
+        resp: Response = None,
         tags: Sequence = (),
-        security=None,
-        deprecated=False,
-        before=None,
-        after=None,
-        validation_error_status=None,
-        path_parameter_descriptions=None,
-    ):
+        security: Any = None,
+        deprecated: bool = False,
+        before: Callable = None,
+        after: Callable = None,
+        validation_error_status: int = 0,
+        path_parameter_descriptions: Mapping[str, str] = None,
+    ) -> Callable:
         """
         - validate query, json, headers in request
         - validate response body and status code
@@ -141,13 +142,13 @@ class SpecTree:
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
-        if not validation_error_status:
+        if validation_error_status == 0:
             validation_error_status = self.validation_error_status
 
-        def decorate_validation(func):
+        def decorate_validation(func: Callable):
             # for sync framework
             @wraps(func)
-            def sync_validate(*args, **kwargs):
+            def sync_validate(*args: Any, **kwargs: Any):
                 return self.backend.validate(
                     func,
                     query,
@@ -164,7 +165,7 @@ class SpecTree:
 
             # for async framework
             @wraps(func)
-            async def async_validate(*args, **kwargs):
+            async def async_validate(*args: Any, **kwargs: Any):
                 return await self.backend.validate(
                     func,
                     query,
@@ -179,7 +180,9 @@ class SpecTree:
                     **kwargs,
                 )
 
-            validation = async_validate if self.backend.ASYNC else sync_validate
+            validation: FunctionDecorator = (
+                async_validate if self.backend.ASYNC else sync_validate  # type: ignore
+            )
 
             if self.config.annotations:
                 nonlocal query
@@ -219,7 +222,7 @@ class SpecTree:
 
         return decorate_validation
 
-    def _add_model(self, model) -> str:
+    def _add_model(self, model: ModelType) -> str:
         """
         unified model processing
         """
@@ -229,11 +232,11 @@ class SpecTree:
 
         return model_key
 
-    def _generate_spec(self):
+    def _generate_spec(self) -> Dict[str, Any]:
         """
         generate OpenAPI spec according to routes and decorators
         """
-        routes = defaultdict(dict)
+        routes: Dict[str, Dict] = defaultdict(dict)
         tags = {}
         for route in self.backend.find_routes():
             for method, func in self.backend.parse_func(route):
@@ -277,7 +280,7 @@ class SpecTree:
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
 
-        spec = {
+        spec: Dict[str, Any] = {
             "openapi": self.config.openapi_version,
             "info": self.config.openapi_info(),
             "tags": list(tags.values()),
@@ -301,7 +304,7 @@ class SpecTree:
         spec["security"] = get_security(self.config.security)
         return spec
 
-    def _get_model_definitions(self):
+    def _get_model_definitions(self) -> Dict[str, Any]:
         """
         handle nested models
         """

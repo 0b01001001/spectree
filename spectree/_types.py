@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Type
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Type, Union
 
 from pydantic import BaseModel
 from typing_extensions import Protocol
@@ -16,3 +16,12 @@ class MultiDict(Protocol):
 
     def __iter__(self) -> Iterator[str]:
         ...
+
+
+class FunctionDecorator(Protocol):
+    resp: Any
+    tags: Sequence[Any]
+    security: Union[None, Dict, List[Any]]
+    deprecated: bool
+    path_parameter_descriptions: Optional[Mapping[str, str]]
+    _decorator: Any
