@@ -1,8 +1,9 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, Dict, Type
+from typing import Any, Callable, Dict, Sequence, Type
 
+from ._types import ModelType
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
 from .plugins import PLUGINS, BasePlugin
@@ -49,7 +50,7 @@ class SpecTree:
         before: Callable = default_before_handler,
         after: Callable = default_after_handler,
         validation_error_status: int = 422,
-        **kwargs,
+        **kwargs: Any,
     ):
         self.before = before
         self.after = after
@@ -100,12 +101,12 @@ class SpecTree:
 
     def validate(
         self,
-        query=None,
+        query: ModelType = None,
         json=None,
         headers=None,
         cookies=None,
         resp=None,
-        tags=(),
+        tags: Sequence = (),
         security=None,
         deprecated=False,
         before=None,

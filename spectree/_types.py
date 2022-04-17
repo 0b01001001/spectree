@@ -1,8 +1,10 @@
-from typing import Iterator, List, Optional, Protocol, Type
+from typing import Iterator, List, Optional, Type
 
 from pydantic import BaseModel
+from typing_extensions import Protocol
 
-OptionalModelType = Optional[Type[BaseModel]]
+ModelType = Type[BaseModel]
+OptionalModelType = Optional[ModelType]
 
 
 class MultiDict(Protocol):

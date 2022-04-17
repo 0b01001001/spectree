@@ -1,8 +1,8 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
-from ._types import OptionalModelType
+from ._types import ModelType, OptionalModelType
 from .utils import get_model_key, parse_code
 
 
@@ -40,7 +40,7 @@ class Response:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             self.codes.append(code)
 
-        self.code_models: Dict[str, Type[BaseModel]] = {}
+        self.code_models: Dict[str, ModelType] = {}
         self.code_descriptions: Dict[str, Optional[str]] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
@@ -70,7 +70,7 @@ class Response:
     def add_model(
         self,
         code: int,
-        model: Type[BaseModel],
+        model: ModelType,
         replace: bool = True,
         description: Optional[str] = None,
     ) -> None:
@@ -111,7 +111,7 @@ class Response:
         return self.code_descriptions.get(code) or DEFAULT_CODE_DESC[code]
 
     @property
-    def models(self) -> Iterable[Type[BaseModel]]:
+    def models(self) -> Iterable[ModelType]:
         """
         :returns:  dict_values -- all the models in this response
         """

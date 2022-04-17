@@ -2,22 +2,11 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from pydantic import BaseModel, ValidationError
 
-from ._types import MultiDict
+from ._types import ModelType, MultiDict
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -228,7 +217,7 @@ def get_model_path_key(model_path: str):
     return model_path_key
 
 
-def get_model_key(model: Type[BaseModel]) -> str:
+def get_model_key(model: ModelType) -> str:
     """
     generate model name prefixed by short hashed path (instead of its path to
     avoid code-structure leaking)
@@ -240,7 +229,7 @@ def get_model_key(model: Type[BaseModel]) -> str:
     return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
 
 
-def get_model_schema(model: Type[BaseModel]):
+def get_model_schema(model: ModelType):
     """
     return a dictionary representing the model as JSON Schema with using hashed
     prefix in ref
