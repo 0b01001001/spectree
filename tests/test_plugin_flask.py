@@ -11,6 +11,7 @@ from .common import (
     SECURITY_SCHEMAS,
     Cookies,
     Headers,
+    Order,
     Query,
     Resp,
     StrDict,
@@ -66,7 +67,7 @@ def ping():
 )
 def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=request.context.query.order)
+    score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
@@ -80,7 +81,7 @@ def user_score(name):
 )
 def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=query.order)
+    score.sort(reverse=True if query.order == Order.desc else False)
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=json.name, score=score)

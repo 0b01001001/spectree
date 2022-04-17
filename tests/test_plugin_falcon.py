@@ -3,7 +3,7 @@ from random import randint
 try:
     from falcon import App
 except ImportError:
-    from falcon import API as App
+    from falcon import API as App  # type: ignore
 
 import pytest
 from falcon import testing

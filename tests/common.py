@@ -9,8 +9,8 @@ api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi
 
 
 class Order(IntEnum):
-    asce = 1
-    desc = 0
+    asce = 0
+    desc = 1
 
 
 class Query(BaseModel):

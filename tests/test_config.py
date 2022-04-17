@@ -78,7 +78,7 @@ def test_update_security_schemes():
 def test_update_security_scheme_wrong_type(secure_item: SecurityScheme):
     # update and validate each schema type
     with pytest.raises(ValidationError):
-        secure_item.data.type += "_wrong"
+        secure_item.data.type += "_wrong"  # type: ignore
 
 
 @pytest.mark.parametrize(

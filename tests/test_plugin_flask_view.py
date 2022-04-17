@@ -7,7 +7,7 @@ from flask.views import MethodView
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
+from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
 
 
 def before_handler(req, resp, err, _):
@@ -64,7 +64,7 @@ class UserAnnotated(MethodView):
     )
     def post(self, name, query: Query, json: JSON, cookies: Cookies):
         score = [randint(0, json.limit) for _ in range(5)]
-        score.sort(reverse=query.order)
+        score.sort(reverse=True if query.order == Order.desc else False)
         assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
         return jsonify(name=json.name, score=score)
