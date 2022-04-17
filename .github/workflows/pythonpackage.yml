@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort autoflake
+          make install
       - name: Lint
         run: make lint
 
