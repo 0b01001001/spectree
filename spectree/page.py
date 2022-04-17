@@ -1,4 +1,6 @@
-DEFAULT_PAGE_TEMPLATES = {
+from typing import Dict
+
+DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
     # https://github.com/Redocly/redoc
     "redoc": """
 <!DOCTYPE html>

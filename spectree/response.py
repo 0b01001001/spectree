@@ -2,9 +2,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
 
+from ._types import OptionalModelType
 from .utils import get_model_key, parse_code
-
-OptionalModelType = Optional[Type[BaseModel]]
 
 
 class Response:
@@ -45,15 +44,16 @@ class Response:
         self.code_descriptions: Dict[str, Optional[str]] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
-            model = model_and_description
-            description = None
+            description: Optional[str] = None
             if isinstance(model_and_description, tuple):
                 assert len(model_and_description) == 2, (
                     "unexpected number of arguments for a tuple of "
                     "`pydantic.BaseModel` and HTTP status code description"
                 )
                 model = model_and_description[0]
-                description: Optional[str] = model_and_description[1]
+                description = model_and_description[1]
+            else:
+                model = model_and_description
 
             if model:
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
@@ -85,7 +85,7 @@ class Response:
         """
         if not replace and self.find_model(code):
             return
-        code_name = f"HTTP_{code}"
+        code_name: str = f"HTTP_{code}"
         self.code_models[code_name] = model
         if description:
             self.code_descriptions[code_name] = description
@@ -96,7 +96,7 @@ class Response:
         """
         return bool(self.code_models)
 
-    def find_model(self, code: int) -> Optional[Type[BaseModel]]:
+    def find_model(self, code: int) -> OptionalModelType:
         """
         :param code: ``r'\\d{3}'``
         """
@@ -146,7 +146,7 @@ class Response:
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1
 # https://developer.mozilla.org/sv-SE/docs/Web/HTTP/Status
-DEFAULT_CODE_DESC = {
+DEFAULT_CODE_DESC: Dict[str, str] = {
     # Information 1xx
     "HTTP_100": "Continue",
     "HTTP_101": "Switching Protocols",

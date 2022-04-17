@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -18,7 +18,7 @@ class Tag(BaseModel):
 
     name: str
     description: str = ""
-    externalDocs: ExternalDocs = None
+    externalDocs: Optional[ExternalDocs] = None
 
     def __str__(self):
         return self.name
@@ -64,7 +64,7 @@ class InType(str, Enum):
     COOKIE = "cookie"
 
 
-type_req_fields = {
+type_req_fields: Dict[SecureType, Sequence[str]] = {
     SecureType.HTTP: ["scheme"],
     SecureType.API_KEY: ["name", "field_in"],
     SecureType.OAUTH_TWO: ["flows"],

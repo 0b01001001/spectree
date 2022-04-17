@@ -1,10 +1,11 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
+from typing import Any, Callable, Dict, Type
 
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
-from .plugins import PLUGINS
+from .plugins import PLUGINS, BasePlugin
 from .utils import (
     default_after_handler,
     default_before_handler,
@@ -42,12 +43,12 @@ class SpecTree:
 
     def __init__(
         self,
-        backend_name="base",
-        backend=None,
-        app=None,
-        before=default_before_handler,
-        after=default_after_handler,
-        validation_error_status=422,
+        backend_name: str = "base",
+        backend: Type[BasePlugin] = None,
+        app: Any = None,
+        before: Callable = default_before_handler,
+        after: Callable = default_after_handler,
+        validation_error_status: int = 422,
         **kwargs,
     ):
         self.before = before
@@ -57,11 +58,11 @@ class SpecTree:
         self.backend_name = backend_name
         self.backend = backend(self) if backend else PLUGINS[backend_name](self)
         # init
-        self.models = {}
+        self.models: Dict[str, Any] = {}
         if app:
             self.register(app)
 
-    def register(self, app):
+    def register(self, app: Any):
         """
         register to backend application
 
@@ -80,7 +81,7 @@ class SpecTree:
             self._spec = self._generate_spec()
         return self._spec
 
-    def bypass(self, func):
+    def bypass(self, func: Callable):
         """
         bypass rules for routes (mode defined in config)
 
