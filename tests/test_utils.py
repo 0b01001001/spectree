@@ -188,7 +188,7 @@ def test_parse_code():
     with pytest.raises(TypeError):
         assert parse_code(200) == 200
 
-    assert parse_code("200") is None
+    assert parse_code("200") == ""
     assert parse_code("HTTP_404") == "404"
 
 

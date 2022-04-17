@@ -2,7 +2,18 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from pydantic import BaseModel, ValidationError
 
@@ -244,14 +255,16 @@ def get_model_schema(model: Type[BaseModel]):
     )
 
 
-def get_security(security: Optional[Mapping]) -> List[Any]:
+def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
     """
     return the correct format of security
     """
     if security is None or not security:
         return []
 
-    if isinstance(security, dict):
+    if isinstance(security, list):
+        return security
+    elif isinstance(security, dict):
         return [security]
     return []
 
