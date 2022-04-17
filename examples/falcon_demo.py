@@ -2,7 +2,7 @@ import logging
 from random import random
 from wsgiref import simple_server
 
-import falcon
+import falcon  # type: ignore
 from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree, Tag

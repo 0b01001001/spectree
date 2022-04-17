@@ -1,4 +1,5 @@
 import string
+from typing import Type
 
 import pytest
 from pydantic import ValidationError
@@ -57,7 +58,7 @@ def test_config_case():
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
-def test_update_security_scheme(secure_item: SecurityScheme):
+def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     # update and validate each schema type
     config = Configuration(
         security_schemes=[{"name": secure_item.name, "data": secure_item.data}]
@@ -77,7 +78,7 @@ def test_update_security_schemes():
 def test_update_security_scheme_wrong_type(secure_item: SecurityScheme):
     # update and validate each schema type
     with pytest.raises(ValidationError):
-        secure_item.data.type += "_wrong"
+        secure_item.data.type += "_wrong"  # type: ignore
 
 
 @pytest.mark.parametrize(

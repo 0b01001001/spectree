@@ -1,4 +1,4 @@
-import uvicorn
+import uvicorn  # type: ignore
 from pydantic import BaseModel, Field
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint

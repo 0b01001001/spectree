@@ -1,6 +1,6 @@
 import warnings
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 
@@ -25,9 +25,9 @@ class Contact(BaseModel):
     #: name of the contact
     name: str
     #: contact url
-    url: AnyUrl = None
+    url: Optional[AnyUrl] = None
     #: contact email address
-    email: EmailStr = None
+    email: Optional[EmailStr] = None
 
 
 class License(BaseModel):
@@ -36,7 +36,7 @@ class License(BaseModel):
     #: name of the license
     name: str
     #: license url
-    url: AnyUrl = None
+    url: Optional[AnyUrl] = None
 
 
 class Configuration(BaseSettings):
@@ -44,15 +44,15 @@ class Configuration(BaseSettings):
     #: title of the service
     title: str = "Service API Document"
     #: service OpenAPI document description
-    description: str = None
+    description: Optional[str] = None
     #: service version
     version: str = "0.1.0"
     #: terms of service url
-    terms_of_service: AnyUrl = None
+    terms_of_service: Optional[AnyUrl] = None
     #: author contact information
-    contact: Contact = None
+    contact: Optional[Contact] = None
     #: license information
-    license: License = None
+    license: Optional[License] = None
 
     # SpecTree configurations
     #: OpenAPI doc route path prefix (i.e. /apidoc/)
@@ -102,14 +102,14 @@ class Configuration(BaseSettings):
         validate_assignment = True
 
     @root_validator(pre=True)
-    def convert_to_lower_case(cls, values):
+    def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
         return {k.lower(): v for k, v in values.items()}
 
     @property
     def spec_url(self) -> str:
         return f"/{self.path}/{self.filename}"
 
-    def swagger_oauth2_config(self) -> Dict:
+    def swagger_oauth2_config(self) -> Dict[str, str]:
         """
         return the swagger UI OAuth2 configs
 
@@ -141,7 +141,7 @@ class Configuration(BaseSettings):
         )
         return config
 
-    def openapi_info(self) -> Dict:
+    def openapi_info(self) -> Dict[str, str]:
         info = self.dict(
             include={
                 "title",

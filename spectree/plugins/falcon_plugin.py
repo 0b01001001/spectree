@@ -1,6 +1,7 @@
 import inspect
 import re
 from functools import partial
+from typing import Any, List, Mapping
 
 from pydantic import ValidationError
 
@@ -8,18 +9,18 @@ from .base import BasePlugin
 
 
 class OpenAPI:
-    def __init__(self, spec):
+    def __init__(self, spec: Mapping[str, str]):
         self.spec = spec
 
-    def on_get(self, req, resp):
+    def on_get(self, _: Any, resp: Any):
         resp.media = self.spec
 
 
 class DocPage:
-    def __init__(self, html, **kwargs):
+    def __init__(self, html: str, **kwargs: Any):
         self.page = html.format(**kwargs)
 
-    def on_get(self, req, resp):
+    def on_get(self, _: Any, resp: Any):
         resp.content_type = "text/html"
         # resp.body is deprecated in Falcon 3
         if hasattr(resp, "text"):
@@ -29,18 +30,20 @@ class DocPage:
 
 
 class OpenAPIAsgi(OpenAPI):
-    async def on_get(self, req, resp):
+    async def on_get(self, req: Any, resp: Any):
         super().on_get(req, resp)
 
 
 class DocPageAsgi(DocPage):
-    async def on_get(self, req, resp):
+    async def on_get(self, req: Any, resp: Any):
         super().on_get(req, resp)
 
 
-DOC_CLASS = [x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)]
+DOC_CLASS: List[str] = [
+    x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)
+]
 
-HTTP_500 = "500 Internal Service Response Validation Error"
+HTTP_500: str = "500 Internal Service Response Validation Error"
 
 
 class FalconPlugin(BasePlugin):
@@ -50,8 +53,8 @@ class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
 
-        from falcon import HTTP_400, HTTP_415, HTTPError
-        from falcon.routing.compiled import _FIELD_PATTERN
+        from falcon import HTTP_400, HTTP_415, HTTPError  # type: ignore
+        from falcon.routing.compiled import _FIELD_PATTERN  # type: ignore
 
         # used to detect falcon 3.0 request media parse error
         self.FALCON_HTTP_ERROR = HTTPError
@@ -72,7 +75,7 @@ class FalconPlugin(BasePlugin):
         )
         self.INT_ARGS_NAMES = ("num_digits", "min", "max")
 
-    def register_route(self, app):
+    def register_route(self, app: Any):
         self.app = app
         self.app.add_route(
             self.config.spec_url, self.OPEN_API_ROUTE_CLASS(self.spectree.spec)

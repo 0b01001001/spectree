@@ -6,7 +6,17 @@ from flask import Blueprint, Flask, jsonify, request
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag, get_paths
+from .common import (
+    JSON,
+    Cookies,
+    Headers,
+    Order,
+    Query,
+    Resp,
+    StrDict,
+    api_tag,
+    get_paths,
+)
 
 
 def before_handler(req, resp, err, _):
@@ -60,7 +70,7 @@ def user_score(name):
 )
 def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=query.order)
+    score.sort(reverse=True if query.order == Order.desc else False)
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=json.name, score=score)

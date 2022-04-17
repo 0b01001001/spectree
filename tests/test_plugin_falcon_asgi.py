@@ -1,7 +1,7 @@
 from random import randint
 
 import pytest
-from falcon import testing
+from falcon import testing  # type: ignore
 
 from spectree import Response, SpecTree
 

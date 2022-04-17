@@ -2,9 +2,11 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import Any, Callable, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+
+from ._types import ModelType, MultiDict
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -46,7 +48,7 @@ def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[st
     return summary, description
 
 
-def parse_request(func):
+def parse_request(func: Any) -> Dict[str, Any]:
     """
     get json spec
     """
@@ -62,7 +64,11 @@ def parse_request(func):
     return data
 
 
-def parse_params(func, params, models):
+def parse_params(
+    func: Callable[..., Any],
+    params: List[Mapping[str, Any]],
+    models: Mapping[str, Any],
+) -> List[Mapping[str, Any]]:
     """
     get spec for (query, headers, cookies)
     """
@@ -91,7 +97,7 @@ def parse_params(func, params, models):
     return params
 
 
-def parse_resp(func):
+def parse_resp(func: Any):
     """
     get the response spec
 
@@ -106,7 +112,7 @@ def parse_resp(func):
     return responses
 
 
-def has_model(func):
+def has_model(func: Any):
     """
     return True if this function have ``pydantic.BaseModel``
     """
@@ -116,7 +122,7 @@ def has_model(func):
     return bool(hasattr(func, "resp") and func.resp.has_model())
 
 
-def parse_code(http_code):
+def parse_code(http_code: str) -> str:
     """
     get the code of this HTTP status
 
@@ -124,11 +130,11 @@ def parse_code(http_code):
     """
     match = HTTP_CODE.match(http_code)
     if not match:
-        return None
+        return ""
     return match.group("code")
 
 
-def parse_name(func):
+def parse_name(func: Callable[..., Any]) -> str:
     """
     the func can be
 
@@ -139,7 +145,9 @@ def parse_name(func):
     return func.__name__
 
 
-def default_before_handler(req, resp, req_validation_error, instance):
+def default_before_handler(
+    req: Any, resp: Any, req_validation_error: ValidationError, instance: Any
+):
     """
     default handler called before the endpoint function after the request validation
 
@@ -159,7 +167,9 @@ def default_before_handler(req, resp, req_validation_error, instance):
         )
 
 
-def default_after_handler(req, resp, resp_validation_error, instance):
+def default_after_handler(
+    req: Any, resp: Any, resp_validation_error: ValidationError, instance: Any
+):
     """
     default handler called after the response validation
 
@@ -207,7 +217,7 @@ def get_model_path_key(model_path: str):
     return model_path_key
 
 
-def get_model_key(model: Type[BaseModel]) -> str:
+def get_model_key(model: ModelType) -> str:
     """
     generate model name prefixed by short hashed path (instead of its path to
     avoid code-structure leaking)
@@ -219,7 +229,7 @@ def get_model_key(model: Type[BaseModel]) -> str:
     return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
 
 
-def get_model_schema(model):
+def get_model_schema(model: ModelType):
     """
     return a dictionary representing the model as JSON Schema with using hashed
     prefix in ref
@@ -234,24 +244,25 @@ def get_model_schema(model):
     )
 
 
-def get_security(security):
+def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
     """
     return the correct format of security
     """
     if security is None or not security:
         return []
 
-    if isinstance(security, dict):
-        security = [security]
+    if isinstance(security, list):
+        return security
+    elif isinstance(security, dict):
+        return [security]
+    return []
 
-    return security
 
-
-def get_multidict_items(multidict):
+def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """
-    res = {}
+    res: Dict[str, Union[None, str, List[str]]] = {}
     for key in multidict:
         if len(multidict.getlist(key)) > 1:
             res[key] = multidict.getlist(key)

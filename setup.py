@@ -1,7 +1,7 @@
 from io import open
 from os import path
 
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup  # type: ignore
 
 here = path.abspath(path.dirname(__file__))
 
@@ -46,11 +46,12 @@ setup(
         "falcon": ["falcon"],
         "starlette": ["starlette[full]"],
         "dev": [
-            "pytest~=7.0",
-            "flake8~=3.8",
-            "black~=22.1",
-            "isort~=5.6",
+            "pytest~=7.1",
+            "flake8~=4.0",
+            "black~=22.3",
+            "isort~=5.10",
             "autoflake~=1.4",
+            "mypy>=0.942",
         ],
     },
     zip_safe=False,
