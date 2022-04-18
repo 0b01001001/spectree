@@ -196,7 +196,7 @@ def test_flask_skip_validation(client):
     client.set_cookie("flask", "pub", "abcdefg")
 
     resp = client.post(
-        f"/api/user_skip/flask?order=1",
+        "/api/user_skip/flask?order=1",
         data=json.dumps(dict(name="flask", limit=10)),
         content_type="application/json",
     )
@@ -211,7 +211,7 @@ def test_flask_return_model(client):
     client.set_cookie("flask", "pub", "abcdefg")
 
     resp = client.post(
-        f"/api/user_model/flask?order=1",
+        "/api/user_model/flask?order=1",
         data=json.dumps(dict(name="flask", limit=10)),
         content_type="application/json",
     )
