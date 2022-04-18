@@ -3,7 +3,7 @@ from random import randint
 import pytest
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
@@ -11,6 +11,11 @@ from starlette.testclient import TestClient
 from spectree import Response, SpecTree
 
 from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
+
+
+class PydanticResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return super().render(content.dict())
 
 
 def before_handler(req, resp, err, instance):
@@ -102,7 +107,7 @@ async def user_score_model(request):
     score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return Response(Resp(name=request.context.json.name, score=score))
+    return PydanticResponse(Resp(name=request.context.json.name, score=score))
 
 
 app = Starlette(
@@ -204,7 +209,7 @@ def test_starlette_validate(client):
 
 def test_starlette_skip_validation(client):
     resp = client.post(
-        f"/api/user_skip/starlette?order=1",
+        "/api/user_skip/starlette?order=1",
         json=dict(name="starlette", limit=10),
         cookies=dict(pub="abcdefg"),
     )
@@ -216,7 +221,7 @@ def test_starlette_skip_validation(client):
 
 def test_starlette_return_model(client):
     resp = client.post(
-        f"/api/user_model/starlette?order=1",
+        "/api/user_model/starlette?order=1",
         json=dict(name="starlette", limit=10),
         cookies=dict(pub="abcdefg"),
     )
