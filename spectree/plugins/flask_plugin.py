@@ -1,4 +1,4 @@
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from ..utils import get_multidict_items
 from .base import BasePlugin, Context
@@ -166,6 +166,7 @@ class FlaskPlugin(BasePlugin):
         before,
         after,
         validation_error_status,
+        skip_validation,
         *args,
         **kwargs,
     ):
@@ -187,9 +188,14 @@ class FlaskPlugin(BasePlugin):
             after(request, response, req_validation_error, None)
             abort(response)
 
-        response = make_response(func(*args, **kwargs))
+        result = func(*args, **kwargs)
+        if isinstance(result, BaseModel):
+            result = result.dict()
+            skip_validation = True
 
-        if resp and resp.has_model():
+        response = make_response(result)
+
+        if resp and resp.has_model() and not skip_validation:
             model = resp.find_model(response.status_code)
             if model:
                 try:

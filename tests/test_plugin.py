@@ -48,6 +48,8 @@ def test_plugin_spec(api):
         "/api/user/{name}",
         "/api/user/{name}/address/{address_id}",
         "/api/user_annotated/{name}",
+        "/api/user_model/{name}",
+        "/api/user_skip/{name}",
         "/ping",
     ]
 

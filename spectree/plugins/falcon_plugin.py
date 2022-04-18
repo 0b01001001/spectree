@@ -3,7 +3,7 @@ import re
 from functools import partial
 from typing import Any, List, Mapping
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from .base import BasePlugin
 
@@ -200,6 +200,7 @@ class FalconPlugin(BasePlugin):
         before,
         after,
         validation_error_status,
+        skip_validation,
         *args,
         **kwargs,
     ):
@@ -223,7 +224,12 @@ class FalconPlugin(BasePlugin):
             return
 
         func(*args, **kwargs)
-        if resp and resp.has_model():
+
+        if isinstance(_resp.media, BaseModel):
+            _resp.media = _resp.media.dict()
+            skip_validation = True
+
+        if resp and resp.has_model() and not skip_validation:
             model = resp.find_model(_resp.status[:3])
             if model:
                 try:
@@ -275,6 +281,7 @@ class FalconAsgiPlugin(FalconPlugin):
         before,
         after,
         validation_error_status,
+        skip_validation,
         *args,
         **kwargs,
     ):
@@ -298,8 +305,11 @@ class FalconAsgiPlugin(FalconPlugin):
             return
 
         await func(*args, **kwargs)
+        if isinstance(_resp.media, BaseModel):
+            _resp.media = _resp.media.dict()
+            skip_validation = True
 
-        if resp and resp.has_model():
+        if resp and resp.has_model() and not skip_validation:
             model = resp.find_model(_resp.status[:3])
             if model:
                 try:

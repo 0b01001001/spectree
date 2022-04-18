@@ -3,7 +3,7 @@ from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from .base import BasePlugin, Context
 
@@ -60,6 +60,7 @@ class StarlettePlugin(BasePlugin):
         before,
         after,
         validation_error_status,
+        skip_validation,
         *args,
         **kwargs,
     ):
@@ -101,7 +102,11 @@ class StarlettePlugin(BasePlugin):
         else:
             response = func(*args, **kwargs)
 
-        if resp:
+        if isinstance(response.body, BaseModel):
+            response.body = response.body.dict()
+            skip_validation = True
+
+        if resp and not skip_validation:
             model = resp.find_model(response.status_code)
             if model:
                 try:
