@@ -57,7 +57,7 @@ class UserScore:
         resp=Response(HTTP_200=Resp, HTTP_401=None),
         tags=[api_tag, "test"],
     )
-    def on_post(self, req, resp, name):
+    def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
         score.sort(reverse=req.context.query.order)
         assert req.context.cookies.pub == "abcdefg"
@@ -107,7 +107,7 @@ class UserScoreSkip:
         tags=[api_tag, "test"],
         skip_validation=True,
     )
-    def on_post(self, req, resp, name):
+    def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
         score.sort(reverse=req.context.query.order)
         assert req.context.cookies.pub == "abcdefg"
@@ -133,7 +133,7 @@ class UserScoreModel:
         resp=Response(HTTP_200=Resp, HTTP_401=None),
         tags=[api_tag, "test"],
     )
-    def on_post(self, req, resp, name):
+    def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
         score = [randint(0, req.context.json.limit) for _ in range(5)]
         score.sort(reverse=req.context.query.order)
         assert req.context.cookies.pub == "abcdefg"
