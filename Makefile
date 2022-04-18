@@ -26,11 +26,13 @@ publish: package
 	twine upload dist/*
 
 format:
+	pip install black isort autoflake
 	autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports ${SOURCE_FILES}
 	isort --project=spectree ${SOURCE_FILES}
 	black ${SOURCE_FILES}
 
 lint:
+	pip install black isort flake8 mypy
 	isort --check --diff --project=spectree ${SOURCE_FILES}
 	black --check --diff ${SOURCE_FILES}
 	flake8 ${SOURCE_FILES} --count --show-source --statistics
