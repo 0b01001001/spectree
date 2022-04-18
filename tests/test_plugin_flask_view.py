@@ -69,6 +69,7 @@ class UserAnnotated(MethodView):
         assert request.cookies["pub"] == "abcdefg"
         return jsonify(name=json.name, score=score)
 
+
 class UserSkip(MethodView):
     @api.validate(
         query=Query,
@@ -86,6 +87,7 @@ class UserSkip(MethodView):
         assert request.cookies["pub"] == "abcdefg"
         return jsonify(name=request.context.json.name, x_score=score)
 
+
 class UserModel(MethodView):
     @api.validate(
         query=Query,
@@ -101,6 +103,7 @@ class UserModel(MethodView):
         assert request.context.cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
         return Resp(name=request.context.json.name, score=score)
+
 
 class UserAddress(MethodView):
     @api.validate(
@@ -223,6 +226,7 @@ def test_flask_return_model(client):
     assert resp.headers.get("X-API") == "OK"
     assert resp.json["name"] == "flask"
     assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
+
 
 @pytest.fixture
 def test_client_and_api(request):

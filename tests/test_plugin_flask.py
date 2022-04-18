@@ -86,6 +86,7 @@ def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=json.name, score=score)
 
+
 @app.route("/api/user_skip/<name>", methods=["POST"])
 @api.validate(
     query=Query,

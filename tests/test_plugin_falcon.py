@@ -87,6 +87,7 @@ class UserScoreAnnotated:
         assert req.cookies["pub"] == "abcdefg"
         resp.media = {"name": req.context.json.name, "score": score}
 
+
 class UserScoreSkip:
     name = "sorted random score"
 
@@ -225,6 +226,7 @@ def test_falcon_skip_validation(client):
     assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
     assert resp.headers.get("X-Name") == "sorted random score"
 
+
 def test_falcon_return_model(client):
     resp = client.simulate_request(
         "POST",
@@ -235,6 +237,8 @@ def test_falcon_return_model(client):
     assert resp.json["name"] == "falcon"
     assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
     assert resp.headers.get("X-Name") == "sorted random score"
+
+
 @pytest.fixture
 def test_client_and_api(request):
     api_args = ["falcon"]

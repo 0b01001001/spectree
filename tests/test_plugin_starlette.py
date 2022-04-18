@@ -73,6 +73,7 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
     assert request.cookies["pub"] == "abcdefg"
     return JSONResponse({"name": json.name, "score": score})
 
+
 @api.validate(
     query=Query,
     json=JSON,
@@ -88,6 +89,7 @@ async def user_score_skip(request):
     assert request.cookies["pub"] == "abcdefg"
     return JSONResponse({"name": request.context.json.name, "x_score": score})
 
+
 @api.validate(
     query=Query,
     json=JSON,
@@ -101,6 +103,7 @@ async def user_score_model(request):
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return Response(Resp(name=request.context.json.name, score=score))
+
 
 app = Starlette(
     routes=[
