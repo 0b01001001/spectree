@@ -9,13 +9,9 @@ from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
 
 from spectree import Response, SpecTree
+from spectree.plugins.starlette_plugin import PydanticResponse
 
 from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
-
-
-class PydanticResponse(JSONResponse):
-    def render(self, content) -> bytes:
-        return super().render(content.dict())
 
 
 def before_handler(req, resp, err, instance):

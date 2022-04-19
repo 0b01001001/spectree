@@ -171,16 +171,22 @@ def client():
 
 
 def test_falcon_validate(client):
-    resp = client.simulate_request("GET", "/ping", headers={"Content-Type": "text/plain"})
+    resp = client.simulate_request(
+        "GET", "/ping", headers={"Content-Type": "text/plain"}
+    )
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error", resp.headers
 
-    resp = client.simulate_request("GET", "/ping", headers={"lang": "en-US", "Content-Type": "text/plain"})
+    resp = client.simulate_request(
+        "GET", "/ping", headers={"lang": "en-US", "Content-Type": "text/plain"}
+    )
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Name") == "health check"
 
-    resp = client.simulate_request("GET", "/api/user/falcon", headers={"Content-Type": "text/plain"})
+    resp = client.simulate_request(
+        "GET", "/api/user/falcon", headers={"Content-Type": "text/plain"}
+    )
     assert resp.json == {"name": "falcon"}
 
     resp = client.simulate_request("POST", "/api/user/falcon")
@@ -296,10 +302,14 @@ def test_client_and_api(request):
     ],
     indirect=["test_client_and_api"],
 )
-def test_validation_error_response_status_code(test_client_and_api, expected_status_code):
+def test_validation_error_response_status_code(
+    test_client_and_api, expected_status_code
+):
     app_client, _ = test_client_and_api
 
-    resp = app_client.simulate_request("GET", "/ping", headers={"Content-Type": "text/plain"})
+    resp = app_client.simulate_request(
+        "GET", "/ping", headers={"Content-Type": "text/plain"}
+    )
 
     assert resp.status_code == expected_status_code
 

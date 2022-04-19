@@ -3,7 +3,7 @@ import re
 from functools import partial
 from typing import Any, List, Mapping
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from .base import BasePlugin
 
@@ -225,13 +225,13 @@ class FalconPlugin(BasePlugin):
 
         func(*args, **kwargs)
 
-        if isinstance(_resp.media, BaseModel):
-            _resp.media = _resp.media.dict()
-            skip_validation = True
+        if resp and resp.has_model():
+            if isinstance(_resp.media, resp.find_model(_resp.status[:3])):
+                _resp.media = _resp.media.dict()
+                skip_validation = True
 
-        if resp and resp.has_model() and not skip_validation:
             model = resp.find_model(_resp.status[:3])
-            if model:
+            if model and not skip_validation:
                 try:
                     model.parse_obj(_resp.media)
                 except ValidationError as err:
@@ -305,13 +305,14 @@ class FalconAsgiPlugin(FalconPlugin):
             return
 
         await func(*args, **kwargs)
-        if isinstance(_resp.media, BaseModel):
-            _resp.media = _resp.media.dict()
-            skip_validation = True
 
-        if resp and resp.has_model() and not skip_validation:
+        if resp and resp.has_model():
+            if resp and isinstance(_resp.media, resp.find_model(_resp.http_status[:3])):
+                _resp.media = _resp.media.dict()
+                skip_validation = True
+
             model = resp.find_model(_resp.status[:3])
-            if model:
+            if model and not skip_validation:
                 try:
                     model.parse_obj(_resp.media)
                 except ValidationError as err:

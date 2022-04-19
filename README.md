@@ -254,6 +254,13 @@ Add `skip_validation=True` to the decorator.
 
 Yes, returning an instance of `BaseModel` will assume the model is valid and bypass spectree's validation and automatically call `.dict()` on the model.  
 
+For starlette you should return a `PydanticResponse`:
+```py
+from spectree.plugins.starlette_plugin import PydanticResponse
+
+return PydanticResponse(MyModel)
+```
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)

@@ -3,12 +3,19 @@ from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
+from starlette.responses import JSONResponse
 
 from .base import BasePlugin, Context
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
+
+
+class PydanticResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        self._model_class = content.__class__
+        return super().render(content.dict())
 
 
 class StarlettePlugin(BasePlugin):
@@ -102,13 +109,14 @@ class StarlettePlugin(BasePlugin):
         else:
             response = func(*args, **kwargs)
 
-        if isinstance(response.body, BaseModel):
-            response.body = response.body.dict()
-            skip_validation = True
+        if resp:
+            if isinstance(
+                response, PydanticResponse
+            ) and response._model_class == resp.find_model(response.status_code):
+                skip_validation = True
 
-        if resp and not skip_validation:
             model = resp.find_model(response.status_code)
-            if model:
+            if model and not skip_validation:
                 try:
                     model.parse_raw(response.body)
                 except ValidationError as err:

@@ -102,6 +102,15 @@ class Response:
         """
         return self.code_models.get(f"HTTP_{code}")
 
+    def find_status_from_model(self, model: ModelType) -> Optional[str]:
+        """
+        Find the mapped status type for a given model
+        Returns None if not found
+        """
+        for _status, _model in self.code_models.items():
+            if _model == model:
+                return int(_status[-3:])
+
     def get_code_description(self, code: str) -> str:
         """Get the description of the given status code.
 
