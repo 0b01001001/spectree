@@ -119,7 +119,7 @@ def user_score_model(name):
     score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return Resp(name=request.context.json.name, score=score)
+    return Resp(name=request.context.json.name, score=score), 200
 
 
 @app.route("/api/user/<name>/address/<address_id>", methods=["GET"])

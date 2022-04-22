@@ -191,7 +191,11 @@ class FlaskPlugin(BasePlugin):
         result = func(*args, **kwargs)
 
         if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
-            result[0] = result.dict()
+            if len(result) > 1:
+                result = result[0].dict(), *result[1:]
+            else:
+                result = (result[0].dict(),)
+
             skip_validation = True
         elif resp and isinstance(result, BaseModel):
             result = result.dict()
