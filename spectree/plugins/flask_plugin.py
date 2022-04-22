@@ -190,22 +190,12 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        # If we return a tuple of a Pydantic Model and a status then confirm
-        # that model matches that status and further skip validation
         if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
-            status_code = result[1]
-            if isinstance(result, resp.find_model(status_code)):
-                result[0] = result.dict()
-                skip_validation = True
-
-        # If we just have a Pydantic Model then find the status code
-        # from the validator configuration, if there is no code for
-        # the given model then validate it as normal
+            result[0] = result.dict()
+            skip_validation = True
         elif resp and isinstance(result, BaseModel):
-            status_code = resp.find_status_from_model(result.__class__)
-            if status_code:
-                result = result.dict(), status_code
-                skip_validation = True
+            result = result.dict()
+            skip_validation = True
 
         response = make_response(result)
 
