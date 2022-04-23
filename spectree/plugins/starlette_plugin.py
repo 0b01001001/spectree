@@ -4,7 +4,6 @@ from functools import partial
 from json import JSONDecodeError
 
 from pydantic import ValidationError
-from starlette.responses import JSONResponse
 
 from .base import BasePlugin, Context
 
@@ -12,10 +11,15 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
-class PydanticResponse(JSONResponse):
-    def render(self, content) -> bytes:
-        self._model_class = content.__class__
-        return super().render(content.dict())
+def PydanticResponse(content):
+    from starlette.responses import JSONResponse
+
+    class _PydanticResponse(JSONResponse):
+        def render(self, content) -> bytes:
+            self._model_class = content.__class__
+            return super().render(content.dict())
+
+    return _PydanticResponse(content)
 
 
 class StarlettePlugin(BasePlugin):
@@ -110,9 +114,11 @@ class StarlettePlugin(BasePlugin):
             response = func(*args, **kwargs)
 
         if resp:
-            if isinstance(
-                response, PydanticResponse
-            ) and response._model_class == resp.find_model(response.status_code):
+            if (
+                isinstance(response, JSONResponse)
+                and hasattr(response, "_model_class")
+                and response._model_class == resp.find_model(response.status_code)
+            ):
                 skip_validation = True
 
             model = resp.find_model(response.status_code)
