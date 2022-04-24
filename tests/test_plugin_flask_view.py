@@ -117,6 +117,20 @@ class UserAddress(MethodView):
         return None
 
 
+class NoResponseView(MethodView):
+    @api.validate(
+        resp=Response(HTTP_200=None),  # response is None
+    )
+    def get(self):
+        return {}
+
+    @api.validate(
+        json=Query,  # resp is missing completely
+    )
+    def post(self, json: Query):
+        return {}
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -138,6 +152,10 @@ app.add_url_rule(
     "/api/user/<name>/address/<address_id>",
     view_func=UserAddress.as_view("user_address"),
     methods=["GET"],
+)
+app.add_url_rule(
+    "/api/no_response",
+    view_func=NoResponseView.as_view("no_response_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering
@@ -196,6 +214,12 @@ def test_flask_validate(client):
             content_type="application/x-www-form-urlencoded",
         )
         assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+
+    resp = client.get("/api/no_response")
+    assert resp.status_code == 200
+
+    resp = client.post("/api/no_response", data={"order": 1})
+    assert resp.status_code == 200
 
 
 def test_flask_skip_validation(client):

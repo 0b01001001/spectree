@@ -106,6 +106,14 @@ async def user_score_model(request):
     return PydanticResponse(Resp(name=request.context.json.name, score=score))
 
 
+@api.validate(
+    json=JSON,
+    resp=Response(HTTP_200=None),
+)
+async def no_response(request):
+    return JSONResponse({})
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -136,6 +144,7 @@ app = Starlette(
                         Route("/{name}", user_score_model, methods=["POST"]),
                     ],
                 ),
+                Route("/no_response", no_response, methods=["POST", "GET"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),

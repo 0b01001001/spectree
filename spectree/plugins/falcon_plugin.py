@@ -226,11 +226,11 @@ class FalconPlugin(BasePlugin):
         func(*args, **kwargs)
 
         if resp and resp.has_model():
-            if isinstance(_resp.media, resp.find_model(_resp.status[:3])):
+            model = resp.find_model(_resp.status[:3])
+            if model and isinstance(_resp.media, model):
                 _resp.media = _resp.media.dict()
                 skip_validation = True
 
-            model = resp.find_model(_resp.status[:3])
             if model and not skip_validation:
                 try:
                     model.parse_obj(_resp.media)
