@@ -123,6 +123,14 @@ def user_address(name, address_id):
     return None
 
 
+@app.route("/api/no_response", methods=["GET", "POST"])
+@api.validate(
+    json=Query,
+)
+def no_response():
+    return {}
+
+
 api.register(app)
 
 flask_app = Flask(__name__)

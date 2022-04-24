@@ -16,9 +16,7 @@ def before_handler(req, resp, err, instance):
 
 
 def after_handler(req, resp, err, instance):
-    print(instance.name)
     resp.set_header("X-Name", instance.name)
-    print(resp.get_header("X-Name"))
 
 
 api = SpecTree(
