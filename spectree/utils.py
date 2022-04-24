@@ -191,9 +191,9 @@ def default_after_handler(
 
 def hash_module_path(module_path: str):
     """
-    generate short hashed prefix for module path
+    generate short hash for module path
 
-    :param modelpath: `str` module path
+    :param module_path: `str` module path
     """
 
     return sha1(module_path.encode()).hexdigest()[:7]
@@ -213,8 +213,8 @@ def get_model_key(model: ModelType) -> str:
 
 def get_model_schema(model: ModelType):
     """
-    return a dictionary representing the model as JSON Schema with using hashed
-    prefix in ref
+    return a dictionary representing the model as JSON Schema with a hashed
+    infix in ref to ensure name uniqueness
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
         request or response
