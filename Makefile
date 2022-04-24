@@ -34,6 +34,6 @@ lint:
 	isort --check --diff --project=spectree ${SOURCE_FILES}
 	black --check --diff ${SOURCE_FILES}
 	flake8 ${SOURCE_FILES} --count --show-source --statistics
-	mypy --install-types --non-interactive ${SOURCE_FILES}
+	mypy --install-types --non-interactive spectree
 
 .PHONY: test doc

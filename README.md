@@ -242,6 +242,25 @@ This library provides `before` and `after` hooks to do these. Check the [doc](ht
 
 You can change the `validation_error_status` in SpecTree (global) or a specific endpoint (local). This also takes effect in the OpenAPI documentation.
 
+> How can I skip the validation?
+
+Add `skip_validation=True` to the decorator.  
+
+```py
+@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
+```
+
+> How can I return my model directly?
+
+Yes, returning an instance of `BaseModel` will assume the model is valid and bypass spectree's validation and automatically call `.dict()` on the model.  
+
+For starlette you should return a `PydanticResponse`:
+```py
+from spectree.plugins.starlette_plugin import PydanticResponse
+
+return PydanticResponse(MyModel)
+```
+
 ## Demo
 
 Try it with `http post :8000/api/user name=alice age=18`. (if you are using `httpie`)
