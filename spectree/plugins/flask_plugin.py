@@ -190,16 +190,19 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
+        status = 200
+        rest = []
         if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
             if len(result) > 1:
-                result = result[0].dict(), *result[1:]
+                model, status, *rest = result
             else:
-                result = (result[0].dict(),)
+                model = result[0]
+        else:
+            model = result
 
+        if isinstance(model, resp.find_model(status)):
             skip_validation = True
-        elif resp and isinstance(result, BaseModel):
-            result = result.dict()
-            skip_validation = True
+            result = (model.dict(), status, *rest)
 
         response = make_response(result)
 
