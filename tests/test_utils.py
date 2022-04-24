@@ -3,7 +3,6 @@ import pytest
 from spectree.response import Response
 from spectree.spec import SpecTree
 from spectree.utils import (
-    get_model_path_key,
     has_model,
     parse_code,
     parse_comments,
@@ -13,7 +12,7 @@ from spectree.utils import (
     parse_resp,
 )
 
-from .common import DemoModel, DemoQuery
+from .common import DemoModel, DemoQuery, get_model_path_key
 
 api = SpecTree()
 

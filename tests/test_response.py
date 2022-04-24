@@ -2,9 +2,8 @@ import pytest
 
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
-from spectree.utils import get_model_path_key
 
-from .common import JSON, DemoModel
+from .common import JSON, DemoModel, get_model_path_key
 
 
 class NormalClass:

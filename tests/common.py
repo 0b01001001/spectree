@@ -4,6 +4,7 @@ from typing import Dict, List
 from pydantic import BaseModel, Field, root_validator
 
 from spectree import SecurityScheme, Tag
+from spectree.utils import hash_module_path
 
 api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
 
@@ -133,3 +134,18 @@ WRONG_SECURITY_SCHEMAS_DATA = [
     },
     {"name": "wrong_Data", "data": {"x": "y"}},
 ]
+
+
+def get_model_path_key(model_path: str) -> str:
+    """
+    generate short hashed prefix for module path (instead of its path to avoid
+    code-structure leaking)
+
+    :param model_path: `str` model path in string
+    """
+
+    model_path, _, model_name = model_path.rpartition(".")
+    if not model_path:
+        return model_name
+
+    return f"{model_name}.{hash_module_path(module_path=model_path)}"

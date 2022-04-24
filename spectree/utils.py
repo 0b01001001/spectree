@@ -191,48 +191,30 @@ def default_after_handler(
 
 def hash_module_path(module_path: str):
     """
-    generate short hashed prefix for module path
+    generate short hash for module path
 
-    :param modelpath: `str` module path
+    :param module_path: `str` module path
     """
 
     return sha1(module_path.encode()).hexdigest()[:7]
 
 
-def get_model_path_key(model_path: str):
-    """
-    generate short hashed prefix for module path (instead of its path to avoid
-    code-structure leaking)
-
-    :param modelpath: `str` model path in string
-    """
-
-    model_path_parts = model_path.rsplit(".", 1)
-    if len(model_path_parts) > 1:
-        hashed_module_path = hash_module_path(module_path=model_path_parts[0])
-        model_path_key = f"{hashed_module_path}.{model_path_parts[1]}"
-    else:
-        model_path_key = model_path_parts[0]
-
-    return model_path_key
-
-
 def get_model_key(model: ModelType) -> str:
     """
-    generate model name prefixed by short hashed path (instead of its path to
+    generate model name suffixed by short hashed path (instead of its path to
     avoid code-structure leaking)
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
         request or response
     """
 
-    return f"{hash_module_path(module_path=model.__module__)}.{model.__name__}"
+    return f"{model.__name__}.{hash_module_path(module_path=model.__module__)}"
 
 
 def get_model_schema(model: ModelType):
     """
-    return a dictionary representing the model as JSON Schema with using hashed
-    prefix in ref
+    return a dictionary representing the model as JSON Schema with a hashed
+    infix in ref to ensure name uniqueness
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
         request or response
