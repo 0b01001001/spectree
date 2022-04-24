@@ -134,6 +134,14 @@ def user_address(name, address_id):
     return None
 
 
+@app.route("/api/no_response", methods=["GET", "POST"])
+@api.validate(
+    json=Query,
+)
+def no_response():
+    return {}
+
+
 # INFO: ensures that spec is calculated and cached _after_ registering
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.

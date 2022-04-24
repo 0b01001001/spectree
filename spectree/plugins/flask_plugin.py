@@ -200,7 +200,11 @@ class FlaskPlugin(BasePlugin):
         else:
             model = result
 
-        if isinstance(model, resp.find_model(status)):
+        if (
+            resp
+            and resp.find_model(status)
+            and isinstance(model, resp.find_model(status))
+        ):
             skip_validation = True
             result = (model.dict(), status, *rest)
 

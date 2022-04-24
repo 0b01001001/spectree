@@ -19,9 +19,7 @@ def before_handler(req, resp, err, instance):
 
 
 def after_handler(req, resp, err, instance):
-    print(instance.name)
     resp.set_header("X-Name", instance.name)
-    print(resp.get_header("X-Name"))
 
 
 api = SpecTree("falcon", before=before_handler, after=after_handler, annotations=True)
@@ -155,6 +153,23 @@ class UserAddress:
         return None
 
 
+class NoResponseView:
+
+    name = "no response view"
+
+    @api.validate(
+        resp=Response(HTTP_200=None),  # response is None
+    )
+    def on_get(self, req, resp):
+        return {}
+
+    @api.validate(
+        json=JSON,  # resp is missing completely
+    )
+    def on_post(self, req, resp, json: JSON):
+        return {}
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -162,6 +177,7 @@ app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/user/{name}/address/{address_id}", UserAddress())
 app.add_route("/api/user_skip/{name}", UserScoreSkip())
 app.add_route("/api/user_model/{name}", UserScoreModel())
+app.add_route("/api/no_response", NoResponseView())
 api.register(app)
 
 
@@ -237,6 +253,21 @@ def test_falcon_return_model(client):
     assert resp.json["name"] == "falcon"
     assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
     assert resp.headers.get("X-Name") == "sorted random score"
+
+
+def test_falcon_no_response(client):
+    resp = client.simulate_request(
+        "POST",
+        "/api/no_response",
+        json=dict(name="foo", limit=1),
+    )
+    assert resp.status_code == 200, resp.json
+
+    resp = client.simulate_request(
+        "GET",
+        "/api/no_response",
+    )
+    assert resp.status_code == 200
 
 
 @pytest.fixture
