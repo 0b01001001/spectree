@@ -1,8 +1,17 @@
 import pytest
 
-from spectree.utils import get_model_key, get_model_path_key, get_model_schema
+from spectree.utils import get_model_key, get_model_schema
 
-from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp, get_paths
+from .common import (
+    JSON,
+    SECURITY_SCHEMAS,
+    Cookies,
+    Headers,
+    Query,
+    Resp,
+    get_model_path_key,
+    get_paths,
+)
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
 from .test_plugin_flask import api_global_secure as flask_api_global_secure
@@ -48,6 +57,8 @@ def test_plugin_spec(api):
         "/api/user/{name}",
         "/api/user/{name}/address/{address_id}",
         "/api/user_annotated/{name}",
+        "/api/user_model/{name}",
+        "/api/user_skip/{name}",
         "/ping",
     ]
 

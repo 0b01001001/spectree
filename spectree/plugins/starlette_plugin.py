@@ -11,6 +11,17 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
+def PydanticResponse(content):
+    from starlette.responses import JSONResponse
+
+    class _PydanticResponse(JSONResponse):
+        def render(self, content) -> bytes:
+            self._model_class = content.__class__
+            return super().render(content.dict())
+
+    return _PydanticResponse(content)
+
+
 class StarlettePlugin(BasePlugin):
     ASYNC = True
 
@@ -60,6 +71,7 @@ class StarlettePlugin(BasePlugin):
         before,
         after,
         validation_error_status,
+        skip_validation,
         *args,
         **kwargs,
     ):
@@ -102,8 +114,15 @@ class StarlettePlugin(BasePlugin):
             response = func(*args, **kwargs)
 
         if resp:
+            if (
+                isinstance(response, JSONResponse)
+                and hasattr(response, "_model_class")
+                and response._model_class == resp.find_model(response.status_code)
+            ):
+                skip_validation = True
+
             model = resp.find_model(response.status_code)
-            if model:
+            if model and not skip_validation:
                 try:
                     model.parse_raw(response.body)
                 except ValidationError as err:

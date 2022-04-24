@@ -114,6 +114,7 @@ class SpecTree:
         after: Callable = None,
         validation_error_status: int = 0,
         path_parameter_descriptions: Mapping[str, str] = None,
+        skip_validation: bool = False,
     ) -> Callable:
         """
         - validate query, json, headers in request
@@ -159,6 +160,7 @@ class SpecTree:
                     before or self.before,
                     after or self.after,
                     validation_error_status,
+                    skip_validation,
                     *args,
                     **kwargs,
                 )
@@ -176,6 +178,7 @@ class SpecTree:
                     before or self.before,
                     after or self.after,
                     validation_error_status,
+                    skip_validation,
                     *args,
                     **kwargs,
                 )

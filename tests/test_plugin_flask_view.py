@@ -70,6 +70,41 @@ class UserAnnotated(MethodView):
         return jsonify(name=json.name, score=score)
 
 
+class UserSkip(MethodView):
+    @api.validate(
+        query=Query,
+        json=JSON,
+        cookies=Cookies,
+        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        tags=[api_tag, "test"],
+        after=api_after_handler,
+        skip_validation=True,
+    )
+    def post(self, name, query: Query, json: JSON, cookies: Cookies):
+        score = [randint(0, request.context.json.limit) for _ in range(5)]
+        score.sort(reverse=True if request.context.query.order == Order.desc else False)
+        assert request.context.cookies.pub == "abcdefg"
+        assert request.cookies["pub"] == "abcdefg"
+        return jsonify(name=request.context.json.name, x_score=score)
+
+
+class UserModel(MethodView):
+    @api.validate(
+        query=Query,
+        json=JSON,
+        cookies=Cookies,
+        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        tags=[api_tag, "test"],
+        after=api_after_handler,
+    )
+    def post(self, name, query: Query, json: JSON, cookies: Cookies):
+        score = [randint(0, request.context.json.limit) for _ in range(5)]
+        score.sort(reverse=True if request.context.query.order == Order.desc else False)
+        assert request.context.cookies.pub == "abcdefg"
+        assert request.cookies["pub"] == "abcdefg"
+        return Resp(name=request.context.json.name, score=score)
+
+
 class UserAddress(MethodView):
     @api.validate(
         query=Query,
@@ -87,6 +122,16 @@ app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["P
 app.add_url_rule(
     "/api/user_annotated/<name>",
     view_func=UserAnnotated.as_view("user_annotated"),
+    methods=["POST"],
+)
+app.add_url_rule(
+    "/api/user_skip/<name>",
+    view_func=UserSkip.as_view("user_skip"),
+    methods=["POST"],
+)
+app.add_url_rule(
+    "/api/user_model/<name>",
+    view_func=UserModel.as_view("user_model"),
     methods=["POST"],
 )
 app.add_url_rule(
@@ -151,6 +196,36 @@ def test_flask_validate(client):
             content_type="application/x-www-form-urlencoded",
         )
         assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+
+
+def test_flask_skip_validation(client):
+    client.set_cookie("flask", "pub", "abcdefg")
+
+    resp = client.post(
+        "/api/user_skip/flask?order=1",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+
+
+def test_flask_return_model(client):
+    client.set_cookie("flask", "pub", "abcdefg")
+
+    resp = client.post(
+        "/api/user_model/flask?order=1",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
 
 
 @pytest.fixture

@@ -9,6 +9,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
 
 from spectree import Response, SpecTree
+from spectree.plugins.starlette_plugin import PydanticResponse
 
 from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
 
@@ -74,6 +75,37 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
     return JSONResponse({"name": json.name, "score": score})
 
 
+@api.validate(
+    query=Query,
+    json=JSON,
+    cookies=Cookies,
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=[api_tag, "test"],
+    skip_validation=True,
+)
+async def user_score_skip(request):
+    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    assert request.context.cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return JSONResponse({"name": request.context.json.name, "x_score": score})
+
+
+@api.validate(
+    query=Query,
+    json=JSON,
+    cookies=Cookies,
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=[api_tag, "test"],
+)
+async def user_score_model(request):
+    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    assert request.context.cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return PydanticResponse(Resp(name=request.context.json.name, score=score))
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -90,6 +122,18 @@ app = Starlette(
                     "/user_annotated",
                     routes=[
                         Route("/{name}", user_score_annotated, methods=["POST"]),
+                    ],
+                ),
+                Mount(
+                    "/user_skip",
+                    routes=[
+                        Route("/{name}", user_score_skip, methods=["POST"]),
+                    ],
+                ),
+                Mount(
+                    "/user_model",
+                    routes=[
+                        Route("/{name}", user_score_model, methods=["POST"]),
                     ],
                 ),
             ],
@@ -157,6 +201,30 @@ def test_starlette_validate(client):
         assert resp_body["name"] == "starlette"
         assert resp_body["score"] == sorted(resp_body["score"], reverse=False)
         assert resp.headers.get("X-Validation") == "Pass"
+
+
+def test_starlette_skip_validation(client):
+    resp = client.post(
+        "/api/user_skip/starlette?order=1",
+        json=dict(name="starlette", limit=10),
+        cookies=dict(pub="abcdefg"),
+    )
+    resp_body = resp.json()
+    assert resp_body["name"] == "starlette"
+    assert resp_body["x_score"] == sorted(resp_body["x_score"], reverse=True)
+    assert resp.headers.get("X-Validation") == "Pass"
+
+
+def test_starlette_return_model(client):
+    resp = client.post(
+        "/api/user_model/starlette?order=1",
+        json=dict(name="starlette", limit=10),
+        cookies=dict(pub="abcdefg"),
+    )
+    resp_body = resp.json()
+    assert resp_body["name"] == "starlette"
+    assert resp_body["score"] == sorted(resp_body["score"], reverse=True)
+    assert resp.headers.get("X-Validation") == "Pass"
 
 
 @pytest.fixture

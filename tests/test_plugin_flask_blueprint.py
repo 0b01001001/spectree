@@ -76,6 +76,41 @@ def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     return jsonify(name=json.name, score=score)
 
 
+@app.route("/api/user_skip/<name>", methods=["POST"])
+@api.validate(
+    query=Query,
+    json=JSON,
+    cookies=Cookies,
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=[api_tag, "test"],
+    after=api_after_handler,
+    skip_validation=True,
+)
+def user_score_skip_validation(name):
+    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    assert request.context.cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return jsonify(name=request.context.json.name, x_score=score)
+
+
+@app.route("/api/user_model/<name>", methods=["POST"])
+@api.validate(
+    query=Query,
+    json=JSON,
+    cookies=Cookies,
+    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    tags=[api_tag, "test"],
+    after=api_after_handler,
+)
+def user_score_model(name):
+    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    assert request.context.cookies.pub == "abcdefg"
+    assert request.cookies["pub"] == "abcdefg"
+    return Resp(name=request.context.json.name, score=score)
+
+
 @app.route("/api/user/<name>/address/<address_id>", methods=["GET"])
 @api.validate(
     query=Query,
@@ -139,6 +174,42 @@ def test_flask_validate(client, prefix):
         content_type="application/json",
     )
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+
+
+@pytest.mark.parametrize(
+    ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
+)
+def test_flask_skip_validation(client, prefix):
+    client.set_cookie("flask", "pub", "abcdefg")
+
+    resp = client.post(
+        f"{prefix}/api/user_skip/flask?order=1",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+
+
+@pytest.mark.parametrize(
+    ("client", "prefix"), [(None, ""), ("/prefix", "/prefix")], indirect=["client"]
+)
+def test_flask_return_model(client, prefix):
+    client.set_cookie("flask", "pub", "abcdefg")
+
+    resp = client.post(
+        f"{prefix}/api/user_model/flask?order=1",
+        data=json.dumps(dict(name="flask", limit=10)),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
 
 
 @pytest.fixture
