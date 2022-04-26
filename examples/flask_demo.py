@@ -98,7 +98,7 @@ class UserAPI(MethodView):
 
 if __name__ == "__main__":
     """
-    cmd: 
+    cmd:
         http :8000/api/user uid=12 limit=1 vip=false
         http ':8000/api/predict/zh/en?text=hello' vip=true uid=aa limit=1
         http POST :8000/api/header Lang:zh-CN Cookie:key=hello
