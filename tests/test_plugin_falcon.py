@@ -161,13 +161,13 @@ class NoResponseView:
         resp=Response(HTTP_200=None),  # response is None
     )
     def on_get(self, req, resp):
-        return {}
+        pass
 
     @api.validate(
         json=JSON,  # resp is missing completely
     )
     def on_post(self, req, resp, json: JSON):
-        return {}
+        pass
 
 
 app = App()
