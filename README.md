@@ -309,7 +309,7 @@ def user_profile():
     user's name, user's age, ... (long description)
     """
     print(request.context.json) # or `request.json`
-    return jsonify(text='it works')
+    return jsonify(text='it works') # or `Message(text='it works')`
 
 
 if __name__ == "__main__":
@@ -334,7 +334,7 @@ def user_profile(json: Profile):
     user's name, user's age, ... (long description)
     """
     print(json) # or `request.json`
-    return jsonify(text='it works')
+    return jsonify(text='it works') # or `Message(text='it works')`
 ```
 
 ### Falcon
@@ -372,7 +372,7 @@ class UserProfile:
         user's name, user's age, ... (long description)
         """
         print(req.context.json)  # or `req.media`
-        resp.media = {'text': 'it works'}
+        resp.media = {'text': 'it works'} # or `resp.media = Message(text='it works')`
 
 
 if __name__ == "__main__":
@@ -401,7 +401,7 @@ class UserProfile:
         user's name, user's age, ... (long description)
         """
         print(req.context.json)  # or `req.media`
-        resp.media = {'text': 'it works'}
+        resp.media = {'text': 'it works'} # or `resp.media = Message(text='it works')`
 ```
 
 ### Starlette
@@ -413,6 +413,7 @@ from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field, constr
 from spectree import SpecTree, Response
+# from spectree.plugins.starlette_plugin import PydanticResponse
 
 
 class Profile(BaseModel):
@@ -440,7 +441,7 @@ async def user_profile(request):
     user's name, user's age, ... (long description)
     """
     print(request.context.json)  # or await request.json()
-    return JSONResponse({'text': 'it works'})
+    return JSONResponse({'text': 'it works'}) # or `return PydanticResponse(Message(text='it works'))`
 
 
 if __name__ == "__main__":
@@ -470,7 +471,7 @@ async def user_profile(request, json=Profile):
     user's name, user's age, ... (long description)
     """
     print(request.context.json)  # or await request.json()
-    return JSONResponse({'text': 'it works'})
+    return JSONResponse({'text': 'it works'}) # or `return PydanticResponse(Message(text='it works'))`
 ```
 
 

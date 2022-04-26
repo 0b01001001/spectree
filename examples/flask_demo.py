@@ -93,9 +93,16 @@ class UserAPI(MethodView):
     @api.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
     def post(self):
         return jsonify(label=int(10 * random()), score=random())
+        # return Resp(label=int(10 * random()), score=random())
 
 
 if __name__ == "__main__":
+    """
+    cmd:
+        http :8000/api/user uid=12 limit=1 vip=false
+        http ':8000/api/predict/zh/en?text=hello' vip=true uid=aa limit=1
+        http POST :8000/api/header Lang:zh-CN Cookie:key=hello
+    """
     app.add_url_rule("/api/user", view_func=UserAPI.as_view("user_id"))
     api.register(app)
     app.run(port=8000)

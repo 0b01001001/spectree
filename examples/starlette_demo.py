@@ -7,6 +7,8 @@ from starlette.routing import Mount, Route
 
 from spectree import Response, SpecTree
 
+# from spectree.plugins.starlette_plugin import PydanticResponse
+
 api = SpecTree("starlette")
 
 
@@ -43,6 +45,7 @@ async def predict(request):
     print(request.path_params)
     print(request.context)
     return JSONResponse({"label": 5, "score": 0.5})
+    # return PydanticResponse(Resp(label=5, score=0.5))
 
 
 class Ping(HTTPEndpoint):
@@ -55,6 +58,11 @@ class Ping(HTTPEndpoint):
 
 
 if __name__ == "__main__":
+    """
+    cmd:
+        http :8000/ping
+        http ':8000/api/predict/233?text=hello' vip=true uid=admin limit=1
+    """
     app = Starlette(
         routes=[
             Route("/ping", Ping),

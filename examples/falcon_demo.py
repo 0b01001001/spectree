@@ -101,9 +101,15 @@ class Classification:
             resp.media = {"loc": "unknown", "msg": "bad luck", "typ": "random"}
             return
         resp.media = {"label": int(10 * random()), "score": random()}
+        # resp.media = Resp(label=int(10 * random()), score=random())
 
 
 if __name__ == "__main__":
+    """
+    cmd:
+        http :8000/ping
+        http ':8000/api/zh/en?text=hi' uid=neo limit=1 vip=true
+    """
     app = falcon.API()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
