@@ -307,7 +307,8 @@ class FalconAsgiPlugin(FalconPlugin):
         await func(*args, **kwargs)
 
         if resp and resp.has_model():
-            if resp and isinstance(_resp.media, resp.find_model(_resp.http_status[:3])):
+            model = resp.find_model(_resp.status[:3])
+            if model and isinstance(_resp.media, model):
                 _resp.media = _resp.media.dict()
                 skip_validation = True
 
