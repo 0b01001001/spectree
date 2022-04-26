@@ -7,7 +7,8 @@ from spectree import Response, SpecTree
 
 from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
-App = pytest.importorskip("falcon.asgi.App", reason="Missing required Falcon 3.0")
+pytest.importorskip("falcon", minversion="3.0.0", reason="Missing required Falcon 3.0")
+from falcon.asgi import App  # noqa: E402
 
 
 def before_handler(req, resp, err, instance):
@@ -86,16 +87,49 @@ class UserScoreAnnotated:
         resp.media = {"name": req.context.json.name, "score": score}
 
 
+class NoResponseView:
+
+    name = "no response view"
+
+    @api.validate(
+        resp=Response(HTTP_200=None),  # response is None
+    )
+    async def on_get(self, req, resp):
+        pass
+
+    @api.validate(
+        json=JSON,  # resp is missing completely
+    )
+    async def on_post(self, req, resp, json: JSON):
+        pass
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
+app.add_route("/api/no_response", NoResponseView())
 api.register(app)
 
 
 @pytest.fixture
 def client():
     return testing.TestClient(app)
+
+
+def test_falcon_no_response(client):
+    resp = client.simulate_request(
+        "GET",
+        "/api/no_response",
+    )
+    assert resp.status_code == 200
+
+    resp = client.simulate_request(
+        "POST",
+        "/api/no_response",
+        json=dict(name="foo", limit=1),
+    )
+    assert resp.status_code == 200
 
 
 def test_falcon_validate(client):
@@ -162,11 +196,7 @@ def test_client_and_api(request):
     class Ping:
         name = "health check"
 
-        @api.validate(
-            headers=Headers,
-            tags=["test", "health"],
-            validation_error_status=request.param["validation_error_status_override"],
-        )
+        @api.validate(**endpoint_kwargs)
         async def on_get(self, req, resp):
             """summary
 
