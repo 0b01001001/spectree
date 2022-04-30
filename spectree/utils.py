@@ -2,7 +2,18 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from pydantic import BaseModel, ValidationError
 
@@ -252,3 +263,18 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
             res[key] = multidict.get(key)
 
     return res
+
+
+def gen_list_model(model: Type[BaseModel]):
+    """
+    generate the correspoding list model class for a given model class
+    """
+    assert issubclass(model, BaseModel)
+    ListModel = type(
+        f"{model.__name__}List",
+        (BaseModel,),
+        {
+            "__annotations__": {"__root__": List[model]},
+        },
+    )
+    return ListModel
