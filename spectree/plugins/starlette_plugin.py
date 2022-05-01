@@ -2,9 +2,12 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
+from typing import Any, Callable, Optional
 
 from pydantic import ValidationError
 
+from .._types import ModelType
+from ..response import Response
 from .base import BasePlugin, Context
 
 METHODS = {"get", "post", "put", "patch", "delete"}
@@ -62,18 +65,18 @@ class StarlettePlugin(BasePlugin):
 
     async def validate(
         self,
-        func,
-        query,
-        json,
-        headers,
-        cookies,
-        resp,
-        before,
-        after,
-        validation_error_status,
-        skip_validation,
-        *args,
-        **kwargs,
+        func: Callable,
+        query: Optional[ModelType],
+        json: Optional[ModelType],
+        headers: Optional[ModelType],
+        cookies: Optional[ModelType],
+        resp: Optional[Response],
+        before: Callable,
+        after: Callable,
+        validation_error_status: int,
+        skip_validation: bool,
+        *args: Any,
+        **kwargs: Any,
     ):
         from starlette.requests import Request
         from starlette.responses import JSONResponse
@@ -113,7 +116,7 @@ class StarlettePlugin(BasePlugin):
         else:
             response = func(*args, **kwargs)
 
-        if resp:
+        if resp and response:
             if (
                 isinstance(response, JSONResponse)
                 and hasattr(response, "_model_class")

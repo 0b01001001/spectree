@@ -2,7 +2,9 @@ import logging
 from collections import namedtuple
 from typing import TYPE_CHECKING, Any, Callable, Generic, Mapping, Optional, TypeVar
 
+from .._types import ModelType
 from ..config import Configuration
+from ..response import Response
 
 if TYPE_CHECKING:
     # to avoid cyclic import
@@ -37,7 +39,21 @@ class BasePlugin(Generic[BackendRoute]):
         """
         raise NotImplementedError
 
-    def validate(self, *args: Any, **kwargs: Any):
+    def validate(
+        self,
+        func: Callable,
+        query: Optional[ModelType],
+        json: Optional[ModelType],
+        headers: Optional[ModelType],
+        cookies: Optional[ModelType],
+        resp: Optional[Response],
+        before: Callable,
+        after: Callable,
+        validation_error_status: int,
+        skip_validation: bool,
+        *args: Any,
+        **kwargs: Any,
+    ):
         """
         validate the request and response
         """

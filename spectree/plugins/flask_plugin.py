@@ -1,5 +1,9 @@
+from typing import Any, Callable, Optional
+
 from pydantic import BaseModel, ValidationError
 
+from .._types import ModelType
+from ..response import Response
 from ..utils import get_multidict_items
 from .base import BasePlugin, Context
 
@@ -35,7 +39,7 @@ class FlaskPlugin(BasePlugin):
     def bypass(self, func, method):
         return method in ["HEAD", "OPTIONS"]
 
-    def parse_func(self, route):
+    def parse_func(self, route: Any):
         from flask import current_app
 
         if self.blueprint_state:
@@ -157,18 +161,18 @@ class FlaskPlugin(BasePlugin):
 
     def validate(
         self,
-        func,
-        query,
-        json,
-        headers,
-        cookies,
-        resp,
-        before,
-        after,
-        validation_error_status,
-        skip_validation,
-        *args,
-        **kwargs,
+        func: Callable,
+        query: Optional[ModelType],
+        json: Optional[ModelType],
+        headers: Optional[ModelType],
+        cookies: Optional[ModelType],
+        resp: Optional[Response],
+        before: Callable,
+        after: Callable,
+        validation_error_status: int,
+        skip_validation: bool,
+        *args: Any,
+        **kwargs: Any,
     ):
         from flask import abort, jsonify, make_response, request
 
@@ -186,7 +190,7 @@ class FlaskPlugin(BasePlugin):
         before(request, response, req_validation_error, None)
         if req_validation_error:
             after(request, response, req_validation_error, None)
-            abort(response)
+            abort(response)  # type: ignore
 
         result = func(*args, **kwargs)
 
@@ -200,13 +204,11 @@ class FlaskPlugin(BasePlugin):
         else:
             model = result
 
-        if (
-            resp
-            and resp.find_model(status)
-            and isinstance(model, resp.find_model(status))
-        ):
-            skip_validation = True
-            result = (model.dict(), status, *rest)
+        if resp:
+            expect_model = resp.find_model(status)
+            if expect_model and isinstance(model, expect_model):
+                skip_validation = True
+                result = (model.dict(), status, *rest)
 
         response = make_response(result)
 

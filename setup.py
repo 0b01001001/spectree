@@ -1,7 +1,7 @@
 from io import open
 from os import path
 
-from setuptools import find_packages, setup  # type: ignore
+from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -14,7 +14,7 @@ with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
 
 setup(
     name="spectree",
-    version="0.9.2",
+    version="0.10.0a1",
     license="Apache-2.0",
     author="Keming Yang",
     author_email="kemingy94@gmail.com",

@@ -2,7 +2,18 @@ import inspect
 import logging
 import re
 from hashlib import sha1
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from pydantic import BaseModel, ValidationError
 
@@ -191,7 +202,8 @@ def default_after_handler(
 
 def hash_module_path(module_path: str):
     """
-    generate short hash for module path
+    generate short hash for module path to avoid the
+    same name object defined in different Python files
 
     :param module_path: `str` module path
     """
@@ -252,3 +264,18 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
             res[key] = multidict.get(key)
 
     return res
+
+
+def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
+    """
+    generate the correspoding list[model] class for a given model class
+    """
+    assert issubclass(model, BaseModel)
+    ListModel = type(
+        f"{model.__name__}List",
+        (BaseModel,),
+        {
+            "__annotations__": {"__root__": List[model]},  # type: ignore
+        },
+    )
+    return ListModel

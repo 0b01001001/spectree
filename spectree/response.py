@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from pydantic import BaseModel
 
 from ._types import ModelType, OptionalModelType
-from .utils import get_model_key, parse_code
+from .utils import gen_list_model, get_model_key, parse_code
 
 
 class Response:
@@ -56,6 +56,10 @@ class Response:
                 model = model_and_description
 
             if model:
+                origin_type = getattr(model, "__origin__", None)
+                if origin_type is list or origin_type is List:
+                    # type is List[BaseModel]
+                    model = gen_list_model(getattr(model, "__args__")[0])
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
                 assert description is None or isinstance(
                     description, str
