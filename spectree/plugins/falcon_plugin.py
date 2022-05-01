@@ -1,10 +1,12 @@
 import inspect
 import re
 from functools import partial
-from typing import Any, List, Mapping
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from pydantic import ValidationError
 
+from .._types import ModelType
+from ..response import Response
 from .base import BasePlugin
 
 
@@ -106,7 +108,7 @@ class FalconPlugin(BasePlugin):
 
         return routes
 
-    def parse_func(self, route):
+    def parse_func(self, route: Any) -> Dict[str, Any]:
         return route.method_map.items()
 
     def parse_path(self, route, path_parameter_descriptions):
@@ -191,18 +193,18 @@ class FalconPlugin(BasePlugin):
 
     def validate(
         self,
-        func,
-        query,
-        json,
-        headers,
-        cookies,
-        resp,
-        before,
-        after,
-        validation_error_status,
-        skip_validation,
-        *args,
-        **kwargs,
+        func: Callable,
+        query: Optional[ModelType],
+        json: Optional[ModelType],
+        headers: Optional[ModelType],
+        cookies: Optional[ModelType],
+        resp: Optional[Response],
+        before: Callable,
+        after: Callable,
+        validation_error_status: int,
+        skip_validation: bool,
+        *args: Any,
+        **kwargs: Any,
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
@@ -272,18 +274,18 @@ class FalconAsgiPlugin(FalconPlugin):
 
     async def validate(
         self,
-        func,
-        query,
-        json,
-        headers,
-        cookies,
-        resp,
-        before,
-        after,
-        validation_error_status,
-        skip_validation,
-        *args,
-        **kwargs,
+        func: Callable,
+        query: Optional[ModelType],
+        json: Optional[ModelType],
+        headers: Optional[ModelType],
+        cookies: Optional[ModelType],
+        resp: Optional[Response],
+        before: Callable,
+        after: Callable,
+        validation_error_status: int,
+        skip_validation: bool,
+        *args: Any,
+        **kwargs: Any,
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]

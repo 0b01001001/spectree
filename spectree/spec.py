@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, Dict, Mapping, Sequence, Type
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type
 
 from ._types import FunctionDecorator, ModelType
 from .config import Configuration, ModeEnum
@@ -46,7 +46,7 @@ class SpecTree:
     def __init__(
         self,
         backend_name: str = "base",
-        backend: Type[BasePlugin] = None,
+        backend: Optional[Type[BasePlugin]] = None,
         app: Any = None,
         before: Callable = default_before_handler,
         after: Callable = default_after_handler,
@@ -102,18 +102,18 @@ class SpecTree:
 
     def validate(
         self,
-        query: ModelType = None,
-        json: ModelType = None,
-        headers: ModelType = None,
-        cookies: ModelType = None,
-        resp: Response = None,
+        query: Optional[ModelType] = None,
+        json: Optional[ModelType] = None,
+        headers: Optional[ModelType] = None,
+        cookies: Optional[ModelType] = None,
+        resp: Optional[Response] = None,
         tags: Sequence = (),
         security: Any = None,
         deprecated: bool = False,
-        before: Callable = None,
-        after: Callable = None,
+        before: Optional[Callable] = None,
+        after: Optional[Callable] = None,
         validation_error_status: int = 0,
-        path_parameter_descriptions: Mapping[str, str] = None,
+        path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,
     ) -> Callable:
         """

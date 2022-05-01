@@ -265,7 +265,7 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
     return res
 
 
-def gen_list_model(model: Type[BaseModel]):
+def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """
     generate the correspoding list model class for a given model class
     """
@@ -274,7 +274,7 @@ def gen_list_model(model: Type[BaseModel]):
         f"{model.__name__}List",
         (BaseModel,),
         {
-            "__annotations__": {"__root__": List[model]},
+            "__annotations__": {"__root__": List[model]},  # type: ignore
         },
     )
     return ListModel
