@@ -57,6 +57,7 @@ class Response:
 
             if model:
                 if getattr(model, "__origin__", None) is list:
+                    # type is List[BaseModel]
                     model = gen_list_model(getattr(model, "__args__")[0])
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
                 assert description is None or isinstance(

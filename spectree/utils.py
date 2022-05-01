@@ -202,7 +202,8 @@ def default_after_handler(
 
 def hash_module_path(module_path: str):
     """
-    generate short hash for module path
+    generate short hash for module path to avoid the
+    same name object defined in different Python files
 
     :param module_path: `str` module path
     """
@@ -267,7 +268,7 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
 
 def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """
-    generate the correspoding list model class for a given model class
+    generate the correspoding list[model] class for a given model class
     """
     assert issubclass(model, BaseModel)
     ListModel = type(

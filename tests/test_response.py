@@ -1,7 +1,11 @@
+from typing import List
+
 import pytest
+from pydantic import BaseModel
 
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
+from spectree.utils import gen_list_model
 
 from .common import JSON, DemoModel, get_model_path_key
 
@@ -31,12 +35,18 @@ def test_init_response():
 
     resp = Response(
         HTTP_200=None,
+        HTTP_400=List[JSON],
         HTTP_401=DemoModel,
         HTTP_402=(None, "custom code description"),
         HTTP_403=(DemoModel, "custom code description"),
     )
+    expect_400_model = gen_list_model(JSON)
     assert resp.has_model()
     assert resp.find_model(200) is None
+    assert (
+        type(resp.find_model(400)) == type(expect_400_model)
+        and resp.find_model(400).__annotations__ == expect_400_model.__annotations__
+    )
     assert resp.find_model(401) == DemoModel
     assert resp.find_model(402) is None
     assert resp.find_model(403) == DemoModel
@@ -96,3 +106,21 @@ def test_response_spec():
 
     assert spec.get(200) is None
     assert spec.get(404) is None
+
+
+def test_list_model():
+    resp = Response(HTTP_200=List[JSON])
+    model = resp.find_model(200)
+    expect_model = gen_list_model(JSON)
+    assert model.__annotations__ == expect_model.__annotations__
+    assert type(model) == type(expect_model)
+    assert issubclass(model, BaseModel)
+    data = [
+        {"name": "a", "limit": 1},
+        {"name": "b", "limit": 2},
+    ]
+    instance = model.parse_obj(data)
+    for i, item in enumerate(instance.dict()["__root__"]):
+        obj = JSON.parse_obj(item)
+        assert obj.name == data[i]["name"]
+        assert obj.limit == data[i]["limit"]
