@@ -14,6 +14,9 @@ test:
 doc:
 	cd docs && make html
 
+opendoc:
+	cd docs/build/html && python -m http.server
+
 clean:
 	rm -rf build/ dist/ *.egg-info .pytest_cache
 	find . -name '*.pyc' -type f -exec rm -rf {} +
