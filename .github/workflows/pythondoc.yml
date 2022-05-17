@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install Sphinx sphinx-rtd-theme
+        pip install Sphinx furo
         make install
     - name: Generate docs
       env:
