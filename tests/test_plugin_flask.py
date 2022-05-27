@@ -325,10 +325,11 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
     assert resp.json == api.spec
 
     for doc_page in expected_doc_pages:
-        location = f"/apidoc/{doc_page}"
-        resp = client.get(location, follow_redirects=True)
+        resp = client.get(f"/apidoc/{doc_page}/")
         assert resp.status_code == 200
-        assert resp.location == f"{location}/"
+
+        resp = client.get(f"/apidoc/{doc_page}")
+        assert resp.status_code == 308
 
 
 """
