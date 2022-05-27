@@ -320,8 +320,10 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
     assert resp.json == api.spec
 
     for doc_page in expected_doc_pages:
-        resp = client.get(f"/apidoc/{doc_page}")
+        location = f"/apidoc/{doc_page}"
+        resp = client.get(location, follow_redirects=True)
         assert resp.status_code == 200
+        assert resp.location == f"{location}/"
 
 
 @pytest.mark.parametrize(
@@ -338,10 +340,10 @@ def test_flask_doc_prefix(test_client_and_api, prefix):
     resp = client.get(prefix + "/apidoc/openapi.json")
     assert resp.json == api.spec
 
-    resp = client.get(prefix + "/apidoc/redoc")
+    resp = client.get(prefix + "/apidoc/redoc/")
     assert resp.status_code == 200
 
-    resp = client.get(prefix + "/apidoc/swagger")
+    resp = client.get(prefix + "/apidoc/swagger/")
     assert resp.status_code == 200
 
     assert get_paths(api.spec) == [
