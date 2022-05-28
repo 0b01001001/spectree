@@ -5,11 +5,11 @@ import falcon.asgi
 import uvicorn
 from pydantic import BaseModel, Field
 
-from spectree import BaseFile, Response, SpecTree, Tag
+from examples.common import File, FileResp, Query
+from spectree import Response, SpecTree, Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
-
 
 api = SpecTree(
     "falcon-asgi",
@@ -19,13 +19,6 @@ api = SpecTree(
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
-
-
-class Query(BaseModel):
-    text: str = Field(
-        ...,
-        max_length=100,
-    )
 
 
 class Resp(BaseModel):
@@ -51,16 +44,6 @@ class Data(BaseModel):
     uid: str
     limit: int
     vip: bool
-
-
-class File(BaseModel):
-    uid: str = None
-    file: BaseFile
-
-
-class FileResp(BaseModel):
-    filename: str
-    type: str
 
 
 class Ping:
@@ -130,7 +113,7 @@ if __name__ == "__main__":
     app = falcon.asgi.App()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
-    app.add_route("/api/upload-file", FileUpload())
+    app.add_route("/api/file_upload", FileUpload())
     api.register(app)
 
     uvicorn.run(app, log_level="info")

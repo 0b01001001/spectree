@@ -8,6 +8,8 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
+    Form,
+    FormFileUpload,
     Headers,
     Order,
     Query,
@@ -47,21 +49,33 @@ def ping():
     return jsonify(msg="pong")
 
 
+@app.route("/api/file_upload", methods=["POST"])
+@api.validate(
+    form=FormFileUpload,
+)
+def file_upload():
+    upload = request.context.form.file
+    assert upload
+    return {"content": upload.stream.read().decode("utf-8")}
+
+
 @app.route("/api/user/<name>", methods=["POST"])
 @api.validate(
     query=Query,
     json=JSON,
     cookies=Cookies,
+    form=Form,
     resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
 def user_score(name):
-    score = [randint(0, request.context.json.limit) for _ in range(5)]
+    data_src = request.context.json or request.context.form
+    score = [randint(0, int(data_src.limit)) for _ in range(5)]
     score.sort(reverse=request.context.query.order)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=request.context.json.name, score=score)
+    return jsonify(name=data_src.name, score=score)
 
 
 @app.route("/api/user_annotated/<name>", methods=["POST"])
@@ -70,12 +84,13 @@ def user_score(name):
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
-def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
-    score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=True if query.order == Order.desc else False)
+def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies, form: Form):
+    data_src = json or form
+    score = [randint(0, int(data_src.limit)) for _ in range(5)]
+    score.sort(reverse=(query.order == Order.desc))
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=json.name, score=score)
+    return jsonify(name=data_src.name, score=score)
 
 
 @app.route("/api/user_skip/<name>", methods=["POST"])

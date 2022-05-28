@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ValidationError
 
@@ -10,7 +10,6 @@ from .base import BasePlugin, Context
 
 class FlaskPlugin(BasePlugin):
     blueprint_state = None
-    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def find_routes(self):
         from flask import current_app
@@ -58,7 +57,11 @@ class FlaskPlugin(BasePlugin):
             for method in route.methods:
                 yield method, func
 
-    def parse_path(self, route, path_parameter_descriptions):
+    def parse_path(
+        self,
+        route: Optional[Mapping[str, str]],
+        path_parameter_descriptions: Optional[Mapping[str, str]],
+    ) -> Tuple[str, list]:
         from werkzeug.routing import parse_converter_args, parse_rule
 
         subs = []
@@ -70,7 +73,8 @@ class FlaskPlugin(BasePlugin):
                 continue
             subs.append(f"{{{variable}}}")
 
-            args, kwargs = [], {}
+            args: tuple = ()
+            kwargs: dict = {}
 
             if arguments:
                 args, kwargs = parse_converter_args(arguments)
@@ -132,45 +136,43 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, form_data, headers, cookies):
+    def request_validation(self, request, query, json, form, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
         req_headers: werkzeug.datastructures.EnvironHeaders
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
-        req_query = get_multidict_items(request.args) or {}
-        req_form = request.form or {}  # or MultiDict() ?
+        req_query = get_multidict_items(request.args)
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
-        use_json = json and request.method not in ("GET", "DELETE")
+        has_data = request.method not in ("GET", "DELETE")
+        use_json = json and has_data and request.mimetype == "application/json"
+        use_form = (
+            form
+            and has_data
+            and any([x in request.mimetype for x in self.FORM_MIMETYPE])
+        )
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
-            json.parse_obj(self._fill_json(request)) if use_json else None,
-            form_data.parse_obj(req_form.items()) if form else None,
+            json.parse_obj(request.get_json(silent=True) or {}) if use_json else None,
+            form.parse_obj(self._fill_form(request)) if use_form else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
-    def _fill_json(self, request):
-        if request.mimetype not in self.FORM_MIMETYPE:
-            return request.get_json(silent=True) or {}
-
-        req_json = get_multidict_items(request.form) or {}
-        if request.files:
-            req_json = {
-                **req_json,
-                **get_multidict_items(request.files),
-            }
-        return req_json
+    def _fill_form(self, request) -> dict:
+        req_data = get_multidict_items(request.form)
+        req_data.update(get_multidict_items(request.files) if request.files else {})
+        return req_data
 
     def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
-        form_data,
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -185,9 +187,9 @@ class FlaskPlugin(BasePlugin):
 
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, headers, cookies)
+            self.request_validation(request, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
+                for name in ("query", "json", "form", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:

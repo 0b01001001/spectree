@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field, root_validator
 
-from spectree import SecurityScheme, Tag
+from spectree import BaseFile, SecurityScheme, Tag
 from spectree.utils import hash_module_path
 
 api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
@@ -16,6 +16,15 @@ class Order(IntEnum):
 
 class Query(BaseModel):
     order: Order
+
+
+class FormFileUpload(BaseModel):
+    file: BaseFile
+
+
+class Form(BaseModel):
+    name: str
+    limit: str
 
 
 class JSON(BaseModel):

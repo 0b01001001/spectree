@@ -5,14 +5,11 @@ from flask import Flask, abort, jsonify, request
 from flask.views import MethodView
 from pydantic import BaseModel, Field
 
-from spectree import BaseFile, Response, SpecTree
+from examples.common import File, FileResp, Query
+from spectree import Response, SpecTree
 
 app = Flask(__name__)
 api = SpecTree("flask")
-
-
-class Query(BaseModel):
-    text: str = "default query strings"
 
 
 class Resp(BaseModel):
@@ -37,16 +34,6 @@ class Data(BaseModel):
                 "vip": True,
             }
         }
-
-
-class File(BaseModel):
-    uid: str = None
-    file: BaseFile
-
-
-class FileResp(BaseModel):
-    filename: str
-    type: str
 
 
 class Language(str, Enum):
@@ -99,7 +86,7 @@ def with_code_header():
     return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
 
 
-@app.route("/api/upload-file", methods=["POST"])
+@app.route("/api/file_upload", methods=["POST"])
 @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 def with_file():
     """
@@ -108,14 +95,13 @@ def with_file():
     demo for 'form'
     """
     file = request.context.form.file
-    return jsonify(filename=file.filename, type=file.content_type)
+    return {"filename": file.filename, "type": file.content_type}
 
 
 class UserAPI(MethodView):
     @api.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
     def post(self):
         return jsonify(label=int(10 * random()), score=random())
-        # return Resp(label=int(10 * random()), score=random())
 
 
 if __name__ == "__main__":

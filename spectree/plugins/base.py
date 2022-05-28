@@ -1,6 +1,14 @@
 import logging
-from collections import namedtuple
-from typing import TYPE_CHECKING, Any, Callable, Generic, Mapping, Optional, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Mapping,
+    NamedTuple,
+    Optional,
+    TypeVar,
+)
 
 from .._types import ModelType
 from ..config import Configuration
@@ -10,7 +18,13 @@ if TYPE_CHECKING:
     # to avoid cyclic import
     from ..spec import SpecTree
 
-Context = namedtuple("Context", ["query", "json", "form", "headers", "cookies"])
+
+class Context(NamedTuple):
+    query: list
+    json: list
+    form: list
+    headers: dict
+    cookies: dict
 
 
 BackendRoute = TypeVar("BackendRoute")
@@ -25,6 +39,7 @@ class BasePlugin(Generic[BackendRoute]):
 
     # ASYNC: is it an async framework or not
     ASYNC = False
+    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
 
     def __init__(self, spectree: "SpecTree"):
         self.spectree = spectree
@@ -44,6 +59,7 @@ class BasePlugin(Generic[BackendRoute]):
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],

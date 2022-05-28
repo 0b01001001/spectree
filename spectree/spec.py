@@ -104,7 +104,7 @@ class SpecTree:
         self,
         query: Optional[ModelType] = None,
         json: Optional[ModelType] = None,
-        form_data=None,
+        form: Optional[ModelType] = None,
         headers: Optional[ModelType] = None,
         cookies: Optional[ModelType] = None,
         resp: Optional[Response] = None,

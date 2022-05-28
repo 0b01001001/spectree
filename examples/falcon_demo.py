@@ -5,11 +5,11 @@ from wsgiref import simple_server
 import falcon
 from pydantic import BaseModel, Field
 
-from spectree import BaseFile, Response, SpecTree, Tag
+from examples.common import File, FileResp, Query
+from spectree import Response, SpecTree, Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
-
 
 api = SpecTree(
     "falcon",
@@ -22,13 +22,6 @@ api = SpecTree(
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
-
-
-class Query(BaseModel):
-    text: str = Field(
-        ...,
-        max_length=100,
-    )
 
 
 class Resp(BaseModel):
@@ -54,16 +47,6 @@ class Data(BaseModel):
     uid: str
     limit: int
     vip: bool
-
-
-class File(BaseModel):
-    uid: str = None
-    file: BaseFile
-
-
-class FileResp(BaseModel):
-    filename: str
-    type: str
 
 
 class Ping:
@@ -129,37 +112,6 @@ class FileUpload:
         resp.media = {"filename": file.filename, "type": file.type}
 
 
-class JSONFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        lr = logging.LogRecord(None, None, "", 0, "", (), None, None)
-        self.default_keys = [key for key in lr.__dict__]
-
-    def extra_data(self, record):
-        return {
-            key: getattr(record, key)
-            for key in record.__dict__
-            if key not in self.default_keys
-        }
-
-    def format(self, record):
-        log_data = {
-            "severity": record.levelname,
-            "path_name": record.pathname,
-            "function_name": record.funcName,
-            "message": record.msg,
-            **self.extra_data(record),
-        }
-        return json.dumps(log_data)
-
-
-logger = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(JSONFormatter())
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
-
-
 if __name__ == "__main__":
     """
     cmd:
@@ -169,7 +121,7 @@ if __name__ == "__main__":
     app = falcon.App()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
-    app.add_route("/api/upload-file", FileUpload())
+    app.add_route("/api/file_upload", FileUpload())
     api.register(app)
 
     httpd = simple_server.make_server("localhost", 8000, app)

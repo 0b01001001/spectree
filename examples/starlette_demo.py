@@ -5,15 +5,10 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-from spectree import BaseFile, Response, SpecTree
-
-# from spectree.plugins.starlette_plugin import PydanticResponse
+from examples.common import File, FileResp, Query
+from spectree import Response, SpecTree
 
 api = SpecTree("starlette")
-
-
-class Query(BaseModel):
-    text: str
 
 
 class Resp(BaseModel):
@@ -33,16 +28,6 @@ class Data(BaseModel):
     uid: str
     limit: int
     vip: bool
-
-
-class File(BaseModel):
-    uid: str = None
-    file: BaseFile
-
-
-class FileResp(BaseModel):
-    filename: str
-    type: str
 
 
 @api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])

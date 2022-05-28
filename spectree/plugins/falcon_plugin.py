@@ -1,10 +1,7 @@
-import cgi
 import inspect
-import io
 import re
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional
-from io import BytesIO
 
 from pydantic import ValidationError
 
@@ -173,22 +170,6 @@ class FalconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def parse_field(self, field):
-        if isinstance(field, list):
-            return [self.parse_field(subfield) for subfield in field]
-
-        # When file name isn't ascii FieldStorage will not consider it.
-        encoded = field.disposition_options.get("filename*")
-        if encoded:
-            encoding, filename = encoded.split("''")
-            field.filename = filename
-            field.file = BytesIO(field.file.read().encode(encoding))
-        if getattr(field, "filename", False):
-            return field
-
-        # This is not a file, thus get flat value (not FieldStorage instance).
-        return field.value
-
     def request_validation(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
@@ -204,20 +185,10 @@ class FalconPlugin(BasePlugin):
                     raise
                 media = None
             req.context.json = json.parse_obj(media)
-        elif form:
-            # This must be done to avoid a bug in cgi.FieldStorage.
-            # https://gist.github.com/kgriffs/fe371bfbb2d63211889b
-            req.env.setdefault("QUERY_STRING", "")
-
-            try:
-                _form = cgi.FieldStorage(fp=req.stream, environ=req.env)  # TODO: rename
-            except ValueError:  # Invalid boundary?
-                raise
-
-            req_form = {}
-            for key in _form:
-                req_form[key] = self.parse_field(_form[key])
-
+        if form:
+            # TODO - possible to pass the BodyPart here?
+            # req_form = {x.name: x for x in req.get_media()}
+            req_form = {x.name: x.stream.read() for x in req.get_media()}
             req.context.form = form.parse_obj(req_form)
 
     def validate(
@@ -225,7 +196,7 @@ class FalconPlugin(BasePlugin):
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
-        form_data,
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -240,9 +211,9 @@ class FalconPlugin(BasePlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            self.request_validation(_req, query, json, form_data, headers, cookies)
+            self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
+                for name in ("query", "json", "form", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
@@ -301,34 +272,26 @@ class FalconAsgiPlugin(FalconPlugin):
                     raise
                 media = None
             req.context.json = json.parse_obj(media)
-        elif form:
-            # This must be done to avoid a bug in cgi.FieldStorage.
-            req.scope.setdefault("QUERY_STRING", "")
-            # For WSGI compatibility
-            # https://asgi.readthedocs.io/en/latest/specs/www.html#wsgi-compatibility
-            req.scope.setdefault("REQUEST_METHOD", req.method)
-
+        if form:
             try:
-                _form = cgi.FieldStorage(
-                    fp=io.BytesIO(await req.stream.read()),
-                    environ=req.scope,
-                    headers=req.headers,
-                )
-            except ValueError:  # Invalid boundary?
-                raise
-
-            req_form = {}
-            for key in _form:
-                req_form[key] = self.parse_field(_form[key])
-
-            req.context.form = form.parse_obj(req_form)
+                form_data = await req.get_media()
+            except self.FALCON_HTTP_ERROR as err:
+                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                    raise
+                req.context.form = None
+            else:
+                res_data = {}
+                async for x in form_data:
+                    res_data[x.name] = x
+                    await x.data  # TODO - how to avoid this?
+                req.context.form = form.parse_obj(res_data)
 
     async def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
-        form_data,
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -343,9 +306,9 @@ class FalconAsgiPlugin(FalconPlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            await self.request_validation(_req, query, json, form_data, headers, cookies)
+            await self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
+                for name in ("query", "json", "form", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)
 

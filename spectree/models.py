@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Any, Callable, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -176,7 +176,7 @@ class BaseFile:
     """
 
     @classmethod
-    def __get_validators__(cls) -> "Callable[..., Any]":
+    def __get_validators__(cls):
         # one or more validators may be yielded which will be called in the
         # order to validate the input, each validator will receive as an input
         # the value returned from the previous validator
