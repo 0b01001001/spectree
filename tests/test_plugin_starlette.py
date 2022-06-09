@@ -320,7 +320,7 @@ def test_validation_error_response_status_code(
     ],
     indirect=["test_client_and_api"],
 )
-def test_flask_doc(test_client_and_api, expected_doc_pages):
+def test_starlette_doc(test_client_and_api, expected_doc_pages):
     client, api = test_client_and_api
 
     resp = client.get("/apidoc/openapi.json")
@@ -329,3 +329,11 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
     for doc_page in expected_doc_pages:
         resp = client.get(f"/apidoc/{doc_page}")
         assert resp.status_code == 200
+
+
+def test_starlette_no_response(client):
+    resp = client.get("/api/no_response")
+    assert resp.status_code == 200, resp.text
+
+    resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
+    assert resp.status_code == 200, resp.text

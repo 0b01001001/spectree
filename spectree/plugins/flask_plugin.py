@@ -140,24 +140,28 @@ class FlaskPlugin(BasePlugin):
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
         req_query = get_multidict_items(request.args) or {}
-        if request.mimetype in self.FORM_MIMETYPE:
-            req_json = get_multidict_items(request.form) or {}
-            if request.files:
-                req_json = {
-                    **req_json,
-                    **get_multidict_items(request.files),
-                }
-        else:
-            req_json = request.get_json(silent=True) or {}
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
+        use_json = json and request.method not in ("GET", "DELETE")
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
-            json.parse_obj(req_json) if json else None,
+            json.parse_obj(self._fill_json(request)) if use_json else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
+
+    def _fill_json(self, request):
+        if request.mimetype not in self.FORM_MIMETYPE:
+            return request.get_json(silent=True) or {}
+
+        req_json = get_multidict_items(request.form) or {}
+        if request.files:
+            req_json = {
+                **req_json,
+                **get_multidict_items(request.files),
+            }
+        return req_json
 
     def validate(
         self,
