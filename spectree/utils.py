@@ -169,12 +169,11 @@ def default_before_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if req_validation_error:
-        logger.info(
-            "422 Validation Error",
-            extra={
-                "spectree_model": req_validation_error.model.__name__,
-                "spectree_validation": req_validation_error.errors(),
-            },
+        logger.error(
+            "422 Request Validation Error: {} - {}".format(
+                req_validation_error.model.__name__,
+                req_validation_error.errors(),
+            )
         )
 
 
@@ -191,12 +190,11 @@ def default_after_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if resp_validation_error:
-        logger.info(
-            "500 Response Validation Error",
-            extra={
-                "spectree_model": resp_validation_error.model.__name__,
-                "spectree_validation": resp_validation_error.errors(),
-            },
+        logger.error(
+            "500 Response Validation Error: {} - {}".format(
+                resp_validation_error.model.__name__,
+                resp_validation_error.errors(),
+            )
         )
 
 
