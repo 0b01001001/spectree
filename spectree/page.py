@@ -38,7 +38,7 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         <meta charset="UTF-8">
         <title>Swagger UI</title>
         <link rel="stylesheet" type="text/css"
-        href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css" >
+        href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css" >
         <style>
         html
         {{
@@ -65,8 +65,8 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
     <body>
         <div id="swagger-ui"></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
         <script>
         window.onload = function() {{
         var full = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
