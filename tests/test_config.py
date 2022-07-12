@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from spectree import SecurityScheme
-from spectree.config import Configuration
+from spectree.config import Configuration, EmailFieldType
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
 
@@ -39,8 +39,11 @@ def test_config_contact():
     with pytest.raises(ValidationError):
         config = Configuration(contact={"name": "John", "url": "url"})
 
+
+@pytest.mark.skipif(EmailFieldType == str, reason="email-validator is not installled")
+def test_config_contact_invalid_email():
     with pytest.raises(ValidationError):
-        config = Configuration(contact={"name": "John", "email": "hello"})
+        Configuration(contact={"name": "John", "email": "hello"})
 
 
 def test_config_case():

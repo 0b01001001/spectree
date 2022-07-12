@@ -1,11 +1,21 @@
 import warnings
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
 
 from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
+
+# Fall back to a str field if email-validator is not installed.
+if TYPE_CHECKING:
+    EmailFieldType = str
+else:
+    try:
+        EmailStr.validate("a@b.com")
+        EmailFieldType = EmailStr
+    except ImportError:
+        EmailFieldType = str
 
 
 class ModeEnum(str, Enum):
@@ -27,7 +37,7 @@ class Contact(BaseModel):
     #: contact url
     url: Optional[AnyUrl] = None
     #: contact email address
-    email: Optional[EmailStr] = None
+    email: Optional[EmailFieldType] = None
 
 
 class License(BaseModel):

@@ -42,6 +42,7 @@ setup(
     python_requires=">=3.6",
     install_requires=requires,
     extras_require={
+        "email": ["pydantic[email]>=1.2"],
         "flask": ["flask"],
         "falcon": ["falcon"],
         "starlette": ["starlette[full]"],

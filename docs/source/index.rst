@@ -27,7 +27,8 @@ Features
 Quick Start
 -----------
 
-install with pip: ``pip install spectree``
+Install with pip: ``pip install spectree``. If you'd like for email fields to be validated, use ``pip install spectree[email]``.
+
 
 Examples
 ~~~~~~~~

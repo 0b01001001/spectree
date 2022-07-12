@@ -3,7 +3,7 @@ check: lint test
 SOURCE_FILES=spectree tests examples setup.py
 
 install:
-	pip install -e .[flask,falcon,starlette,dev]
+	pip install -e .[email,flask,falcon,starlette,dev]
 
 test:
 	pip install falcon --upgrade
