@@ -3,14 +3,13 @@ check: lint test
 SOURCE_FILES=spectree tests examples setup.py
 
 install:
-	pip install -e .[flask,falcon,starlette,dev]
+	pip install -e .[email,flask,falcon,starlette,dev]
 
 test:
-	pip install falcon --upgrade
-	pytest tests -vv
-	pip uninstall falcon -y && pip install falcon==2.0.0
-	pytest tests -vv
-
+	pip install -U -e .[email,flask,falcon,starlette]
+	pytest tests -vv -rs
+	pip uninstall falcon email-validator -y && pip install falcon==2.0.0
+	pytest tests -vv -rs
 doc:
 	cd docs && make html
 
