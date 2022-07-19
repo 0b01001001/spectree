@@ -47,6 +47,7 @@ class BasePlugin(Generic[BackendRoute]):
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
+        accessible: bool,
         before: Callable,
         after: Callable,
         validation_error_status: int,

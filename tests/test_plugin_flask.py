@@ -144,6 +144,14 @@ def no_response():
     return {}
 
 
+@app.route("/api/not_accessible", methods=["GET"])
+@api.validate(
+    accessible=False,
+)
+def not_accessible():
+    return {}
+
+
 # INFO: ensures that spec is calculated and cached _after_ registering
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.
@@ -193,6 +201,11 @@ def test_client_and_api(request):
 
     with app.test_client() as test_client:
         yield test_client, api
+
+
+def test_not_accessible_endpoint(client):
+    resp = client.get("/not_accessible")
+    assert resp.status_code == 404
 
 
 """

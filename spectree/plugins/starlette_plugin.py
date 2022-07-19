@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional
 from pydantic import ValidationError
 
 from .._types import ModelType
-from ..response import Response
+from ..response import DEFAULT_CODE_DESC, Response
 from .base import BasePlugin, Context
 
 METHODS = {"get", "post", "put", "patch", "delete"}
@@ -72,6 +72,7 @@ class StarlettePlugin(BasePlugin):
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
+        accessible: bool,
         before: Callable,
         after: Callable,
         validation_error_status: int,
@@ -89,6 +90,10 @@ class StarlettePlugin(BasePlugin):
 
         response = None
         req_validation_error = resp_validation_error = json_decode_error = None
+
+        if not accessible:
+            response = JSONResponse(DEFAULT_CODE_DESC["HTTP_404"], 404)
+            return response
 
         try:
             await self.request_validation(request, query, json, headers, cookies)
@@ -112,26 +117,13 @@ class StarlettePlugin(BasePlugin):
         if req_validation_error or json_decode_error:
             return response
 
-        if inspect.iscoroutinefunction(func):
-            response = await func(*args, **kwargs)
-        else:
-            response = func(*args, **kwargs)
-
-        if resp and response:
-            if (
-                isinstance(response, JSONResponse)
-                and hasattr(response, "_model_class")
-                and response._model_class == resp.find_model(response.status_code)
-            ):
-                skip_validation = True
-
-            model = resp.find_model(response.status_code)
-            if model and not skip_validation:
-                try:
-                    model.parse_raw(response.body)
-                except ValidationError as err:
-                    resp_validation_error = err
-                    response = JSONResponse(err.errors(), 500)
+        resp_validation_error, response = await self._prepare_success_response(
+            func=func,
+            skip_validation=skip_validation,
+            resp=resp,
+            args=args,
+            kwargs=kwargs,
+        )
 
         after(request, response, resp_validation_error, instance)
 
@@ -224,3 +216,38 @@ class StarlettePlugin(BasePlugin):
             )
 
         return path, parameters
+
+    @staticmethod
+    async def _prepare_success_response(
+        func: Callable,
+        skip_validation: bool,
+        resp: Optional[Response],
+        args: Any,
+        kwargs: Any,
+    ):
+        from starlette.responses import JSONResponse
+
+        response, resp_validation_error = None, None
+
+        if inspect.iscoroutinefunction(func):
+            response = await func(*args, **kwargs)
+        else:
+            response = func(*args, **kwargs)
+
+        if resp and response:
+            if (
+                isinstance(response, JSONResponse)
+                and hasattr(response, "_model_class")
+                and response._model_class == resp.find_model(response.status_code)
+            ):
+                skip_validation = True
+
+            model = resp.find_model(response.status_code)
+            if model and not skip_validation:
+                try:
+                    model.parse_raw(response.body)
+                except ValidationError as err:
+                    resp_validation_error = err
+                    response = JSONResponse(err.errors(), 500)
+
+        return resp_validation_error, response

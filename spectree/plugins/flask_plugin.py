@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 from pydantic import BaseModel, ValidationError
 
 from .._types import ModelType
-from ..response import Response
+from ..response import DEFAULT_CODE_DESC, Response
 from ..utils import get_multidict_items
 from .base import BasePlugin, Context
 
@@ -171,6 +171,7 @@ class FlaskPlugin(BasePlugin):
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
+        accessible: bool,
         before: Callable,
         after: Callable,
         validation_error_status: int,
@@ -181,6 +182,9 @@ class FlaskPlugin(BasePlugin):
         from flask import abort, jsonify, make_response, request
 
         response, req_validation_error, resp_validation_error = None, None, None
+        if not accessible:
+            response = make_response(jsonify(DEFAULT_CODE_DESC["HTTP_404"], 404))
+            abort(response)
         try:
             self.request_validation(request, query, json, headers, cookies)
             if self.config.annotations:
@@ -196,37 +200,13 @@ class FlaskPlugin(BasePlugin):
             after(request, response, req_validation_error, None)
             abort(response)  # type: ignore
 
-        result = func(*args, **kwargs)
-
-        status = 200
-        rest = []
-        if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
-            if len(result) > 1:
-                model, status, *rest = result
-            else:
-                model = result[0]
-        else:
-            model = result
-
-        if resp:
-            expect_model = resp.find_model(status)
-            if expect_model and isinstance(model, expect_model):
-                skip_validation = True
-                result = (model.dict(), status, *rest)
-
-        response = make_response(result)
-
-        if resp and resp.has_model():
-
-            model = resp.find_model(response.status_code)
-            if model and not skip_validation:
-                try:
-                    model.parse_obj(response.get_json())
-                except ValidationError as err:
-                    resp_validation_error = err
-                    response = make_response(
-                        jsonify({"message": "response validation error"}), 500
-                    )
+        resp_validation_error, response = self._prepare_success_response(
+            func=func,
+            skip_validation=skip_validation,
+            resp=resp,
+            args=args,
+            kwargs=kwargs,
+        )
 
         after(request, response, resp_validation_error, None)
 
@@ -278,3 +258,48 @@ class FlaskPlugin(BasePlugin):
                         **self.config.swagger_oauth2_config(),
                     ),
                 )
+
+    @staticmethod
+    def _prepare_success_response(
+        func: Callable,
+        skip_validation: bool,
+        resp: Optional[Response],
+        args: Any,
+        kwargs: Any,
+    ):
+        from flask import jsonify, make_response
+
+        response, resp_validation_error = None, None
+
+        result = func(*args, **kwargs)
+        status = 200
+        rest = []
+        if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
+            if len(result) > 1:
+                model, status, *rest = result
+            else:
+                model = result[0]
+        else:
+            model = result
+
+        if resp:
+            expect_model = resp.find_model(status)
+            if expect_model and isinstance(model, expect_model):
+                skip_validation = True
+                result = (model.dict(), status, *rest)
+
+        response = make_response(result)
+
+        if resp and resp.has_model():
+
+            model = resp.find_model(response.status_code)
+            if model and not skip_validation:
+                try:
+                    model.parse_obj(response.get_json())
+                except ValidationError as err:
+                    resp_validation_error = err
+                    response = make_response(
+                        jsonify({"message": "response validation error"}), 500
+                    )
+
+        return resp_validation_error, response

@@ -21,6 +21,8 @@ from .utils import (
     parse_resp,
 )
 
+DEFAULT_ACCESSIBLE = True
+
 
 class SpecTree:
     """
@@ -110,6 +112,7 @@ class SpecTree:
         tags: Sequence = (),
         security: Any = None,
         deprecated: bool = False,
+        accessible: bool = DEFAULT_ACCESSIBLE,
         before: Optional[Callable] = None,
         after: Optional[Callable] = None,
         validation_error_status: int = 0,
@@ -129,7 +132,11 @@ class SpecTree:
         :param resp: `spectree.Response`
         :param tags: a tuple of strings or :class:`spectree.models.Tag`
         :param security: dict with security config for current route and method
-        :param deprecated: bool if endpoint is marked as deprecated
+        :param deprecated: bool, if endpoint is marked as deprecated
+        :param accessible: bool, if  endpoint is accessible and if it is shown
+            in apidoc (for example development endpoints visible and accessible
+            on development instance, but not visible and accessible on production
+            instance.
         :param before: :meth:`spectree.utils.default_before_handler` for
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
@@ -157,6 +164,7 @@ class SpecTree:
                     headers,
                     cookies,
                     resp,
+                    accessible,
                     before or self.before,
                     after or self.after,
                     validation_error_status,
@@ -175,6 +183,7 @@ class SpecTree:
                     headers,
                     cookies,
                     resp,
+                    accessible,
                     before or self.before,
                     after or self.after,
                     validation_error_status,
@@ -218,6 +227,7 @@ class SpecTree:
 
             validation.security = security
             validation.deprecated = deprecated
+            validation.accessible = accessible
             validation.path_parameter_descriptions = path_parameter_descriptions
             # register decorator
             validation._decorator = self
@@ -243,6 +253,13 @@ class SpecTree:
         tags = {}
         for route in self.backend.find_routes():
             for method, func in self.backend.parse_func(route):
+                accessible = getattr(func, "accessible", DEFAULT_ACCESSIBLE)
+                if not accessible:
+                    print(
+                        f"Route {route}, method {method}, "
+                        f"func {func} is not accessible."
+                    )
+                    continue
                 path_parameter_descriptions = getattr(
                     func, "path_parameter_descriptions", None
                 )

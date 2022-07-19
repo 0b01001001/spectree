@@ -154,7 +154,6 @@ class UserAddress:
 
 
 class NoResponseView:
-
     name = "no response view"
 
     @api.validate(
@@ -170,6 +169,16 @@ class NoResponseView:
         pass
 
 
+class NotAccessibleEndpoint:
+    name = "not accessible (disabled) endpoint"
+
+    @api.validate(
+        accessible=False,
+    )
+    def on_get(self, req, resp):
+        resp.media = {"name": self.name}
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -178,6 +187,7 @@ app.add_route("/api/user/{name}/address/{address_id}", UserAddress())
 app.add_route("/api/user_skip/{name}", UserScoreSkip())
 app.add_route("/api/user_model/{name}", UserScoreModel())
 app.add_route("/api/no_response", NoResponseView())
+app.add_route("/api/not_accessible", NotAccessibleEndpoint())
 api.register(app)
 
 
@@ -261,13 +271,23 @@ def test_falcon_no_response(client):
         "/api/no_response",
         json=dict(name="foo", limit=1),
     )
-    assert resp.status_code == 200, resp.json
+    assert resp.status_code == 200
+    assert resp.text == ""
 
     resp = client.simulate_request(
         "GET",
         "/api/no_response",
     )
     assert resp.status_code == 200
+    assert resp.text == ""
+
+
+def test_falcon_not_accessible_endpoint(client):
+    resp = client.simulate_request(
+        "GET",
+        "/api/not_accessible",
+    )
+    assert resp.status_code == 404
 
 
 @pytest.fixture

@@ -334,6 +334,8 @@ def test_starlette_doc(test_client_and_api, expected_doc_pages):
 def test_starlette_no_response(client):
     resp = client.get("/api/no_response")
     assert resp.status_code == 200, resp.text
+    assert resp.json() == {}
 
     resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
     assert resp.status_code == 200, resp.text
+    assert resp.json() == {}

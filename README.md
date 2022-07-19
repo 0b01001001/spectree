@@ -35,14 +35,16 @@ Check the [examples](/examples) folder.
 
 1. Define your data structure used in (query, json, headers, cookies, resp) with `pydantic.BaseModel`
 2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`
-3. `api.validate` decorate the route with
+3. `api.validate` decorate the route with (the default value is given in parentheses):
    * `query`
    * `json`
    * `headers`
    * `cookies`
    * `resp`
-   * `tags`
-   * `security`
+   * `tags` *(no tags on endpoint)*
+   * `security` *(`None` - endpoint is not secured)*
+   * `deprecated` *(`False` - endpoint is not marked as deprecated)*
+   * `accessible` *(`True` - endpoint is not disabled)*
 4. access these data with `context(query, json, headers, cookies)` (of course, you can access these from the original place where the framework offered)
    * flask: `request.context`
    * falcon: `req.context`
@@ -213,6 +215,34 @@ def foobar():
 
 </p>
 </details>
+
+> How to mark deprecated endpoint?
+
+Use `deprecated` attribute with value `True` in `api.validate()` decorator. This way, an endpoint will be marked as
+ deprecated and will be marked with a strikethrough in API documentation.
+
+Code example:
+```
+@api.validate(
+    deprecated=True,
+)
+def depreated_endpoint():
+    ...
+```
+
+> Some endpoint is for development purposes only - is it possible to disable endpoint according to something?
+
+Yes! You can use attribute `accessible` with value `False` in `api.validate()` decorator. By default, all endpoints are
+ accessible (`accessible=True`), so in most cases you do not need to use this attribute.
+
+Code example:
+```
+@api.validate(
+    accessible=False,
+)
+def disabled_endpoint():
+    ...
+```
 
 > What should I return when I'm using the library?
 

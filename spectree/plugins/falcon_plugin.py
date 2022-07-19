@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional
 from pydantic import ValidationError
 
 from .._types import ModelType
-from ..response import Response
+from ..response import DEFAULT_CODE_DESC, Response
 from .base import BasePlugin
 
 
@@ -199,6 +199,7 @@ class FalconPlugin(BasePlugin):
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
+        accessible: bool,
         before: Callable,
         after: Callable,
         validation_error_status: int,
@@ -209,6 +210,11 @@ class FalconPlugin(BasePlugin):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
+
+        if not accessible:
+            _resp.status = f'404 {DEFAULT_CODE_DESC["HTTP_404"]}'
+            _resp.media = DEFAULT_CODE_DESC["HTTP_404"]
+            return
         try:
             self.request_validation(_req, query, json, headers, cookies)
             if self.config.annotations:
@@ -280,6 +286,7 @@ class FalconAsgiPlugin(FalconPlugin):
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
+        accessible: bool,
         before: Callable,
         after: Callable,
         validation_error_status: int,
@@ -290,6 +297,10 @@ class FalconAsgiPlugin(FalconPlugin):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
+        if not accessible:
+            _resp.status = f'404 {DEFAULT_CODE_DESC["HTTP_404"]}'
+            _resp.media = DEFAULT_CODE_DESC["HTTP_404"]
+            return
         try:
             await self.request_validation(_req, query, json, headers, cookies)
             if self.config.annotations:
