@@ -194,7 +194,8 @@ class FlaskPlugin(BasePlugin):
         before(request, response, req_validation_error, None)
         if req_validation_error:
             after(request, response, req_validation_error, None)
-            abort(response)  # type: ignore
+            assert response  # make mypy happy
+            abort(response)
 
         result = func(*args, **kwargs)
 
