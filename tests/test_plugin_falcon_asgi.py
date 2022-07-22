@@ -1,14 +1,14 @@
 from random import randint
 
 import pytest
-from falcon import testing  # type: ignore
+from falcon import testing
 
 from spectree import Response, SpecTree
 
 from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
 
 pytest.importorskip("falcon", minversion="3.0.0", reason="Missing required Falcon 3.0")
-from falcon.asgi import App  # type: ignore # noqa: E402
+from falcon.asgi import App  # noqa: E402
 
 
 def before_handler(req, resp, err, instance):

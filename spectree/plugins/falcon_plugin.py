@@ -55,8 +55,8 @@ class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
 
-        from falcon import HTTP_400, HTTP_415, HTTPError  # type: ignore
-        from falcon.routing.compiled import _FIELD_PATTERN  # type: ignore
+        from falcon import HTTP_400, HTTP_415, HTTPError
+        from falcon.routing.compiled import _FIELD_PATTERN
 
         # used to detect falcon 3.0 request media parse error
         self.FALCON_HTTP_ERROR = HTTPError

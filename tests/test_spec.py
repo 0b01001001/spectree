@@ -1,7 +1,7 @@
 try:
     from falcon import App as FalconApp
 except ImportError:
-    from falcon import API as FalconApp  # type: ignore
+    from falcon import API as FalconApp
 
 import pytest
 from flask import Flask
