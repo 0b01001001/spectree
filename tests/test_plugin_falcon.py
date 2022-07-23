@@ -1,12 +1,7 @@
 from random import randint
 
-try:
-    from falcon import App
-except ImportError:
-    from falcon import API as App
-
 import pytest
-from falcon import testing
+from falcon import App, testing
 
 from spectree import Response, SpecTree
 

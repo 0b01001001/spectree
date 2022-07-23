@@ -44,7 +44,7 @@ setup(
     extras_require={
         "email": ["pydantic[email]>=1.2"],
         "flask": ["flask", "werkzeug<2.2"],
-        "falcon": ["falcon"],
+        "falcon": ["falcon>=3.0.0"],
         "starlette": ["starlette[full]"],
         "dev": [
             "pytest~=7.1",
