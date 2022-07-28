@@ -54,7 +54,6 @@ class FalconPlugin(BasePlugin):
         from falcon import HTTP_400, HTTP_415, HTTPError
         from falcon.routing.compiled import _FIELD_PATTERN
 
-        # used to detect falcon 3.0 request media parse error
         self.FALCON_HTTP_ERROR = HTTPError
         self.FALCON_MEDIA_ERROR_CODE = (HTTP_400, HTTP_415)
         self.FIELD_PATTERN = _FIELD_PATTERN
