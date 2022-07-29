@@ -1,9 +1,5 @@
-try:
-    from falcon import App as FalconApp
-except ImportError:
-    from falcon import API as FalconApp
-
 import pytest
+from falcon import App as FalconApp
 from flask import Flask
 from pydantic import BaseModel
 from starlette.applications import Starlette

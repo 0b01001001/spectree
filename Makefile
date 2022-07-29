@@ -8,8 +8,6 @@ install:
 test:
 	pip install -U -e .[email,flask,falcon,starlette]
 	pytest tests -vv -rs
-	pip uninstall falcon email-validator -y && pip install falcon==2.0.0
-	pytest tests -vv -rs
 doc:
 	cd docs && make html
 

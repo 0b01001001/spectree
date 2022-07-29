@@ -16,7 +16,7 @@ Yet another library to generate OpenAPI documents and validate requests & respon
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
   * Flask [demo](#flask)
-  * Falcon [demo](#falcon) (including ASGI under Falcon 3+)
+  * Falcon [demo](#falcon)
   * Starlette [demo](#starlette)
 
 ## Quick Start
@@ -54,7 +54,7 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 
 ### Falcon response validation
 
-For falcon response, this library only validates against media as it is the serializable object. Response.body(deprecated in falcon 3.0 and replaced by text) is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`
+For Falcon response, this library only validates against media as it is the serializable object. Response.text is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`
 
 ### Opt-in type annotation feature
 This library also supports the injection of validated fields into view function arguments along with parameter annotation-based type declaration. This works well with linters that can take advantage of typing features like mypy. See the examples section below.

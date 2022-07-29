@@ -110,7 +110,7 @@ if __name__ == "__main__":
         http :8000/ping
         http ':8000/api/zh/en?text=hi' uid=neo limit=1 vip=true
     """
-    app = falcon.API()
+    app = falcon.App()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
     api.register(app)
