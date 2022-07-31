@@ -43,7 +43,7 @@ setup(
     install_requires=requires,
     extras_require={
         "email": ["pydantic[email]>=1.2"],
-        "flask": ["flask", "werkzeug<2.2"],
+        "flask": ["flask"],
         "falcon": ["falcon>=3.0.0"],
         "starlette": ["starlette[full]"],
         "dev": [
