@@ -246,15 +246,15 @@ class SpecTree:
         tags = {}
         for route in self.backend.find_routes():
             for method, func in self.backend.parse_func(route):
+                if self.backend.bypass(func, method) or self.bypass(func):
+                    continue
+
                 path_parameter_descriptions = getattr(
                     func, "path_parameter_descriptions", None
                 )
                 path, parameters = self.backend.parse_path(
                     route, path_parameter_descriptions
                 )
-
-                if self.backend.bypass(func, method) or self.bypass(func):
-                    continue
 
                 name = parse_name(func)
                 summary, desc = parse_comments(func)

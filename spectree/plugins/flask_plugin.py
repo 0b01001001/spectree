@@ -4,7 +4,7 @@ from pydantic import BaseModel, ValidationError
 
 from .._types import ModelType
 from ..response import Response
-from ..utils import get_multidict_items
+from ..utils import get_multidict_items, werkzeug_parse_rule
 from .base import BasePlugin, Context
 
 
@@ -62,12 +62,12 @@ class FlaskPlugin(BasePlugin):
         route: Optional[Mapping[str, str]],
         path_parameter_descriptions: Optional[Mapping[str, str]],
     ) -> Tuple[str, list]:
-        from werkzeug.routing import parse_converter_args, parse_rule
+        from werkzeug.routing import parse_converter_args
 
         subs = []
         parameters = []
 
-        for converter, arguments, variable in parse_rule(str(route)):
+        for converter, arguments, variable in werkzeug_parse_rule(str(route)):
             if converter is None:
                 subs.append(variable)
                 continue
