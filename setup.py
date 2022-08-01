@@ -14,7 +14,7 @@ with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
 
 setup(
     name="spectree",
-    version="0.10.3",
+    version="0.10.4",
     license="Apache-2.0",
     author="Keming Yang",
     author_email="kemingy94@gmail.com",
@@ -43,8 +43,8 @@ setup(
     install_requires=requires,
     extras_require={
         "email": ["pydantic[email]>=1.2"],
-        "flask": ["flask", "werkzeug<2.2"],
-        "falcon": ["falcon"],
+        "flask": ["flask"],
+        "falcon": ["falcon>=3.0.0"],
         "starlette": ["starlette[full]"],
         "dev": [
             "pytest~=7.1",
