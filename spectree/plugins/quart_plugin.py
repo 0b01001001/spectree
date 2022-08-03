@@ -1,3 +1,4 @@
+import nest_asyncio
 import asyncio
 from typing import Any, Callable, Optional
 
@@ -7,6 +8,8 @@ from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule
 from .base import BasePlugin, Context
+
+nest_asyncio.apply()
 
 
 class QuartPlugin(BasePlugin):

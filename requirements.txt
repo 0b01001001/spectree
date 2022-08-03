@@ -1,1 +1,2 @@
 pydantic>=1.2
+nest-asyncio==1.5.5
