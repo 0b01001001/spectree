@@ -1,3 +1,4 @@
+import io
 from random import randint
 
 import pytest
@@ -11,7 +12,17 @@ from starlette.testclient import TestClient
 from spectree import Response, SpecTree
 from spectree.plugins.starlette_plugin import PydanticResponse
 
-from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
+from .common import (
+    JSON,
+    Cookies,
+    FormFileUpload,
+    Headers,
+    Order,
+    Query,
+    Resp,
+    StrDict,
+    api_tag,
+)
 
 
 def before_handler(req, resp, err, instance):
@@ -46,6 +57,15 @@ class Ping(HTTPEndpoint):
 
         description"""
         return JSONResponse({"msg": "pong"})
+
+
+@api.validate(
+    form=FormFileUpload,
+)
+async def file_upload(request):
+    assert request.context.form.file
+    content = await request.context.form.file.read()
+    return JSONResponse({"file": content.decode("utf-8")})
 
 
 @api.validate(
@@ -145,6 +165,7 @@ app = Starlette(
                     ],
                 ),
                 Route("/no_response", no_response, methods=["POST", "GET"]),
+                Route("/file_upload", file_upload, methods=["POST"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -337,3 +358,14 @@ def test_starlette_no_response(client):
 
     resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
     assert resp.status_code == 200, resp.text
+
+
+def test_starlette_upload_file(client):
+    file_content = "abcdef"
+    file_io = io.BytesIO(file_content.encode("utf-8"))
+    resp = client.post(
+        "/api/file_upload",
+        files={"file": ("test.txt", file_io, "text/plain")},
+    )
+    assert resp.status_code == 200, resp.data
+    assert resp.json()["file"] == file_content

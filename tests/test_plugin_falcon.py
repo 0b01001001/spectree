@@ -5,7 +5,16 @@ from falcon import App, testing
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Query, Resp, StrDict, api_tag
+from .common import (
+    JSON,
+    Cookies,
+    FormFileUpload,
+    Headers,
+    Query,
+    Resp,
+    StrDict,
+    api_tag,
+)
 
 
 def before_handler(req, resp, err, instance):
@@ -165,6 +174,18 @@ class NoResponseView:
         pass
 
 
+class FileUploadView:
+    name = "file upload view"
+
+    @api.validate(
+        form=FormFileUpload,
+    )
+    def on_post(self, req, resp, form: FormFileUpload):
+        assert form.file
+        file_content = form.file
+        resp.media = {"file": file_content.decode("utf-8")}
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -173,6 +194,7 @@ app.add_route("/api/user/{name}/address/{address_id}", UserAddress())
 app.add_route("/api/user_skip/{name}", UserScoreSkip())
 app.add_route("/api/user_model/{name}", UserScoreModel())
 app.add_route("/api/no_response", NoResponseView())
+app.add_route("/api/file_upload", FileUploadView())
 api.register(app)
 
 
@@ -352,7 +374,7 @@ def test_validation_error_response_status_code(
     ],
     indirect=["test_client_and_api"],
 )
-def test_flask_doc(test_client_and_api, expected_doc_pages):
+def test_falcon_doc(test_client_and_api, expected_doc_pages):
     client, api = test_client_and_api
 
     resp = client.simulate_get("/apidoc/openapi.json")
@@ -361,3 +383,26 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
     for doc_page in expected_doc_pages:
         resp = client.simulate_get(f"/apidoc/{doc_page}")
         assert resp.status_code == 200
+
+
+def test_falcon_file_upload_sync(client):
+    boundary = "xxx"
+    file_content = "abcdef"
+    body = (
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'
+        "Content-Type: text/plain\r\n\r\n"
+        f"{file_content}\r\n"
+        f"--{boundary}--\r\n"
+    )
+
+    resp = client.simulate_post(
+        "/api/file_upload",
+        headers={
+            "Content-Type": "multipart/form-data; boundary=%s" % boundary,
+        },
+        body=body.encode("utf-8"),
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.headers["content-type"] == "application/json"
+    assert resp.json["file"] == file_content

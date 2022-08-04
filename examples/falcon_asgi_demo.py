@@ -1,8 +1,8 @@
 import logging
 from random import random
-from wsgiref import simple_server
 
-import falcon
+import falcon.asgi
+import uvicorn
 from pydantic import BaseModel, Field
 
 from examples.common import File, FileResp, Query
@@ -12,13 +12,10 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 api = SpecTree(
-    "falcon",
+    "falcon-asgi",
     title="Demo Service",
     version="0.1.2",
-    description="This is a demo service.",
-    terms_of_service="https://github.io",
-    contact={"name": "John", "email": "hello@github.com", "url": "https://github.com"},
-    license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+    unknown="test",
 )
 
 demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
@@ -54,7 +51,7 @@ class Ping:
         pass
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp):
+    async def on_get(self, req, resp):
         """
         health check
         """
@@ -69,7 +66,7 @@ class Classification:
     """
 
     @api.validate(tags=[demo])
-    def on_get(self, req, resp, source, target):
+    async def on_get(self, req, resp, source, target):
         """
         API summary
 
@@ -80,7 +77,7 @@ class Classification:
     @api.validate(
         query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck)
     )
-    def on_post(self, req, resp, source, target):
+    async def on_post(self, req, resp, source, target):
         """
         post demo
 
@@ -102,7 +99,7 @@ class FileUpload:
     """
 
     @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-    def on_post(self, req, resp):
+    async def on_post(self, req, resp):
         """
         post multipart/form-data demo
 
@@ -113,16 +110,10 @@ class FileUpload:
 
 
 if __name__ == "__main__":
-    """
-    cmd:
-        http :8000/ping
-        http ':8000/api/zh/en?text=hi' uid=neo limit=1 vip=true
-    """
-    app = falcon.App()
+    app = falcon.asgi.App()
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
     app.add_route("/api/file_upload", FileUpload())
     api.register(app)
 
-    httpd = simple_server.make_server("localhost", 8000, app)
-    httpd.serve_forever()
+    uvicorn.run(app, log_level="info")

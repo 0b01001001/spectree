@@ -168,3 +168,25 @@ class Server(BaseModel):
 
     class Config:
         validate_assignment = True
+
+
+class BaseFile:
+    """
+    An uploaded file included as part of the request data.
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
+        field_schema.update(format="binary", type="string")
+
+    @classmethod
+    def validate(cls, value: Any):
+        # https://github.com/luolingchun/flask-openapi3/blob/master/flask_openapi3/models/file.py
+        return value

@@ -6,7 +6,18 @@ from flask.views import MethodView
 
 from spectree import Response, SpecTree
 
-from .common import JSON, Cookies, Headers, Order, Query, Resp, StrDict, api_tag
+from .common import (
+    JSON,
+    Cookies,
+    Form,
+    FormFileUpload,
+    Headers,
+    Order,
+    Query,
+    Resp,
+    StrDict,
+    api_tag,
+)
 
 # import tests to execute
 from .flask_imports import *  # NOQA
@@ -41,21 +52,33 @@ class Ping(MethodView):
         return jsonify(msg="pong")
 
 
+class FileUploadView(MethodView):
+    @api.validate(
+        form=FormFileUpload,
+    )
+    def post(self, form: FormFileUpload):
+        upload = form.file
+        assert upload
+        return {"content": upload.stream.read().decode("utf-8")}
+
+
 class User(MethodView):
     @api.validate(
         query=Query,
         json=JSON,
+        form=Form,
         cookies=Cookies,
         resp=Response(HTTP_200=Resp, HTTP_401=None),
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
     def post(self, name):
-        score = [randint(0, request.context.json.limit) for _ in range(5)]
+        data_src = request.context.json or request.context.form
+        score = [randint(0, int(data_src.limit)) for _ in range(5)]
         score.sort(reverse=request.context.query.order)
         assert request.context.cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return jsonify(name=request.context.json.name, score=score)
+        return jsonify(name=data_src.name, score=score)
 
 
 class UserAnnotated(MethodView):
@@ -64,12 +87,13 @@ class UserAnnotated(MethodView):
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
-    def post(self, name, query: Query, json: JSON, cookies: Cookies):
-        score = [randint(0, json.limit) for _ in range(5)]
+    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+        data_src = json or form
+        score = [randint(0, int(data_src.limit)) for _ in range(5)]
         score.sort(reverse=True if query.order == Order.desc else False)
         assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return jsonify(name=json.name, score=score)
+        return jsonify(name=data_src.name, score=score)
 
 
 class UserSkip(MethodView):
@@ -82,12 +106,13 @@ class UserSkip(MethodView):
         after=api_after_handler,
         skip_validation=True,
     )
-    def post(self, name, query: Query, json: JSON, cookies: Cookies):
-        score = [randint(0, request.context.json.limit) for _ in range(5)]
-        score.sort(reverse=True if request.context.query.order == Order.desc else False)
-        assert request.context.cookies.pub == "abcdefg"
+    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+        data_src = json or form
+        score = [randint(0, int(data_src.limit)) for _ in range(5)]
+        score.sort(reverse=(query.order == Order.desc))
+        assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return jsonify(name=request.context.json.name, x_score=score)
+        return jsonify(name=data_src.name, x_score=score)
 
 
 class UserModel(MethodView):
@@ -99,12 +124,13 @@ class UserModel(MethodView):
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
-    def post(self, name, query: Query, json: JSON, cookies: Cookies):
-        score = [randint(0, request.context.json.limit) for _ in range(5)]
-        score.sort(reverse=True if request.context.query.order == Order.desc else False)
-        assert request.context.cookies.pub == "abcdefg"
+    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+        data_src = json or form
+        score = [randint(0, int(data_src.limit)) for _ in range(5)]
+        score.sort(reverse=(query.order == Order.desc))
+        assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return Resp(name=request.context.json.name, score=score)
+        return Resp(name=data_src.name, score=score)
 
 
 class UserAddress(MethodView):
@@ -158,6 +184,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/no_response",
     view_func=NoResponseView.as_view("no_response_view"),
+)
+app.add_url_rule(
+    "/api/file_upload",
+    view_func=FileUploadView.as_view("file_upload_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

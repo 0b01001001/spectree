@@ -170,27 +170,33 @@ class FalconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def request_validation(self, req, query, json, headers, cookies):
+    def request_validation(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
             req.context.headers = headers.parse_obj(req.headers)
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
-        try:
-            media = req.media
-        except self.FALCON_HTTP_ERROR as err:
-            if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                raise
-            media = None
         if json:
+            try:
+                media = req.media
+            except self.FALCON_HTTP_ERROR as err:
+                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                    raise
+                media = None
             req.context.json = json.parse_obj(media)
+        if form:
+            # TODO - possible to pass the BodyPart here?
+            # req_form = {x.name: x for x in req.get_media()}
+            req_form = {x.name: x.stream.read() for x in req.get_media()}
+            req.context.form = form.parse_obj(req_form)
 
     def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -205,9 +211,9 @@ class FalconPlugin(BasePlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            self.request_validation(_req, query, json, headers, cookies)
+            self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
+                for name in ("query", "json", "form", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
@@ -251,7 +257,7 @@ class FalconAsgiPlugin(FalconPlugin):
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
 
-    async def request_validation(self, req, query, json, headers, cookies):
+    async def request_validation(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -266,12 +272,26 @@ class FalconAsgiPlugin(FalconPlugin):
                     raise
                 media = None
             req.context.json = json.parse_obj(media)
+        if form:
+            try:
+                form_data = await req.get_media()
+            except self.FALCON_HTTP_ERROR as err:
+                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                    raise
+                req.context.form = None
+            else:
+                res_data = {}
+                async for x in form_data:
+                    res_data[x.name] = x
+                    await x.data  # TODO - how to avoid this?
+                req.context.form = form.parse_obj(res_data)
 
     async def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -286,9 +306,9 @@ class FalconAsgiPlugin(FalconPlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            await self.request_validation(_req, query, json, headers, cookies)
+            await self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
+                for name in ("query", "json", "form", "headers", "cookies"):
                     if func.__annotations__.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
