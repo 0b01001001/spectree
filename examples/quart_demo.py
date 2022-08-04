@@ -1,9 +1,9 @@
 from enum import Enum
 from random import random
 
+from pydantic import BaseModel, Field
 from quart import Quart, abort, jsonify, request
 from quart.views import MethodView
-from pydantic import BaseModel, Field
 
 from spectree import Response, SpecTree
 
@@ -58,7 +58,7 @@ class Cookie(BaseModel):
 @api.validate(
     query=Query, json=Data, resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"]
 )
-async def predict(source, target):
+def predict(source, target):
     """
     predict demo
 
@@ -68,7 +68,7 @@ async def predict(source, target):
     ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
     """
     print(f"=> from {source} to {target}")  # path
-    print(f"JSON: {await request.json}")  # Data
+    print(f"JSON: {request.json}")  # Data
     print(f"Query: {request.args}")  # Query
     if random() < 0.5:
         abort(403)
@@ -86,7 +86,7 @@ async def with_code_header():
 
     query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
-    return jsonify(language=request.headers.get('Lang')), 203, {"X": 233}
+    return jsonify(language=request.headers.get("Lang")), 203, {"X": 233}
 
 
 class UserAPI(MethodView):
