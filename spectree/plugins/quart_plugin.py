@@ -1,8 +1,11 @@
+import inspect
+
 import nest_asyncio
 import asyncio
 from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, ValidationError
+from quart import Request
 
 from .._types import ModelType
 from ..response import Response
@@ -136,7 +139,7 @@ class QuartPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, headers, cookies):
+    def request_validation(self, request: Request, query, json, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
@@ -157,7 +160,7 @@ class QuartPlugin(BasePlugin):
 
     def _fill_json(self, request):
         if request.mimetype not in self.FORM_MIMETYPE:
-            return request.get_json(silent=True) or {}
+            return asyncio.run(request.get_json(silent=True)) or {}
         req_form = asyncio.run(request.form)
         req_files = asyncio.run(request.files)
         req_json = get_multidict_items(req_form) or {}
@@ -201,9 +204,10 @@ class QuartPlugin(BasePlugin):
             after(request, response, req_validation_error, None)
             assert response  # make mypy happy
             abort(response)
-
-        result = func(*args, **kwargs)
-
+        if inspect.iscoroutinefunction(func):
+            result = asyncio.run(func(*args, **kwargs))
+        else:
+            result = func(*args, **kwargs)
         status = 200
         rest = []
         if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
@@ -227,12 +231,12 @@ class QuartPlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(response.get_json())
+                    model.parse_obj(asyncio.run(response.get_json()))
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = make_response(
+                    response = asyncio.run(make_response(
                         jsonify({"message": "response validation error"}), 500
-                    )
+                    ))
 
         after(request, response, resp_validation_error, None)
 
