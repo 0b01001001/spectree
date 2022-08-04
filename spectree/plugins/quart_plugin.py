@@ -1,9 +1,8 @@
-import inspect
-
-import nest_asyncio
 import asyncio
+import inspect
 from typing import Any, Callable, Optional
 
+import nest_asyncio
 from pydantic import BaseModel, ValidationError
 from quart import Request
 
@@ -197,17 +196,22 @@ class QuartPlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = asyncio.run(make_response(jsonify(err.errors()), validation_error_status))
+            response = asyncio.run(
+                make_response(jsonify(err.errors()), validation_error_status)
+            )
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
             after(request, response, req_validation_error, None)
             assert response  # make mypy happy
-            abort(response)
-        if inspect.iscoroutinefunction(func):
-            result = asyncio.run(func(*args, **kwargs))
-        else:
-            result = func(*args, **kwargs)
+            abort(response)  # type: ignore
+
+        result = (
+            asyncio.run(func(*args, **kwargs))
+            if inspect.iscoroutinefunction(func)
+            else func(*args, **kwargs)
+        )
+
         status = 200
         rest = []
         if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
@@ -231,12 +235,14 @@ class QuartPlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(asyncio.run(response.get_json()))
+                    model.parse_obj(asyncio.run(response.get_json()))  # type: ignore
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = asyncio.run(make_response(
-                        jsonify({"message": "response validation error"}), 500
-                    ))
+                    response = asyncio.run(
+                        make_response(
+                            jsonify({"message": "response validation error"}), 500
+                        )
+                    )
 
         after(request, response, resp_validation_error, None)
 

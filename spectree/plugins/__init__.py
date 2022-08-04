@@ -1,8 +1,8 @@
 from .base import BasePlugin
 from .falcon_plugin import FalconAsgiPlugin, FalconPlugin
 from .flask_plugin import FlaskPlugin
-from .starlette_plugin import StarlettePlugin
 from .quart_plugin import QuartPlugin
+from .starlette_plugin import StarlettePlugin
 
 PLUGINS = {
     "base": BasePlugin,
