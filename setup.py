@@ -44,6 +44,7 @@ setup(
     extras_require={
         "email": ["pydantic[email]>=1.2"],
         "flask": ["flask"],
+        "quart": ["quart"],
         "falcon": ["falcon>=3.0.0"],
         "starlette": ["starlette[full]"],
         "dev": [
