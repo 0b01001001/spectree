@@ -2,7 +2,7 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, get_type_hints
 
 from pydantic import ValidationError
 
@@ -100,8 +100,9 @@ class StarlettePlugin(BasePlugin):
         try:
             await self.request_validation(request, query, json, form, headers, cookies)
             if self.config.annotations:
+                annotations = get_type_hints(func)
                 for name in ("query", "json", "form", "headers", "cookies"):
-                    if func.__annotations__.get(name):
+                    if annotations.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err

@@ -1,7 +1,7 @@
 import inspect
 import re
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 
 from pydantic import ValidationError
 
@@ -213,8 +213,9 @@ class FalconPlugin(BasePlugin):
         try:
             self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
+                annotations = get_type_hints(func)
                 for name in ("query", "json", "form", "headers", "cookies"):
-                    if func.__annotations__.get(name):
+                    if annotations.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
         except ValidationError as err:
@@ -308,8 +309,9 @@ class FalconAsgiPlugin(FalconPlugin):
         try:
             await self.request_validation(_req, query, json, form, headers, cookies)
             if self.config.annotations:
+                annotations = get_type_hints(func)
                 for name in ("query", "json", "form", "headers", "cookies"):
-                    if func.__annotations__.get(name):
+                    if annotations.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
         except ValidationError as err:
