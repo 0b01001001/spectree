@@ -1,7 +1,16 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, get_type_hints
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Type,
+    get_type_hints,
+)
 
 from ._types import FunctionDecorator, ModelType
 from .config import Configuration, ModeEnum
