@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, get_type_hints
 
 import pytest
 from pydantic import BaseModel
@@ -43,10 +43,9 @@ def test_init_response():
     expect_400_model = gen_list_model(JSON)
     assert resp.has_model()
     assert resp.find_model(200) is None
-    assert (
-        type(resp.find_model(400)) == type(expect_400_model)
-        and resp.find_model(400).__annotations__ == expect_400_model.__annotations__
-    )
+    assert type(resp.find_model(400)) == type(expect_400_model) and get_type_hints(
+        resp.find_model(400)
+    ) == get_type_hints(expect_400_model)
     assert resp.find_model(401) == DemoModel
     assert resp.find_model(402) is None
     assert resp.find_model(403) == DemoModel
@@ -112,7 +111,7 @@ def test_list_model():
     resp = Response(HTTP_200=List[JSON])
     model = resp.find_model(200)
     expect_model = gen_list_model(JSON)
-    assert model.__annotations__ == expect_model.__annotations__
+    assert get_type_hints(model) == get_type_hints(expect_model)
     assert type(model) == type(expect_model)
     assert issubclass(model, BaseModel)
     data = [
