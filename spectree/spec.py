@@ -1,7 +1,16 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Type,
+    get_type_hints,
+)
 
 from ._types import FunctionDecorator, ModelType
 from .config import Configuration, ModeEnum
@@ -193,11 +202,12 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                query = func.__annotations__.get("query", query)
-                json = func.__annotations__.get("json", json)
-                form = func.__annotations__.get("form", form)
-                headers = func.__annotations__.get("headers", headers)
-                cookies = func.__annotations__.get("cookies", cookies)
+                annotations = get_type_hints(func)
+                query = annotations.get("query", query)
+                json = annotations.get("json", json)
+                form = annotations.get("form", form)
+                headers = annotations.get("headers", headers)
+                cookies = annotations.get("cookies", cookies)
 
             # register
             for name, model in zip(
