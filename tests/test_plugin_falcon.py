@@ -168,7 +168,7 @@ class NoResponseView:
         pass
 
     @api.validate(
-        json=JSON,  # resp is missing completely
+        json=StrDict,  # resp is missing completely
     )
     def on_post(self, req, resp, json: JSON):
         pass

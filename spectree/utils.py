@@ -111,7 +111,8 @@ def parse_params(
     for attr in attr_to_spec_key:
         if hasattr(func, attr):
             model = models[getattr(func, attr)]
-            for name, schema in model["properties"].items():
+            properties = model.get("properties", {model.get("title"): model})
+            for name, schema in properties.items():
                 # Route parameters keywords taken out of schema level
                 extra = {
                     kw: schema.pop(kw) for kw in route_param_keywords if kw in schema
