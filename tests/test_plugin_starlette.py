@@ -127,7 +127,7 @@ async def user_score_model(request):
 
 
 @api.validate(
-    json=JSON,
+    json=StrDict,
     resp=Response(HTTP_200=None),
 )
 async def no_response(request):

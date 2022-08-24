@@ -153,7 +153,7 @@ class NoResponseView(MethodView):
         return {}
 
     @api.validate(
-        json=JSON,  # resp is missing completely
+        json=StrDict,  # resp is missing completely
     )
     def post(self, json: JSON):
         return {}
