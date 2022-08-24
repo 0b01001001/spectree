@@ -127,7 +127,7 @@ def user_address(name, address_id):
 
 @app.route("/api/no_response", methods=["GET", "POST"])
 @api.validate(
-    json=JSON,
+    json=StrDict,
 )
 def no_response():
     return {}
