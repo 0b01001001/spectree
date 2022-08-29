@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 
@@ -96,7 +98,7 @@ def test_flask_doc(test_client_and_api, expected_doc_pages):
         assert resp.status_code == 308
 
 
-def test_flask_validate(client):
+def test_flask_validate_basic(client):
     resp = client.get("/ping")
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
@@ -110,34 +112,40 @@ def test_flask_validate(client):
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
 
+
+@pytest.mark.parametrize(
+    ["fragment"],
+    [
+        ("user",),
+        ("user_annotated",),
+    ],
+)
+def test_flask_validate_post_data(client, fragment):
     client.set_cookie("flask", "pub", "abcdefg")
-    for fragment in ("user", "user_annotated"):
-        resp = client.post(
-            f"/api/{fragment}/flask?order=1",
-            json=dict(name="flask", limit=10),
-            content_type="application/json",
-        )
-        assert resp.status_code == 200, resp.json
-        assert resp.headers.get("X-Validation") is None
-        assert resp.headers.get("X-API") == "OK"
-        assert resp.json["name"] == "flask"
-        assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
+    resp = client.post(
+        f"/api/{fragment}/flask?order=1",
+        json=dict(name="flask", limit=10),
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.headers.get("X-Validation") is None
+    assert resp.headers.get("X-API") == "OK"
+    assert resp.json["name"] == "flask"
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=True)
 
-        resp = client.post(
-            f"/api/{fragment}/flask?order=0",
-            json=dict(name="flask", limit=10),
-            content_type="application/json",
-        )
-        assert resp.status_code == 200, resp.json
-        assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+    resp = client.post(
+        f"/api/{fragment}/flask?order=0",
+        json=dict(name="flask", limit=10),
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
-        resp = client.post(
-            f"/api/{fragment}/flask?order=0",
-            data="name=flask&limit=10",
-            content_type="application/x-www-form-urlencoded",
-        )
-        assert resp.status_code == 200, resp.json
-        assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
+    resp = client.post(
+        f"/api/{fragment}/flask?order=0",
+        data=dict(name="flask", limit=10),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert resp.status_code == 200, resp.json
+    assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
 
 def test_flask_no_response(client):
@@ -146,3 +154,15 @@ def test_flask_no_response(client):
 
     resp = client.post("/api/no_response", data={"name": "foo", "limit": 1})
     assert resp.status_code == 200, resp.data
+
+
+def test_flask_upload_file(client):
+    file_content = "abcdef"
+    data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}
+    resp = client.post(
+        "/api/file_upload",
+        data=data,
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 200, resp.data
+    assert resp.json["content"] == file_content

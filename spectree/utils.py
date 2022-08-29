@@ -80,16 +80,21 @@ def parse_request(func: Any) -> Dict[str, Any]:
     """
     get json spec
     """
-    data = {}
+    content_items = {}
     if hasattr(func, "json"):
-        data = {
-            "content": {
-                "application/json": {
-                    "schema": {"$ref": f"#/components/schemas/{func.json}"}
-                }
-            }
+        content_items["application/json"] = {
+            "schema": {"$ref": f"#/components/schemas/{func.json}"}
         }
-    return data
+
+    if hasattr(func, "form"):
+        content_items["multipart/form-data"] = {
+            "schema": {"$ref": f"#/components/schemas/{func.form}"}
+        }
+
+    if not content_items:
+        return {}
+
+    return {"content": content_items}
 
 
 def parse_params(
@@ -106,7 +111,8 @@ def parse_params(
     for attr in attr_to_spec_key:
         if hasattr(func, attr):
             model = models[getattr(func, attr)]
-            for name, schema in model["properties"].items():
+            properties = model.get("properties", {model.get("title"): model})
+            for name, schema in properties.items():
                 # Route parameters keywords taken out of schema level
                 extra = {
                     kw: schema.pop(kw) for kw in route_param_keywords if kw in schema
@@ -130,7 +136,7 @@ def parse_resp(func: Any):
     get the response spec
 
     If this function does not have explicit ``resp`` but have other models,
-    a ``422 Validation Error`` will be append to the response spec. Since
+    a ``422 Validation Error`` will be appended to the response spec, since
     this may be triggered in the validation step.
     """
     responses = {}
@@ -140,7 +146,7 @@ def parse_resp(func: Any):
     return responses
 
 
-def has_model(func: Any):
+def has_model(func: Any) -> bool:
     """
     return True if this function have ``pydantic.BaseModel``
     """

@@ -2,7 +2,7 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, get_type_hints
 
 from pydantic import ValidationError
 
@@ -55,11 +55,17 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def request_validation(self, request, query, json, headers, cookies):
-        use_json = json and request.method not in ("GET", "DELETE")
+    async def request_validation(self, request, query, json, form, headers, cookies):
+        has_data = request.method not in ("GET", "DELETE")
+        content_type = request.headers.get("content-type", "").lower()
+        use_json = json and has_data and content_type == "application/json"
+        use_form = (
+            form and has_data and any([x in content_type for x in self.FORM_MIMETYPE])
+        )
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
-            json.parse_raw(await request.body() or "{}") if use_json else None,
+            json.parse_obj(await request.json() or {}) if use_json else None,
+            form.parse_obj(await request.form() or {}) if use_form else None,
             headers.parse_obj(request.headers) if headers else None,
             cookies.parse_obj(request.cookies) if cookies else None,
         )
@@ -69,6 +75,7 @@ class StarlettePlugin(BasePlugin):
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -91,10 +98,11 @@ class StarlettePlugin(BasePlugin):
         req_validation_error = resp_validation_error = json_decode_error = None
 
         try:
-            await self.request_validation(request, query, json, headers, cookies)
+            await self.request_validation(request, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
-                    if func.__annotations__.get(name):
+                annotations = get_type_hints(func)
+                for name in ("query", "json", "form", "headers", "cookies"):
+                    if annotations.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err

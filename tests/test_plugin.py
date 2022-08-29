@@ -54,6 +54,7 @@ def test_plugin_spec(api):
     ]
 
     assert get_paths(api.spec) == [
+        "/api/file_upload",
         "/api/no_response",
         "/api/user/{name}",
         "/api/user/{name}/address/{address_id}",
