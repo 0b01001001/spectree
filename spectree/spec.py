@@ -114,6 +114,7 @@ class SpecTree:
         query: Optional[ModelType] = None,
         json: Optional[ModelType] = None,
         form: Optional[ModelType] = None,
+        openapi_name: Optional[str] = 'Void_Method',
         headers: Optional[ModelType] = None,
         cookies: Optional[ModelType] = None,
         resp: Optional[Response] = None,
@@ -135,6 +136,7 @@ class SpecTree:
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
         :param form: `pydantic.BaseModel`, form-data request body
+        :param openapi_name: A string name of function in docs
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
@@ -166,6 +168,7 @@ class SpecTree:
                     query,
                     json,
                     form,
+                    openapi_name,
                     headers,
                     cookies,
                     resp,
@@ -185,6 +188,7 @@ class SpecTree:
                     query,
                     json,
                     form,
+                    openapi_name,
                     headers,
                     cookies,
                     resp,
@@ -231,6 +235,7 @@ class SpecTree:
 
             validation.security = security
             validation.deprecated = deprecated
+            validation.openapi_name = openapi_name
             validation.path_parameter_descriptions = path_parameter_descriptions
             # register decorator
             validation._decorator = self

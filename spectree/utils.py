@@ -176,7 +176,7 @@ def parse_name(func: Callable[..., Any]) -> str:
         * decorated functions
         * decorated class methods
     """
-    return func.__name__
+    return func.openapi_name
 
 
 def default_before_handler(
