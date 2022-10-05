@@ -1,22 +1,18 @@
-import asyncio
 import inspect
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, get_type_hints
 
-import nest_asyncio
 from pydantic import BaseModel, ValidationError
-from quart import Request
 
 from .._types import ModelType
 from ..response import Response
-from ..utils import get_multidict_items, werkzeug_parse_rule
-from .base import BasePlugin, Context
-
-nest_asyncio.apply()
+from ..utils import get_multidict_items
+from .flask_plugin import Context, FlaskPlugin
 
 
-class QuartPlugin(BasePlugin):
+class QuartPlugin(FlaskPlugin):
     blueprint_state = None
     FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
+    ASYNC = True
 
     def find_routes(self):
         from quart import current_app
@@ -42,9 +38,6 @@ class QuartPlugin(BasePlugin):
                 continue
             yield rule
 
-    def bypass(self, func, method):
-        return method in ["HEAD", "OPTIONS"]
-
     def parse_func(self, route: Any):
         from quart import current_app
 
@@ -64,117 +57,45 @@ class QuartPlugin(BasePlugin):
             for method in route.methods:
                 yield method, func
 
-    def parse_path(self, route, path_parameter_descriptions):
-        from werkzeug.routing import parse_converter_args
+    def _fill_form(self, request) -> dict:
+        req_data = get_multidict_items(request.form)
+        req_data.update(get_multidict_items(request.files) if request.files else {})
+        return req_data
 
-        subs = []
-        parameters = []
-
-        for converter, arguments, variable in werkzeug_parse_rule(str(route)):
-            if converter is None:
-                subs.append(variable)
-                continue
-            subs.append(f"{{{variable}}}")
-
-            args, kwargs = [], {}
-
-            if arguments:
-                args, kwargs = parse_converter_args(arguments)
-
-            schema = None
-            if converter == "any":
-                schema = {
-                    "type": "string",
-                    "enum": args,
-                }
-            elif converter == "int":
-                schema = {
-                    "type": "integer",
-                    "format": "int32",
-                }
-                if "max" in kwargs:
-                    schema["maximum"] = kwargs["max"]
-                if "min" in kwargs:
-                    schema["minimum"] = kwargs["min"]
-            elif converter == "float":
-                schema = {
-                    "type": "number",
-                    "format": "float",
-                }
-            elif converter == "uuid":
-                schema = {
-                    "type": "string",
-                    "format": "uuid",
-                }
-            elif converter == "path":
-                schema = {
-                    "type": "string",
-                    "format": "path",
-                }
-            elif converter == "string":
-                schema = {
-                    "type": "string",
-                }
-                for prop in ["length", "maxLength", "minLength"]:
-                    if prop in kwargs:
-                        schema[prop] = kwargs[prop]
-            elif converter == "default":
-                schema = {"type": "string"}
-
-            description = (
-                path_parameter_descriptions.get(variable, "")
-                if path_parameter_descriptions
-                else ""
-            )
-            parameters.append(
-                {
-                    "name": variable,
-                    "in": "path",
-                    "required": True,
-                    "schema": schema,
-                    "description": description,
-                }
-            )
-
-        return "".join(subs), parameters
-
-    def request_validation(self, request: Request, query, json, headers, cookies):
+    async def request_validation(self, request, query, json, form, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
         req_headers: werkzeug.datastructures.EnvironHeaders
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
-        req_query = get_multidict_items(request.args) or {}
+        req_query = get_multidict_items(request.args)
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
-        use_json = json and request.method not in ("GET", "DELETE")
+        has_data = request.method not in ("GET", "DELETE")
+        use_json = json and has_data and request.mimetype == "application/json"
+        use_form = (
+            form
+            and has_data
+            and any([x in request.mimetype for x in self.FORM_MIMETYPE])
+        )
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
-            json.parse_obj(self._fill_json(request)) if use_json else None,
+            json.parse_obj(await request.get_json(silent=True) or {})
+            if use_json
+            else None,
+            form.parse_obj(self._fill_form(request)) if use_form else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
-    def _fill_json(self, request):
-        if request.mimetype not in self.FORM_MIMETYPE:
-            return asyncio.run(request.get_json(silent=True)) or {}
-        req_form = asyncio.run(request.form)
-        req_files = asyncio.run(request.files)
-        req_json = get_multidict_items(req_form) or {}
-        if request.files:
-            req_json = {
-                **req_json,
-                **get_multidict_items(req_files),
-            }
-        return req_json
-
-    def validate(
+    async def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
         json: Optional[ModelType],
+        form: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -189,15 +110,16 @@ class QuartPlugin(BasePlugin):
 
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, headers, cookies)
+            await self.request_validation(request, query, json, form, headers, cookies)
             if self.config.annotations:
-                for name in ("query", "json", "headers", "cookies"):
-                    if func.__annotations__.get(name):
+                annotations = get_type_hints(func)
+                for name in ("query", "json", "form", "headers", "cookies"):
+                    if annotations.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = asyncio.run(
-                make_response(jsonify(err.errors()), validation_error_status)
+            response = await make_response(
+                jsonify(err.errors()), validation_error_status
             )
 
         before(request, response, req_validation_error, None)
@@ -207,7 +129,7 @@ class QuartPlugin(BasePlugin):
             abort(response)  # type: ignore
 
         result = (
-            asyncio.run(func(*args, **kwargs))
+            await func(*args, **kwargs)
             if inspect.iscoroutinefunction(func)
             else func(*args, **kwargs)
         )
@@ -228,20 +150,18 @@ class QuartPlugin(BasePlugin):
                 skip_validation = True
                 result = (model.dict(), status, *rest)
 
-        response = asyncio.run(make_response(result))
+        response = await make_response(result)
 
         if resp and resp.has_model():
 
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(asyncio.run(response.get_json()))  # type: ignore
+                    model.parse_obj(await response.get_json())  # type: ignore
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = asyncio.run(
-                        make_response(
-                            jsonify({"message": "response validation error"}), 500
-                        )
+                    response = await make_response(
+                        jsonify({"message": "response validation error"}), 500
                     )
 
         after(request, response, resp_validation_error, None)
