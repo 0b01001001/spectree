@@ -1,6 +1,6 @@
 check: lint test
 
-SOURCE_FILES=spectree tests examples setup.py
+SOURCE_FILES=spectree tests examples
 
 install:
 	pip install -e .[email,flask,falcon,starlette,dev]
