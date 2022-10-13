@@ -3,10 +3,10 @@ check: lint test
 SOURCE_FILES=spectree tests examples setup.py
 
 install:
-	pip install -e .[email,quart,flask,falcon,starlette,pytest-asyncio,dev]
+	pip install -e .[email,quart,flask,falcon,starlette,dev]
 
 test:
-	pip install -U -e .[email,quart,flask,falcon,starlette,pytest-asyncio]
+	pip install -U -e .[email,quart,flask,falcon,starlette]
 	pytest tests -vv -rs
 doc:
 	cd docs && make html

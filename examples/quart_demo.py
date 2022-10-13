@@ -105,4 +105,4 @@ if __name__ == "__main__":
     """
     app.add_url_rule("/api/user", view_func=UserAPI.as_view("user_id"))
     api.register(app)
-    app.run(port=8005)
+    app.run(port=8000)
