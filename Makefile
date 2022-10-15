@@ -6,6 +6,7 @@ install:
 	pip install -e .[email,flask,falcon,starlette,dev]
 
 import_test:
+	pip install -e .[email]
 	for module in flask falcon starlette; do \
 		pip install -U $$module; \
 		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
