@@ -5,11 +5,20 @@ SOURCE_FILES=spectree tests examples setup.py
 install:
 	pip install -e .[email,flask,falcon,starlette,dev]
 
-test:
+import_test:
+	pip install -e .[email]
+	for module in flask falcon starlette; do \
+		pip install -U $$module; \
+		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
+		pip uninstall $$module -y; \
+	done
+
+test: import_test
 	pip install -U -e .[email,flask,falcon,starlette]
 	pytest tests -vv -rs
 	pip uninstall falcon email-validator -y && pip install falcon==2.0.0
 	pytest tests -vv -rs
+
 doc:
 	cd docs && make html
 

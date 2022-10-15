@@ -3,6 +3,8 @@ import re
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 
+from falcon import HTTP_400, HTTP_415, HTTPError
+from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 from pydantic import ValidationError
 
 from .._types import ModelType
@@ -55,13 +57,7 @@ class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
 
-        from falcon import HTTP_400, HTTP_415, HTTPError
-        from falcon.routing.compiled import _FIELD_PATTERN
-
-        # used to detect falcon 3.0 request media parse error
-        self.FALCON_HTTP_ERROR = HTTPError
         self.FALCON_MEDIA_ERROR_CODE = (HTTP_400, HTTP_415)
-        self.FIELD_PATTERN = _FIELD_PATTERN
         # NOTE from `falcon.routing.compiled.CompiledRouterNode`
         self.ESCAPE = r"[\.\(\)\[\]\?\$\*\+\^\|]"
         self.ESCAPE_TO = r"\\\g<0>"
@@ -114,13 +110,13 @@ class FalconPlugin(BasePlugin):
     def parse_path(self, route, path_parameter_descriptions):
         subs, parameters = [], []
         for segment in route.uri_template.strip("/").split("/"):
-            matches = self.FIELD_PATTERN.finditer(segment)
+            matches = FALCON_FIELD_PATTERN.finditer(segment)
             if not matches:
                 subs.append(segment)
                 continue
 
             escaped = re.sub(self.ESCAPE, self.ESCAPE_TO, segment)
-            subs.append(self.FIELD_PATTERN.sub(self.EXTRACT, escaped))
+            subs.append(FALCON_FIELD_PATTERN.sub(self.EXTRACT, escaped))
 
             for field in matches:
                 variable, converter, argstr = [
@@ -184,11 +180,17 @@ class FalconPlugin(BasePlugin):
             req.context.cookies = cookies.parse_obj(req.cookies)
         try:
             media = req.media
-        except self.FALCON_HTTP_ERROR as err:
+        except HTTPError as err:
             if err.status not in self.FALCON_MEDIA_ERROR_CODE:
                 raise
             media = None
         if json:
+            try:
+                media = req.media
+            except HTTPError as err:
+                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                    raise
+                media = None
             req.context.json = json.parse_obj(media)
 
     def validate(
@@ -267,7 +269,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if json:
             try:
                 media = await req.get_media()
-            except self.FALCON_HTTP_ERROR as err:
+            except HTTPError as err:
                 if err.status not in self.FALCON_MEDIA_ERROR_CODE:
                     raise
                 media = None
