@@ -1,6 +1,8 @@
 from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
+from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from pydantic import BaseModel, ValidationError
+from werkzeug.routing import parse_converter_args
 
 from .._types import ModelType
 from ..response import Response
@@ -12,8 +14,6 @@ class FlaskPlugin(BasePlugin):
     blueprint_state = None
 
     def find_routes(self):
-        from flask import current_app
-
         for rule in current_app.url_map.iter_rules():
             if any(
                 str(rule).startswith(path)
@@ -39,8 +39,6 @@ class FlaskPlugin(BasePlugin):
         return method in ["HEAD", "OPTIONS"]
 
     def parse_func(self, route: Any):
-        from flask import current_app
-
         if self.blueprint_state:
             func = self.blueprint_state.app.view_functions[route.endpoint]
         else:
@@ -62,8 +60,6 @@ class FlaskPlugin(BasePlugin):
         route: Optional[Mapping[str, str]],
         path_parameter_descriptions: Optional[Mapping[str, str]],
     ) -> Tuple[str, list]:
-        from werkzeug.routing import parse_converter_args
-
         subs = []
         parameters = []
 
@@ -183,8 +179,6 @@ class FlaskPlugin(BasePlugin):
         *args: Any,
         **kwargs: Any,
     ):
-        from flask import abort, jsonify, make_response, request
-
         response, req_validation_error, resp_validation_error = None, None, None
         try:
             self.request_validation(request, query, json, form, headers, cookies)
@@ -240,8 +234,6 @@ class FlaskPlugin(BasePlugin):
         return response
 
     def register_route(self, app):
-        from flask import Blueprint, jsonify
-
         app.add_url_rule(
             rule=self.config.spec_url,
             endpoint=f"openapi_{self.config.path}",

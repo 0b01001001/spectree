@@ -7,7 +7,7 @@ from starlette.applications import Starlette
 from spectree import Response
 from spectree.config import Configuration
 from spectree.models import Server, ValidationError
-from spectree.plugins import FlaskPlugin
+from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 
 from .common import get_paths
