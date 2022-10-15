@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - dev
+      - before_v1
 
 jobs:
   lint:
