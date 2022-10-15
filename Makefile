@@ -8,7 +8,7 @@ install:
 import_test:
 	for module in flask falcon starlette; do \
 		pip install -U $$module; \
-		bash -c "python tests/import_module/test_$${module}_plugin.py"; \
+		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
 		pip uninstall $$module -y; \
 	done
 
