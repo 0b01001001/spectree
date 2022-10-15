@@ -1,0 +1,551 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Response" href="response.html" /><link rel="prev" title="SpecTree" href="spectree.html" />
+
+    <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
+        <title>Config - spectree documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">spectree  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">spectree  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="spectree.html">SpecTree</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="response.html">Response</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-spectree.config">
+<span id="config"></span><h1>Config<a class="headerlink" href="#module-spectree.config" title="Permalink to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="spectree.config.Configuration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectree.config.</span></span><span class="sig-name descname"><span class="pre">Configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_env_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'&lt;object</span> <span class="pre">object&gt;'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_env_file_encoding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_env_nested_delimiter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_secrets_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Service</span> <span class="pre">API</span> <span class="pre">Document'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'0.1.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terms_of_service</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contact</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#spectree.config.Contact" title="spectree.config.Contact"><span class="pre">Contact</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">license</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#spectree.config.License" title="spectree.config.License"><span class="pre">License</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'apidoc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'openapi.json'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openapi_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'3.0.3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#spectree.config.ModeEnum" title="spectree.config.ModeEnum"><span class="pre">ModeEnum</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ModeEnum.normal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">servers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="models.html#spectree.models.Server" title="spectree.models.Server"><span class="pre">Server</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">security_schemes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="models.html#spectree.models.SecurityScheme" title="spectree.models.SecurityScheme"><span class="pre">SecurityScheme</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">security</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_secret</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">realm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'spectree_app'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope_separator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scopes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_query_string_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_basic_authentication_with_access_code_grant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_pkce_with_authorization_code_grant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">page_templates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'redoc':</span> <span class="pre">'\n&lt;!DOCTYPE</span> <span class="pre">html&gt;\n&lt;html&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;head&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;title&gt;ReDoc&lt;/title&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;!--</span> <span class="pre">needed</span> <span class="pre">for</span> <span class="pre">adaptive</span> <span class="pre">design</span> <span class="pre">--&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;meta</span> <span class="pre">charset=&quot;utf-8&quot;/&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;meta</span> <span class="pre">name=&quot;viewport&quot;</span> <span class="pre">content=&quot;width=device-width,</span> <span class="pre">initial-scale=1&quot;&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;link</span> <span class="pre">href=\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&quot;https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">rel=&quot;stylesheet&quot;&gt;\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;!--\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ReDoc</span> <span class="pre">doesn\'t</span> <span class="pre">change</span> <span class="pre">outer</span> <span class="pre">page</span> <span class="pre">styles\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">--&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;style&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">body</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">margin:</span> <span class="pre">0;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">padding:</span> <span class="pre">0;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;/style&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;/head&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;body&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;redoc</span> <span class="pre">spec-url=\'{spec_url}\'&gt;&lt;/redoc&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;script</span> <span class="pre">src=&quot;https://cdn.jsdelivr.net/npm/redoc&#64;next/bundles/redoc.standalone.js&quot;&gt;</span> <span class="pre">&lt;/script&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;/body&gt;\n&lt;/html&gt;',</span> <span class="pre">'swagger':</span> <span class="pre">'\n&lt;!--</span> <span class="pre">HTML</span> <span class="pre">for</span> <span class="pre">static</span> <span class="pre">distribution</span> <span class="pre">bundle</span> <span class="pre">build</span> <span class="pre">--&gt;\n&lt;!DOCTYPE</span> <span class="pre">html&gt;\n&lt;html</span> <span class="pre">lang=&quot;en&quot;&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;head&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;meta</span> <span class="pre">charset=&quot;UTF-8&quot;&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;title&gt;Swagger</span> <span class="pre">UI&lt;/title&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;link</span> <span class="pre">rel=&quot;stylesheet&quot;</span> <span class="pre">type=&quot;text/css&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">href=&quot;https://cdn.jsdelivr.net/npm/swagger-ui-dist&#64;4/swagger-ui.css&quot;</span> <span class="pre">&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;style&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">html\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">box-sizing:</span> <span class="pre">border-box;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">overflow:</span> <span class="pre">-moz-scrollbars-vertical;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">overflow-y:</span> <span class="pre">scroll;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">*,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">*:before,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">*:after\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">box-sizing:</span> <span class="pre">inherit;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">body\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">margin:0;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">background:</span> <span class="pre">#fafafa;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;/style&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;/head&gt;\n\n</span>&#160;&#160;&#160; <span class="pre">&lt;body&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;div</span> <span class="pre">id=&quot;swagger-ui&quot;&gt;&lt;/div&gt;\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;script</span> <span class="pre">src=&quot;https://cdn.jsdelivr.net/npm/swagger-ui-dist&#64;4/swagger-ui-bundle.js&quot;&gt;&lt;/script&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;script</span> <span class="pre">src=&quot;https://cdn.jsdelivr.net/npm/swagger-ui-dist&#64;4/swagger-ui-standalone-preset.js&quot;&gt;&lt;/script&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">&lt;script&gt;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">window.onload</span> <span class="pre">=</span> <span class="pre">function()</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">var</span> <span class="pre">full</span> <span class="pre">=</span> <span class="pre">location.protocol</span> <span class="pre">+</span> <span class="pre">\'//\'</span> <span class="pre">+</span> <span class="pre">location.hostname</span> <span class="pre">+</span> <span class="pre">(location.port</span> <span class="pre">?</span> <span class="pre">\':\'</span> <span class="pre">+</span> <span class="pre">location.port</span> <span class="pre">:</span> <span class="pre">\'\');\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">//</span> <span class="pre">Begin</span> <span class="pre">Swagger</span> <span class="pre">UI</span> <span class="pre">call</span> <span class="pre">region\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">const</span> <span class="pre">ui</span> <span class="pre">=</span> <span class="pre">SwaggerUIBundle({{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">url:</span> <span class="pre">&quot;{spec_url}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">dom_id:</span> <span class="pre">\'#swagger-ui\',\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">deepLinking:</span> <span class="pre">true,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">presets:</span> <span class="pre">[\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SwaggerUIBundle.presets.apis,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SwaggerUIStandalonePreset\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">],\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">plugins:</span> <span class="pre">[\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SwaggerUIBundle.plugins.DownloadUrl\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">],\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2RedirectUrl:</span> <span class="pre">full</span> <span class="pre">+</span> <span class="pre">&quot;/{spec_path}/swagger/oauth2-redirect.html&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">layout:</span> <span class="pre">&quot;StandaloneLayout&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}})\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ui.initOAuth({{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">clientId:</span> <span class="pre">&quot;{client_id}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">clientSecret:</span> <span class="pre">&quot;{client_secret}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">realm:</span> <span class="pre">&quot;{realm}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">appName:</span> <span class="pre">&quot;{app_name}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">scopeSeparator:</span> <span class="pre">&quot;{scope_separator}&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">additionalQueryStringParams:</span> <span class="pre">{additional_query_string_params},\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">useBasicAuthenticationWithAccessCodeGrant:</span> <span class="pre">{use_basic_authentication_with_access_code_grant},\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">usePkceWithAuthorizationCodeGrant:</span> <span class="pre">{use_pkce_with_authorization_code_grant}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}})\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">//</span> <span class="pre">End</span> <span class="pre">Swagger</span> <span class="pre">UI</span> <span class="pre">call</span> <span class="pre">region\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">window.ui</span> <span class="pre">=</span> <span class="pre">ui\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160; <span class="pre">&lt;/script&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;/body&gt;\n&lt;/html&gt;',</span> <span class="pre">'swagger/oauth2-redirect.html':</span> <span class="pre">'\n&lt;!DOCTYPE</span> <span class="pre">html&gt;\n&lt;html</span> <span class="pre">lang=&quot;en-US&quot;&gt;\n&lt;head&gt;\n</span>&#160;&#160;&#160; <span class="pre">&lt;title&gt;Swagger</span> <span class="pre">UI:</span> <span class="pre">OAuth2</span> <span class="pre">Redirect&lt;/title&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;script&gt;\n</span>&#160;&#160;&#160; <span class="pre">\'use</span> <span class="pre">strict\';\n</span>&#160;&#160;&#160; <span class="pre">function</span> <span class="pre">run</span> <span class="pre">()</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">var</span> <span class="pre">oauth2</span> <span class="pre">=</span> <span class="pre">window.opener.swaggerUIRedirectOauth2;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">var</span> <span class="pre">sentState</span> <span class="pre">=</span> <span class="pre">oauth2.state;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">var</span> <span class="pre">redirectUrl</span> <span class="pre">=</span> <span class="pre">oauth2.redirectUrl;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">var</span> <span class="pre">isValid,</span> <span class="pre">qp,</span> <span class="pre">arr;\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">(/code|token|error/.test(window.location.hash))</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">qp</span> <span class="pre">=</span> <span class="pre">window.location.hash.substring(1);\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}</span> <span class="pre">else</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">qp</span> <span class="pre">=</span> <span class="pre">location.search.substring(1);\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">arr</span> <span class="pre">=</span> <span class="pre">qp.split(&quot;&amp;&quot;);\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">arr.forEach(function</span> <span class="pre">(v,i,_arr)</span> <span class="pre">{{</span> <span class="pre">_arr[i]</span> <span class="pre">=</span> <span class="pre">\'&quot;\'</span> <span class="pre">+</span> <span class="pre">v.replace(\'=\',</span> <span class="pre">\'&quot;:&quot;\')</span> <span class="pre">+</span> <span class="pre">\'&quot;\';}});\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">qp</span> <span class="pre">=</span> <span class="pre">qp</span> <span class="pre">?</span> <span class="pre">JSON.parse(\'{{\'</span> <span class="pre">+</span> <span class="pre">arr.join()</span> <span class="pre">+</span> <span class="pre">\'}}\',\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">function</span> <span class="pre">(key,</span> <span class="pre">value)</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">return</span> <span class="pre">key</span> <span class="pre">===</span> <span class="pre">&quot;&quot;</span> <span class="pre">?</span> <span class="pre">value</span> <span class="pre">:</span> <span class="pre">decodeURIComponent(value);\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">)</span> <span class="pre">:</span> <span class="pre">{{}};\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">isValid</span> <span class="pre">=</span> <span class="pre">qp.state</span> <span class="pre">===</span> <span class="pre">sentState;\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">((\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.auth.schema.get(&quot;flow&quot;)</span> <span class="pre">===</span> <span class="pre">&quot;accessCode&quot;</span> <span class="pre">||\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.auth.schema.get(&quot;flow&quot;)</span> <span class="pre">===</span> <span class="pre">&quot;authorizationCode&quot;</span> <span class="pre">||\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.auth.schema.get(&quot;flow&quot;)</span> <span class="pre">===</span> <span class="pre">&quot;authorization_code&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">)</span> <span class="pre">&amp;&amp;</span> <span class="pre">!oauth2.auth.code)</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">(!isValid)</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.errCb({{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">authId:</span> <span class="pre">oauth2.auth.name,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">source:</span> <span class="pre">&quot;auth&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">level:</span> <span class="pre">&quot;warning&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">message:</span> <span class="pre">&quot;Authorization</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">unsafe,</span> <span class="pre">passed</span> <span class="pre">state</span> <span class="pre">was</span> <span class="pre">changed</span> <span class="pre">in</span> <span class="pre">server</span> <span class="pre">Passed</span> <span class="pre">state</span> <span class="pre">wasn\'t</span> <span class="pre">returned</span> <span class="pre">from</span> <span class="pre">auth</span> <span class="pre">server&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}});\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">(qp.code)</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">delete</span> <span class="pre">oauth2.state;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.auth.code</span> <span class="pre">=</span> <span class="pre">qp.code;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.callback({{auth:</span> <span class="pre">oauth2.auth,</span> <span class="pre">redirectUrl:</span> <span class="pre">redirectUrl}});\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}</span> <span class="pre">else</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">let</span> <span class="pre">oauthErrorMsg;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">(qp.error)</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauthErrorMsg</span> <span class="pre">=</span> <span class="pre">&quot;[&quot;+qp.error+&quot;]:</span> <span class="pre">&quot;</span> <span class="pre">+\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">(qp.error_description</span> <span class="pre">?</span> <span class="pre">qp.error_description+</span> <span class="pre">&quot;.</span> <span class="pre">&quot;</span> <span class="pre">:</span> <span class="pre">&quot;no</span> <span class="pre">accessCode</span> <span class="pre">received</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">server.</span> <span class="pre">&quot;)</span> <span class="pre">+\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">(qp.error_uri</span> <span class="pre">?</span> <span class="pre">&quot;More</span> <span class="pre">info:</span> <span class="pre">&quot;+qp.error_uri</span> <span class="pre">:</span> <span class="pre">&quot;&quot;);\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.errCb({{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">authId:</span> <span class="pre">oauth2.auth.name,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">source:</span> <span class="pre">&quot;auth&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">level:</span> <span class="pre">&quot;error&quot;,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">message:</span> <span class="pre">oauthErrorMsg</span> <span class="pre">||</span> <span class="pre">&quot;[Authorization</span> <span class="pre">failed]:</span> <span class="pre">no</span> <span class="pre">accessCode</span> <span class="pre">received</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">server&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}});\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}</span> <span class="pre">else</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">oauth2.callback({{auth:</span> <span class="pre">oauth2.auth,</span> <span class="pre">token:</span> <span class="pre">qp,</span> <span class="pre">isValid:</span> <span class="pre">isValid,</span> <span class="pre">redirectUrl:</span> <span class="pre">redirectUrl}});\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">}}\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">window.close();\n</span>&#160;&#160;&#160; <span class="pre">}}\n\n</span>&#160;&#160;&#160; <span class="pre">window.addEventListener(\'DOMContentLoaded\',</span> <span class="pre">function</span> <span class="pre">()</span> <span class="pre">{{\n</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">run();\n</span>&#160;&#160;&#160; <span class="pre">}});\n&lt;/script&gt;\n&lt;/body&gt;\n&lt;/html&gt;'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spectree/config.html#Configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectree.config.Configuration" title="Permalink to this definition">#</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.additional_query_string_params">
+<span class="sig-name descname"><span class="pre">additional_query_string_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.additional_query_string_params" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 additional query string params</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.annotations">
+<span class="sig-name descname"><span class="pre">annotations</span></span><a class="headerlink" href="#spectree.config.Configuration.annotations" title="Permalink to this definition">#</a></dt>
+<dd><p>opt-in type annotation feature, see the README examples</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.app_name">
+<span class="sig-name descname"><span class="pre">app_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.app_name" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 app name</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.client_id">
+<span class="sig-name descname"><span class="pre">client_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.client_id" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 client id</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.client_secret">
+<span class="sig-name descname"><span class="pre">client_secret</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.client_secret" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 client secret</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.contact">
+<span class="sig-name descname"><span class="pre">contact</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#spectree.config.Contact" title="spectree.config.Contact"><span class="pre">Contact</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.contact" title="Permalink to this definition">#</a></dt>
+<dd><p>author contact information</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.description" title="Permalink to this definition">#</a></dt>
+<dd><p>service OpenAPI document description</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.filename">
+<span class="sig-name descname"><span class="pre">filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.filename" title="Permalink to this definition">#</a></dt>
+<dd><p>OpenAPI file route path suffix (i.e. /apidoc/openapi.json)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.license">
+<span class="sig-name descname"><span class="pre">license</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#spectree.config.License" title="spectree.config.License"><span class="pre">License</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.license" title="Permalink to this definition">#</a></dt>
+<dd><p>license information</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#spectree.config.ModeEnum" title="spectree.config.ModeEnum"><span class="pre">ModeEnum</span></a></em><a class="headerlink" href="#spectree.config.Configuration.mode" title="Permalink to this definition">#</a></dt>
+<dd><p>the mode of the SpecTree validator <a class="reference internal" href="#spectree.config.ModeEnum" title="spectree.config.ModeEnum"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModeEnum</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.openapi_version">
+<span class="sig-name descname"><span class="pre">openapi_version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.openapi_version" title="Permalink to this definition">#</a></dt>
+<dd><p>OpenAPI version (doesn’t affect anything)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.page_templates">
+<span class="sig-name descname"><span class="pre">page_templates</span></span><a class="headerlink" href="#spectree.config.Configuration.page_templates" title="Permalink to this definition">#</a></dt>
+<dd><p>A dictionary of documentation page templates. The key is the
+name of the template, that is also used in the URL path, while the value is used
+to render the documentation page content. (Each page template should contain a
+<cite>{spec_url}</cite> placeholder, that’ll be replaced by the actual OpenAPI spec URL in
+the rendered documentation page</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.path">
+<span class="sig-name descname"><span class="pre">path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.path" title="Permalink to this definition">#</a></dt>
+<dd><p>OpenAPI doc route path prefix (i.e. /apidoc/)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.realm">
+<span class="sig-name descname"><span class="pre">realm</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.realm" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 realm</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.scope_separator">
+<span class="sig-name descname"><span class="pre">scope_separator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.scope_separator" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 scope separator</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.scopes">
+<span class="sig-name descname"><span class="pre">scopes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.scopes" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 scopes</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.security">
+<span class="sig-name descname"><span class="pre">security</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span></em><a class="headerlink" href="#spectree.config.Configuration.security" title="Permalink to this definition">#</a></dt>
+<dd><p>OpenAPI <cite>security</cite> JSON at the global level</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.security_schemes">
+<span class="sig-name descname"><span class="pre">security_schemes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="models.html#spectree.models.SecurityScheme" title="spectree.models.SecurityScheme"><span class="pre">SecurityScheme</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.security_schemes" title="Permalink to this definition">#</a></dt>
+<dd><p>OpenAPI <cite>securitySchemes</cite> <a class="reference internal" href="models.html#spectree.models.SecurityScheme" title="spectree.models.SecurityScheme"><code class="xref py py-class docutils literal notranslate"><span class="pre">spectree.models.SecurityScheme</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.servers">
+<span class="sig-name descname"><span class="pre">servers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="models.html#spectree.models.Server" title="spectree.models.Server"><span class="pre">Server</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.servers" title="Permalink to this definition">#</a></dt>
+<dd><p>servers section of OAS <a class="reference internal" href="models.html#spectree.models.Server" title="spectree.models.Server"><code class="xref py py-class docutils literal notranslate"><span class="pre">spectree.models.Server</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectree.config.Configuration.swagger_oauth2_config">
+<span class="sig-name descname"><span class="pre">swagger_oauth2_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/spectree/config.html#Configuration.swagger_oauth2_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectree.config.Configuration.swagger_oauth2_config" title="Permalink to this definition">#</a></dt>
+<dd><p>return the swagger UI OAuth2 configs</p>
+<p>ref: <a class="reference external" href="https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/">https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/</a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.terms_of_service">
+<span class="sig-name descname"><span class="pre">terms_of_service</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Configuration.terms_of_service" title="Permalink to this definition">#</a></dt>
+<dd><p>terms of service url</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.title">
+<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.title" title="Permalink to this definition">#</a></dt>
+<dd><p>title of the service</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.use_basic_authentication_with_access_code_grant">
+<span class="sig-name descname"><span class="pre">use_basic_authentication_with_access_code_grant</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#spectree.config.Configuration.use_basic_authentication_with_access_code_grant" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 use basic authentication with access code grant</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.use_pkce_with_authorization_code_grant">
+<span class="sig-name descname"><span class="pre">use_pkce_with_authorization_code_grant</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#spectree.config.Configuration.use_pkce_with_authorization_code_grant" title="Permalink to this definition">#</a></dt>
+<dd><p>OAuth2 use PKCE with authorization code grant</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Configuration.version">
+<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Configuration.version" title="Permalink to this definition">#</a></dt>
+<dd><p>service version</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="spectree.config.Contact">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectree.config.</span></span><span class="sig-name descname"><span class="pre">Contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">EmailStr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spectree/config.html#Contact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectree.config.Contact" title="Permalink to this definition">#</a></dt>
+<dd><p>contact information</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Contact.email">
+<span class="sig-name descname"><span class="pre">email</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">EmailStr</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Contact.email" title="Permalink to this definition">#</a></dt>
+<dd><p>contact email address</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Contact.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.Contact.name" title="Permalink to this definition">#</a></dt>
+<dd><p>name of the contact</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.Contact.url">
+<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.Contact.url" title="Permalink to this definition">#</a></dt>
+<dd><p>contact url</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="spectree.config.License">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectree.config.</span></span><span class="sig-name descname"><span class="pre">License</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spectree/config.html#License"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectree.config.License" title="Permalink to this definition">#</a></dt>
+<dd><p>license information</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.License.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#spectree.config.License.name" title="Permalink to this definition">#</a></dt>
+<dd><p>name of the license</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.License.url">
+<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">AnyUrl</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#spectree.config.License.url" title="Permalink to this definition">#</a></dt>
+<dd><p>license url</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="spectree.config.ModeEnum">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectree.config.</span></span><span class="sig-name descname"><span class="pre">ModeEnum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spectree/config.html#ModeEnum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectree.config.ModeEnum" title="Permalink to this definition">#</a></dt>
+<dd><p>the mode of the SpecTree validator</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.ModeEnum.greedy">
+<span class="sig-name descname"><span class="pre">greedy</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'greedy'</span></em><a class="headerlink" href="#spectree.config.ModeEnum.greedy" title="Permalink to this definition">#</a></dt>
+<dd><p>includes all the routes</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.ModeEnum.normal">
+<span class="sig-name descname"><span class="pre">normal</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'normal'</span></em><a class="headerlink" href="#spectree.config.ModeEnum.normal" title="Permalink to this definition">#</a></dt>
+<dd><p>includes undecorated routes and routes decorated by this instance</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="spectree.config.ModeEnum.strict">
+<span class="sig-name descname"><span class="pre">strict</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'strict'</span></em><a class="headerlink" href="#spectree.config.ModeEnum.strict" title="Permalink to this definition">#</a></dt>
+<dd><p>only includes routes decorated by this instance</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="response.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Response</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="spectree.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">SpecTree</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2020, Keming Yang
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Config</a><ul>
+<li><a class="reference internal" href="#spectree.config.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
+<li><a class="reference internal" href="#spectree.config.Configuration.additional_query_string_params"><code class="docutils literal notranslate"><span class="pre">Configuration.additional_query_string_params</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.annotations"><code class="docutils literal notranslate"><span class="pre">Configuration.annotations</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.app_name"><code class="docutils literal notranslate"><span class="pre">Configuration.app_name</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.client_id"><code class="docutils literal notranslate"><span class="pre">Configuration.client_id</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.client_secret"><code class="docutils literal notranslate"><span class="pre">Configuration.client_secret</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.contact"><code class="docutils literal notranslate"><span class="pre">Configuration.contact</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.description"><code class="docutils literal notranslate"><span class="pre">Configuration.description</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.filename"><code class="docutils literal notranslate"><span class="pre">Configuration.filename</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.license"><code class="docutils literal notranslate"><span class="pre">Configuration.license</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.mode"><code class="docutils literal notranslate"><span class="pre">Configuration.mode</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.openapi_version"><code class="docutils literal notranslate"><span class="pre">Configuration.openapi_version</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.page_templates"><code class="docutils literal notranslate"><span class="pre">Configuration.page_templates</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.path"><code class="docutils literal notranslate"><span class="pre">Configuration.path</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.realm"><code class="docutils literal notranslate"><span class="pre">Configuration.realm</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.scope_separator"><code class="docutils literal notranslate"><span class="pre">Configuration.scope_separator</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.scopes"><code class="docutils literal notranslate"><span class="pre">Configuration.scopes</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.security"><code class="docutils literal notranslate"><span class="pre">Configuration.security</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.security_schemes"><code class="docutils literal notranslate"><span class="pre">Configuration.security_schemes</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.servers"><code class="docutils literal notranslate"><span class="pre">Configuration.servers</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.swagger_oauth2_config"><code class="docutils literal notranslate"><span class="pre">Configuration.swagger_oauth2_config()</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.terms_of_service"><code class="docutils literal notranslate"><span class="pre">Configuration.terms_of_service</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.title"><code class="docutils literal notranslate"><span class="pre">Configuration.title</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.use_basic_authentication_with_access_code_grant"><code class="docutils literal notranslate"><span class="pre">Configuration.use_basic_authentication_with_access_code_grant</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.use_pkce_with_authorization_code_grant"><code class="docutils literal notranslate"><span class="pre">Configuration.use_pkce_with_authorization_code_grant</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Configuration.version"><code class="docutils literal notranslate"><span class="pre">Configuration.version</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#spectree.config.Contact"><code class="docutils literal notranslate"><span class="pre">Contact</span></code></a><ul>
+<li><a class="reference internal" href="#spectree.config.Contact.email"><code class="docutils literal notranslate"><span class="pre">Contact.email</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Contact.name"><code class="docutils literal notranslate"><span class="pre">Contact.name</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.Contact.url"><code class="docutils literal notranslate"><span class="pre">Contact.url</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#spectree.config.License"><code class="docutils literal notranslate"><span class="pre">License</span></code></a><ul>
+<li><a class="reference internal" href="#spectree.config.License.name"><code class="docutils literal notranslate"><span class="pre">License.name</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.License.url"><code class="docutils literal notranslate"><span class="pre">License.url</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#spectree.config.ModeEnum"><code class="docutils literal notranslate"><span class="pre">ModeEnum</span></code></a><ul>
+<li><a class="reference internal" href="#spectree.config.ModeEnum.greedy"><code class="docutils literal notranslate"><span class="pre">ModeEnum.greedy</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.ModeEnum.normal"><code class="docutils literal notranslate"><span class="pre">ModeEnum.normal</span></code></a></li>
+<li><a class="reference internal" href="#spectree.config.ModeEnum.strict"><code class="docutils literal notranslate"><span class="pre">ModeEnum.strict</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    </body>
+</html>

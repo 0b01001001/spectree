@@ -1,0 +1,413 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="SpecTree" href="spectree.html" />
+
+    <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
+        <title>spectree documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">spectree  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  
+  <span class="sidebar-brand-text">spectree  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spectree.html">SpecTree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="response.html">Response</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="welcome-to-spectree-s-documentation">
+<h1>Welcome to spectree’s documentation!<a class="headerlink" href="#welcome-to-spectree-s-documentation" title="Permalink to this heading">#</a></h1>
+<p><a class="reference external" href="https://github.com/0b01001001/spectree/actions"><img alt="GitHub Actions" src="https://github.com/0b01001001/spectree/workflows/Python%20package/badge.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/spectree"><img alt="pypi" src="https://img.shields.io/pypi/v/spectree.svg" /></a> <a class="reference external" href="https://github.com/0b01001001/spectree"><img alt="versions" src="https://img.shields.io/pypi/pyversions/spectree.svg" /></a> <a class="reference external" href="https://lgtm.com/projects/g/0b01001001/spectree/context:python"><img alt="Language grade: Python" src="https://img.shields.io/lgtm/grade/python/g/0b01001001/spectree.svg?logo=lgtm&amp;logoWidth=18" /></a>
+<a class="reference external" href="https://spectree.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/spectree/badge/?version=latest" /></a></p>
+<p>Yet another library to generate OpenAPI document and validate request &amp;
+response with Python annotations.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Less boilerplate code, annotations are really easy-to-use</p></li>
+<li><p>Generate API document with <a class="reference external" href="https://github.com/Redocly/redoc">Redoc UI</a> or <a class="reference external" href="https://github.com/swagger-api/swagger-ui">Swagger UI</a></p></li>
+<li><p>Validate query, JSON data, response data with <a class="reference external" href="https://github.com/samuelcolvin/pydantic/">pydantic</a></p></li>
+<li><p>Current support:</p>
+<ul>
+<li><p>Flask</p></li>
+<li><p>Falcon (including Falcon ASGI)</p></li>
+<li><p>Starlette</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this heading">#</a></h2>
+<p>Install with pip: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">spectree</span></code>. If you’d like for email fields to be validated, use <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">spectree[email]</span></code>.</p>
+<section id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">#</a></h3>
+<p>Check the <a class="reference external" href="https://github.com/0b01001001/spectree/blob/master/examples">examples</a> folder.</p>
+</section>
+<section id="step-by-step">
+<h3>Step by Step<a class="headerlink" href="#step-by-step" title="Permalink to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>Define your data structure used in (query, json, headers, cookies,
+resp) with <code class="docutils literal notranslate"><span class="pre">pydantic.BaseModel</span></code></p></li>
+<li><p>create <code class="docutils literal notranslate"><span class="pre">spectree.SpecTree</span></code> instance with the web framework name you
+are using, like <code class="docutils literal notranslate"><span class="pre">api</span> <span class="pre">=</span> <span class="pre">SpecTree('flask')</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">api.validate</span></code> decorate the route with</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">query</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">json</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">headers</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cookies</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tags</span></code></p></li>
+</ul>
+</li>
+<li><p>access these data with <code class="docutils literal notranslate"><span class="pre">context(query,</span> <span class="pre">json,</span> <span class="pre">headers,</span> <span class="pre">cookies)</span></code> (of
+course, you can access these from the original place where the
+framework offered)</p>
+<ul class="simple">
+<li><p>flask: <code class="docutils literal notranslate"><span class="pre">request.context</span></code></p></li>
+<li><p>falcon: <code class="docutils literal notranslate"><span class="pre">req.context</span></code></p></li>
+<li><p>starlette: <code class="docutils literal notranslate"><span class="pre">request.context</span></code></p></li>
+</ul>
+</li>
+<li><p>register to the web application <code class="docutils literal notranslate"><span class="pre">api.register(app)</span></code></p></li>
+<li><p>check the document at URL location <code class="docutils literal notranslate"><span class="pre">/apidoc/redoc</span></code> or
+<code class="docutils literal notranslate"><span class="pre">/apidoc/swagger</span></code></p></li>
+</ol>
+</section>
+</section>
+<section id="faq">
+<h2>FAQ<a class="headerlink" href="#faq" title="Permalink to this heading">#</a></h2>
+<blockquote>
+<div><p>ValidationError: missing field for headers</p>
+</div></blockquote>
+<p>The HTTP headers’ keys in Flask are capitalized, in Falcon are upper
+cases, in Starlette are lower cases.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spectree.html">SpecTree</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spectree.html#spectree.spec.SpecTree"><code class="docutils literal notranslate"><span class="pre">SpecTree</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config.html#spectree.config.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html#spectree.config.Contact"><code class="docutils literal notranslate"><span class="pre">Contact</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html#spectree.config.License"><code class="docutils literal notranslate"><span class="pre">License</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="config.html#spectree.config.ModeEnum"><code class="docutils literal notranslate"><span class="pre">ModeEnum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="response.html">Response</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="response.html#spectree.response.Response"><code class="docutils literal notranslate"><span class="pre">Response</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.base.BasePlugin"><code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.base.Context"><code class="docutils literal notranslate"><span class="pre">Context</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.flask_plugin.FlaskPlugin"><code class="docutils literal notranslate"><span class="pre">FlaskPlugin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.falcon_plugin.FalconAsgiPlugin"><code class="docutils literal notranslate"><span class="pre">FalconAsgiPlugin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.falcon_plugin.FalconPlugin"><code class="docutils literal notranslate"><span class="pre">FalconPlugin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.starlette_plugin.Route"><code class="docutils literal notranslate"><span class="pre">Route</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#spectree.plugins.starlette_plugin.StarlettePlugin"><code class="docutils literal notranslate"><span class="pre">StarlettePlugin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.BaseFile"><code class="docutils literal notranslate"><span class="pre">BaseFile</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.InType"><code class="docutils literal notranslate"><span class="pre">InType</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.SecureType"><code class="docutils literal notranslate"><span class="pre">SecureType</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.SecurityScheme"><code class="docutils literal notranslate"><span class="pre">SecurityScheme</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.SecuritySchemeData"><code class="docutils literal notranslate"><span class="pre">SecuritySchemeData</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.Server"><code class="docutils literal notranslate"><span class="pre">Server</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.Tag"><code class="docutils literal notranslate"><span class="pre">Tag</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.ValidationError"><code class="docutils literal notranslate"><span class="pre">ValidationError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#spectree.models.ValidationErrorElement"><code class="docutils literal notranslate"><span class="pre">ValidationErrorElement</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.default_after_handler"><code class="docutils literal notranslate"><span class="pre">default_after_handler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.default_before_handler"><code class="docutils literal notranslate"><span class="pre">default_before_handler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.gen_list_model"><code class="docutils literal notranslate"><span class="pre">gen_list_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.get_model_key"><code class="docutils literal notranslate"><span class="pre">get_model_key()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.get_model_schema"><code class="docutils literal notranslate"><span class="pre">get_model_schema()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.get_multidict_items"><code class="docutils literal notranslate"><span class="pre">get_multidict_items()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.get_security"><code class="docutils literal notranslate"><span class="pre">get_security()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.has_model"><code class="docutils literal notranslate"><span class="pre">has_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.hash_module_path"><code class="docutils literal notranslate"><span class="pre">hash_module_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_code"><code class="docutils literal notranslate"><span class="pre">parse_code()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_comments"><code class="docutils literal notranslate"><span class="pre">parse_comments()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_name"><code class="docutils literal notranslate"><span class="pre">parse_name()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_params"><code class="docutils literal notranslate"><span class="pre">parse_params()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_request"><code class="docutils literal notranslate"><span class="pre">parse_request()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.parse_resp"><code class="docutils literal notranslate"><span class="pre">parse_resp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#spectree.utils.werkzeug_parse_rule"><code class="docutils literal notranslate"><span class="pre">werkzeug_parse_rule()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">#</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="spectree.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">SpecTree</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2020, Keming Yang
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Welcome to spectree’s documentation!</a><ul>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#step-by-step">Step by Step</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#faq">FAQ</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    </body>
+</html>
