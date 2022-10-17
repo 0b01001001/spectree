@@ -1,22 +1,22 @@
 import inspect
-from typing import Any, Callable, Optional, get_type_hints
+from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
 from pydantic import BaseModel, ValidationError
+from quart import Blueprint, abort, current_app, jsonify, make_response, request
+from werkzeug.routing import parse_converter_args
 
 from .._types import ModelType
 from ..response import Response
-from ..utils import get_multidict_items
-from .flask_plugin import Context, FlaskPlugin
+from ..utils import get_multidict_items, werkzeug_parse_rule
+from .base import BasePlugin, Context
 
 
-class QuartPlugin(FlaskPlugin):
+class QuartPlugin(BasePlugin):
     blueprint_state = None
     FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
     ASYNC = True
 
     def find_routes(self):
-        from quart import current_app
-
         for rule in current_app.url_map.iter_rules():
             if any(
                 str(rule).startswith(path)
@@ -38,9 +38,10 @@ class QuartPlugin(FlaskPlugin):
                 continue
             yield rule
 
-    def parse_func(self, route: Any):
-        from quart import current_app
+    def bypass(self, func, method):
+        return method in ["HEAD", "OPTIONS"]
 
+    def parse_func(self, route: Any):
         if self.blueprint_state:
             func = self.blueprint_state.app.view_functions[route.endpoint]
         else:
@@ -57,10 +58,82 @@ class QuartPlugin(FlaskPlugin):
             for method in route.methods:
                 yield method, func
 
-    def _fill_form(self, request) -> dict:
-        req_data = get_multidict_items(request.form)
-        req_data.update(get_multidict_items(request.files) if request.files else {})
-        return req_data
+    def parse_path(
+        self,
+        route: Optional[Mapping[str, str]],
+        path_parameter_descriptions: Optional[Mapping[str, str]],
+    ) -> Tuple[str, list]:
+        subs = []
+        parameters = []
+
+        for converter, arguments, variable in werkzeug_parse_rule(str(route)):
+            if converter is None:
+                subs.append(variable)
+                continue
+            subs.append(f"{{{variable}}}")
+
+            args: tuple = ()
+            kwargs: dict = {}
+
+            if arguments:
+                args, kwargs = parse_converter_args(arguments)
+
+            schema = None
+            if converter == "any":
+                schema = {
+                    "type": "string",
+                    "enum": args,
+                }
+            elif converter == "int":
+                schema = {
+                    "type": "integer",
+                    "format": "int32",
+                }
+                if "max" in kwargs:
+                    schema["maximum"] = kwargs["max"]
+                if "min" in kwargs:
+                    schema["minimum"] = kwargs["min"]
+            elif converter == "float":
+                schema = {
+                    "type": "number",
+                    "format": "float",
+                }
+            elif converter == "uuid":
+                schema = {
+                    "type": "string",
+                    "format": "uuid",
+                }
+            elif converter == "path":
+                schema = {
+                    "type": "string",
+                    "format": "path",
+                }
+            elif converter == "string":
+                schema = {
+                    "type": "string",
+                }
+                for prop in ["length", "maxLength", "minLength"]:
+                    if prop in kwargs:
+                        schema[prop] = kwargs[prop]
+            elif converter == "default":
+                schema = {"type": "string"}
+
+            description = (
+                path_parameter_descriptions.get(variable, "")
+                if path_parameter_descriptions
+                else ""
+            )
+            parameters.append(
+                {
+                    "name": variable,
+                    "in": "path",
+                    "required": True,
+                    "schema": schema,
+                    "description": description,
+                }
+            )
+
+        return "".join(subs), parameters
 
     async def request_validation(self, request, query, json, form, headers, cookies):
         """
@@ -90,6 +163,11 @@ class QuartPlugin(FlaskPlugin):
             cookies.parse_obj(req_cookies) if cookies else None,
         )
 
+    def _fill_form(self, request) -> dict:
+        req_data = get_multidict_items(request.form)
+        req_data.update(get_multidict_items(request.files) if request.files else {})
+        return req_data
+
     async def validate(
         self,
         func: Callable,
@@ -106,8 +184,6 @@ class QuartPlugin(FlaskPlugin):
         *args: Any,
         **kwargs: Any,
     ):
-        from quart import abort, jsonify, make_response, request
-
         response, req_validation_error, resp_validation_error = None, None, None
         try:
             await self.request_validation(request, query, json, form, headers, cookies)
@@ -169,8 +245,6 @@ class QuartPlugin(FlaskPlugin):
         return response
 
     def register_route(self, app):
-        from quart import Blueprint, jsonify
-
         app.add_url_rule(
             self.config.spec_url,
             endpoint=f"openapi_{self.config.path}",

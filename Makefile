@@ -14,7 +14,7 @@ import_test:
 	done
 
 test: import_test
-	pip install -U -e .[email,flask,falcon,starlette]
+	pip install -U -e .[email,flask,quart,falcon,starlette]
 	pytest tests -vv -rs
 
 doc:
