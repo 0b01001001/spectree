@@ -172,7 +172,7 @@ class QuartPlugin(FlaskPlugin):
         from quart import Blueprint, jsonify
 
         app.add_url_rule(
-            rule=self.config.spec_url,
+            self.config.spec_url,
             endpoint=f"openapi_{self.config.path}",
             view_func=lambda: jsonify(self.spectree.spec),
         )
@@ -197,7 +197,7 @@ class QuartPlugin(FlaskPlugin):
 
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    f"/{self.config.path}/{ui}/",
                     endpoint=f"openapi_{self.config.path}_{ui.replace('.', '_')}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
@@ -206,7 +206,7 @@ class QuartPlugin(FlaskPlugin):
         else:
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    f"/{self.config.path}/{ui}/",
                     endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: self.config.page_templates[ui].format(
                         spec_url=self.config.spec_url,
