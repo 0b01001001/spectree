@@ -42,7 +42,7 @@ security_schemes = [
 ]
 
 app = Flask(__name__)
-api = SpecTree(
+spec = SpecTree(
     "flask",
     security_schemes=security_schemes,
     SECURITY={"test_secure": []},
@@ -51,7 +51,7 @@ api = SpecTree(
 
 
 @app.route("/ping", methods=["POST"])
-@api.validate(
+@spec.validate(
     json=Req,
     security=[{"PartnerID": [], "PartnerToken": []}, {"auth_oauth2": ["read"]}],
 )
@@ -65,5 +65,5 @@ def index():
 
 
 if __name__ == "__main__":
-    api.register(app)
+    spec.register(app)
     app.run(port=8000)

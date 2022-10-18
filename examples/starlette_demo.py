@@ -8,7 +8,7 @@ from starlette.routing import Mount, Route
 from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
-api = SpecTree("starlette")
+spec = SpecTree("starlette")
 
 
 class Resp(BaseModel):
@@ -30,7 +30,7 @@ class Data(BaseModel):
     vip: bool
 
 
-@api.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
+@spec.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
 async def predict(request):
     """
     async api
@@ -43,7 +43,7 @@ async def predict(request):
     # return PydanticResponse(Resp(label=5, score=0.5))
 
 
-@api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+@spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 async def file_upload(request):
     """
     post multipart/form-data demo
@@ -55,7 +55,7 @@ async def file_upload(request):
 
 
 class Ping(HTTPEndpoint):
-    @api.validate(tags=["health check", "api"])
+    @spec.validate(tags=["health check", "api"])
     def get(self, request):
         """
         health check
@@ -81,6 +81,6 @@ if __name__ == "__main__":
             ),
         ]
     )
-    api.register(app)
+    spec.register(app)
 
     uvicorn.run(app, log_level="info")

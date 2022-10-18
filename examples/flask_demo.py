@@ -9,7 +9,7 @@ from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
 app = Flask(__name__)
-api = SpecTree("flask")
+spec = SpecTree("flask")
 
 
 class Resp(BaseModel):
@@ -52,7 +52,7 @@ class Cookie(BaseModel):
 @app.route(
     "/api/predict/<string(length=2):source>/<string(length=2):target>", methods=["POST"]
 )
-@api.validate(
+@spec.validate(
     query=Query, json=Data, resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"]
 )
 def predict(source, target):
@@ -74,7 +74,7 @@ def predict(source, target):
 
 
 @app.route("/api/header", methods=["POST"])
-@api.validate(
+@spec.validate(
     headers=Header, cookies=Cookie, resp=Response("HTTP_203"), tags=["test", "demo"]
 )
 def with_code_header():
@@ -87,7 +87,7 @@ def with_code_header():
 
 
 @app.route("/api/file_upload", methods=["POST"])
-@api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+@spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
 def with_file():
     """
     post multipart/form-data demo
@@ -99,7 +99,7 @@ def with_file():
 
 
 class UserAPI(MethodView):
-    @api.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
+    @spec.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
     def post(self):
         return jsonify(label=int(10 * random()), score=random())
 
@@ -112,5 +112,5 @@ if __name__ == "__main__":
         http POST :8000/api/header Lang:zh-CN Cookie:key=hello
     """
     app.add_url_rule("/api/user", view_func=UserAPI.as_view("user_id"))
-    api.register(app)
+    spec.register(app)
     app.run(port=8000)
