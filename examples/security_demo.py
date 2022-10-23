@@ -45,7 +45,10 @@ app = Flask(__name__)
 api = SpecTree(
     "flask",
     security_schemes=security_schemes,
-    SECURITY={"test_secure": []},
+    SECURITY=[
+        {"test_secure": []},
+        {"PartnerID": [], "PartnerToken": []},
+    ],
     client_id="client_id",
 )
 
@@ -53,9 +56,17 @@ api = SpecTree(
 @app.route("/ping", methods=["POST"])
 @api.validate(
     json=Req,
-    security=[{"PartnerID": [], "PartnerToken": []}, {"auth_oauth2": ["read"]}],
 )
 def ping():
+    return "pong"
+
+
+@app.route("/ping/oauth", methods=["POST"])
+@spec.validate(
+    json=Req,
+    security=[{"auth_oauth2": ["read"]}],
+)
+def oauth_only():
     return "pong"
 
 
