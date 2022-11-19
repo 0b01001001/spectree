@@ -7,7 +7,7 @@ from starlette.applications import Starlette
 from spectree import Response
 from spectree.config import Configuration
 from spectree.models import Server, ValidationError
-from spectree.plugins import FlaskPlugin
+from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 
 from .common import get_paths
@@ -190,3 +190,29 @@ def test_model_for_validation_errors_specified():
 
     assert foo.resp.find_model(422) is ValidationError
     assert bar.resp.find_model(422) is CustomValidationError
+
+
+def test_global_model_for_validation_errors_specified():
+    class GlobalValidationError(BaseModel):
+        pass
+
+    class RouteValidationError(BaseModel):
+        pass
+
+    api = SpecTree("flask", validation_error_model=GlobalValidationError)
+    app = Flask(__name__)
+
+    @app.route("/foo")
+    @api.validate(resp=Response(HTTP_200=None))
+    def foo():
+        pass
+
+    @app.route("/bar")
+    @api.validate(resp=Response(HTTP_200=None, HTTP_422=RouteValidationError))
+    def bar():
+        pass
+
+    api.register(app)
+
+    assert foo.resp.find_model(422) is GlobalValidationError
+    assert bar.resp.find_model(422) is RouteValidationError

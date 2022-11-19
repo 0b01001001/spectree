@@ -1,12 +1,16 @@
+from collections import namedtuple
+
 from .base import BasePlugin
-from .falcon_plugin import FalconAsgiPlugin, FalconPlugin
-from .flask_plugin import FlaskPlugin
-from .starlette_plugin import StarlettePlugin
+
+__all__ = ["BasePlugin"]
+
+Plugin = namedtuple("Plugin", ("name", "package", "class_name"))
 
 PLUGINS = {
-    "base": BasePlugin,
-    "flask": FlaskPlugin,
-    "falcon": FalconPlugin,
-    "falcon-asgi": FalconAsgiPlugin,
-    "starlette": StarlettePlugin,
+    "base": Plugin(".base", __name__, "BasePlugin"),
+    "flask": Plugin(".flask_plugin", __name__, "FlaskPlugin"),
+    "quart": Plugin(".quart_plugin", __name__, "QuartPlugin"),
+    "falcon": Plugin(".falcon_plugin", __name__, "FalconPlugin"),
+    "falcon-asgi": Plugin(".falcon_plugin", __name__, "FalconAsgiPlugin"),
+    "starlette": Plugin(".starlette_plugin", __name__, "StarlettePlugin"),
 }

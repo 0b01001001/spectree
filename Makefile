@@ -3,11 +3,20 @@ check: lint test
 SOURCE_FILES=spectree tests examples
 
 install:
-	pip install -e .[email,flask,falcon,starlette,dev]
+	pip install -e .[email,quart,flask,falcon,starlette,dev]
 
-test:
-	pip install -U -e .[email,flask,falcon,starlette]
+import_test:
+	pip install -e .[email]
+	for module in flask quart falcon starlette; do \
+		pip install -U $$module; \
+		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
+		pip uninstall $$module -y; \
+	done
+
+test: import_test
+	pip install -U -e .[email,flask,quart,falcon,starlette]
 	pytest tests -vv -rs
+
 doc:
 	cd docs && make html
 

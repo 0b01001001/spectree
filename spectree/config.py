@@ -1,6 +1,6 @@
 import warnings
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 
@@ -86,7 +86,7 @@ class Configuration(BaseSettings):
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`
     security_schemes: Optional[List[SecurityScheme]] = None
     #: OpenAPI `security` JSON at the global level
-    security: Dict = {}
+    security: Union[Dict[str, List[str]], List[Dict[str, List[str]]]] = {}
     # Swagger OAuth2 configs
     #: OAuth2 client id
     client_id: str = ""

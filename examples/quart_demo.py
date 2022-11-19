@@ -1,15 +1,18 @@
 from enum import Enum
 from random import random
 
-from flask import Flask, abort, jsonify, request
-from flask.views import MethodView
 from pydantic import BaseModel, Field
+from quart import Quart, abort, jsonify, request
+from quart.views import MethodView
 
-from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
-app = Flask(__name__)
-spec = SpecTree("flask")
+app = Quart(__name__)
+spec = SpecTree("quart")
+
+
+class Query(BaseModel):
+    text: str = "default query strings"
 
 
 class Resp(BaseModel):
@@ -65,8 +68,8 @@ def predict(source, target):
     ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
     """
     print(f"=> from {source} to {target}")  # path
-    print(f"JSON: {request.context.json}")  # Data
-    print(f"Query: {request.context.query}")  # Query
+    print(f"JSON: {request.json}")  # Data
+    print(f"Query: {request.args}")  # Query
     if random() < 0.5:
         abort(403)
 
@@ -77,31 +80,20 @@ def predict(source, target):
 @spec.validate(
     headers=Header, cookies=Cookie, resp=Response("HTTP_203"), tags=["test", "demo"]
 )
-def with_code_header():
+async def with_code_header():
     """
     demo for JSON with status code and header
 
     query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
-    return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
-
-
-@app.route("/api/file_upload", methods=["POST"])
-@spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-def with_file():
-    """
-    post multipart/form-data demo
-
-    demo for 'form'
-    """
-    file = request.context.form.file
-    return {"filename": file.filename, "type": file.content_type}
+    return jsonify(language=request.headers.get("Lang")), 203, {"X": 233}
 
 
 class UserAPI(MethodView):
     @spec.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
-    def post(self):
+    async def post(self):
         return jsonify(label=int(10 * random()), score=random())
+        # return Resp(label=int(10 * random()), score=random())
 
 
 if __name__ == "__main__":

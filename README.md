@@ -16,6 +16,7 @@ Yet another library to generate OpenAPI documents and validate requests & respon
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
 * Current support:
   * Flask [demo](#flask)
+  * Quart [demo](#quart)
   * Falcon [demo](#falcon)
   * Starlette [demo](#starlette)
 
@@ -274,20 +275,15 @@ from spectree import SpecTree, Response
 
 
 class Profile(BaseModel):
-    name: constr(min_length=2, max_length=40) # Constrained Str
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=150,
-        description='user age(Human)'
-    )
+    name: constr(min_length=2, max_length=40)  # constrained str
+    age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
     class Config:
         schema_extra = {
             # provide an example
-            'example': {
-                'name': 'very_important_user',
-                'age': 42,
+            "example": {
+                "name": "very_important_user",
+                "age": 42,
             }
         }
 
@@ -297,44 +293,114 @@ class Message(BaseModel):
 
 
 app = Flask(__name__)
-api = SpecTree('flask')
+spec = SpecTree("flask")
 
 
-@app.route('/api/user', methods=['POST'])
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+@app.route("/api/user", methods=["POST"])
+@spec.validate(
+    json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"]
+)
 def user_profile():
     """
     verify user profile (summary of this endpoint)
 
     user's name, user's age, ... (long description)
     """
-    print(request.context.json) # or `request.json`
-    return jsonify(text='it works') # or `Message(text='it works')`
+    print(request.context.json)  # or `request.json`
+    return jsonify(text="it works")  # or `Message(text='it works')`
 
 
 if __name__ == "__main__":
-    api.register(app) # if you don't register in api init step
+    spec.register(app)  # if you don't register in api init step
     app.run(port=8000)
-
 ```
 
 #### Flask example with type annotation
 
 ```python
 # opt in into annotations feature
-api = SpecTree("flask", annotations=True)
+spec = SpecTree("flask", annotations=True)
 
 
-@app.route('/api/user', methods=['POST'])
-@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+@app.route("/api/user", methods=["POST"])
+@spec.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"])
 def user_profile(json: Profile):
     """
     verify user profile (summary of this endpoint)
 
     user's name, user's age, ... (long description)
     """
-    print(json) # or `request.json`
-    return jsonify(text='it works') # or `Message(text='it works')`
+    print(json)  # or `request.json`
+    return jsonify(text="it works")  # or `Message(text='it works')`
+```
+
+### Quart
+
+```py
+from quart import Quart, jsonify, request
+from pydantic import BaseModel, Field, constr
+
+from spectree import SpecTree, Response
+
+
+class Profile(BaseModel):
+    name: constr(min_length=2, max_length=40)  # constrained str
+    age: int = Field(..., gt=0, lt=150, description="user age")
+
+    class Config:
+        schema_extra = {
+            # provide an example
+            "example": {
+                "name": "very_important_user",
+                "age": 42,
+            }
+        }
+
+
+class Message(BaseModel):
+    text: str
+
+
+app = Quart(__name__)
+spec = SpecTree("quart")
+
+
+@app.route("/api/user", methods=["POST"])
+@spec.validate(
+    json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"]
+)
+async def user_profile():
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(request.context.json)  # or `request.json`
+    return jsonify(text="it works")  # or `Message(text="it works")`
+
+
+if __name__ == "__main__":
+    spec.register(app)
+    app.run(port=8000)
+```
+
+#### Quart example with type annotation
+
+```python
+# opt in into annotations feature
+spec = SpecTree("quart", annotations=True)
+
+
+@app.route("/api/user", methods=["POST"])
+@spec.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"])
+def user_profile(json: Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(json)  # or `request.json`
+    return jsonify(text="it works")  # or `Message(text='it works')`
 ```
 
 ### Falcon
@@ -348,23 +414,20 @@ from spectree import SpecTree, Response
 
 class Profile(BaseModel):
     name: constr(min_length=2, max_length=40)  # Constrained Str
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=150,
-        description='user age(Human)'
-    )
+    age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
 
 class Message(BaseModel):
     text: str
 
 
-api = SpecTree('falcon')
+spec = SpecTree("falcon")
 
 
 class UserProfile:
-    @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+    @spec.validate(
+        json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"]
+    )
     def on_post(self, req, resp):
         """
         verify user profile (summary of this endpoint)
@@ -372,28 +435,27 @@ class UserProfile:
         user's name, user's age, ... (long description)
         """
         print(req.context.json)  # or `req.media`
-        resp.media = {'text': 'it works'} # or `resp.media = Message(text='it works')`
+        resp.media = {"text": "it works"}  # or `resp.media = Message(text='it works')`
 
 
 if __name__ == "__main__":
-    app = falcon.API()
-    app.add_route('/api/user', UserProfile())
-    api.register(app)
+    app = falcon.App()
+    app.add_route("/api/user", UserProfile())
+    spec.register(app)
 
-    httpd = simple_server.make_server('localhost', 8000, app)
+    httpd = simple_server.make_server("localhost", 8000, app)
     httpd.serve_forever()
-
 ```
 
 #### Falcon with type annotations
 
 ```python
 # opt in into annotations feature
-api = SpecTree("falcon", annotations=True)
+spec = SpecTree("falcon", annotations=True)
 
 
 class UserProfile:
-    @api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+    @spec.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"])
     def on_post(self, req, resp, json: Profile):
         """
         verify user profile (summary of this endpoint)
@@ -401,7 +463,7 @@ class UserProfile:
         user's name, user's age, ... (long description)
         """
         print(req.context.json)  # or `req.media`
-        resp.media = {'text': 'it works'} # or `resp.media = Message(text='it works')`
+        resp.media = {"text": "it works"}  # or `resp.media = Message(text='it works')`
 ```
 
 ### Starlette
@@ -413,27 +475,25 @@ from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field, constr
 from spectree import SpecTree, Response
+
 # from spectree.plugins.starlette_plugin import PydanticResponse
 
 
 class Profile(BaseModel):
     name: constr(min_length=2, max_length=40)  # Constrained Str
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=150,
-        description='user age(Human)'
-    )
+    age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
 
 class Message(BaseModel):
     text: str
 
 
-api = SpecTree('starlette')
+spec = SpecTree("starlette")
 
 
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+@spec.validate(
+    json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"]
+)
 async def user_profile(request):
     """
     verify user profile (summary of this endpoint)
@@ -441,29 +501,35 @@ async def user_profile(request):
     user's name, user's age, ... (long description)
     """
     print(request.context.json)  # or await request.json()
-    return JSONResponse({'text': 'it works'}) # or `return PydanticResponse(Message(text='it works'))`
+    return JSONResponse(
+        {"text": "it works"}
+    )  # or `return PydanticResponse(Message(text='it works'))`
 
 
 if __name__ == "__main__":
-    app = Starlette(routes=[
-        Mount('api', routes=[
-            Route('/user', user_profile, methods=['POST']),
-        ])
-    ])
-    api.register(app)
+    app = Starlette(
+        routes=[
+            Mount(
+                "api",
+                routes=[
+                    Route("/user", user_profile, methods=["POST"]),
+                ],
+            )
+        ]
+    )
+    spec.register(app)
 
     uvicorn.run(app)
-
 ```
 
 #### Starlette example with type annotations
 
 ```python
 # opt in into annotations feature
-api = SpecTree("flask", annotations=True)
+spec = SpecTree("flask", annotations=True)
 
 
-@api.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=['api'])
+@spec.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"])
 async def user_profile(request, json=Profile):
     """
     verify user profile (summary of this endpoint)
@@ -471,7 +537,7 @@ async def user_profile(request, json=Profile):
     user's name, user's age, ... (long description)
     """
     print(request.context.json)  # or await request.json()
-    return JSONResponse({'text': 'it works'}) # or `return PydanticResponse(Message(text='it works'))`
+    return JSONResponse({"text": "it works"})  # or `return PydanticResponse(Message(text='it works'))`
 ```
 
 

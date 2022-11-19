@@ -1,7 +1,8 @@
+import inspect
 from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
-from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from pydantic import BaseModel, ValidationError
+from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
 from .._types import ModelType
@@ -10,8 +11,10 @@ from ..utils import get_multidict_items, werkzeug_parse_rule
 from .base import BasePlugin, Context
 
 
-class FlaskPlugin(BasePlugin):
+class QuartPlugin(BasePlugin):
     blueprint_state = None
+    FORM_MIMETYPE = ("application/x-www-form-urlencoded", "multipart/form-data")
+    ASYNC = True
 
     def find_routes(self):
         for rule in current_app.url_map.iter_rules():
@@ -132,7 +135,7 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, form, headers, cookies):
+    async def request_validation(self, request, query, json, form, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
@@ -152,7 +155,9 @@ class FlaskPlugin(BasePlugin):
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
-            json.parse_obj(request.get_json(silent=True) or {}) if use_json else None,
+            json.parse_obj(await request.get_json(silent=True) or {})
+            if use_json
+            else None,
             form.parse_obj(self._fill_form(request)) if use_form else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
@@ -163,7 +168,7 @@ class FlaskPlugin(BasePlugin):
         req_data.update(get_multidict_items(request.files) if request.files else {})
         return req_data
 
-    def validate(
+    async def validate(
         self,
         func: Callable,
         query: Optional[ModelType],
@@ -181,7 +186,7 @@ class FlaskPlugin(BasePlugin):
     ):
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, form, headers, cookies)
+            await self.request_validation(request, query, json, form, headers, cookies)
             if self.config.annotations:
                 annotations = get_type_hints(func)
                 for name in ("query", "json", "form", "headers", "cookies"):
@@ -189,14 +194,21 @@ class FlaskPlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = make_response(jsonify(err.errors()), validation_error_status)
+            response = await make_response(
+                jsonify(err.errors()), validation_error_status
+            )
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
+            after(request, response, req_validation_error, None)
             assert response  # make mypy happy
-            abort(response)
+            abort(response)  # type: ignore
 
-        result = func(*args, **kwargs)
+        result = (
+            await func(*args, **kwargs)
+            if inspect.iscoroutinefunction(func)
+            else func(*args, **kwargs)
+        )
 
         status = 200
         rest = []
@@ -214,17 +226,17 @@ class FlaskPlugin(BasePlugin):
                 skip_validation = True
                 result = (model.dict(), status, *rest)
 
-        response = make_response(result)
+        response = await make_response(result)
 
         if resp and resp.has_model():
 
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(response.get_json())
+                    model.parse_obj(await response.get_json())  # type: ignore
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = make_response(
+                    response = await make_response(
                         jsonify({"message": "response validation error"}), 500
                     )
 
@@ -234,7 +246,7 @@ class FlaskPlugin(BasePlugin):
 
     def register_route(self, app):
         app.add_url_rule(
-            rule=self.config.spec_url,
+            self.config.spec_url,
             endpoint=f"openapi_{self.config.path}",
             view_func=lambda: jsonify(self.spectree.spec),
         )
@@ -259,7 +271,7 @@ class FlaskPlugin(BasePlugin):
 
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    f"/{self.config.path}/{ui}/",
                     endpoint=f"openapi_{self.config.path}_{ui.replace('.', '_')}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
@@ -268,7 +280,7 @@ class FlaskPlugin(BasePlugin):
         else:
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    f"/{self.config.path}/{ui}/",
                     endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: self.config.page_templates[ui].format(
                         spec_url=self.config.spec_url,

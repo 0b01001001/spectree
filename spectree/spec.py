@@ -1,6 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
+from importlib import import_module
 from typing import (
     Any,
     Callable,
@@ -60,15 +61,21 @@ class SpecTree:
         before: Callable = default_before_handler,
         after: Callable = default_after_handler,
         validation_error_status: int = 422,
+        validation_error_model: Optional[ModelType] = None,
         **kwargs: Any,
     ):
         self.before = before
         self.after = after
         self.validation_error_status = validation_error_status
+        self.validation_error_model = validation_error_model or ValidationError
         self.config: Configuration = Configuration.parse_obj(kwargs)
         self.backend_name = backend_name
-        self.backend = backend(self) if backend else PLUGINS[backend_name](self)
-        # init
+        if backend:
+            self.backend = backend(self)
+        else:
+            plugin = PLUGINS[backend_name]
+            module = import_module(plugin.name, plugin.package)
+            self.backend = getattr(module, plugin.class_name)(self)
         self.models: Dict[str, Any] = {}
         if app:
             self.register(app)
@@ -221,7 +228,9 @@ class SpecTree:
             if resp:
                 # Make sure that the endpoint specific status code and data model for
                 # validation errors shows up in the response spec.
-                resp.add_model(validation_error_status, ValidationError, replace=False)
+                resp.add_model(
+                    validation_error_status, self.validation_error_model, replace=False
+                )
                 for model in resp.models:
                     self._add_model(model=model)
                 validation.resp = resp

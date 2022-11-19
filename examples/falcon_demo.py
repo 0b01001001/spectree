@@ -11,7 +11,7 @@ from spectree import Response, SpecTree, Tag
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-api = SpecTree(
+spec = SpecTree(
     "falcon",
     title="Demo Service",
     version="0.1.2",
@@ -53,7 +53,7 @@ class Ping:
     def check(self):
         pass
 
-    @api.validate(tags=[demo])
+    @spec.validate(tags=[demo])
     def on_get(self, req, resp):
         """
         health check
@@ -68,7 +68,7 @@ class Classification:
     classification demo
     """
 
-    @api.validate(tags=[demo])
+    @spec.validate(tags=[demo])
     def on_get(self, req, resp, source, target):
         """
         API summary
@@ -77,7 +77,7 @@ class Classification:
         """
         resp.media = {"msg": f"hello from {source} to {target}"}
 
-    @api.validate(
+    @spec.validate(
         query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck)
     )
     def on_post(self, req, resp, source, target):
@@ -101,7 +101,7 @@ class FileUpload:
     file-handling demo
     """
 
-    @api.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+    @spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
     def on_post(self, req, resp):
         """
         post multipart/form-data demo
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     app.add_route("/ping", Ping())
     app.add_route("/api/{source}/{target}", Classification())
     app.add_route("/api/file_upload", FileUpload())
-    api.register(app)
+    spec.register(app)
 
     httpd = simple_server.make_server("localhost", 8000, app)
     httpd.serve_forever()

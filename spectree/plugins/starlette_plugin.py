@@ -5,6 +5,10 @@ from json import JSONDecodeError
 from typing import Any, Callable, Optional, get_type_hints
 
 from pydantic import ValidationError
+from starlette.convertors import CONVERTOR_TYPES
+from starlette.requests import Request
+from starlette.responses import HTMLResponse, JSONResponse
+from starlette.routing import compile_path
 
 from .._types import ModelType
 from ..response import Response
@@ -15,8 +19,6 @@ Route = namedtuple("Route", ["path", "methods", "func"])
 
 
 def PydanticResponse(content):
-    from starlette.responses import JSONResponse
-
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
@@ -30,13 +32,11 @@ class StarlettePlugin(BasePlugin):
 
     def __init__(self, spectree):
         super().__init__(spectree)
-        from starlette.convertors import CONVERTOR_TYPES
 
         self.conv2type = {conv: typ for typ, conv in CONVERTOR_TYPES.items()}
 
     def register_route(self, app):
         self.app = app
-        from starlette.responses import HTMLResponse, JSONResponse
 
         self.app.add_route(
             self.config.spec_url,
@@ -86,8 +86,6 @@ class StarlettePlugin(BasePlugin):
         *args: Any,
         **kwargs: Any,
     ):
-        from starlette.requests import Request
-        from starlette.responses import JSONResponse
 
         if isinstance(args[0], Request):
             instance, request = None, args[0]
@@ -193,7 +191,6 @@ class StarlettePlugin(BasePlugin):
             yield method, route.func
 
     def parse_path(self, route, path_parameter_descriptions):
-        from starlette.routing import compile_path
 
         _, path, variables = compile_path(route.path)
         parameters = []
