@@ -2,7 +2,6 @@ import io
 from random import randint
 
 import pytest
-from httpx import Cookies as HTTPCookies
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
@@ -213,7 +212,7 @@ def test_starlette_validate(client):
         assert resp.status_code == 422
         assert resp.headers.get("X-Error") == "Validation Error"
 
-        client.cookies = HTTPCookies(dict(pub="abcdefg"))
+        client.cookies = dict(pub="abcdefg")
         resp = client.post(
             f"/api/{fragment}/starlette?order=1",
             json=dict(name="starlette", limit=10),
@@ -234,7 +233,7 @@ def test_starlette_validate(client):
 
 
 def test_starlette_skip_validation(client):
-    client.cookies = HTTPCookies(dict(pub="abcdefg"))
+    client.cookies = dict(pub="abcdefg")
     resp = client.post(
         "/api/user_skip/starlette?order=1",
         json=dict(name="starlette", limit=10),
@@ -246,7 +245,7 @@ def test_starlette_skip_validation(client):
 
 
 def test_starlette_return_model(client):
-    client.cookies = HTTPCookies(dict(pub="abcdefg"))
+    client.cookies = dict(pub="abcdefg")
     resp = client.post(
         "/api/user_model/starlette?order=1",
         json=dict(name="starlette", limit=10),
