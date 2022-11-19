@@ -8,6 +8,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
+from httpx import Cookies
 
 from spectree import Response, SpecTree
 from spectree.plugins.starlette_plugin import PydanticResponse
@@ -212,7 +213,7 @@ def test_starlette_validate(client):
         assert resp.status_code == 422
         assert resp.headers.get("X-Error") == "Validation Error"
 
-        client.cookies = dict(pub="abcdefg")
+        client.cookies = Cookies(dict(pub="abcdefg"))
         resp = client.post(
             f"/api/{fragment}/starlette?order=1",
             json=dict(name="starlette", limit=10),
@@ -233,7 +234,7 @@ def test_starlette_validate(client):
 
 
 def test_starlette_skip_validation(client):
-    client.cookies = dict(pub="abcdefg")
+    client.cookies = Cookies(dict(pub="abcdefg"))
     resp = client.post(
         "/api/user_skip/starlette?order=1",
         json=dict(name="starlette", limit=10),
@@ -245,7 +246,7 @@ def test_starlette_skip_validation(client):
 
 
 def test_starlette_return_model(client):
-    client.cookies = dict(pub="abcdefg")
+    client.cookies = Cookies(dict(pub="abcdefg"))
     resp = client.post(
         "/api/user_model/starlette?order=1",
         json=dict(name="starlette", limit=10),
