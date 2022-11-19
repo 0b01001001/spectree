@@ -2,13 +2,13 @@ import io
 from random import randint
 
 import pytest
+from httpx import Cookies
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
-from httpx import Cookies
 
 from spectree import Response, SpecTree
 from spectree.plugins.starlette_plugin import PydanticResponse
