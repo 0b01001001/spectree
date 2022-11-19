@@ -1,0 +1,65 @@
+[project]
+name = "spectree"
+version = "1.0.2"
+dynamic = []
+description = "generate OpenAPI document and validate request&response with Python annotations."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.6"
+authors = [
+    { name = "Keming Yang", email = "kemingy94@gmail.com" },
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pydantic>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "autoflake~=1.4",
+    "black~=22.3",
+    "flake8>=4,<6",
+    "isort~=5.10",
+    "mypy>=0.971",
+    "pytest~=7.1",
+]
+email = [
+    "pydantic[email]>=1.2",
+]
+falcon = [
+    "falcon>=3.0.0",
+]
+flask = [
+    "flask",
+]
+starlette = [
+    "starlette[full]",
+]
+
+[project.urls]
+Homepage = "https://github.com/0b01001001/spectree"
+documentation = "https://0b01001001.github.io/spectree/"
+repository = "https://github.com/0b01001001/spectree"
+changelog = "https://github.com/0b01001001/spectree/releases"
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+show_error_codes = true
+warn_unused_ignores = true
+disable_error_code = ["attr-defined"]

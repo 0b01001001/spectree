@@ -1,9 +1,9 @@
-check: lint test
+.DEFAULT_GOAL:=install
 
-SOURCE_FILES=spectree tests examples setup.py
+SOURCE_FILES=spectree tests examples
 
 install:
-	pip install -e .[email,quart,flask,falcon,starlette,dev]
+	pip install -U -e .[email,quart,flask,falcon,starlette,dev]
 
 import_test:
 	pip install -e .[email]
@@ -42,7 +42,7 @@ format:
 lint:
 	isort --check --diff --project=spectree ${SOURCE_FILES}
 	black --check --diff ${SOURCE_FILES}
-	flake8 ${SOURCE_FILES} --count --show-source --statistics
+	flake8 ${SOURCE_FILES} --count --show-source --statistics --ignore=D203,E203,W503 --max-line-length=88 --max-complexity=15
 	mypy --install-types --non-interactive ${SOURCE_FILES}
 
 .PHONY: test doc
