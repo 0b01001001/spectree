@@ -16,7 +16,7 @@ setup(
         "starlette": ["starlette[full]"],
         "dev": [
             "pytest~=7.1",
-            "flake8>=4,<6",
+            "flake8>=4,<7",
             "black~=22.3",
             "isort~=5.10",
             "autoflake~=1.4",
