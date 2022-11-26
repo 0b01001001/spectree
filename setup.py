@@ -19,7 +19,7 @@ setup(
             "flake8>=4,<7",
             "black~=22.3",
             "isort~=5.10",
-            "autoflake~=1.4",
+            "autoflake>=1.4,<3.0",
             "mypy>=0.971",
         ],
     },
