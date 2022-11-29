@@ -162,7 +162,8 @@ def test_spec_bypass_mode():
 def test_two_endpoints_with_the_same_path():
     app = create_app()
     api.register(app)
-    spec = api.spec
+    with app.app_context():
+        spec = api.spec
 
     http_methods = list(spec["paths"]["/lone"].keys())
     http_methods.sort()
