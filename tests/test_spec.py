@@ -216,3 +216,23 @@ def test_global_model_for_validation_errors_specified():
 
     assert foo.resp.find_model(422) is GlobalValidationError
     assert bar.resp.find_model(422) is RouteValidationError
+
+
+@pytest.mark.parametrize(
+    ["override_operation_id", "expected_operation_id"],
+    [(None, "get__foo"), ("getFoo", "getFoo")],
+)
+def test_operation_id_override(override_operation_id, expected_operation_id):
+    api = SpecTree("flask")
+    app = Flask(__name__)
+
+    @app.route("/foo")
+    @api.validate(operation_id=override_operation_id)
+    def foo():
+        pass
+
+    api.register(app)
+
+    with app.app_context():
+        operation_id = api.spec["paths"]["/foo"]["get"]["operationId"]
+        assert operation_id == expected_operation_id

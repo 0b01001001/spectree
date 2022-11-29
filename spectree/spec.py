@@ -132,6 +132,7 @@ class SpecTree:
         validation_error_status: int = 0,
         path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,
+        operation_id: Optional[str] = None,
     ) -> Callable:
         """
         - validate query, json, headers in request
@@ -158,6 +159,7 @@ class SpecTree:
             in :meth:`spectree.spec.SpecTree`.
         :param path_parameter_descriptions: A dictionary of path parameter names and
             their description.
+        :param operation_id: a string override for operationId for the given endpoint
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
@@ -241,6 +243,7 @@ class SpecTree:
             validation.security = security
             validation.deprecated = deprecated
             validation.path_parameter_descriptions = path_parameter_descriptions
+            validation.operation_id = operation_id
             # register decorator
             validation._decorator = self
             return validation
@@ -284,9 +287,13 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
+                operation_id = getattr(func, "operation_id", None)
+                if not operation_id:
+                    operation_id = f"{method.lower()}_{path.replace('/', '_')}"
+
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
-                    "operationId": f"{method.lower()}_{path.replace('/', '_')}",
+                    "operationId": operation_id,
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
                     "parameters": parse_params(func, parameters[:], self.models),
