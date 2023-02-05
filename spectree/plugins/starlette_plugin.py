@@ -86,7 +86,6 @@ class StarlettePlugin(BasePlugin):
         *args: Any,
         **kwargs: Any,
     ):
-
         if isinstance(args[0], Request):
             instance, request = None, args[0]
         else:
@@ -191,7 +190,6 @@ class StarlettePlugin(BasePlugin):
             yield method, route.func
 
     def parse_path(self, route, path_parameter_descriptions):
-
         _, path, variables = compile_path(route.path)
         parameters = []
 

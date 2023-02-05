@@ -158,7 +158,6 @@ class UserAddress:
 
 
 class NoResponseView:
-
     name = "no response view"
 
     @api.validate(
