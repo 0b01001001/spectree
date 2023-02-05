@@ -217,7 +217,6 @@ class FlaskPlugin(BasePlugin):
         response = make_response(result)
 
         if resp and resp.has_model():
-
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
