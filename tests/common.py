@@ -3,10 +3,12 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field, root_validator
 
-from spectree import BaseFile, SecurityScheme, Tag
+from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree.utils import hash_module_path
 
-api_tag = Tag(name="API", description="🐱", externalDocs={"url": "https://pypi.org"})
+api_tag = Tag(
+    name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
+)
 
 
 class Order(IntEnum):
@@ -83,37 +85,51 @@ def get_paths(spec):
 SECURITY_SCHEMAS = [
     SecurityScheme(
         name="auth_apiKey",
-        data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        data=SecuritySchemeData.parse_obj(
+            {"type": "apiKey", "name": "Authorization", "in": "header"}
+        ),
     ),
     SecurityScheme(
         name="auth_apiKey_backup",
-        data={"type": "apiKey", "name": "Authorization", "in": "header"},
+        data=SecuritySchemeData.parse_obj(
+            {"type": "apiKey", "name": "Authorization", "in": "header"}
+        ),
     ),
-    SecurityScheme(name="auth_BasicAuth", data={"type": "http", "scheme": "basic"}),
-    SecurityScheme(name="auth_BearerAuth", data={"type": "http", "scheme": "bearer"}),
+    SecurityScheme(
+        name="auth_BasicAuth",
+        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "basic"}),
+    ),
+    SecurityScheme(
+        name="auth_BearerAuth",
+        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "bearer"}),
+    ),
     SecurityScheme(
         name="auth_openID",
-        data={
-            "type": "openIdConnect",
-            "openIdConnectUrl": "https://example.com/.well-known/openid-configuration",
-        },
+        data=SecuritySchemeData.parse_obj(
+            {
+                "type": "openIdConnect",
+                "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
+            }
+        ),
     ),
     SecurityScheme(
         name="auth_oauth2",
-        data={
-            "type": "oauth2",
-            "flows": {
-                "authorizationCode": {
-                    "authorizationUrl": "https://example.com/oauth/authorize",
-                    "tokenUrl": "https://example.com/oauth/token",
-                    "scopes": {
-                        "read": "Grants read access",
-                        "write": "Grants write access",
-                        "admin": "Grants access to admin operations",
+        data=SecuritySchemeData.parse_obj(
+            {
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://example.com/oauth/authorize",
+                        "tokenUrl": "https://example.com/oauth/token",
+                        "scopes": {
+                            "read": "Grants read access",
+                            "write": "Grants write access",
+                            "admin": "Grants access to admin operations",
+                        },
                     },
                 },
-            },
-        },
+            }
+        ),
     ),
 ]
 WRONG_SECURITY_SCHEMAS_DATA = [

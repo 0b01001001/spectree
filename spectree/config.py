@@ -78,9 +78,9 @@ class Configuration(BaseSettings):
     #: to render the documentation page content. (Each page template should contain a
     #: `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
     #: the rendered documentation page
-    page_templates = DEFAULT_PAGE_TEMPLATES
+    page_templates: Dict[str, str] = DEFAULT_PAGE_TEMPLATES
     #: opt-in type annotation feature, see the README examples
-    annotations = False
+    annotations: bool = False
     #: servers section of OAS :py:class:`spectree.models.Server`
     servers: Optional[List[Server]] = []
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`

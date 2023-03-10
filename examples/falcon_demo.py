@@ -6,7 +6,7 @@ import falcon
 from pydantic import BaseModel, Field
 
 from examples.common import File, FileResp, Query
-from spectree import Response, SpecTree, Tag
+from spectree import ExternalDocs, Response, SpecTree, Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -21,7 +21,9 @@ spec = SpecTree(
     license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
 )
 
-demo = Tag(name="demo", description="😊", externalDocs={"url": "https://github.com"})
+demo = Tag(
+    name="demo", description="😊", externalDocs=ExternalDocs(url="https://github.com")
+)
 
 
 class Resp(BaseModel):
