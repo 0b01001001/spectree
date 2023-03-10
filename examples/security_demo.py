@@ -1,7 +1,7 @@
 from flask import Flask
 from pydantic import BaseModel
 
-from spectree import SecurityScheme, SpecTree
+from spectree import SecurityScheme, SecuritySchemeData, SpecTree
 
 
 class Req(BaseModel):
@@ -11,33 +11,43 @@ class Req(BaseModel):
 security_schemes = [
     SecurityScheme(
         name="PartnerID",
-        data={"type": "apiKey", "name": "partner-id", "in": "header"},
+        data=SecuritySchemeData.parse_obj(
+            {"type": "apiKey", "name": "partner-id", "in": "header"}
+        ),
     ),
     SecurityScheme(
         name="PartnerToken",
-        data={"type": "apiKey", "name": "partner-access-token", "in": "header"},
+        data=SecuritySchemeData.parse_obj(
+            {"type": "apiKey", "name": "partner-access-token", "in": "header"}
+        ),
     ),
     SecurityScheme(
         name="test_secure",
-        data={
-            "type": "http",
-            "scheme": "bearer",
-        },
+        data=SecuritySchemeData.parse_obj(
+            {
+                "type": "http",
+                "scheme": "bearer",
+            }
+        ),
     ),
     SecurityScheme(
         name="auth_oauth2",
-        data={
-            "type": "oauth2",
-            "flows": {
-                "authorizationCode": {
-                    "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
-                    "tokenUrl": "https://sts.googleapis.com",
-                    "scopes": {
-                        "https://www.googleapis.com/auth/tasks.readonly": "tasks",
+        data=SecuritySchemeData.parse_obj(
+            {
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": (
+                            "https://accounts.google.com/o/oauth2/v2/auth"
+                        ),
+                        "tokenUrl": "https://sts.googleapis.com",
+                        "scopes": {
+                            "https://www.googleapis.com/auth/tasks.readonly": "tasks",
+                        },
                     },
                 },
-            },
-        },
+            }
+        ),
     ),
 ]
 

@@ -130,13 +130,13 @@ class FalconPlugin(BasePlugin):
                             index = self.INT_ARGS_NAMES.index(name)
                         arg_values[index] = value
 
-                    num_digits, minumum, maximum = arg_values
+                    num_digits, minimum, maximum = arg_values
                     schema = {
                         "type": "integer",
                         "format": f"int{num_digits}" if num_digits else "int32",
                     }
-                    if minumum:
-                        schema["minimum"] = minumum
+                    if minimum:
+                        schema["minimum"] = minimum
                     if maximum:
                         schema["maximum"] = maximum
                 elif converter == "uuid":

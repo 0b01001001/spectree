@@ -210,7 +210,7 @@ DEFAULT_CODE_DESC: Dict[str, str] = {
     "HTTP_504": "Gateway Timeout",
     "HTTP_505": "HTTP Version Not Supported",
     "HTTP_506": "Variant Also negotiates",
-    "HTTP_507": "Insufficient Sotrage",
+    "HTTP_507": "Insufficient Storage",
     "HTTP_508": "Loop Detected",
     "HTTP_511": "Network Authentication Required",
 }

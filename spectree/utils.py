@@ -289,7 +289,7 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
 
 def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """
-    generate the correspoding list[model] class for a given model class
+    generate the corresponding list[model] class for a given model class
     """
     assert issubclass(model, BaseModel)
     ListModel = type(

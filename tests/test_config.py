@@ -64,7 +64,7 @@ def test_config_case():
 def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     # update and validate each schema type
     config = Configuration(
-        security_schemes=[{"name": secure_item.name, "data": secure_item.data}]
+        security_schemes=[SecurityScheme(name=secure_item.name, data=secure_item.data)]
     )
     assert config.security_schemes == [
         {"name": secure_item.name, "data": secure_item.data}

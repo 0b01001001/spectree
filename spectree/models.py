@@ -39,7 +39,7 @@ class ValidationErrorElement(BaseModel):
         ...,
         title="Error type",
     )
-    ctx: Dict[str, Any] = Field(
+    ctx: Optional[Dict[str, Any]] = Field(
         None,
         title="Error context",
     )
@@ -79,31 +79,33 @@ class SecuritySchemeData(BaseModel):
     """
 
     type: SecureType = Field(..., description="Secure scheme type")
-    description: str = Field(
+    description: Optional[str] = Field(
         None,
         description="A short description for security scheme.",
     )
-    name: str = Field(
+    name: Optional[str] = Field(
         None,
         description="The name of the header, query or cookie parameter to be used.",
     )
-    field_in: InType = Field(
+    field_in: Optional[InType] = Field(
         None, alias="in", description="The location of the API key."
     )
-    scheme: str = Field(None, description="The name of the HTTP Authorization scheme.")
-    bearerFormat: str = Field(
+    scheme: Optional[str] = Field(
+        None, description="The name of the HTTP Authorization scheme."
+    )
+    bearerFormat: Optional[str] = Field(
         None,
         description=(
             "A hint to the client to identify how the bearer token is formatted."
         ),
     )
-    flows: dict = Field(
+    flows: Optional[dict] = Field(
         None,
         description=(
             "Containing configuration information for the flow types supported."
         ),
     )
-    openIdConnectUrl: str = Field(
+    openIdConnectUrl: Optional[str] = Field(
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
     )
 
@@ -157,11 +159,11 @@ class Server(BaseModel):
         (may be parametrized with using \"variables\" section - for more information,
         see: https://swagger.io/docs/specification/api-host-and-base-path/ )""",
     )
-    description: str = Field(
+    description: Optional[str] = Field(
         None,
         description="Custom server description for server URL",
     )
-    variables: dict = Field(
+    variables: Optional[dict] = Field(
         None,
         description="Variables for customizing server URL",
     )
