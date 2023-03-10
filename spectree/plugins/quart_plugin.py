@@ -232,7 +232,7 @@ class QuartPlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(await response.get_json())  # type: ignore
+                    model.parse_obj(await response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
                     response = await make_response(
