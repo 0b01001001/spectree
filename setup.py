@@ -21,6 +21,7 @@ setup(
             "isort~=5.10",
             "autoflake>=1.4,<3.0",
             "mypy>=0.971",
+            "syrupy>=4.0.0",
         ],
     },
 )

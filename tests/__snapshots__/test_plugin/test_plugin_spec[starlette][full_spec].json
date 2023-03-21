@@ -1,0 +1,693 @@
+{
+  "components": {
+    "schemas": {
+      "Cookies.7068f62": {
+        "properties": {
+          "pub": {
+            "title": "Pub",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pub"
+        ],
+        "title": "Cookies",
+        "type": "object"
+      },
+      "FormFileUpload.7068f62": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "FormFileUpload",
+        "type": "object"
+      },
+      "Headers.7068f62": {
+        "properties": {
+          "lang": {
+            "$ref": "#/components/schemas/Headers.7068f62.Language"
+          }
+        },
+        "required": [
+          "lang"
+        ],
+        "title": "Headers",
+        "type": "object"
+      },
+      "Headers.7068f62.Language": {
+        "description": "An enumeration.",
+        "enum": [
+          "en-US",
+          "zh-CN"
+        ],
+        "title": "Language",
+        "type": "string"
+      },
+      "JSON.7068f62": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
+      "ListJSON.7068f62": {
+        "items": {
+          "$ref": "#/components/schemas/ListJSON.7068f62.JSON"
+        },
+        "title": "ListJSON",
+        "type": "array"
+      },
+      "ListJSON.7068f62.JSON": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
+      "Query.7068f62": {
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/Query.7068f62.Order"
+          }
+        },
+        "required": [
+          "order"
+        ],
+        "title": "Query",
+        "type": "object"
+      },
+      "Query.7068f62.Order": {
+        "description": "An enumeration.",
+        "enum": [
+          0,
+          1
+        ],
+        "title": "Order",
+        "type": "integer"
+      },
+      "Resp.7068f62": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "score": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Score",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "score"
+        ],
+        "title": "Resp",
+        "type": "object"
+      },
+      "StrDict.7068f62": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "title": "StrDict",
+        "type": "object"
+      },
+      "ValidationError.6a07bef": {
+        "description": "Model of a validation error response.",
+        "items": {
+          "$ref": "#/components/schemas/ValidationError.6a07bef.ValidationErrorElement"
+        },
+        "title": "ValidationError",
+        "type": "array"
+      },
+      "ValidationError.6a07bef.ValidationErrorElement": {
+        "description": "Model of a validation error response element.",
+        "properties": {
+          "ctx": {
+            "title": "Error context",
+            "type": "object"
+          },
+          "loc": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing field name",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Error message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationErrorElement",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Service API Document",
+    "version": "0.1.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/file_upload": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_file_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/FormFileUpload.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {},
+        "summary": "file_upload <POST>",
+        "tags": []
+      }
+    },
+    "/api/list_json": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_list_json",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListJSON.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {},
+        "summary": "list_json <POST>",
+        "tags": []
+      }
+    },
+    "/api/no_response": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_no_response",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrDict.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "no_response <GET>",
+        "tags": []
+      },
+      "post": {
+        "description": "",
+        "operationId": "post__api_no_response",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrDict.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "no_response <POST>",
+        "tags": []
+      }
+    },
+    "/api/user/{name}": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_user_{name}",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Query.7068f62.Order"
+            }
+          },
+          {
+            "description": "",
+            "in": "cookie",
+            "name": "pub",
+            "required": true,
+            "schema": {
+              "title": "Pub",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JSON.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "user_score <POST>",
+        "tags": [
+          "API",
+          "test"
+        ]
+      }
+    },
+    "/api/user/{name}/address/{address_id}": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_user_{name}_address_{address_id}",
+        "parameters": [
+          {
+            "description": "The name that uniquely identifies the user.",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "path",
+            "name": "address_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Query.7068f62.Order"
+            }
+          }
+        ],
+        "responses": {},
+        "summary": "user_address <GET>",
+        "tags": []
+      }
+    },
+    "/api/user_annotated/{name}": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_user_annotated_{name}",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Query.7068f62.Order"
+            }
+          },
+          {
+            "description": "",
+            "in": "cookie",
+            "name": "pub",
+            "required": true,
+            "schema": {
+              "title": "Pub",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JSON.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "user_score_annotated <POST>",
+        "tags": [
+          "API",
+          "test"
+        ]
+      }
+    },
+    "/api/user_model/{name}": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_user_model_{name}",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Query.7068f62.Order"
+            }
+          },
+          {
+            "description": "",
+            "in": "cookie",
+            "name": "pub",
+            "required": true,
+            "schema": {
+              "title": "Pub",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JSON.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "user_score_model <POST>",
+        "tags": [
+          "API",
+          "test"
+        ]
+      }
+    },
+    "/api/user_skip/{name}": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_user_skip_{name}",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "",
+            "in": "query",
+            "name": "order",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Query.7068f62.Order"
+            }
+          },
+          {
+            "description": "",
+            "in": "cookie",
+            "name": "pub",
+            "required": true,
+            "schema": {
+              "title": "Pub",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JSON.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "user_score_skip <POST>",
+        "tags": [
+          "API",
+          "test"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "description",
+        "operationId": "get__ping",
+        "parameters": [
+          {
+            "description": "",
+            "in": "header",
+            "name": "lang",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Headers.7068f62.Language"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrDict.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "summary",
+        "tags": [
+          "test",
+          "health"
+        ]
+      }
+    }
+  },
+  "security": [],
+  "tags": [
+    {
+      "name": "test"
+    },
+    {
+      "name": "health"
+    },
+    {
+      "description": "🐱",
+      "externalDocs": {
+        "description": "",
+        "url": "https://pypi.org"
+      },
+      "name": "API"
+    }
+  ]
+}
