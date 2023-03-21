@@ -155,3 +155,10 @@ def test_quart_no_response(client):
         client.post("/api/no_response", json={"name": "foo", "limit": 1})
     )
     assert resp.status_code == 200
+
+
+def test_quart_list_json_request(client):
+    resp = asyncio.run(
+        client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
+    )
+    assert resp.status_code == 200

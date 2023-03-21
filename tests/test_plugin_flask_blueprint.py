@@ -11,6 +11,7 @@ from .common import (
     Form,
     FormFileUpload,
     Headers,
+    ListJSON,
     Order,
     Query,
     Resp,
@@ -145,6 +146,14 @@ def user_address(name, address_id):
     json=StrDict,
 )
 def no_response():
+    return {}
+
+
+@app.route("/api/list_json", methods=["POST"])
+@api.validate(
+    json=ListJSON,
+)
+def list_json():
     return {}
 
 

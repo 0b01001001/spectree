@@ -156,6 +156,11 @@ def test_flask_no_response(client):
     assert resp.status_code == 200, resp.data
 
 
+def test_flask_list_json_request(client):
+    resp = client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
+    assert resp.status_code == 200, resp.data
+
+
 def test_flask_upload_file(client):
     file_content = "abcdef"
     data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}

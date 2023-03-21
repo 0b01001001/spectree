@@ -17,6 +17,7 @@ from .common import (
     Cookies,
     FormFileUpload,
     Headers,
+    ListJSON,
     Order,
     Query,
     Resp,
@@ -134,6 +135,13 @@ async def no_response(request):
     return JSONResponse({})
 
 
+@api.validate(
+    json=ListJSON,
+)
+async def list_json(request):
+    return JSONResponse({})
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -166,6 +174,7 @@ app = Starlette(
                 ),
                 Route("/no_response", no_response, methods=["POST", "GET"]),
                 Route("/file_upload", file_upload, methods=["POST"]),
+                Route("/list_json", list_json, methods=["POST"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -356,6 +365,11 @@ def test_starlette_no_response(client):
     assert resp.status_code == 200, resp.text
 
     resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
+    assert resp.status_code == 200, resp.text
+
+
+def test_json_list_request(client):
+    resp = client.post("/api/list_json", json=[{"name": "starlette", "limit": 1}])
     assert resp.status_code == 200, resp.text
 
 

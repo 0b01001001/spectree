@@ -34,6 +34,10 @@ class JSON(BaseModel):
     limit: int
 
 
+class ListJSON(BaseModel):
+    __root__: List[JSON]
+
+
 class StrDict(BaseModel):
     __root__: Dict[str, str]
 

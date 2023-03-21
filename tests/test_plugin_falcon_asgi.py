@@ -11,6 +11,7 @@ from .common import (
     Cookies,
     FormFileUpload,
     Headers,
+    ListJSON,
     Query,
     Resp,
     StrDict,
@@ -110,6 +111,16 @@ class NoResponseView:
         pass
 
 
+class ListJsonView:
+    name = "json list request view"
+
+    @api.validate(
+        json=ListJSON,
+    )
+    async def on_post(self, req, resp, json: ListJSON):
+        pass
+
+
 class FileUploadView:
     name = "file upload view"
 
@@ -128,6 +139,7 @@ app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
+app.add_route("/api/list_json", ListJsonView())
 api.register(app)
 
 
@@ -147,6 +159,15 @@ def test_falcon_no_response(client):
         "POST",
         "/api/no_response",
         json=dict(name="foo", limit=1),
+    )
+    assert resp.status_code == 200
+
+
+def test_falcon_list_json_request_async(client):
+    resp = client.simulate_request(
+        "POST",
+        "/api/list_json",
+        json=[dict(name="foo", limit=1)],
     )
     assert resp.status_code == 200
 
