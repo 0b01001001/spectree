@@ -2,16 +2,7 @@ import pytest
 
 from spectree.utils import get_model_key, get_model_schema
 
-from .common import (
-    JSON,
-    SECURITY_SCHEMAS,
-    Cookies,
-    Headers,
-    Query,
-    Resp,
-    get_model_path_key,
-    get_paths,
-)
+from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp
 from .test_plugin_falcon import api as falcon_api
 from .test_plugin_flask import api as flask_api
 from .test_plugin_flask import api_global_secure as flask_api_global_secure
@@ -31,7 +22,7 @@ from .test_plugin_starlette import api as starlette_api
         pytest.param(falcon_api, id="falcon"),
     ],
 )
-def test_plugin_spec(api):
+def test_plugin_spec(api, snapshot_json):
     models = {
         get_model_key(model=m): get_model_schema(model=m)
         for m in (Query, JSON, Resp, Cookies, Headers)
@@ -40,57 +31,7 @@ def test_plugin_spec(api):
         schema.pop("definitions", None)
         assert api.spec["components"]["schemas"][name] == schema
 
-    assert api.spec["tags"] == [
-        {"name": "test"},
-        {"name": "health"},
-        {
-            "description": "🐱",
-            "externalDocs": {
-                "description": "",
-                "url": "https://pypi.org",
-            },
-            "name": "API",
-        },
-    ]
-
-    assert get_paths(api.spec) == [
-        "/api/file_upload",
-        "/api/no_response",
-        "/api/user/{name}",
-        "/api/user/{name}/address/{address_id}",
-        "/api/user_annotated/{name}",
-        "/api/user_model/{name}",
-        "/api/user_skip/{name}",
-        "/ping",
-    ]
-
-    ping = api.spec["paths"]["/ping"]["get"]
-    assert ping["tags"] == ["test", "health"]
-    assert ping["parameters"][0]["in"] == "header"
-    assert ping["summary"] == "summary"
-    assert ping["description"] == "description"
-    assert ping["operationId"] == "get__ping"
-
-    user = api.spec["paths"]["/api/user/{name}"]["post"]
-    assert user["tags"] == ["API", "test"]
-    assert (
-        user["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-        == f"#/components/schemas/{get_model_path_key('tests.common.JSON')}"
-    )
-    assert len(user["responses"]) == 3
-
-    user_address = api.spec["paths"]["/api/user/{name}/address/{address_id}"]["get"]
-    params = user_address["parameters"]
-    assert params[0]["in"] == "path"
-    assert params[0]["name"] == "name"
-    assert params[0]["description"] == "The name that uniquely identifies the user."
-
-    assert params[1]["in"] == "path"
-    assert params[1]["name"] == "address_id"
-    assert params[1]["description"] == ""
-
-    assert params[2]["in"] == "query"
-    assert params[2]["name"] == "order"
+    assert api.spec == snapshot_json(name="full_spec")
 
 
 def test_secure_spec():

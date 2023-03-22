@@ -10,6 +10,7 @@ from .common import (
     SECURITY_SCHEMAS,
     Cookies,
     Headers,
+    ListJSON,
     Order,
     Query,
     Resp,
@@ -138,6 +139,14 @@ async def user_address(name, address_id):
     json=JSON,
 )
 async def no_response():
+    return {}
+
+
+@app.route("/api/list_json", methods=["POST"])
+@api.validate(
+    json=ListJSON,
+)
+async def list_json():
     return {}
 
 

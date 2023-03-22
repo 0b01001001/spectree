@@ -10,6 +10,7 @@ from .common import (
     Cookies,
     FormFileUpload,
     Headers,
+    ListJSON,
     Query,
     Resp,
     StrDict,
@@ -185,6 +186,16 @@ class FileUploadView:
         resp.media = {"file": file_content.decode("utf-8")}
 
 
+class ListJsonView:
+    name = "json list request view"
+
+    @api.validate(
+        json=ListJSON,
+    )
+    def on_post(self, req, resp, json: ListJSON):
+        pass
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -194,6 +205,7 @@ app.add_route("/api/user_skip/{name}", UserScoreSkip())
 app.add_route("/api/user_model/{name}", UserScoreModel())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
+app.add_route("/api/list_json", ListJsonView())
 api.register(app)
 
 
@@ -282,6 +294,15 @@ def test_falcon_no_response(client):
     resp = client.simulate_request(
         "GET",
         "/api/no_response",
+    )
+    assert resp.status_code == 200
+
+
+def test_falcon_list_json_request_sync(client):
+    resp = client.simulate_request(
+        "POST",
+        "/api/list_json",
+        json=[dict(name="foo", limit=1)],
     )
     assert resp.status_code == 200
 

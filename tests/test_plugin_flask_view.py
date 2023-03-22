@@ -12,6 +12,7 @@ from .common import (
     Form,
     FormFileUpload,
     Headers,
+    ListJSON,
     Order,
     Query,
     Resp,
@@ -159,6 +160,14 @@ class NoResponseView(MethodView):
         return {}
 
 
+class ListJsonView(MethodView):
+    @api.validate(
+        json=ListJSON,
+    )
+    def post(self):
+        return {}
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -188,6 +197,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/file_upload",
     view_func=FileUploadView.as_view("file_upload_view"),
+)
+app.add_url_rule(
+    "/api/list_json",
+    view_func=ListJsonView.as_view("list_json_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering
