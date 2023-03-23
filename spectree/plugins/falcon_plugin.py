@@ -229,7 +229,7 @@ class FalconPlugin(BasePlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
+                _resp.media = _resp.media.json().encode('UTF-8')
                 skip_validation = True
 
             if model and not skip_validation:
@@ -325,7 +325,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
+                _resp.media = _resp.media.json().encode('UTF-8')
                 skip_validation = True
 
             model = resp.find_model(_resp.status[:3])
