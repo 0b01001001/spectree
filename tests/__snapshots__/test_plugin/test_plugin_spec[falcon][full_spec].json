@@ -188,6 +188,66 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/custom_serializer": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_custom_serializer",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "on_get <GET>",
+        "tags": []
+      },
+      "post": {
+        "description": "",
+        "operationId": "post__api_custom_serializer",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "on_post <POST>",
+        "tags": []
+      }
+    },
     "/api/file_upload": {
       "post": {
         "description": "",
