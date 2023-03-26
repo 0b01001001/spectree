@@ -133,6 +133,22 @@ class FileUploadView:
         resp.media = {"file": file_content.decode("utf-8")}
 
 
+class ViewWithCustomSerializer:
+    name = "view with custom serializer"
+
+    @api.validate(
+        resp=Response(HTTP_200=Resp),
+    )
+    async def on_get(self, req, resp):
+        resp.data = Resp(name="falcon", score=[1, 2, 3]).json().encode("utf-8")
+
+    @api.validate(
+        resp=Response(HTTP_200=Resp),
+    )
+    async def on_post(self, req, resp):
+        resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -140,6 +156,7 @@ app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
+app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
 api.register(app)
 
 
@@ -335,3 +352,19 @@ def test_falcon_file_upload_async(client):
     )
     assert resp.status_code == 200, resp.text
     assert resp.json["file"] == file_content
+
+
+def test_falcon_custom_serializer(client):
+    resp = client.simulate_get(
+        "/api/custom_serializer",
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "falcon"
+    assert resp.json["score"] == [1, 2, 3]
+
+    resp = client.simulate_post(
+        "/api/custom_serializer",
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "falcon"
+    assert resp.json["score"] == [1, 2, 3]

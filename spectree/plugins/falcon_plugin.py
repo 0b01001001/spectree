@@ -232,6 +232,9 @@ class FalconPlugin(BasePlugin):
                 _resp.media = _resp.media.dict()
                 skip_validation = True
 
+            if self._data_set_manually(_resp):
+                skip_validation = True
+
             if model and not skip_validation:
                 try:
                     model.parse_obj(_resp.media)
@@ -241,6 +244,9 @@ class FalconPlugin(BasePlugin):
                     _resp.media = err.errors()
 
         after(_req, _resp, resp_validation_error, _self)
+
+    def _data_set_manually(self, resp):
+        return (resp.text is not None or resp.data is not None) and resp.media is None
 
     def bypass(self, func, method):
         if isinstance(func, partial):
@@ -326,6 +332,9 @@ class FalconAsgiPlugin(FalconPlugin):
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
                 _resp.media = _resp.media.dict()
+                skip_validation = True
+
+            if self._data_set_manually(_resp):
                 skip_validation = True
 
             model = resp.find_model(_resp.status[:3])
