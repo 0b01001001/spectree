@@ -220,20 +220,29 @@ def test_global_model_for_validation_errors_specified():
 
 
 @pytest.mark.parametrize(
-    ["override_operation_id", "expected_operation_id"],
-    [(None, "get__foo"), ("getFoo", "getFoo")],
+    ["path_to_expected_operation_id", "override_operation_id"],
+    [
+        pytest.param({"/foo": "get__foo"}, None, id="no-override"),
+        pytest.param({"/foo": "getFoo"}, "getFoo", id="single-path-override"),
+    ],
 )
-def test_operation_id_override(override_operation_id, expected_operation_id):
+def test_operation_id_override(
+    path_to_expected_operation_id,
+    override_operation_id,
+):
     api = SpecTree("flask")
     app = Flask(__name__)
 
-    @app.route("/foo")
     @api.validate(operation_id=override_operation_id)
     def foo():
         pass
 
+    for path in path_to_expected_operation_id.keys():
+        foo = app.route(path)(foo)
+
     api.register(app)
 
     with app.app_context():
-        operation_id = api.spec["paths"]["/foo"]["get"]["operationId"]
-        assert operation_id == expected_operation_id
+        for path, expected_operation_id in path_to_expected_operation_id.items():
+            operation_id = api.spec["paths"][path]["get"]["operationId"]
+            assert operation_id == expected_operation_id
