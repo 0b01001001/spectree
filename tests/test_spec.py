@@ -224,6 +224,11 @@ def test_global_model_for_validation_errors_specified():
     [
         pytest.param({"/foo": "get__foo"}, None, id="no-override"),
         pytest.param({"/foo": "getFoo"}, "getFoo", id="single-path-override"),
+        pytest.param(
+            {"/foo": "getFoo", "/bar": "getBar", "/baz": "get__baz"},
+            {"/foo": "getFoo", "/bar": "getBar"},
+            id="multi-path-override",
+        ),
     ],
 )
 def test_operation_id_override(

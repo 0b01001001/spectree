@@ -10,6 +10,7 @@ from typing import (
     Optional,
     Sequence,
     Type,
+    Union,
     get_type_hints,
 )
 
@@ -132,7 +133,7 @@ class SpecTree:
         validation_error_status: int = 0,
         path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,
-        operation_id: Optional[str] = None,
+        operation_id: Optional[Union[str, Mapping[str, str]]] = None,
     ) -> Callable:
         """
         - validate query, json, headers in request
@@ -288,6 +289,8 @@ class SpecTree:
                         )
 
                 operation_id = getattr(func, "operation_id", None)
+                if isinstance(operation_id, dict):
+                    operation_id = operation_id.get(path)
                 if not operation_id:
                     operation_id = f"{method.lower()}_{path.replace('/', '_')}"
 
