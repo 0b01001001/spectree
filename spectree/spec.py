@@ -288,11 +288,7 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
-                operation_id = getattr(func, "operation_id", None)
-                if isinstance(operation_id, dict):
-                    operation_id = operation_id.get(path)
-                if not operation_id:
-                    operation_id = f"{method.lower()}_{path.replace('/', '_')}"
+                operation_id = self._get_func_operation_id(func, path, method)
 
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
@@ -338,6 +334,19 @@ class SpecTree:
 
         spec["security"] = get_security(self.config.security)
         return spec
+
+    def _get_func_operation_id(
+        self,
+        func: Callable,
+        path: str,
+        method: str,
+    ) -> str:
+        operation_id = getattr(func, "operation_id", None)
+        if isinstance(operation_id, dict):
+            operation_id = operation_id.get(path)
+        if not operation_id:
+            operation_id = f"{method.lower()}_{path.replace('/', '_')}"
+        return operation_id
 
     def _get_model_definitions(self) -> Dict[str, Any]:
         """
