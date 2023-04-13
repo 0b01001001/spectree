@@ -5,9 +5,8 @@
 ## Pull Requests
 
 * fork this repo and git clone it
-* install spectree in your virtualenv with `pip install -e .` and test it with `make test`
+* install spectree in your virtualenv with `pip install -e .[dev]` and test it with `make test`
 * create a new branch: `git checkout -b fix-<bug>`
 * make your changes (code, doc, test)
-* check the coding style `make style` and test cases `make test`
+* check the coding style `make lint` and test cases `make test`
 * open a pull request
-
