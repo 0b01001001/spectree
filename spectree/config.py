@@ -1,4 +1,3 @@
-import posixpath
 import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
@@ -7,6 +6,7 @@ from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
+from .utils import join_path
 
 # Fall back to a str field if email-validator is not installed.
 if TYPE_CHECKING:
@@ -118,9 +118,18 @@ class Configuration(BaseSettings):
 
     @property
     def spec_url(self) -> str:
-        sep = posixpath.sep
-        parts = (sep, self.path.lstrip(sep), self.filename.lstrip(sep))
-        return posixpath.join(*parts)
+        return self.join_doc_path(self.filename)
+
+    @property
+    def doc_root(self) -> str:
+        return self.join_doc_path("")
+
+    def join_doc_path(self, path: str) -> str:
+        """
+        Return the documentation path constructed using the configured
+        self.path documentation prefix and the given path string.
+        """
+        return f"/{join_path((self.path, path))}"
 
     def swagger_oauth2_config(self) -> Dict[str, str]:
         """

@@ -6,6 +6,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     Iterator,
     List,
     Mapping,
@@ -349,3 +350,16 @@ def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
         responses = func.resp.generate_spec(naming_strategy)
 
     return responses
+
+
+def join_path(paths: Iterable[str]) -> str:
+    """
+    Join path parts together.
+
+    Normalizes any leading or trailing slashes on the given path parts and avoids
+    behavior of urllib.parse.urljoin and posixpath.join where a path part with
+    leading slash overrides any path parts before it due to being treated as an
+    absolute path.
+    """
+    normalized_paths = (x.strip("/") for x in paths if x)
+    return "/".join(x for x in normalized_paths if x)

@@ -231,23 +231,44 @@ def test_client_and_api(request):
 
 
 @pytest.mark.parametrize(
-    ("test_client_and_api", "prefix"),
+    ("test_client_and_api", "prefix", "doc_prefix"),
     [
-        ({"register_blueprint_kwargs": {}}, ""),
-        ({"register_blueprint_kwargs": {"url_prefix": "/prefix"}}, "/prefix"),
+        pytest.param({"register_blueprint_kwargs": {}}, "", "/apidoc", id="default"),
+        pytest.param(
+            {"register_blueprint_kwargs": {}, "api_kwargs": {"path": ""}},
+            "",
+            "",
+            id="root-doc-prefix",
+        ),
+        pytest.param(
+            {"register_blueprint_kwargs": {"url_prefix": "/prefix"}},
+            "/prefix",
+            "/apidoc",
+            id="blueprint-prefix",
+        ),
+        pytest.param(
+            {
+                "register_blueprint_kwargs": {"url_prefix": "/prefix"},
+                "api_kwargs": {"path": ""},
+            },
+            "/prefix",
+            "",
+            id="blueprint-prefix-with-root-doc-prefix",
+        ),
     ],
     indirect=["test_client_and_api"],
 )
-def test_flask_doc_prefix(test_client_and_api, prefix):
+def test_flask_doc_prefix(test_client_and_api, prefix, doc_prefix):
     client, api = test_client_and_api
 
-    resp = client.get(prefix + "/apidoc/openapi.json")
+    resp = client.get(f"{prefix}{doc_prefix}/openapi.json")
+    assert resp.status_code == 200
     assert resp.json == api.spec
 
-    resp = client.get(prefix + "/apidoc/redoc/")
+    resp = client.get(f"{prefix}{doc_prefix}/redoc/")
     assert resp.status_code == 200
 
-    resp = client.get(prefix + "/apidoc/swagger/")
+    resp = client.get(f"{prefix}{doc_prefix}/swagger/")
     assert resp.status_code == 200
 
     assert get_paths(api.spec) == [

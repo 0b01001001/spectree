@@ -82,6 +82,36 @@ def test_config_spec_url_when_given_path_and_filename(path, filename):
     assert config.spec_url == "/prefix/openapi.json"
 
 
+@pytest.mark.parametrize(
+    "config_path, test_path, expected_path",
+    [
+        pytest.param("prefix", "", "/prefix", id="root"),
+        pytest.param(
+            "prefix", "swagger", "/prefix/swagger", id="test-path-no-trailing-slash"
+        ),
+        pytest.param(
+            "prefix", "swagger/", "/prefix/swagger", id="test-path-trailing-slash"
+        ),
+    ],
+)
+def test_config_join_doc_path(config_path, test_path, expected_path):
+    config = Configuration(path=config_path)
+    assert config.join_doc_path(test_path) == expected_path
+
+
+@pytest.mark.parametrize(
+    "config_path, expected_doc_root_path",
+    [
+        pytest.param("", "/", id="root"),
+        pytest.param("prefix", "/prefix", id="path-no-trailing-slash"),
+        pytest.param("prefix/", "/prefix", id="path-trailing-slash"),
+    ],
+)
+def test_config_doc_root(config_path, expected_doc_root_path):
+    config = Configuration(path=config_path)
+    assert config.doc_root == expected_doc_root_path
+
+
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
 def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     # update and validate each schema type

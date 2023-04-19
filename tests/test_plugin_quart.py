@@ -18,6 +18,9 @@ from .common import (
     api_tag,
 )
 
+# import tests to execute
+from .quart_imports import *  # NOQA
+
 
 def before_handler(req, resp, err, _):
     if err:

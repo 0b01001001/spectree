@@ -73,28 +73,36 @@ def test_flask_validation_error_response_status_code(
 
 
 @pytest.mark.parametrize(
-    "test_client_and_api, expected_doc_pages",
+    "test_client_and_api, doc_prefix, expected_doc_pages",
     [
-        pytest.param({}, ["redoc", "swagger"], id="default-page-templates"),
+        pytest.param({}, "/apidoc", ["redoc", "swagger"], id="default-page-templates"),
+        pytest.param(
+            {"api_kwargs": {"path": ""}},
+            "",
+            ["redoc", "swagger"],
+            id="default-page-templates-in-root-path",
+        ),
         pytest.param(
             {"api_kwargs": {"page_templates": {"custom_page": "{spec_url}"}}},
+            "/apidoc",
             ["custom_page"],
             id="custom-page-templates",
         ),
     ],
     indirect=["test_client_and_api"],
 )
-def test_flask_doc(test_client_and_api, expected_doc_pages):
+def test_flask_doc(test_client_and_api, doc_prefix, expected_doc_pages):
     client, api = test_client_and_api
 
-    resp = client.get("/apidoc/openapi.json")
+    resp = client.get(f"{doc_prefix}/openapi.json")
+    assert resp.status_code == 200
     assert resp.json == api.spec
 
     for doc_page in expected_doc_pages:
-        resp = client.get(f"/apidoc/{doc_page}/")
+        resp = client.get(f"{doc_prefix}/{doc_page}/")
         assert resp.status_code == 200
 
-        resp = client.get(f"/apidoc/{doc_page}")
+        resp = client.get(f"{doc_prefix}/{doc_page}")
         assert resp.status_code == 308
 
 
