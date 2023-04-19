@@ -1,3 +1,4 @@
+import posixpath
 import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
@@ -65,7 +66,7 @@ class Configuration(BaseSettings):
     license: Optional[License] = None
 
     # SpecTree configurations
-    #: OpenAPI doc route path prefix (i.e. /apidoc/)
+    #: OpenAPI doc route path prefix (i.e. /apidoc/) or empty string for no path prefix.
     path: str = "apidoc"
     #: OpenAPI file route path suffix (i.e. /apidoc/openapi.json)
     filename: str = "openapi.json"
@@ -117,7 +118,9 @@ class Configuration(BaseSettings):
 
     @property
     def spec_url(self) -> str:
-        return f"/{self.path}/{self.filename}"
+        sep = posixpath.sep
+        parts = (sep, self.path.lstrip(sep), self.filename.lstrip(sep))
+        return posixpath.join(*parts)
 
     def swagger_oauth2_config(self) -> Dict[str, str]:
         """

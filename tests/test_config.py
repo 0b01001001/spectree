@@ -60,6 +60,28 @@ def test_config_case():
     assert config.title == "Demo"
 
 
+@pytest.mark.parametrize("filename", ["openapi.json", "/openapi.json"])
+@pytest.mark.parametrize("path", ["", "/"])
+def test_config_spec_url_when_given_empty_path(path, filename):
+    """
+    Test spec_url given empty path values and filename values with and
+    without leading slash.
+    """
+    config = Configuration(path=path, filename=filename)
+    assert config.spec_url == "/openapi.json"
+
+
+@pytest.mark.parametrize("filename", ["openapi.json", "/openapi.json"])
+@pytest.mark.parametrize("path", ["prefix", "/prefix", "prefix/", "/prefix/"])
+def test_config_spec_url_when_given_path_and_filename(path, filename):
+    """
+    Test spec_url given path and filename values with and without
+    leading/trailing slashes.
+    """
+    config = Configuration(path=path, filename=filename)
+    assert config.spec_url == "/prefix/openapi.json"
+
+
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
 def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     # update and validate each schema type
