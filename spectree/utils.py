@@ -18,7 +18,7 @@ from typing import (
 
 from pydantic import BaseModel, ValidationError
 
-from ._types import ModelType, MultiDict
+from ._types import ModelType, MultiDict, NamingStrategy
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -131,21 +131,6 @@ def parse_params(
     return params
 
 
-def parse_resp(func: Any):
-    """
-    get the response spec
-
-    If this function does not have explicit ``resp`` but have other models,
-    a ``422 Validation Error`` will be appended to the response spec, since
-    this may be triggered in the validation step.
-    """
-    responses = {}
-    if hasattr(func, "resp"):
-        responses = func.resp.generate_spec()
-
-    return responses
-
-
 def has_model(func: Any) -> bool:
     """
     return True if this function have ``pydantic.BaseModel``
@@ -244,7 +229,7 @@ def get_model_key(model: ModelType) -> str:
     return f"{model.__name__}.{hash_module_path(module_path=model.__module__)}"
 
 
-def get_model_schema(model: ModelType):
+def get_model_schema(model: ModelType, naming_strategy: NamingStrategy = get_model_key):
     """
     return a dictionary representing the model as JSON Schema with a hashed
     infix in ref to ensure name uniqueness
@@ -255,7 +240,7 @@ def get_model_schema(model: ModelType):
     assert issubclass(model, BaseModel)
 
     return model.schema(
-        ref_template=f"#/components/schemas/{get_model_key(model)}.{{model}}"
+        ref_template=f"#/components/schemas/{naming_strategy(model)}.{{model}}"
     )
 
 
@@ -334,3 +319,18 @@ def werkzeug_parse_rule(
         if ">" in remaining or "<" in remaining:
             raise ValueError(f"malformed url rule: {rule!r}")
         yield None, None, remaining
+
+
+def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
+    """
+    get the response spec
+
+    If this function does not have explicit ``resp`` but have other models,
+    a ``422 Validation Error`` will be appended to the response spec, since
+    this may be triggered in the validation step.
+    """
+    responses = {}
+    if hasattr(func, "resp"):
+        responses = func.resp.generate_spec(naming_strategy)
+
+    return responses

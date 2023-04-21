@@ -2,7 +2,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
-from ._types import ModelType, OptionalModelType
+from ._types import ModelType, NamingStrategy, OptionalModelType
 from .utils import gen_list_model, get_model_key, parse_code
 
 
@@ -121,7 +121,9 @@ class Response:
         """
         return self.code_models.values()
 
-    def generate_spec(self) -> Dict[str, Any]:
+    def generate_spec(
+        self, naming_strategy: NamingStrategy = get_model_key
+    ) -> Dict[str, Any]:
         """
         generate the spec for responses
 
@@ -134,7 +136,7 @@ class Response:
             }
 
         for code, model in self.code_models.items():
-            model_name = get_model_key(model=model)
+            model_name = naming_strategy(model)
             responses[parse_code(code)] = {
                 "description": self.get_code_description(code),
                 "content": {

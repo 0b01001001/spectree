@@ -1,10 +1,22 @@
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 
 from pydantic import BaseModel
 from typing_extensions import Protocol
 
 ModelType = Type[BaseModel]
 OptionalModelType = Optional[ModelType]
+NamingStrategy = Callable[[ModelType], str]
 
 
 class MultiDict(Protocol):
