@@ -13,7 +13,7 @@ from typing import (
     get_type_hints,
 )
 
-from ._types import FunctionDecorator, ModelType
+from ._types import FunctionDecorator, ModelType, NamingStrategy
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
 from .plugins import PLUGINS, BasePlugin
@@ -62,8 +62,10 @@ class SpecTree:
         after: Callable = default_after_handler,
         validation_error_status: int = 422,
         validation_error_model: Optional[ModelType] = None,
+        naming_strategy: NamingStrategy = get_model_key,
         **kwargs: Any,
     ):
+        self.naming_strategy = naming_strategy
         self.before = before
         self.after = after
         self.validation_error_status = validation_error_status
@@ -255,8 +257,10 @@ class SpecTree:
         unified model processing
         """
 
-        model_key = get_model_key(model=model)
-        self.models[model_key] = deepcopy(get_model_schema(model=model))
+        model_key = self.naming_strategy(model)
+        self.models[model_key] = deepcopy(
+            get_model_schema(model=model, naming_strategy=self.naming_strategy)
+        )
 
         return model_key
 
@@ -297,7 +301,7 @@ class SpecTree:
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
                     "parameters": parse_params(func, parameters[:], self.models),
-                    "responses": parse_resp(func),
+                    "responses": parse_resp(func, self.naming_strategy),
                 }
 
                 security = getattr(func, "security", None)
