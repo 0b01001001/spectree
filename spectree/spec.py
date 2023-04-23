@@ -37,7 +37,8 @@ class SpecTree:
     Interface
 
     :param str backend_name: choose from ('flask', 'falcon', 'falcon-asgi', 'starlette')
-    :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`
+    :param backend: a backend that inherit `SpecTree.plugins.base.BasePlugin`, this will
+        override the `backend_name` if provided
     :param app: backend framework application instance (can be registered later)
     :param before: a callback function of the form
         :meth:`spectree.utils.default_before_handler`
@@ -50,7 +51,8 @@ class SpecTree:
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
         if needed.
-    :param kwargs: init :class:`spectree.config.Configuration`
+    :param kwargs: init :class:`spectree.config.Configuration`, they can also be
+        configured through the environment variables with prefix `spectree_`
     """
 
     def __init__(
