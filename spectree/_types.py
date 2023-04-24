@@ -17,6 +17,7 @@ from typing_extensions import Protocol
 ModelType = Type[BaseModel]
 OptionalModelType = Optional[ModelType]
 NamingStrategy = Callable[[ModelType], str]
+NestedNamingStrategy = Callable[[str, str], str]
 
 
 class MultiDict(Protocol):

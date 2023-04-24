@@ -13,7 +13,7 @@ from typing import (
     get_type_hints,
 )
 
-from ._types import FunctionDecorator, ModelType, NamingStrategy
+from ._types import FunctionDecorator, ModelType, NamingStrategy, NestedNamingStrategy
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
 from .plugins import PLUGINS, BasePlugin
@@ -23,6 +23,7 @@ from .utils import (
     default_before_handler,
     get_model_key,
     get_model_schema,
+    get_nested_key,
     get_security,
     parse_comments,
     parse_name,
@@ -65,9 +66,11 @@ class SpecTree:
         validation_error_status: int = 422,
         validation_error_model: Optional[ModelType] = None,
         naming_strategy: NamingStrategy = get_model_key,
+        nested_naming_strategy: NestedNamingStrategy = get_nested_key,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
+        self.nested_naming_strategy = nested_naming_strategy
         self.before = before
         self.after = after
         self.validation_error_status = validation_error_status
@@ -261,7 +264,11 @@ class SpecTree:
 
         model_key = self.naming_strategy(model)
         self.models[model_key] = deepcopy(
-            get_model_schema(model=model, naming_strategy=self.naming_strategy)
+            get_model_schema(
+                model=model,
+                naming_strategy=self.naming_strategy,
+                nested_naming_strategy=self.nested_naming_strategy,
+            )
         )
 
         return model_key
@@ -350,7 +357,9 @@ class SpecTree:
         for name, schema in self.models.items():
             if "definitions" in schema:
                 for key, value in schema["definitions"].items():
-                    definitions[f"{name}.{key}"] = value
+                    composed_key = self.nested_naming_strategy(name, key)
+                    if composed_key not in definitions:
+                        definitions[composed_key] = value
                 del schema["definitions"]
 
         return definitions
