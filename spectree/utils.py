@@ -18,7 +18,7 @@ from typing import (
 
 from pydantic import BaseModel, ValidationError
 
-from ._types import ModelType, MultiDict, NamingStrategy
+from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -229,7 +229,22 @@ def get_model_key(model: ModelType) -> str:
     return f"{model.__name__}.{hash_module_path(module_path=model.__module__)}"
 
 
-def get_model_schema(model: ModelType, naming_strategy: NamingStrategy = get_model_key):
+def get_nested_key(parent: str, child: str) -> str:
+    """
+    generate nested model reference name suffixed by parent model name
+
+    :param parent: string of parent name
+    :param child: string of child name
+    """
+
+    return f"{parent}.{child}"
+
+
+def get_model_schema(
+    model: ModelType,
+    naming_strategy: NamingStrategy = get_model_key,
+    nested_naming_strategy: NestedNamingStrategy = get_nested_key,
+):
     """
     return a dictionary representing the model as JSON Schema with a hashed
     infix in ref to ensure name uniqueness
@@ -239,9 +254,9 @@ def get_model_schema(model: ModelType, naming_strategy: NamingStrategy = get_mod
     """
     assert issubclass(model, BaseModel)
 
-    return model.schema(
-        ref_template=f"#/components/schemas/{naming_strategy(model)}.{{model}}"
-    )
+    nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
+
+    return model.schema(ref_template=f"#/components/schemas/{nested_key}")
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
