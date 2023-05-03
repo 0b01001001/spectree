@@ -33,9 +33,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [lint]
     strategy:
-      max-parallel: 6
+      max-parallel: 5
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy3.7"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy3.8"]
         os: [ubuntu-latest]
 
     steps:
