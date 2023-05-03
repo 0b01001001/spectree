@@ -225,7 +225,6 @@ def test_client_and_api(request):
 
     with flask_app.app_context():
         api.spec
-    api.register(app)
 
     with flask_app.test_client() as test_client:
         yield test_client, api

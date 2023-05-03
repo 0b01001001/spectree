@@ -183,7 +183,6 @@ app = Starlette(
 
 
 def inner_register_func():
-    @app.route("/api/user/{name}/address/{address_id}")
     @api.validate(
         query=Query,
         path_parameter_descriptions={
@@ -193,6 +192,8 @@ def inner_register_func():
     )
     def user_address(request):
         return None
+
+    app.routes.append(Route("/api/user/{name}/address/{address_id}", user_address))
 
 
 inner_register_func()
