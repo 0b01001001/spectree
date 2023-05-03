@@ -4,7 +4,7 @@ import pytest
 
 
 def test_flask_skip_validation(client):
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie(key="pub", value="abcdefg")
 
     resp = client.post(
         "/api/user_skip/flask?order=1",
@@ -19,7 +19,7 @@ def test_flask_skip_validation(client):
 
 
 def test_flask_return_model(client):
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie(key="pub", value="abcdefg")
 
     resp = client.post(
         "/api/user_model/flask?order=1",
@@ -121,7 +121,7 @@ def test_flask_validate_basic(client):
     ],
 )
 def test_flask_validate_post_data(client, fragment):
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie(key="pub", value="abcdefg")
     resp = client.post(
         f"/api/{fragment}/flask?order=1",
         json=dict(name="flask", limit=10),
