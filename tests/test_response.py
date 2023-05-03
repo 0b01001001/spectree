@@ -7,7 +7,7 @@ from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import gen_list_model
 
-from .common import JSON, DemoModel, get_model_path_key
+from .common import JSON, DemoModel, DemoModelWithSchemaExtra, get_model_path_key
 
 
 class NormalClass:
@@ -99,6 +99,34 @@ def test_response_spec():
     assert spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
     ] == get_model_path_key("tests.common.DemoModel")
+    assert spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[
+        -1
+    ] == get_model_path_key("spectree.models.ValidationError")
+
+    assert spec.get(200) is None
+    assert spec.get(404) is None
+
+
+def test_response_spec_with_schema_extra():
+    resp = Response(
+        "HTTP_200",
+        HTTP_201=DemoModelWithSchemaExtra,
+        HTTP_401=(DemoModelWithSchemaExtra, "custom code description"),
+        HTTP_402=(None, "custom code description"),
+    )
+    resp.add_model(422, ValidationError)
+    spec = resp.generate_spec()
+    assert spec["200"]["description"] == DEFAULT_CODE_DESC["HTTP_200"]
+    assert spec["201"]["description"] == DEFAULT_CODE_DESC["HTTP_201"]
+    assert spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
+    assert spec["401"]["description"] == "custom code description"
+    assert spec["402"]["description"] == "custom code description"
+    assert spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[
+        -1
+    ] == get_model_path_key("tests.common.DemoModelWithSchemaExtra")
+    assert spec["201"]["content"]["application/json"]["examples"] == {
+        "example1": {"value": {"key1": "value1", "key2": "value2"}}
+    }
     assert spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
     ] == get_model_path_key("spectree.models.ValidationError")

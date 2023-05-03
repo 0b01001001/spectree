@@ -70,6 +70,11 @@ class DemoModel(BaseModel):
     name: str = Field(..., description="user name")
 
 
+class DemoModelWithSchemaExtra(BaseModel):
+    class Config:
+        schema_extra = {"example1": {"value": {"key1": "value1", "key2": "value2"}}}
+
+
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
     names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")
