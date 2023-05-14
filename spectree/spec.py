@@ -99,8 +99,6 @@ class SpecTree:
         self.app = app
         if self.publish_apidoc:
             self.backend.register_route(self.app)
-        else:
-            self.backend.app = self.app
 
     @property
     def spec(self):

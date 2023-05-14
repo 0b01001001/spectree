@@ -36,15 +36,13 @@ class StarlettePlugin(BasePlugin):
         self.conv2type = {conv: typ for typ, conv in CONVERTOR_TYPES.items()}
 
     def register_route(self, app):
-        self.app = app
-
-        self.app.add_route(
+        app.add_route(
             self.config.spec_url,
             lambda request: JSONResponse(self.spectree.spec),
         )
 
         for ui in self.config.page_templates:
-            self.app.add_route(
+            app.add_route(
                 f"/{self.config.path}/{ui}",
                 lambda request, ui=ui: HTMLResponse(
                     self.config.page_templates[ui].format(
@@ -177,7 +175,7 @@ class StarlettePlugin(BasePlugin):
                 else:
                     parse_route(route, prefix=f"{prefix}{route.path}")
 
-        parse_route(self.app)
+        parse_route(self.spectree.app)
         return routes
 
     def bypass(self, func, method):

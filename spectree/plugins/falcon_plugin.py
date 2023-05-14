@@ -70,12 +70,11 @@ class FalconPlugin(BasePlugin):
         self.INT_ARGS_NAMES = ("num_digits", "min", "max")
 
     def register_route(self, app: Any):
-        self.app = app
-        self.app.add_route(
+        app.add_route(
             self.config.spec_url, self.OPEN_API_ROUTE_CLASS(self.spectree.spec)
         )
         for ui in self.config.page_templates:
-            self.app.add_route(
+            app.add_route(
                 f"/{self.config.path}/{ui}",
                 self.DOC_PAGE_ROUTE_CLASS(
                     self.config.page_templates[ui],
@@ -95,7 +94,7 @@ class FalconPlugin(BasePlugin):
             for child in node.children:
                 find_node(child)
 
-        for route in self.app._router._roots:
+        for route in self.spectree.app._router._roots:
             find_node(route)
 
         return routes
