@@ -109,3 +109,16 @@ class BasePlugin(Generic[BackendRoute]):
         get the endpoint function from routes
         """
         raise NotImplementedError
+
+    def get_func_operation_id(self, func: Callable, path: str, method: str):
+        """
+        :param func: route function (endpoint)
+        :param method: URI path for this route function
+        :param method: HTTP method for this route function
+
+        get the operation_id value for the endpoint
+        """
+        operation_id = getattr(func, "operation_id", None)
+        if not operation_id:
+            operation_id = f"{method.lower()}_{path.replace('/', '_')}"
+        return operation_id

@@ -300,13 +300,11 @@ class SpecTree:
                             tag.dict() if isinstance(tag, Tag) else {"name": tag}
                         )
 
-                operation_id = getattr(func, "operation_id", None)
-                if not operation_id:
-                    operation_id = f"{method.lower()}_{path.replace('/', '_')}"
-
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
-                    "operationId": operation_id,
+                    "operationId": self.backend.get_func_operation_id(
+                        func, path, method
+                    ),
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
                     "parameters": parse_params(func, parameters[:], self.models),
