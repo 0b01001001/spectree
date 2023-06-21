@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. meta::
+    :description lang=en:
+        SpecTree is an API spec validator and OpenAPI document generator for Python web frameworks.
+
 Welcome to spectree's documentation!
 ====================================
 
