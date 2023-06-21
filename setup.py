@@ -23,5 +23,9 @@ setup(
             "mypy>=0.971",
             "syrupy>=4.0.0",
         ],
+        "docs": [
+            "Sphinx",
+            "furo",
+        ],
     },
 )
