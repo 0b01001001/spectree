@@ -155,7 +155,7 @@ class SpecTree:
         :param resp: `spectree.Response`
         :param tags: a tuple of strings or :class:`spectree.models.Tag`
         :param security: dict with security config for current route and method
-        :param deprecated: bool if endpoint is marked as deprecated
+        :param deprecated: bool, if endpoint is marked as deprecated
         :param before: :meth:`spectree.utils.default_before_handler` for
             specific endpoint
         :param after: :meth:`spectree.utils.default_after_handler` for
