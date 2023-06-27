@@ -128,6 +128,7 @@ class SpecTree:
         query: Optional[ModelType] = None,
         json: Optional[ModelType] = None,
         form: Optional[ModelType] = None,
+        body: Optional[ModelType] = None,
         headers: Optional[ModelType] = None,
         cookies: Optional[ModelType] = None,
         resp: Optional[Response] = None,
@@ -150,6 +151,7 @@ class SpecTree:
         :param query: `pydantic.BaseModel`, query in uri like `?name=value`
         :param json: `pydantic.BaseModel`, JSON format request body
         :param form: `pydantic.BaseModel`, form-data request body
+        :param body: `pydantic.BaseModel`, raw (plain text) request body
         :param headers: `pydantic.BaseModel`, if you have specific headers
         :param cookies: `pydantic.BaseModel`, if you have cookies for this route
         :param resp: `spectree.Response`
@@ -182,6 +184,7 @@ class SpecTree:
                     query,
                     json,
                     form,
+                    body,
                     headers,
                     cookies,
                     resp,
@@ -201,6 +204,7 @@ class SpecTree:
                     query,
                     json,
                     form,
+                    body,
                     headers,
                     cookies,
                     resp,
@@ -217,18 +221,19 @@ class SpecTree:
             )
 
             if self.config.annotations:
-                nonlocal query, json, form, headers, cookies
+                nonlocal query, json, form, body, headers, cookies
                 annotations = get_type_hints(func)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)
+                body = annotations.get("body", body)
                 headers = annotations.get("headers", headers)
                 cookies = annotations.get("cookies", cookies)
 
             # register
             for name, model in zip(
-                ("query", "json", "form", "headers", "cookies"),
-                (query, json, form, headers, cookies),
+                ("query", "json", "form", "body", "headers", "cookies"),
+                (query, json, form, body, headers, cookies),
             ):
                 if model is not None:
                     model_key = self._add_model(model=model)

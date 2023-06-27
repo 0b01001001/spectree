@@ -55,17 +55,21 @@ class StarlettePlugin(BasePlugin):
                 ),
             )
 
-    async def request_validation(self, request, query, json, form, headers, cookies):
+    async def request_validation(
+        self, request, query, json, form, body, headers, cookies
+    ):
         has_data = request.method not in ("GET", "DELETE")
         content_type = request.headers.get("content-type", "").lower()
         use_json = json and has_data and content_type == "application/json"
         use_form = (
             form and has_data and any([x in content_type for x in self.FORM_MIMETYPE])
         )
+        use_body = body and has_data and content_type == "text/plain"
         request.context = Context(
             query.parse_obj(request.query_params) if query else None,
             json.parse_obj(await request.json() or {}) if use_json else None,
             form.parse_obj(await request.form() or {}) if use_form else None,
+            body.parse_obj(await request.body() or {}) if use_body else None,
             headers.parse_obj(request.headers) if headers else None,
             cookies.parse_obj(request.cookies) if cookies else None,
         )
@@ -76,6 +80,7 @@ class StarlettePlugin(BasePlugin):
         query: Optional[ModelType],
         json: Optional[ModelType],
         form: Optional[ModelType],
+        body: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -95,10 +100,12 @@ class StarlettePlugin(BasePlugin):
         req_validation_error = resp_validation_error = json_decode_error = None
 
         try:
-            await self.request_validation(request, query, json, form, headers, cookies)
+            await self.request_validation(
+                request, query, json, form, body, headers, cookies
+            )
             if self.config.annotations:
                 annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
+                for name in ("query", "json", "form", "body", "headers", "cookies"):
                     if annotations.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
