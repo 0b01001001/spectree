@@ -153,6 +153,7 @@ async def list_json():
 # INFO: ensures that spec is calculated and cached _after_ registering
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.
+# TODO: this is commented out because it requires async context
 # with app.app_context():
 #     api.spec
 api.register(app)
@@ -262,6 +263,7 @@ async def oauth_two_ping():
     return jsonify(msg="pong")
 
 
+# TODO: this is commented out because it requires async context
 # with app_secure.app_context():
 #     api_secure.spec
 
@@ -332,6 +334,7 @@ async def global_security_or():
     return jsonify(msg="pong")
 
 
+# TODO: this is commented out because it requires async context
 # with app_global_secure.app_context():
 #     api_global_secure.spec
 

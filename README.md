@@ -226,7 +226,7 @@ Code example:
 @api.validate(
     deprecated=True,
 )
-def depreated_endpoint():
+def deprecated_endpoint():
     ...
 ```
 

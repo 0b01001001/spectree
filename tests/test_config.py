@@ -21,7 +21,7 @@ def test_config_license():
     assert config.license.url == "https://opensource.org/licenses/MIT"
 
     with pytest.raises(ValidationError):
-        config = Configuration(license={"name": "MIT", "url": "url"})
+        Configuration(license={"name": "MIT", "url": "url"})
 
 
 def test_config_contact():
@@ -37,7 +37,7 @@ def test_config_contact():
     assert config.contact.email == "hello@github.com"
 
     with pytest.raises(ValidationError):
-        config = Configuration(contact={"name": "John", "url": "url"})
+        Configuration(contact={"name": "John", "url": "url"})
 
 
 @pytest.mark.skipif(EmailFieldType == str, reason="email-validator is not installled")

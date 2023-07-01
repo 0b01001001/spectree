@@ -22,13 +22,13 @@ NestedNamingStrategy = Callable[[str, str], str]
 
 class MultiDict(Protocol):
     def get(self, key: str) -> Optional[str]:
-        ...
+        pass
 
     def getlist(self, key: str) -> List[str]:
-        ...
+        pass
 
     def __iter__(self) -> Iterator[str]:
-        ...
+        pass
 
 
 class FunctionDecorator(Protocol):

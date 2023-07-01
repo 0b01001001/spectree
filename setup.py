@@ -9,7 +9,7 @@ setup(
         "pydantic>=1.2",
     ],
     extras_require={
-        "email": ["pydantic[email]>=1.2"],
+        "email": ["pydantic[email]>=1.2,<2"],
         "flask": ["flask"],
         "quart": ["quart"],
         "falcon": ["falcon>=3.0.0"],

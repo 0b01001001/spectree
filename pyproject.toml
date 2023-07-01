@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "1.1.3"
+version = "1.1.4"
 dynamic = []
 description = "generate OpenAPI document and validate request&response with Python annotations."
 readme = "README.md"
@@ -34,9 +34,10 @@ dev = [
     "mypy>=0.971",
     "pre-commit",
     "pytest~=7.1",
+    "syrupy>=4.0",
 ]
 email = [
-    "pydantic[email]>=1.2",
+    "pydantic[email]>=1.2,<2",
 ]
 falcon = [
     "falcon>=3.0.0",
@@ -46,6 +47,10 @@ flask = [
 ]
 starlette = [
     "starlette[full]",
+]
+docs = [
+    "Sphinx",
+    "furo",
 ]
 
 [project.urls]
@@ -62,7 +67,7 @@ plugins = ["pydantic.mypy"]
 follow_imports = "silent"
 ignore_missing_imports = true
 show_error_codes = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_redundant_casts = true
 no_implicit_reexport = true
 disable_error_code = ["attr-defined"]
