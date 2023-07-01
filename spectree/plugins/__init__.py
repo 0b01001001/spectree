@@ -2,8 +2,6 @@ from collections import namedtuple
 
 from .base import BasePlugin
 
-__all__ = ["BasePlugin"]
-
 Plugin = namedtuple("Plugin", ("name", "package", "class_name"))
 
 PLUGINS = {
@@ -14,3 +12,5 @@ PLUGINS = {
     "falcon-asgi": Plugin(".falcon_plugin", __name__, "FalconAsgiPlugin"),
     "starlette": Plugin(".starlette_plugin", __name__, "StarlettePlugin"),
 }
+
+__all__ = ["BasePlugin", "PLUGINS", "Plugin"]

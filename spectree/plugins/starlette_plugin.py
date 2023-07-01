@@ -157,8 +157,10 @@ class StarlettePlugin(BasePlugin):
                 if isinstance(func, partial):
                     try:
                         func = func.__wrapped__
-                    except AttributeError:
-                        pass
+                    except AttributeError as err:
+                        self.logger.warning(
+                            "failed to get the wrapped func %s: %s", func, err
+                        )
 
                 if inspect.isclass(func):
                     for method in METHODS:
