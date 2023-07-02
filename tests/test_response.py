@@ -120,8 +120,7 @@ def test_list_model():
     ]
     instance = model.model_validate(data)
 
-    print(instance.model_dump())
-    for i, item in enumerate(instance.model_dump()):
+    for i, item in enumerate(instance.model_dump(mode="json")):
         obj = JSON.model_validate(item)
         assert obj.name == data[i]["name"]
         assert obj.limit == data[i]["limit"]

@@ -24,7 +24,7 @@ def PydanticResponse(content: BaseModel):
     class _PydanticResponse(JSONResponse):
         def render(self, content: BaseModel) -> bytes:
             self._model_class = content.__class__
-            return super().render(content.model_dump())
+            return super().render(content.model_dump(mode="json"))
 
     return _PydanticResponse(content)
 

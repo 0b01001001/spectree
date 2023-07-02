@@ -66,8 +66,8 @@ def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     config = Configuration(
         security_schemes=[SecurityScheme(name=secure_item.name, data=secure_item.data)]
     )
-    assert config.model_dump()["security_schemes"] == [
-        {"name": secure_item.name, "data": secure_item.data.model_dump()}
+    assert config.model_dump(mode="json")["security_schemes"] == [
+        {"name": secure_item.name, "data": secure_item.data.model_dump(mode="json")}
     ]
 
 

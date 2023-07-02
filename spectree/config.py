@@ -138,7 +138,8 @@ class Configuration(BaseSettings):
                 "additional_query_string_params",
                 "use_basic_authentication_with_access_code_grant",
                 "use_pkce_with_authorization_code_grant",
-            }
+            },
+            mode="json",
         )
         config["use_basic_authentication_with_access_code_grant"] = (
             "true"
@@ -160,6 +161,7 @@ class Configuration(BaseSettings):
                 "contact",
                 "license",
             },
+            mode="json",
             exclude_none=True,
         )
         if info.get("terms_of_service") is not None:

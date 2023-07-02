@@ -222,7 +222,7 @@ class QuartPlugin(BasePlugin):
             expect_model = resp.find_model(status)
             if expect_model and isinstance(model, expect_model):
                 skip_validation = True
-                result = (model.model_dump(), status, *rest)
+                result = (model.model_dump(mode="json"), status, *rest)
 
         response = await make_response(result)
 

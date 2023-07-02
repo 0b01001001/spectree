@@ -1,11 +1,11 @@
 from enum import Enum
 from random import random
 
-from common import File, FileResp, Query
 from flask import Flask, abort, jsonify, request
 from flask.views import MethodView
 from pydantic import BaseModel, ConfigDict, Field
 
+from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
 app = Flask(__name__)
@@ -114,4 +114,4 @@ if __name__ == "__main__":
     """
     app.add_url_rule("/api/user", view_func=UserAPI.as_view("user_id"))
     spec.register(app)
-    app.run(port=4000)
+    app.run(port=8000)

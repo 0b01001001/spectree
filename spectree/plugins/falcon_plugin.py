@@ -229,7 +229,7 @@ class FalconPlugin(BasePlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.model_dump()
+                _resp.media = _resp.media.model_dump(mode="json")
                 skip_validation = True
 
             if self._data_set_manually(_resp):
@@ -331,7 +331,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.model_dump()
+                _resp.media = _resp.media.model_dump(mode="json")
                 skip_validation = True
 
             if self._data_set_manually(_resp):

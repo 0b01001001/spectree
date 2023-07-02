@@ -214,7 +214,7 @@ class FlaskPlugin(BasePlugin):
             expect_model = resp.find_model(status)
             if expect_model and isinstance(model, expect_model):
                 skip_validation = True
-                result = (model.model_dump(), status, *rest)
+                result = (model.model_dump(mode="json"), status, *rest)
 
         response = make_response(result)
 

@@ -335,12 +335,15 @@ class SpecTree:
 
         if self.config.servers:
             spec["servers"] = [
-                server.model_dump(exclude_none=True) for server in self.config.servers
+                server.model_dump(exclude_none=True, mode="json")
+                for server in self.config.servers
             ]
 
         if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
-                scheme.name: scheme.data.model_dump(exclude_none=True, by_alias=True)
+                scheme.name: scheme.data.model_dump(
+                    exclude_none=True, by_alias=True, mode="json"
+                )
                 for scheme in self.config.security_schemes
             }
 
