@@ -16,7 +16,7 @@ from typing import (
     Union,
 )
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, RootModel, ValidationError
 
 from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
 
@@ -179,7 +179,7 @@ def default_before_handler(
     if req_validation_error:
         logger.error(
             "422 Request Validation Error: {} - {}".format(
-                req_validation_error.model.__name__,
+                req_validation_error.title,
                 req_validation_error.errors(),
             )
         )
@@ -200,7 +200,7 @@ def default_after_handler(
     if resp_validation_error:
         logger.error(
             "500 Response Validation Error: {} - {}".format(
-                resp_validation_error.model.__name__,
+                resp_validation_error.title,
                 resp_validation_error.errors(),
             )
         )
@@ -255,8 +255,7 @@ def get_model_schema(
     assert issubclass(model, BaseModel)
 
     nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
-
-    return model.schema(ref_template=f"#/components/schemas/{nested_key}")
+    return model.model_json_schema(ref_template=f"#/components/schemas/{nested_key}")
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
@@ -294,9 +293,9 @@ def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     assert issubclass(model, BaseModel)
     ListModel = type(
         f"{model.__name__}List",
-        (BaseModel,),
+        (RootModel,),
         {
-            "__annotations__": {"__root__": List[model]},  # type: ignore
+            "__annotations__": {"root": List[model]},  # type: ignore
         },
     )
     return ListModel

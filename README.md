@@ -285,7 +285,7 @@ Try it with `http post :8000/api/user name=alice age=18`. (if you are using `htt
 
 ```py
 from flask import Flask, request, jsonify
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, constr
 from spectree import SpecTree, Response
 
 
@@ -293,15 +293,15 @@ class Profile(BaseModel):
     name: constr(min_length=2, max_length=40)  # constrained str
     age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             # provide an example
             "example": {
                 "name": "very_important_user",
                 "age": 42,
             }
         }
-
+    )
 
 class Message(BaseModel):
     text: str
@@ -353,7 +353,7 @@ def user_profile(json: Profile):
 
 ```py
 from quart import Quart, jsonify, request
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, constr
 
 from spectree import SpecTree, Response
 
@@ -362,14 +362,15 @@ class Profile(BaseModel):
     name: constr(min_length=2, max_length=40)  # constrained str
     age: int = Field(..., gt=0, lt=150, description="user age")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra = {
             # provide an example
             "example": {
                 "name": "very_important_user",
                 "age": 42,
             }
         }
+    )
 
 
 class Message(BaseModel):

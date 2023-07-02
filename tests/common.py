@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
 from typing import Dict, List
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, RootModel, model_validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree.utils import hash_module_path
@@ -34,12 +34,12 @@ class JSON(BaseModel):
     limit: int
 
 
-class ListJSON(BaseModel):
-    __root__: List[JSON]
+class ListJSON(RootModel):
+    root: List[JSON]
 
 
-class StrDict(BaseModel):
-    __root__: Dict[str, str]
+class StrDict(RootModel):
+    root: Dict[str, str]
 
 
 class Resp(BaseModel):
@@ -55,7 +55,7 @@ class Language(str, Enum):
 class Headers(BaseModel):
     lang: Language
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def lower_keys(cls, values):
         return {key.lower(): value for key, value in values.items()}
 
@@ -72,7 +72,9 @@ class DemoModel(BaseModel):
 
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
-    names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")
+    names2: List[str] = Field(
+        ..., json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy")
+    )
 
 
 def get_paths(spec):
@@ -89,27 +91,27 @@ def get_paths(spec):
 SECURITY_SCHEMAS = [
     SecurityScheme(
         name="auth_apiKey",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "Authorization", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="auth_apiKey_backup",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "Authorization", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="auth_BasicAuth",
-        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "basic"}),
+        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "basic"}),
     ),
     SecurityScheme(
         name="auth_BearerAuth",
-        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "bearer"}),
+        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "bearer"}),
     ),
     SecurityScheme(
         name="auth_openID",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "openIdConnect",
                 "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
@@ -118,7 +120,7 @@ SECURITY_SCHEMAS = [
     ),
     SecurityScheme(
         name="auth_oauth2",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "oauth2",
                 "flows": {

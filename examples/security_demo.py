@@ -11,19 +11,19 @@ class Req(BaseModel):
 security_schemes = [
     SecurityScheme(
         name="PartnerID",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "partner-id", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="PartnerToken",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "partner-access-token", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="test_secure",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "http",
                 "scheme": "bearer",
@@ -32,7 +32,7 @@ security_schemes = [
     ),
     SecurityScheme(
         name="auth_oauth2",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "oauth2",
                 "flows": {

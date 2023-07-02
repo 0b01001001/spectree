@@ -2,12 +2,14 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
+from json import loads as json_loads
 from typing import Any, Callable, Optional, get_type_hints
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import Response as StarletteResponse
 from starlette.routing import compile_path
 
 from .._types import ModelType
@@ -18,11 +20,11 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
-def PydanticResponse(content):
+def PydanticResponse(content: BaseModel):
     class _PydanticResponse(JSONResponse):
-        def render(self, content) -> bytes:
+        def render(self, content: BaseModel) -> bytes:
             self._model_class = content.__class__
-            return super().render(content.dict())
+            return super().render(content.model_dump())
 
     return _PydanticResponse(content)
 
@@ -63,11 +65,11 @@ class StarlettePlugin(BasePlugin):
             form and has_data and any([x in content_type for x in self.FORM_MIMETYPE])
         )
         request.context = Context(
-            query.parse_obj(request.query_params) if query else None,
-            json.parse_obj(await request.json() or {}) if use_json else None,
-            form.parse_obj(await request.form() or {}) if use_form else None,
-            headers.parse_obj(request.headers) if headers else None,
-            cookies.parse_obj(request.cookies) if cookies else None,
+            query.model_validate(request.query_params) if query else None,
+            json.model_validate(await request.json() or {}) if use_json else None,
+            form.model_validate(await request.form() or {}) if use_form else None,
+            headers.model_validate(request.headers) if headers else None,
+            cookies.model_validate(request.cookies) if cookies else None,
         )
 
     async def validate(
@@ -103,7 +105,11 @@ class StarlettePlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = JSONResponse(err.errors(), validation_error_status)
+            response = StarletteResponse(
+                err.json(indent=2),
+                validation_error_status,
+                media_type="application/json",
+            )
         except JSONDecodeError as err:
             json_decode_error = err
             self.logger.info(
@@ -133,7 +139,8 @@ class StarlettePlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_raw(response.body)
+                    body_data = json_loads(response.body)
+                    model.model_validate(body_data)
                 except ValidationError as err:
                     resp_validation_error = err
                     response = JSONResponse(err.errors(), 500)

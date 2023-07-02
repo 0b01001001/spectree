@@ -1,7 +1,7 @@
 from enum import Enum
 from random import random
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from quart import Quart, abort, jsonify, request
 from quart.views import MethodView
 
@@ -29,14 +29,15 @@ class Data(BaseModel):
     limit: int = 5
     vip: bool
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "uid": "very_important_user",
                 "limit": 10,
                 "vip": True,
             }
         }
+    )
 
 
 class Language(str, Enum):

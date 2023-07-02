@@ -118,8 +118,10 @@ def test_list_model():
         {"name": "a", "limit": 1},
         {"name": "b", "limit": 2},
     ]
-    instance = model.parse_obj(data)
-    for i, item in enumerate(instance.dict()["__root__"]):
-        obj = JSON.parse_obj(item)
+    instance = model.model_validate(data)
+
+    print(instance.model_dump())
+    for i, item in enumerate(instance.model_dump()):
+        obj = JSON.model_validate(item)
         assert obj.name == data[i]["name"]
         assert obj.limit == data[i]["limit"]

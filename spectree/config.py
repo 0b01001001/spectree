@@ -2,7 +2,8 @@ import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
+from pydantic import AnyUrl, BaseModel, EmailStr, model_validator, validate_email
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     EmailFieldType = str
 else:
     try:
-        EmailStr.validate("a@b.com")
+        validate_email("a@b.com")
         EmailFieldType = EmailStr
     except ImportError:
         EmailFieldType = str
@@ -107,11 +108,9 @@ class Configuration(BaseSettings):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
-    class Config:
-        env_prefix = "spectree_"
-        validate_assignment = True
+    model_config = SettingsConfigDict(env_prefix="spectree_", validate_assignment=True)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
         return {k.lower(): v for k, v in values.items()}
 
@@ -128,7 +127,7 @@ class Configuration(BaseSettings):
         if self.client_secret:
             warnings.warn("Do not use client_secret in production", UserWarning)
 
-        config = self.dict(
+        config = self.model_dump(
             include={
                 "client_id",
                 "client_secret",
@@ -152,7 +151,7 @@ class Configuration(BaseSettings):
         return config
 
     def openapi_info(self) -> Dict[str, str]:
-        info = self.dict(
+        info = self.model_dump(
             include={
                 "title",
                 "description",

@@ -232,7 +232,7 @@ def test_parse_request():
 
 def test_parse_params():
     models = {
-        get_model_path_key("tests.common.DemoModel"): DemoModel.schema(
+        get_model_path_key("tests.common.DemoModel"): DemoModel.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )
     }
@@ -251,7 +251,7 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        get_model_path_key("tests.common.DemoQuery"): DemoQuery.schema(
+        get_model_path_key("tests.common.DemoQuery"): DemoQuery.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )
     }

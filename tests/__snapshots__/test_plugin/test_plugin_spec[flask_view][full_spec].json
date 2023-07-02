@@ -59,7 +59,6 @@
         "type": "object"
       },
       "Headers.7068f62.Language": {
-        "description": "An enumeration.",
         "enum": [
           "en-US",
           "zh-CN"
@@ -123,7 +122,6 @@
         "type": "object"
       },
       "Query.7068f62.Order": {
-        "description": "An enumeration.",
         "enum": [
           0,
           1
@@ -171,14 +169,25 @@
         "description": "Model of a validation error response element.",
         "properties": {
           "ctx": {
-            "title": "Error context",
-            "type": "object"
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error context"
+          },
+          "input": {
+            "title": "Input provided for validation"
           },
           "loc": {
             "items": {
               "type": "string"
             },
-            "title": "Missing field name",
+            "title": "Error location",
             "type": "array"
           },
           "msg": {
@@ -188,12 +197,20 @@
           "type": {
             "title": "Error type",
             "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "minLength": 1,
+            "title": "Error URL",
+            "type": "string"
           }
         },
         "required": [
+          "input",
           "loc",
           "msg",
-          "type"
+          "type",
+          "url"
         ],
         "title": "ValidationErrorElement",
         "type": "object"

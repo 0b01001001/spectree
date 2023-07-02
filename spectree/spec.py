@@ -75,7 +75,7 @@ class SpecTree:
         self.after = after
         self.validation_error_status = validation_error_status
         self.validation_error_model = validation_error_model or ValidationError
-        self.config: Configuration = Configuration.parse_obj(kwargs)
+        self.config: Configuration = Configuration.model_validate(kwargs)
         self.backend_name = backend_name
         if backend:
             self.backend = backend(self)
@@ -297,7 +297,7 @@ class SpecTree:
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
-                            tag.dict() if isinstance(tag, Tag) else {"name": tag}
+                            tag.model_dump() if isinstance(tag, Tag) else {"name": tag}
                         )
 
                 routes[path][method.lower()] = {
@@ -335,12 +335,12 @@ class SpecTree:
 
         if self.config.servers:
             spec["servers"] = [
-                server.dict(exclude_none=True) for server in self.config.servers
+                server.model_dump(exclude_none=True) for server in self.config.servers
             ]
 
         if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
-                scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
+                scheme.name: scheme.data.model_dump(exclude_none=True, by_alias=True)
                 for scheme in self.config.security_schemes
             }
 
@@ -353,11 +353,11 @@ class SpecTree:
         """
         definitions = {}
         for name, schema in self.models.items():
-            if "definitions" in schema:
-                for key, value in schema["definitions"].items():
+            if "$defs" in schema:
+                for key, value in schema["$defs"].items():
                     composed_key = self.nested_naming_strategy(name, key)
                     if composed_key not in definitions:
                         definitions[composed_key] = value
-                del schema["definitions"]
+                del schema["$defs"]
 
         return definitions

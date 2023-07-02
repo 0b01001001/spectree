@@ -6,10 +6,11 @@ from setuptools import setup
 setup(
     name="spectree",
     install_requires=[
-        "pydantic>=1.2",
+        "pydantic>=2.0",
+        "pydantic-settings"
     ],
     extras_require={
-        "email": ["pydantic[email]>=1.2,<2"],
+        "email": ["pydantic[email]>=2.0"],
         "flask": ["flask"],
         "quart": ["quart"],
         "falcon": ["falcon>=3.0.0"],

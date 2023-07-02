@@ -140,13 +140,15 @@ class ViewWithCustomSerializer:
         resp=Response(HTTP_200=Resp),
     )
     async def on_get(self, req, resp):
-        resp.data = Resp(name="falcon", score=[1, 2, 3]).json().encode("utf-8")
+        resp.data = (
+            Resp(name="falcon", score=[1, 2, 3]).model_dump_json().encode("utf-8")
+        )
 
     @api.validate(
         resp=Response(HTTP_200=Resp),
     )
     async def on_post(self, req, resp):
-        resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
+        resp.text = Resp(name="falcon", score=[1, 2, 3]).model_dump_json()
 
 
 app = App()

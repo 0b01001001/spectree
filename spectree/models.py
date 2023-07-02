@@ -2,7 +2,16 @@ import re
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    field_validator,
+    model_validator,
+)
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import Url, core_schema
 
 # OpenAPI names validation regexp
 OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
@@ -27,9 +36,14 @@ class Tag(BaseModel):
 class ValidationErrorElement(BaseModel):
     """Model of a validation error response element."""
 
+    ctx: Optional[Dict[str, Any]] = Field(
+        None,
+        title="Error context",
+    )
+    input: Any = Field(..., title="Input provided for validation")
     loc: Sequence[str] = Field(
         ...,
-        title="Missing field name",
+        title="Error location",
     )
     msg: str = Field(
         ...,
@@ -39,16 +53,16 @@ class ValidationErrorElement(BaseModel):
         ...,
         title="Error type",
     )
-    ctx: Optional[Dict[str, Any]] = Field(
-        None,
-        title="Error context",
+    url: Url = Field(
+        ...,
+        title="Error URL",
     )
 
 
-class ValidationError(BaseModel):
+class ValidationError(RootModel):
     """Model of a validation error response."""
 
-    __root__: Sequence[ValidationErrorElement]
+    root: Sequence[ValidationErrorElement]
 
 
 class SecureType(str, Enum):
@@ -66,7 +80,7 @@ class InType(str, Enum):
 
 type_req_fields: Dict[SecureType, Sequence[str]] = {
     SecureType.HTTP: ["scheme"],
-    SecureType.API_KEY: ["name", "field_in"],
+    SecureType.API_KEY: ["name", "in"],
     SecureType.OAUTH_TWO: ["flows"],
     SecureType.OPEN_ID_CONNECT: ["openIdConnectUrl"],
 }
@@ -109,8 +123,10 @@ class SecuritySchemeData(BaseModel):
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
     )
 
-    @root_validator()
-    def check_type_required_fields(cls, values: dict):
+    model_config = ConfigDict(validate_assignment=True)
+
+    @model_validator(mode="before")
+    def check_type_required_fields(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         exist_fields = {key for key in values.keys() if values[key]}
         if not values.get("type"):
             raise ValueError("Type field is required")
@@ -121,9 +137,6 @@ class SecuritySchemeData(BaseModel):
                 f"`{', '.join(type_req_fields[values['type']])}` field(s) is required."
             )
         return values
-
-    class Config:
-        validate_assignment = True
 
 
 class SecurityScheme(BaseModel):
@@ -137,14 +150,14 @@ class SecurityScheme(BaseModel):
     )
     data: SecuritySchemeData = Field(..., description="Security scheme data")
 
-    @validator("name")
+    model_config = ConfigDict(validate_assignment=True)
+
+    @field_validator("name")
+    @classmethod
     def check_name(cls, value: str):
         if not OpenAPI_NAME_RE.fullmatch(value):
             raise ValueError("Name not match OpenAPI rules")
         return value
-
-    class Config:
-        validate_assignment = True
 
 
 class Server(BaseModel):
@@ -168,8 +181,7 @@ class Server(BaseModel):
         description="Variables for customizing server URL",
     )
 
-    class Config:
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class BaseFile:
@@ -178,17 +190,17 @@ class BaseFile:
     """
 
     @classmethod
-    def __get_validators__(cls):
+    def __get_pydantic_core_schema__(cls, _source: Any) -> core_schema.CoreSchema:
         # one or more validators may be yielded which will be called in the
         # order to validate the input, each validator will receive as an input
         # the value returned from the previous validator
-        yield cls.validate
+        return core_schema.general_plain_validator_function(cls.validate)
+
+    def __get_pydantic_json_schema__(cls, *args) -> JsonSchemaValue:
+        field_schema = {"format": "binary", "type": "string"}
+        return field_schema
 
     @classmethod
-    def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
-        field_schema.update(format="binary", type="string")
-
-    @classmethod
-    def validate(cls, value: Any):
+    def validate(cls, value: Any, info: core_schema.ValidationInfo) -> Any:
         # https://github.com/luolingchun/flask-openapi3/blob/master/flask_openapi3/models/file.py
         return value

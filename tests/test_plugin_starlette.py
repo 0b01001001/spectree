@@ -365,7 +365,7 @@ def test_starlette_no_response(client):
     resp = client.get("/api/no_response")
     assert resp.status_code == 200, resp.text
 
-    resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
+    resp = client.post("/api/no_response", json={"name": "starlette", "limit": "1"})
     assert resp.status_code == 200, resp.text
 
 

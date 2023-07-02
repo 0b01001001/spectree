@@ -154,13 +154,13 @@ class QuartPlugin(BasePlugin):
         )
 
         request.context = Context(
-            query.parse_obj(req_query) if query else None,
-            json.parse_obj(await request.get_json(silent=True) or {})
+            query.model_validate(req_query) if query else None,
+            json.model_validate(await request.get_json(silent=True) or {})
             if use_json
             else None,
-            form.parse_obj(self._fill_form(request)) if use_form else None,
-            headers.parse_obj(req_headers) if headers else None,
-            cookies.parse_obj(req_cookies) if cookies else None,
+            form.model_validate(self._fill_form(request)) if use_form else None,
+            headers.model_validate(req_headers) if headers else None,
+            cookies.model_validate(req_cookies) if cookies else None,
         )
 
     def _fill_form(self, request) -> dict:
@@ -194,9 +194,7 @@ class QuartPlugin(BasePlugin):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:
             req_validation_error = err
-            response = await make_response(
-                jsonify(err.errors()), validation_error_status
-            )
+            response = await make_response(err.json(indent=2), validation_error_status)
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
@@ -224,7 +222,7 @@ class QuartPlugin(BasePlugin):
             expect_model = resp.find_model(status)
             if expect_model and isinstance(model, expect_model):
                 skip_validation = True
-                result = (model.dict(), status, *rest)
+                result = (model.model_dump(), status, *rest)
 
         response = await make_response(result)
 
@@ -232,7 +230,7 @@ class QuartPlugin(BasePlugin):
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
-                    model.parse_obj(await response.get_json())
+                    model.model_validate(await response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
                     response = await make_response(

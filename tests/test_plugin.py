@@ -28,7 +28,7 @@ def test_plugin_spec(api, snapshot_json):
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():
-        schema.pop("definitions", None)
+        schema.pop("$defs", None)
         assert api.spec["components"]["schemas"][name] == schema
 
     assert api.spec == snapshot_json(name="full_spec")

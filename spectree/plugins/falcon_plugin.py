@@ -169,11 +169,11 @@ class FalconPlugin(BasePlugin):
 
     def request_validation(self, req, query, json, form, headers, cookies):
         if query:
-            req.context.query = query.parse_obj(req.params)
+            req.context.query = query.model_validate(req.params)
         if headers:
-            req.context.headers = headers.parse_obj(req.headers)
+            req.context.headers = headers.model_validate(req.headers)
         if cookies:
-            req.context.cookies = cookies.parse_obj(req.cookies)
+            req.context.cookies = cookies.model_validate(req.cookies)
         if json:
             try:
                 media = req.media
@@ -181,12 +181,12 @@ class FalconPlugin(BasePlugin):
                 if err.status not in self.FALCON_MEDIA_ERROR_CODE:
                     raise
                 media = None
-            req.context.json = json.parse_obj(media)
+            req.context.json = json.model_validate(media)
         if form:
             # TODO - possible to pass the BodyPart here?
             # req_form = {x.name: x for x in req.get_media()}
             req_form = {x.name: x.stream.read() for x in req.get_media()}
-            req.context.form = form.parse_obj(req_form)
+            req.context.form = form.model_validate(req_form)
 
     def validate(
         self,
@@ -229,7 +229,7 @@ class FalconPlugin(BasePlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
+                _resp.media = _resp.media.model_dump()
                 skip_validation = True
 
             if self._data_set_manually(_resp):
@@ -237,7 +237,7 @@ class FalconPlugin(BasePlugin):
 
             if model and not skip_validation:
                 try:
-                    model.parse_obj(_resp.media)
+                    model.model_validate(_resp.media)
                 except ValidationError as err:
                     resp_validation_error = err
                     _resp.status = HTTP_500
@@ -263,11 +263,11 @@ class FalconAsgiPlugin(FalconPlugin):
 
     async def request_validation(self, req, query, json, form, headers, cookies):
         if query:
-            req.context.query = query.parse_obj(req.params)
+            req.context.query = query.model_validate(req.params)
         if headers:
-            req.context.headers = headers.parse_obj(req.headers)
+            req.context.headers = headers.model_validate(req.headers)
         if cookies:
-            req.context.cookies = cookies.parse_obj(req.cookies)
+            req.context.cookies = cookies.model_validate(req.cookies)
         if json:
             try:
                 media = await req.get_media()
@@ -275,7 +275,7 @@ class FalconAsgiPlugin(FalconPlugin):
                 if err.status not in self.FALCON_MEDIA_ERROR_CODE:
                     raise
                 media = None
-            req.context.json = json.parse_obj(media)
+            req.context.json = json.model_validate(media)
         if form:
             try:
                 form_data = await req.get_media()
@@ -288,7 +288,7 @@ class FalconAsgiPlugin(FalconPlugin):
                 async for x in form_data:
                     res_data[x.name] = x
                     await x.data  # TODO - how to avoid this?
-                req.context.form = form.parse_obj(res_data)
+                req.context.form = form.model_validate(res_data)
 
     async def validate(
         self,
@@ -331,7 +331,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if resp and resp.has_model():
             model = resp.find_model(_resp.status[:3])
             if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
+                _resp.media = _resp.media.model_dump()
                 skip_validation = True
 
             if self._data_set_manually(_resp):
@@ -340,7 +340,7 @@ class FalconAsgiPlugin(FalconPlugin):
             model = resp.find_model(_resp.status[:3])
             if model and not skip_validation:
                 try:
-                    model.parse_obj(_resp.media)
+                    model.model_validate(_resp.media)
                 except ValidationError as err:
                     resp_validation_error = err
                     _resp.status = HTTP_500

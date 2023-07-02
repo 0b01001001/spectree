@@ -1,11 +1,11 @@
 import uvicorn
+from common import File, FileResp, Query
 from pydantic import BaseModel, Field
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
 spec = SpecTree("starlette")
