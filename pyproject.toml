@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "1.1.4"
+version = "1.1.5"
 dynamic = []
 description = "generate OpenAPI document and validate request&response with Python annotations."
 readme = "README.md"
@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pydantic>=1.9.1",
+    "pydantic>=1.2,<2",
 ]
 
 [project.optional-dependencies]
