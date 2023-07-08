@@ -6,7 +6,7 @@ from setuptools import setup
 setup(
     name="spectree",
     install_requires=[
-        "pydantic>=1.2,<2",
+        "pydantic>=1.2,<3",
     ],
     extras_require={
         "email": ["pydantic[email]>=1.2,<2"],
