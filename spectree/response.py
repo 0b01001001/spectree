@@ -1,8 +1,7 @@
 from http import HTTPStatus
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
-
+from ._pydantic import BaseModel
 from ._types import ModelType, NamingStrategy, OptionalModelType
 from .utils import gen_list_model, get_model_key, parse_code
 

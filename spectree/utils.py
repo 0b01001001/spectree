@@ -12,12 +12,10 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
 )
 
-from pydantic import BaseModel, RootModel, ValidationError
-
+from ._pydantic import PYDANTIC_ROOT_ATTR, BaseModel, RootModel, ValidationError
 from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
 
 # parse HTTP status code to get the code
@@ -178,10 +176,9 @@ def default_before_handler(
     """
     if req_validation_error:
         logger.error(
-            "422 Request Validation Error: {} - {}".format(
-                req_validation_error.title,
-                req_validation_error.errors(),
-            )
+            "422 Request Validation Error: "
+            f"{req_validation_error.__class__.__name__} - "
+            f"{req_validation_error.errors()}"
         )
 
 
@@ -199,10 +196,9 @@ def default_after_handler(
     """
     if resp_validation_error:
         logger.error(
-            "500 Response Validation Error: {} - {}".format(
-                resp_validation_error.title,
-                resp_validation_error.errors(),
-            )
+            "500 Response Validation Error: "
+            f"{resp_validation_error.__class__.__name__} - "
+            f"{resp_validation_error.errors()}"
         )
 
 
@@ -286,16 +282,17 @@ def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List
     return res
 
 
-def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
+def gen_list_model(model: ModelType) -> ModelType:
     """
     generate the corresponding list[model] class for a given model class
     """
+
     assert issubclass(model, BaseModel)
     ListModel = type(
         f"{model.__name__}List",
         (RootModel,),
         {
-            "__annotations__": {"root": List[model]},  # type: ignore
+            "__annotations__": {PYDANTIC_ROOT_ATTR: List[model]},  # type: ignore
         },
     )
     return ListModel

@@ -5,13 +5,13 @@ from json import JSONDecodeError
 from json import loads as json_loads
 from typing import Any, Callable, Optional, get_type_hints
 
-from pydantic import BaseModel, ValidationError
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.responses import Response as StarletteResponse
 from starlette.routing import compile_path
 
+from .._pydantic import BaseModel, ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin, Context

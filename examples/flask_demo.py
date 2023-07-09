@@ -3,7 +3,7 @@ from random import random
 
 from flask import Flask, abort, jsonify, request
 from flask.views import MethodView
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
@@ -26,15 +26,15 @@ class Data(BaseModel):
     limit: int = 5
     vip: bool
 
-    model_config = ConfigDict(
-        json_schema_extra={
+    model_config = {  # type: ignore
+        "json_schema_extra": {
             "example": {
                 "uid": "very_important_user",
                 "limit": 10,
                 "vip": True,
             }
         }
-    )
+    }
 
 
 class Language(str, Enum):

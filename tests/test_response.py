@@ -1,8 +1,8 @@
 from typing import List, get_type_hints
 
 import pytest
-from pydantic import BaseModel
 
+from spectree._pydantic import PYDANTIC2, BaseModel
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import gen_list_model
@@ -119,8 +119,10 @@ def test_list_model():
         {"name": "b", "limit": 2},
     ]
     instance = model.model_validate(data)
-
-    for i, item in enumerate(instance.model_dump(mode="json")):
+    instance_items = (
+        instance.model_dump(mode="json") if PYDANTIC2 else instance.dict()["__root__"]
+    )
+    for i, item in enumerate(instance_items):
         obj = JSON.model_validate(item)
         assert obj.name == data[i]["name"]
         assert obj.limit == data[i]["limit"]

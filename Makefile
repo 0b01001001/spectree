@@ -5,17 +5,39 @@ SOURCE_FILES=spectree tests examples
 install:
 	pip install -U -e .[email,quart,flask,falcon,starlette,dev]
 
-import_test:
-	pip install -e .[email]
+import_test_pydantic2:
+	pip install -e .[email,pydantic2]
 	for module in flask quart falcon starlette; do \
 		pip install -U $$module; \
 		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
 		pip uninstall $$module -y; \
 	done
 
-test: import_test
-	pip install -U -e .[email,flask,quart,falcon,starlette]
+test_pydantic2: import_test_pydantic2
+	pip install -U -e .[email,flask,quart,falcon,starlette,pydantic2]
 	pytest tests -vv -rs
+
+import_test_pydantic1:
+	pip install -e .[email,pydantic1]
+	for module in flask quart falcon starlette; do \
+		pip install -U $$module; \
+		bash -c "python tests/import_module/test_$${module}_plugin.py" || exit 1; \
+		pip uninstall $$module -y; \
+	done
+
+test_pydantic1: import_test_pydantic1
+	pip install -U -e .[email,flask,quart,falcon,starlette,pydantic1]
+	pytest tests -vv -rs
+
+test: test_pydantic1 test_pydantic2
+
+snapshot_pydantic1:
+	pip install -U -e .[pydantic1]
+	pytest tests --snapshot-update
+
+snapshot_pydantic2:
+	pip install -U -e .[pydantic2]
+	pytest tests --snapshot-update
 
 doc:
 	cd docs && make html

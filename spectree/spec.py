@@ -13,6 +13,7 @@ from typing import (
     get_type_hints,
 )
 
+from ._pydantic import PYDANTIC_SCHEMA_DEFS_KEY
 from ._types import FunctionDecorator, ModelType, NamingStrategy, NestedNamingStrategy
 from .config import Configuration, ModeEnum
 from .models import Tag, ValidationError
@@ -356,11 +357,11 @@ class SpecTree:
         """
         definitions = {}
         for name, schema in self.models.items():
-            if "$defs" in schema:
-                for key, value in schema["$defs"].items():
+            if PYDANTIC_SCHEMA_DEFS_KEY in schema:
+                for key, value in schema[PYDANTIC_SCHEMA_DEFS_KEY].items():
                     composed_key = self.nested_naming_strategy(name, key)
                     if composed_key not in definitions:
                         definitions[composed_key] = value
-                del schema["$defs"]
+                del schema[PYDANTIC_SCHEMA_DEFS_KEY]
 
         return definitions

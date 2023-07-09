@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 
 from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
-from pydantic import ValidationError
 
+from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin

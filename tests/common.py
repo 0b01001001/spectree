@@ -1,9 +1,15 @@
 from enum import Enum, IntEnum
 from typing import Dict, List
 
-from pydantic import BaseModel, Field, RootModel, model_validator
-
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
+from spectree._pydantic import (
+    PYDANTIC2,
+    BaseModel,
+    Field,
+    RootModel,
+    model_validator,
+    root_validator,
+)
 from spectree.utils import hash_module_path
 
 api_tag = Tag(
@@ -35,11 +41,17 @@ class JSON(BaseModel):
 
 
 class ListJSON(RootModel):
-    root: List[JSON]
+    if PYDANTIC2:
+        root: List[JSON]
+    else:
+        __root__: List[JSON]
 
 
 class StrDict(RootModel):
-    root: Dict[str, str]
+    if PYDANTIC2:
+        root: Dict[str, str]
+    else:
+        __root__: Dict[str, str]
 
 
 class Resp(BaseModel):
@@ -55,9 +67,17 @@ class Language(str, Enum):
 class Headers(BaseModel):
     lang: Language
 
-    @model_validator(mode="before")
-    def lower_keys(cls, values):
-        return {key.lower(): value for key, value in values.items()}
+    if PYDANTIC2:
+
+        @model_validator(mode="before")
+        def lower_keys(cls, values):
+            return {key.lower(): value for key, value in values.items()}
+
+    else:
+
+        @root_validator(pre=True, allow_reuse=True)
+        def lower_keys_v1(cls, values):
+            return {key.lower(): value for key, value in values.items()}
 
 
 class Cookies(BaseModel):
@@ -72,9 +92,15 @@ class DemoModel(BaseModel):
 
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
-    names2: List[str] = Field(
-        ..., json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy")
-    )
+    if PYDANTIC2:
+        names2: List[str] = Field(
+            ...,
+            json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy"),
+        )
+    else:
+        names2: List[str] = Field(  # type: ignore[no-redef]
+            ..., style="matrix", explode=True, non_keyword="dummy"
+        )
 
 
 def get_paths(spec):

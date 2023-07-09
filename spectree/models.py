@@ -2,16 +2,21 @@ import re
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence
 
-from pydantic import (
+from ._pydantic import (
+    PYDANTIC2,
     BaseModel,
-    ConfigDict,
+    CoreSchema,
     Field,
+    JsonSchemaValue,
     RootModel,
+    Url,
+    ValidationInfo,
     field_validator,
+    general_plain_validator_function,
     model_validator,
+    root_validator,
+    validator,
 )
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import Url, core_schema
 
 # OpenAPI names validation regexp
 OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
@@ -40,7 +45,8 @@ class ValidationErrorElement(BaseModel):
         None,
         title="Error context",
     )
-    input: Any = Field(..., title="Input provided for validation")
+    if PYDANTIC2:
+        input: Any = Field(..., title="Input provided for validation")
     loc: Sequence[str] = Field(
         ...,
         title="Error location",
@@ -53,16 +59,20 @@ class ValidationErrorElement(BaseModel):
         ...,
         title="Error type",
     )
-    url: Url = Field(
-        ...,
-        title="Error URL",
-    )
+    if PYDANTIC2:
+        url: Url = Field(
+            ...,
+            title="Error URL",
+        )
 
 
 class ValidationError(RootModel):
     """Model of a validation error response."""
 
-    root: Sequence[ValidationErrorElement]
+    if PYDANTIC2:
+        root: Sequence[ValidationErrorElement]
+    else:
+        __root__: Sequence[ValidationErrorElement]
 
 
 class SecureType(str, Enum):
@@ -78,12 +88,20 @@ class InType(str, Enum):
     COOKIE = "cookie"
 
 
-type_req_fields: Dict[SecureType, Sequence[str]] = {
-    SecureType.HTTP: ["scheme"],
-    SecureType.API_KEY: ["name", "in"],
-    SecureType.OAUTH_TWO: ["flows"],
-    SecureType.OPEN_ID_CONNECT: ["openIdConnectUrl"],
-}
+if PYDANTIC2:
+    type_req_fields: Dict[SecureType, Sequence[str]] = {
+        SecureType.HTTP: ["scheme"],
+        SecureType.API_KEY: ["name", "in"],
+        SecureType.OAUTH_TWO: ["flows"],
+        SecureType.OPEN_ID_CONNECT: ["openIdConnectUrl"],
+    }
+else:
+    type_req_fields: Dict[SecureType, Sequence[str]] = {  # type: ignore[no-redef]
+        SecureType.HTTP: ["scheme"],
+        SecureType.API_KEY: ["name", "field_in"],
+        SecureType.OAUTH_TWO: ["flows"],
+        SecureType.OPEN_ID_CONNECT: ["openIdConnectUrl"],
+    }
 
 
 class SecuritySchemeData(BaseModel):
@@ -123,20 +141,41 @@ class SecuritySchemeData(BaseModel):
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
     )
 
-    model_config = ConfigDict(validate_assignment=True)
+    if PYDANTIC2:
+        model_config = {"validate_assignment": True}
 
-    @model_validator(mode="before")
-    def check_type_required_fields(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        exist_fields = {key for key in values.keys() if values[key]}
-        if not values.get("type"):
-            raise ValueError("Type field is required")
+        @model_validator(mode="before")
+        def check_type_required_fields(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+            exist_fields = {key for key in values.keys() if values[key]}
+            if not values.get("type"):
+                raise ValueError("Type field is required")
 
-        if not set(type_req_fields[values["type"]]).issubset(exist_fields):
-            raise ValueError(
-                f"For `{values['type']}` type "
-                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required."
-            )
-        return values
+            if not set(type_req_fields[values["type"]]).issubset(exist_fields):
+                raise ValueError(
+                    f"For `{values['type']}` type "
+                    f"`{', '.join(type_req_fields[values['type']])}`"
+                    "field(s) is required."
+                )
+            return values
+
+    else:
+
+        class Config:
+            validate_assignment = True
+
+        @root_validator(pre=False)
+        def check_type_required_fields(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+            exist_fields = {key for key in values.keys() if values[key]}
+            if not values.get("type"):
+                raise ValueError("Type field is required")
+
+            if not set(type_req_fields[values["type"]]).issubset(exist_fields):
+                raise ValueError(
+                    f"For `{values['type']}` type "
+                    f"`{', '.join(type_req_fields[values['type']])}`"
+                    "field(s) is required."
+                )
+            return values
 
 
 class SecurityScheme(BaseModel):
@@ -150,14 +189,26 @@ class SecurityScheme(BaseModel):
     )
     data: SecuritySchemeData = Field(..., description="Security scheme data")
 
-    model_config = ConfigDict(validate_assignment=True)
+    if PYDANTIC2:
+        model_config = {"validate_assignment": True}
 
-    @field_validator("name")
-    @classmethod
-    def check_name(cls, value: str):
-        if not OpenAPI_NAME_RE.fullmatch(value):
-            raise ValueError("Name not match OpenAPI rules")
-        return value
+        @field_validator("name")
+        @classmethod
+        def check_name(cls, value: str):
+            if not OpenAPI_NAME_RE.fullmatch(value):
+                raise ValueError("Name not match OpenAPI rules")
+            return value
+
+    else:
+
+        class Config:
+            validate_assignment = True
+
+        @validator("name")
+        def check_name(cls, value: str):
+            if not OpenAPI_NAME_RE.fullmatch(value):
+                raise ValueError("Name not match OpenAPI rules")
+            return value
 
 
 class Server(BaseModel):
@@ -181,7 +232,12 @@ class Server(BaseModel):
         description="Variables for customizing server URL",
     )
 
-    model_config = ConfigDict(validate_assignment=True)
+    if PYDANTIC2:
+        model_config = {"validate_assignment": True}
+    else:
+
+        class Config:
+            validate_assignment = True
 
 
 class BaseFile:
@@ -189,18 +245,37 @@ class BaseFile:
     An uploaded file included as part of the request data.
     """
 
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source: Any) -> core_schema.CoreSchema:
-        # one or more validators may be yielded which will be called in the
-        # order to validate the input, each validator will receive as an input
-        # the value returned from the previous validator
-        return core_schema.general_plain_validator_function(cls.validate)
+    if PYDANTIC2:
 
-    def __get_pydantic_json_schema__(cls, *args) -> JsonSchemaValue:
-        field_schema = {"format": "binary", "type": "string"}
-        return field_schema
+        @classmethod
+        def __get_pydantic_core_schema__(cls, _source: Any) -> CoreSchema:
+            # one or more validators may be yielded which will be called in the
+            # order to validate the input, each validator will receive as an input
+            # the value returned from the previous validator
+            return general_plain_validator_function(cls.validate)
 
-    @classmethod
-    def validate(cls, value: Any, info: core_schema.ValidationInfo) -> Any:
-        # https://github.com/luolingchun/flask-openapi3/blob/master/flask_openapi3/models/file.py
-        return value
+        def __get_pydantic_json_schema__(cls, *args) -> JsonSchemaValue:
+            return {"format": "binary", "type": "string"}
+
+        @classmethod
+        def validate(cls, value: Any, info: ValidationInfo) -> Any:
+            # https://github.com/luolingchun/flask-openapi3/blob/master/flask_openapi3/models/file.py
+            return value
+
+    else:
+
+        @classmethod
+        def __get_validators__(cls):
+            # one or more validators may be yielded which will be called in the
+            # order to validate the input, each validator will receive as an input
+            # the value returned from the previous validator
+            yield cls.validate
+
+        @classmethod
+        def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
+            field_schema.update(format="binary", type="string")
+
+        @classmethod
+        def validate(cls, value: Any) -> Any:
+            # https://github.com/luolingchun/flask-openapi3/blob/master/flask_openapi3/models/file.py
+            return value

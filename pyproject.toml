@@ -22,8 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pydantic>=2.0",
-    "pydantic-settings"
+    "pydantic>=1.2,<3",
 ]
 
 [project.optional-dependencies]
@@ -37,8 +36,15 @@ dev = [
     "pytest~=7.1",
     "syrupy>=4.0",
 ]
+pydantic1 = [
+    "pydantic>=1.2,<2",
+]
+pydantic2 = [
+    "pydantic>=2.0",
+    "pydantic-settings",
+]
 email = [
-    "pydantic[email]>=2.0",
+    "pydantic[email]>=1.2,<3",
 ]
 falcon = [
     "falcon>=3.0.0",

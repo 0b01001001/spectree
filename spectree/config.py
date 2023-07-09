@@ -2,9 +2,16 @@ import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, EmailStr, model_validator, validate_email
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from ._pydantic import (
+    PYDANTIC2,
+    AnyUrl,
+    BaseModel,
+    BaseSettings,
+    EmailStr,
+    model_validator,
+    root_validator,
+    validate_email,
+)
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
 
@@ -108,11 +115,22 @@ class Configuration(BaseSettings):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
-    model_config = SettingsConfigDict(env_prefix="spectree_", validate_assignment=True)
+    if PYDANTIC2:
+        model_config = {"env_prefix": "spectree_", "validate_assignment": True}
 
-    @model_validator(mode="before")
-    def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
-        return {k.lower(): v for k, v in values.items()}
+        @model_validator(mode="before")
+        def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
+            return {k.lower(): v for k, v in values.items()}
+
+    else:
+
+        class Config:
+            env_prefix = "spectree_"
+            validate_assignment = True
+
+        @root_validator(pre=True)
+        def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
+            return {k.lower(): v for k, v in values.items()}
 
     @property
     def spec_url(self) -> str:
