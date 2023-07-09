@@ -8,7 +8,7 @@ from syrupy.location import PyTestLocation
 def create_validator_fixture(validator: str):
     class VersionedJSONExtension(JSONSnapshotExtension):
         @classmethod
-        def dirname(cls, *, test_location: "PyTestLocation") -> str:
+        def dirname(cls, *, test_location: PyTestLocation) -> str:
             return str(
                 Path(test_location.filepath).parent.joinpath(
                     "__snapshots__", f"{validator}"

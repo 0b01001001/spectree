@@ -26,6 +26,8 @@ __all__ = [
     "ValidationError",
     "ValidationInfo",
     "validator",
+    "PYDANTIC_SCHEMA_DEFS_KEY",
+    "PYDANTIC_ROOT_ATTR",
 ]
 
 
@@ -63,7 +65,7 @@ else:
     PYDANTIC_SCHEMA_DEFS_KEY = "definitions"
     PYDANTIC_ROOT_ATTR = "__root__"
 
-    class BaseSettings(_PydanticBaseSettings):  # type: ignore[no-redef]
+    class BaseSettings(_PydanticBaseSettings):  # type: ignore[no-redef,valid-type,misc]
         @classmethod
         def model_validate(cls, *args, **kwargs):
             return cls.parse_obj(*args, **kwargs)
@@ -86,16 +88,16 @@ else:
         def model_dump_json(self, **kwargs) -> str:
             return self.json(**kwargs)
 
-    def field_validator() -> None:  # type: ignore[no-redef]
+    def field_validator(fieldname: str) -> None:  # type: ignore[no-redef]
         pass
 
-    def model_validator() -> None:  # type: ignore[no-redef]
+    def model_validator(mode: str = "") -> None:  # type: ignore[no-redef]
         pass
 
     def validate_email(value: str) -> str:  # type: ignore[misc]
         return EmailStr.validate(value)
 
-    def general_plain_validator_function():  # type: ignore[misc]
+    def general_plain_validator_function(*args, **kwargs):  # type: ignore[misc]
         return {}
 
     RootModel = BaseModel  # type: ignore[misc,assignment]
