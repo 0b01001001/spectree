@@ -2,8 +2,7 @@ import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
-
+from ._pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
 

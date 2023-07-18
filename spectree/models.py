@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence
 
-from pydantic import BaseModel, Field, root_validator, validator
+from ._pydantic import BaseModel, Field, root_validator, validator
 
 # OpenAPI names validation regexp
 OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")

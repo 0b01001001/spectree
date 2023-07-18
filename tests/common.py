@@ -1,9 +1,8 @@
 from enum import Enum, IntEnum
 from typing import Dict, List
 
-from pydantic import BaseModel, Field, root_validator
-
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
+from spectree._pydantic import BaseModel, Field, root_validator
 from spectree.utils import hash_module_path
 
 api_tag = Tag(

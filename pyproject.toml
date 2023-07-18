@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pydantic>=1.2,<2",
+    "pydantic>=1.2,<3",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +37,7 @@ dev = [
     "syrupy>=4.0",
 ]
 email = [
-    "pydantic[email]>=1.2,<2",
+    "pydantic[email]>=1.2,<3",
 ]
 falcon = [
     "falcon>=3.0.0",

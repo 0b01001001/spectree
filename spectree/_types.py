@@ -11,8 +11,9 @@ from typing import (
     Union,
 )
 
-from pydantic import BaseModel
 from typing_extensions import Protocol
+
+from ._pydantic import BaseModel
 
 ModelType = Type[BaseModel]
 OptionalModelType = Optional[ModelType]

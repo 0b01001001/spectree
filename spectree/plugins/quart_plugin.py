@@ -1,10 +1,10 @@
 import inspect
 from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
-from pydantic import BaseModel, ValidationError
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
+from .._pydantic import BaseModel, ValidationError
 from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule

@@ -16,8 +16,7 @@ from typing import (
     Union,
 )
 
-from pydantic import BaseModel, ValidationError
-
+from ._pydantic import BaseModel, ValidationError
 from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
 
 # parse HTTP status code to get the code

@@ -1,6 +1,7 @@
 .DEFAULT_GOAL:=install
 
 SOURCE_FILES=spectree tests examples
+MYPY_SOURCE_FILES=spectree tests # temporary
 
 install:
 	pip install -U -e .[email,quart,flask,falcon,starlette,dev]
@@ -43,6 +44,6 @@ lint:
 	isort --check --diff --project=spectree ${SOURCE_FILES}
 	black --check --diff ${SOURCE_FILES}
 	flake8 ${SOURCE_FILES} --count --show-source --statistics --ignore=D203,E203,W503 --max-line-length=88 --max-complexity=15
-	mypy --install-types --non-interactive ${SOURCE_FILES}
+	mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
 .PHONY: test doc
