@@ -17,6 +17,8 @@ import_test:
 test: import_test
 	pip install -U -e .[email,flask,quart,falcon,starlette]
 	pytest tests -vv -rs
+	pip install pydantic==1.10.11
+	pytest tests -vv -rs
 
 doc:
 	cd docs && make html
