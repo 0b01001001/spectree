@@ -13,7 +13,7 @@ Yet another library to generate OpenAPI documents and validate requests & respon
 
 * Less boilerplate code, only annotations, no need for YAML :sparkles:
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
-* Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
+* Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink: (we support both v1 and v2)
 * Current support:
   * Flask [demo](#flask)
   * Quart [demo](#quart)
