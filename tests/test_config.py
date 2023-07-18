@@ -2,9 +2,9 @@ import string
 from typing import Type
 
 import pytest
-from pydantic import ValidationError
 
 from spectree import SecurityScheme
+from spectree._pydantic import ValidationError
 from spectree.config import Configuration, EmailFieldType
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA

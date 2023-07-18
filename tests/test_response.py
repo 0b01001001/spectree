@@ -1,8 +1,8 @@
 from typing import List, get_type_hints
 
 import pytest
-from pydantic import BaseModel
 
+from spectree._pydantic import BaseModel
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import gen_list_model

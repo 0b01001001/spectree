@@ -1,10 +1,10 @@
 import pytest
 from falcon import App as FalconApp
 from flask import Flask
-from pydantic import BaseModel
 from starlette.applications import Starlette
 
 from spectree import Response
+from spectree._pydantic import BaseModel
 from spectree.config import Configuration
 from spectree.models import Server, ValidationError
 from spectree.plugins.flask_plugin import FlaskPlugin

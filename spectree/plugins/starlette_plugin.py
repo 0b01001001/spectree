@@ -4,12 +4,12 @@ from functools import partial
 from json import JSONDecodeError
 from typing import Any, Callable, Optional, get_type_hints
 
-from pydantic import ValidationError
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
+from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin, Context
