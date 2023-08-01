@@ -112,7 +112,7 @@ def test_list_model():
     model = resp.find_model(200)
     expect_model = gen_list_model(JSON)
     assert get_type_hints(model) == get_type_hints(expect_model)
-    assert type(model) == type(expect_model)
+    assert type(model) is type(expect_model)
     assert issubclass(model, BaseModel)
     data = [
         {"name": "a", "limit": 1},
