@@ -53,6 +53,20 @@ language = "en"
 # a list of builtin themes.
 #
 html_theme = "shibuya"
+html_theme_options = {
+    "og_image_url": "https://repository-images.githubusercontent.com/225120376/c3469400-c16d-11ea-9498-093594983a5a",
+    "nav_links": [
+        {
+            "title": "Sponsor me",
+            "url": "https://github.com/sponsors/kemingy",
+        },
+    ]
+}
+html_context = {
+    "source_type": "github",
+    "source_user": "0b01001001",
+    "source_repo": "spectree",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
