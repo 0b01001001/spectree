@@ -27,10 +27,10 @@ Install with pip: `pip install spectree`. If you'd like for email fields to be v
 
 ### Examples
 
-Check the [examples](/examples) folder.
+Check the [examples](examples) folder.
 
-* [flask example](/examples/flask_demo.py)
-* [falcon example with logging when validation failed](/examples/falcon_demo.py)
+* [flask example](examples/flask_demo.py)
+* [falcon example with logging when validation failed](examples/falcon_demo.py)
 * [starlette example](examples/starlette_demo.py)
 
 ### Step by Step

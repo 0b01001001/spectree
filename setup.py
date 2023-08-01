@@ -25,7 +25,8 @@ setup(
         ],
         "docs": [
             "Sphinx",
-            "furo",
+            "shibuya",
+            "myst-parser",
         ],
     },
 )
