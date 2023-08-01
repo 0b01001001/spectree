@@ -50,7 +50,8 @@ starlette = [
 ]
 docs = [
     "Sphinx",
-    "furo",
+    "shibuya",
+    "myst-parser",
 ]
 
 [project.urls]

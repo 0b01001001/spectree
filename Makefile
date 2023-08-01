@@ -24,7 +24,7 @@ doc:
 	cd docs && make html
 
 opendoc:
-	cd docs/build/html && python -m http.server 8765
+	cd docs/build/html && python -m http.server 8765 -b 127.0.0.1
 
 clean:
 	rm -rf build/ dist/ *.egg-info .pytest_cache
