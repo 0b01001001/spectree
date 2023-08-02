@@ -1,0 +1,7 @@
+p > a > img {
+    display: inline;
+}
+
+#spectree img {
+    margin: 0;
+}
