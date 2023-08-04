@@ -111,6 +111,8 @@ def test_list_model():
     resp = Response(HTTP_200=List[JSON])
     model = resp.find_model(200)
     expect_model = gen_list_model(JSON)
+    assert resp.expect_list_result(200)
+    assert not resp.expect_list_result(500)
     assert get_type_hints(model) == get_type_hints(expect_model)
     assert type(model) is type(expect_model)
     assert issubclass(model, BaseModel)

@@ -1,4 +1,5 @@
 from random import randint
+from typing import List
 
 import pytest
 from flask import Flask, jsonify, request
@@ -168,6 +169,16 @@ class ListJsonView(MethodView):
         return {}
 
 
+class ReturnListView(MethodView):
+    @api.validate(
+        resp=Response(HTTP_200=List[JSON]),
+    )
+    def get(self):
+        pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
+        data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+        return [entry.dict() if pre_serialize else entry for entry in data]
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -201,6 +212,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/list_json",
     view_func=ListJsonView.as_view("list_json_view"),
+)
+app.add_url_rule(
+    "/api/return_list",
+    view_func=ReturnListView.as_view("return_list_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

@@ -2,6 +2,7 @@ from .dry_plugin_flask import (
     test_flask_doc,
     test_flask_list_json_request,
     test_flask_no_response,
+    test_flask_return_list_request,
     test_flask_return_model,
     test_flask_skip_validation,
     test_flask_upload_file,
@@ -18,4 +19,5 @@ __all__ = [
     "test_flask_no_response",
     "test_flask_upload_file",
     "test_flask_list_json_request",
+    "test_flask_return_list_request",
 ]

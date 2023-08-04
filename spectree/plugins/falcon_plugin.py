@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from .._pydantic import ValidationError
+from .._pydantic import BaseModel, ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin
@@ -227,17 +227,24 @@ class FalconPlugin(BasePlugin):
         func(*args, **kwargs)
 
         if resp and resp.has_model():
-            model = resp.find_model(_resp.status[:3])
-            if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
+            model = _resp.media
+            status = int(_resp.status[:3])
+            expect_model = resp.find_model(status)
+            if resp.expect_list_result(status) and isinstance(model, list):
+                _resp.media = [
+                    (entry.dict() if isinstance(entry, BaseModel) else entry)
+                    for entry in model
+                ]
+            elif expect_model and isinstance(_resp.media, expect_model):
+                _resp.media = model.dict()
                 skip_validation = True
 
             if self._data_set_manually(_resp):
                 skip_validation = True
 
-            if model and not skip_validation:
+            if expect_model and not skip_validation:
                 try:
-                    model.parse_obj(_resp.media)
+                    expect_model.parse_obj(_resp.media)
                 except ValidationError as err:
                     resp_validation_error = err
                     _resp.status = HTTP_500

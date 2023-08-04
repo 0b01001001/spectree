@@ -210,7 +210,16 @@ class FlaskPlugin(BasePlugin):
 
         if resp:
             expect_model = resp.find_model(status)
-            if expect_model and isinstance(model, expect_model):
+            if resp.expect_list_result(status) and isinstance(model, list):
+                result = (
+                    [
+                        (entry.dict() if isinstance(entry, BaseModel) else entry)
+                        for entry in model
+                    ],
+                    status,
+                    *rest,
+                )
+            elif expect_model and isinstance(model, expect_model):
                 skip_validation = True
                 result = (model.dict(), status, *rest)
 

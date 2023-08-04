@@ -162,3 +162,15 @@ def test_quart_list_json_request(client):
         client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
     )
     assert resp.status_code == 200
+
+
+@pytest.mark.parametrize("pre_serialize", [False, True])
+def test_quart_return_list_request(client, pre_serialize: bool):
+    resp = asyncio.run(
+        client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
+    )
+    assert resp.status_code == 200
+    assert resp.json == [
+        {"name": "user1", "limit": 1},
+        {"name": "user2", "limit": 2},
+    ]

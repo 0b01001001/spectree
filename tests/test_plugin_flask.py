@@ -1,4 +1,5 @@
 from random import randint
+from typing import List
 
 import pytest
 from flask import Flask, jsonify, request
@@ -166,6 +167,14 @@ def no_response():
 )
 def json_list():
     return {}
+
+
+@app.route("/api/return_list", methods=["GET"])
+@api.validate(resp=Response(HTTP_200=List[JSON]))
+def return_list():
+    pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
+    data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+    return [entry.dict() if pre_serialize else entry for entry in data]
 
 
 # INFO: ensures that spec is calculated and cached _after_ registering

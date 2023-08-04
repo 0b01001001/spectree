@@ -85,6 +85,31 @@
         "title": "JSON",
         "type": "object"
       },
+      "JSONList.a9993e3": {
+        "items": {
+          "$ref": "#/components/schemas/JSONList.a9993e3.JSON"
+        },
+        "title": "JSONList",
+        "type": "array"
+      },
+      "JSONList.a9993e3.JSON": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
       "ListJSON.7068f62": {
         "items": {
           "$ref": "#/components/schemas/ListJSON.7068f62.JSON"
@@ -282,6 +307,37 @@
         },
         "responses": {},
         "summary": "post <POST>",
+        "tags": []
+      }
+    },
+    "/api/return_list": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JSONList.a9993e3"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "get <GET>",
         "tags": []
       }
     },

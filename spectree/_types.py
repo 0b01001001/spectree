@@ -8,6 +8,7 @@ from typing import (
     Optional,
     Sequence,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -15,7 +16,8 @@ from typing_extensions import Protocol
 
 from ._pydantic import BaseModel
 
-ModelType = Type[BaseModel]
+BaseModelSubclassType = TypeVar("BaseModelSubclassType", bound=BaseModel)
+ModelType = Type[BaseModelSubclassType]
 OptionalModelType = Optional[ModelType]
 NamingStrategy = Callable[[ModelType], str]
 NestedNamingStrategy = Callable[[str, str], str]

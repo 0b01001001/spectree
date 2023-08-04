@@ -1,4 +1,5 @@
 from random import randint
+from typing import List
 
 import pytest
 from falcon import testing
@@ -121,6 +122,15 @@ class ListJsonView:
         pass
 
 
+class ReturnListView:
+    name = "return list request view"
+
+    @api.validate(resp=Response(HTTP_200=List[JSON]))
+    async def on_get(self, req, resp):
+        data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+        resp.media = [entry.dict() for entry in data]
+
+
 class FileUploadView:
     name = "file upload view"
 
@@ -156,6 +166,7 @@ app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
+app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
 api.register(app)
 
@@ -187,6 +198,15 @@ def test_falcon_list_json_request_async(client):
         json=[dict(name="foo", limit=1)],
     )
     assert resp.status_code == 200
+
+
+def test_falcon_return_list_request_async(client):
+    resp = client.simulate_request("GET", "/api/return_list")
+    assert resp.status_code == 200
+    assert resp.json == [
+        {"name": "user1", "limit": 1},
+        {"name": "user2", "limit": 2},
+    ]
 
 
 def test_falcon_validate(client):

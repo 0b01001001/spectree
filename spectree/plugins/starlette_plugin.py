@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from .._pydantic import ValidationError
+from .._pydantic import BaseModel, ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin, Context
@@ -22,7 +22,14 @@ def PydanticResponse(content):
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
-            return super().render(content.dict())
+            return super().render(
+                [
+                    (entry.dict() if isinstance(entry, BaseModel) else entry)
+                    for entry in content
+                ]
+                if isinstance(content, list)
+                else content.dict()
+            )
 
     return _PydanticResponse(content)
 
