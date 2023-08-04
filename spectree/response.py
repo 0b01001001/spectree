@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from ._pydantic import BaseModel
 from ._types import ModelType, NamingStrategy, OptionalModelType
-from .utils import gen_list_model, get_model_key, parse_code
+from .utils import gen_list_model, get_model_key, has_examples, parse_code
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1
@@ -158,5 +158,11 @@ class Response:
                     }
                 },
             }
+
+            schema_extra = getattr(model.__config__, "schema_extra", None)
+            if schema_extra and has_examples(schema_extra):
+                responses[parse_code(code)]["content"]["application/json"][
+                    "examples"
+                ] = schema_extra
 
         return responses

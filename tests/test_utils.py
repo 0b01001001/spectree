@@ -12,7 +12,7 @@ from spectree.utils import (
     parse_resp,
 )
 
-from .common import DemoModel, DemoQuery, get_model_path_key
+from .common import DemoModel, DemoModelWithSchemaExtra, DemoQuery, get_model_path_key
 
 api = SpecTree()
 
@@ -25,6 +25,14 @@ def undecorated_func():
 
 @api.validate(json=DemoModel, resp=Response(HTTP_200=DemoModel))
 def demo_func():
+    """
+    summary
+
+    description"""
+
+
+@api.validate(json=DemoModelWithSchemaExtra, resp=Response(HTTP_200=DemoModel))
+def demo_with_schema_extra_func():
     """
     summary
 
@@ -227,6 +235,18 @@ def test_parse_request():
         parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
     )
+    assert parse_request(demo_class.demo_method) == {}
+
+
+def test_parse_request_with_schema_extra():
+    model_path_key = get_model_path_key("tests.common.DemoModelWithSchemaExtra")
+
+    assert parse_request(
+        demo_with_schema_extra_func, demo_with_schema_extra_func.json_model
+    )["content"]["application/json"] == {
+        "schema": {"$ref": f"#/components/schemas/{model_path_key}"},
+        "examples": {"example1": {"value": {"key1": "value1", "key2": "value2"}}},
+    }
     assert parse_request(demo_class.demo_method) == {}
 
 

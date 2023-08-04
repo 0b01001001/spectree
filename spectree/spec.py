@@ -234,6 +234,7 @@ class SpecTree:
                 if model is not None:
                     model_key = self._add_model(model=model)
                     setattr(validation, name, model_key)
+                    validation.json_model = model
 
             if resp:
                 # Make sure that the endpoint specific status code and data model for
@@ -320,7 +321,8 @@ class SpecTree:
                 if deprecated:
                     routes[path][method.lower()]["deprecated"] = deprecated
 
-                request_body = parse_request(func)
+                json_model = getattr(func, "json_model", None)
+                request_body = parse_request(func, json_model)
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
 

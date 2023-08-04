@@ -75,7 +75,14 @@ def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[st
     return summary, description
 
 
-def parse_request(func: Any) -> Dict[str, Any]:
+def has_examples(schema_exta: dict) -> bool:
+    for _, v in schema_exta.items():
+        if isinstance(v, dict) and "value" in v.keys():
+            return True
+    return False
+
+
+def parse_request(func: Any, model: Optional[Any] = None) -> Dict[str, Any]:
     """
     get json spec
     """
@@ -84,6 +91,11 @@ def parse_request(func: Any) -> Dict[str, Any]:
         content_items["application/json"] = {
             "schema": {"$ref": f"#/components/schemas/{func.json}"}
         }
+
+        if model:
+            schema_extra = getattr(model.__config__, "schema_extra", None)
+            if schema_extra and has_examples(schema_extra):
+                content_items["application/json"]["examples"] = schema_extra
 
     if hasattr(func, "form"):
         content_items["multipart/form-data"] = {
