@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from ._pydantic import BaseModel
 from ._types import BaseModelSubclassType, ModelType, NamingStrategy, OptionalModelType
@@ -63,7 +63,7 @@ class Response:
 
         self.code_models: Dict[str, ModelType] = {}
         self.code_descriptions: Dict[str, Optional[str]] = {}
-        self.codes_expecting_list_result: Set[str] = set()
+        self.code_list_item_types: Dict[str, ModelType] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             description: Optional[str] = None
@@ -81,8 +81,9 @@ class Response:
                 origin_type = getattr(model, "__origin__", None)
                 if origin_type is list or origin_type is List:
                     # type is List[BaseModel]
-                    model = gen_list_model(getattr(model, "__args__")[0])
-                    self.codes_expecting_list_result.add(code)
+                    list_item_type = getattr(model, "__args__")[0]
+                    model = gen_list_model(list_item_type)
+                    self.code_list_item_types[code] = list_item_type
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
                 assert description is None or isinstance(
                     description, str
@@ -132,9 +133,16 @@ class Response:
     def expect_list_result(self, code: int) -> bool:
         """Check whether a specific HTTP code expects a list result.
 
-        :param code: Status code string, format('HTTP_[0-9]_{3}'), 'HTTP_200'.
+        :param code: Status code (example: 200)
         """
-        return f"HTTP_{code}" in self.codes_expecting_list_result
+        return f"HTTP_{code}" in self.code_list_item_types
+
+    def get_expected_list_item_type(self, code: int) -> ModelType:
+        """Get the expected list result item type.
+
+        :param code: Status code (example: 200)
+        """
+        return self.code_list_item_types[f"HTTP_{code}"]
 
     def get_code_description(self, code: str) -> str:
         """Get the description of the given status code.

@@ -231,6 +231,9 @@ class FalconPlugin(BasePlugin):
             status = int(_resp.status[:3])
             expect_model = resp.find_model(status)
             if resp.expect_list_result(status) and isinstance(model, list):
+                expected_list_item_type = resp.get_expected_list_item_type(status)
+                if all(isinstance(entry, expected_list_item_type) for entry in model):
+                    skip_validation = True
                 _resp.media = [
                     (entry.dict() if isinstance(entry, BaseModel) else entry)
                     for entry in model
