@@ -1,8 +1,8 @@
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from ._pydantic import BaseModel
-from ._types import ModelType, NamingStrategy, OptionalModelType
+from ._types import BaseModelSubclassType, ModelType, NamingStrategy, OptionalModelType
 from .utils import gen_list_model, get_model_key, parse_code
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
@@ -30,22 +30,30 @@ class Response:
 
     examples:
 
+        >>> from typing import List
         >>> from spectree.response import Response
         >>> from pydantic import BaseModel
         ...
         >>> class User(BaseModel):
         ...     id: int
         ...
-        >>> response = Response(HTTP_200)
+        >>> response = Response("HTTP_200")
         >>> response = Response(HTTP_200=None)
         >>> response = Response(HTTP_200=User)
         >>> response = Response(HTTP_200=(User, "status code description"))
+        >>> response = Response(HTTP_200=List[User])
+        >>> response = Response(HTTP_200=(List[User], "status code description"))
     """
 
     def __init__(
         self,
         *codes: str,
-        **code_models: Union[OptionalModelType, Tuple[OptionalModelType, str]],
+        **code_models: Union[
+            OptionalModelType,
+            Tuple[OptionalModelType, str],
+            Type[List[BaseModelSubclassType]],
+            Tuple[Type[List[BaseModelSubclassType]], str],
+        ],
     ) -> None:
         self.codes: List[str] = []
 
@@ -55,6 +63,7 @@ class Response:
 
         self.code_models: Dict[str, ModelType] = {}
         self.code_descriptions: Dict[str, Optional[str]] = {}
+        self.code_list_item_types: Dict[str, ModelType] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             description: Optional[str] = None
@@ -72,7 +81,9 @@ class Response:
                 origin_type = getattr(model, "__origin__", None)
                 if origin_type is list or origin_type is List:
                     # type is List[BaseModel]
-                    model = gen_list_model(getattr(model, "__args__")[0])
+                    list_item_type = getattr(model, "__args__")[0]
+                    model = gen_list_model(list_item_type)
+                    self.code_list_item_types[code] = list_item_type
                 assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
                 assert description is None or isinstance(
                     description, str
@@ -118,6 +129,20 @@ class Response:
         :param code: ``r'\\d{3}'``
         """
         return self.code_models.get(f"HTTP_{code}")
+
+    def expect_list_result(self, code: int) -> bool:
+        """Check whether a specific HTTP code expects a list result.
+
+        :param code: Status code (example: 200)
+        """
+        return f"HTTP_{code}" in self.code_list_item_types
+
+    def get_expected_list_item_type(self, code: int) -> ModelType:
+        """Get the expected list result item type.
+
+        :param code: Status code (example: 200)
+        """
+        return self.code_list_item_types[f"HTTP_{code}"]
 
     def get_code_description(self, code: str) -> str:
         """Get the description of the given status code.

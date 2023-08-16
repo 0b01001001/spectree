@@ -161,6 +161,16 @@ def test_flask_list_json_request(client):
     assert resp.status_code == 200, resp.data
 
 
+@pytest.mark.parametrize("pre_serialize", [False, True])
+def test_flask_return_list_request(client, pre_serialize: bool):
+    resp = client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
+    assert resp.status_code == 200
+    assert resp.json == [
+        {"name": "user1", "limit": 1},
+        {"name": "user2", "limit": 2},
+    ]
+
+
 def test_flask_upload_file(client):
     file_content = "abcdef"
     data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}

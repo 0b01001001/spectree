@@ -1,5 +1,6 @@
 import io
 from random import randint
+from typing import List
 
 import pytest
 from starlette.applications import Starlette
@@ -142,6 +143,15 @@ async def list_json(request):
     return JSONResponse({})
 
 
+@api.validate(resp=Response(HTTP_200=List[JSON]))
+async def return_list(request):
+    pre_serialize = bool(int(request.query_params.get("pre_serialize", 0)))
+    data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+    return PydanticResponse(
+        [entry.dict() if pre_serialize else entry for entry in data]
+    )
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -175,6 +185,7 @@ app = Starlette(
                 Route("/no_response", no_response, methods=["POST", "GET"]),
                 Route("/file_upload", file_upload, methods=["POST"]),
                 Route("/list_json", list_json, methods=["POST"]),
+                Route("/return_list", return_list, methods=["GET"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -372,6 +383,16 @@ def test_starlette_no_response(client):
 def test_json_list_request(client):
     resp = client.post("/api/list_json", json=[{"name": "starlette", "limit": 1}])
     assert resp.status_code == 200, resp.text
+
+
+@pytest.mark.parametrize("pre_serialize", [False, True])
+def test_return_list_request(client, pre_serialize: bool):
+    resp = client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
+    assert resp.status_code == 200
+    assert resp.json() == [
+        {"name": "user1", "limit": 1},
+        {"name": "user2", "limit": 2},
+    ]
 
 
 def test_starlette_upload_file(client):

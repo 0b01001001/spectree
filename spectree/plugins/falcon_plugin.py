@@ -4,9 +4,10 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 
 from falcon import HTTP_400, HTTP_415, HTTPError
+from falcon import Response as FalconResponse
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from .._pydantic import ValidationError
+from .._pydantic import BaseModel, ValidationError
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin
@@ -188,6 +189,34 @@ class FalconPlugin(BasePlugin):
             req_form = {x.name: x.stream.read() for x in req.get_media()}
             req.context.form = form.parse_obj(req_form)
 
+    def response_validation(
+        self,
+        response_spec: Optional[Response],
+        falcon_response: FalconResponse,
+        skip_validation: bool,
+    ) -> None:
+        if response_spec and response_spec.has_model():
+            model = falcon_response.media
+            status = int(falcon_response.status[:3])
+            expect_model = response_spec.find_model(status)
+            if response_spec.expect_list_result(status) and isinstance(model, list):
+                expected_list_item_type = response_spec.get_expected_list_item_type(
+                    status
+                )
+                if all(isinstance(entry, expected_list_item_type) for entry in model):
+                    skip_validation = True
+                falcon_response.media = [
+                    (entry.dict() if isinstance(entry, BaseModel) else entry)
+                    for entry in model
+                ]
+            elif expect_model and isinstance(falcon_response.media, expect_model):
+                falcon_response.media = model.dict()
+                skip_validation = True
+            if self._data_set_manually(falcon_response):
+                skip_validation = True
+            if expect_model and not skip_validation:
+                expect_model.parse_obj(falcon_response.media)
+
     def validate(
         self,
         func: Callable,
@@ -226,22 +255,16 @@ class FalconPlugin(BasePlugin):
 
         func(*args, **kwargs)
 
-        if resp and resp.has_model():
-            model = resp.find_model(_resp.status[:3])
-            if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
-                skip_validation = True
-
-            if self._data_set_manually(_resp):
-                skip_validation = True
-
-            if model and not skip_validation:
-                try:
-                    model.parse_obj(_resp.media)
-                except ValidationError as err:
-                    resp_validation_error = err
-                    _resp.status = HTTP_500
-                    _resp.media = err.errors()
+        try:
+            self.response_validation(
+                response_spec=resp,
+                falcon_response=_resp,
+                skip_validation=skip_validation,
+            )
+        except ValidationError as err:
+            resp_validation_error = err
+            _resp.status = HTTP_500
+            _resp.media = err.errors()
 
         after(_req, _resp, resp_validation_error, _self)
 
@@ -328,22 +351,15 @@ class FalconAsgiPlugin(FalconPlugin):
 
         await func(*args, **kwargs)
 
-        if resp and resp.has_model():
-            model = resp.find_model(_resp.status[:3])
-            if model and isinstance(_resp.media, model):
-                _resp.media = _resp.media.dict()
-                skip_validation = True
-
-            if self._data_set_manually(_resp):
-                skip_validation = True
-
-            model = resp.find_model(_resp.status[:3])
-            if model and not skip_validation:
-                try:
-                    model.parse_obj(_resp.media)
-                except ValidationError as err:
-                    resp_validation_error = err
-                    _resp.status = HTTP_500
-                    _resp.media = err.errors()
+        try:
+            self.response_validation(
+                response_spec=resp,
+                falcon_response=_resp,
+                skip_validation=skip_validation,
+            )
+        except ValidationError as err:
+            resp_validation_error = err
+            _resp.status = HTTP_500
+            _resp.media = err.errors()
 
         after(_req, _resp, resp_validation_error, _self)
