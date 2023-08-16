@@ -127,8 +127,9 @@ class ReturnListView:
 
     @api.validate(resp=Response(HTTP_200=List[JSON]))
     async def on_get(self, req, resp):
+        pre_serialize = bool(int(req.params.get("pre_serialize", 0)))
         data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
-        resp.media = [entry.dict() for entry in data]
+        resp.media = [entry.dict() if pre_serialize else entry for entry in data]
 
 
 class FileUploadView:
@@ -200,8 +201,11 @@ def test_falcon_list_json_request_async(client):
     assert resp.status_code == 200
 
 
-def test_falcon_return_list_request_async(client):
-    resp = client.simulate_request("GET", "/api/return_list")
+@pytest.mark.parametrize("pre_serialize", [False, True])
+def test_falcon_return_list_request_async(client, pre_serialize: bool):
+    resp = client.simulate_request(
+        "GET", f"/api/return_list?pre_serialize={int(pre_serialize)}"
+    )
     assert resp.status_code == 200
     assert resp.json == [
         {"name": "user1", "limit": 1},

@@ -234,7 +234,7 @@ class QuartPlugin(BasePlugin):
                     status,
                     *rest,
                 )
-            if expect_model and isinstance(model, expect_model):
+            elif expect_model and isinstance(model, expect_model):
                 skip_validation = True
                 result = (model.dict(), status, *rest)
 
