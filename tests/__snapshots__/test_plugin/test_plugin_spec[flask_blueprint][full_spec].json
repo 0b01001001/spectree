@@ -177,6 +177,38 @@
         "title": "Resp",
         "type": "object"
       },
+      "RootResp.7068f62": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RootResp.7068f62.JSON"
+          },
+          {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        ],
+        "title": "RootResp"
+      },
+      "RootResp.7068f62.JSON": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
       "StrDict.7068f62": {
         "additionalProperties": {
           "type": "string"
@@ -333,6 +365,37 @@
           }
         },
         "summary": "return_list <GET>",
+        "tags": []
+      }
+    },
+    "/api/return_root": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_root",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootResp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "return_root <GET>",
         "tags": []
       }
     },

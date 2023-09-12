@@ -3,7 +3,7 @@ from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from .._pydantic import BaseModel, ValidationError
+from .._pydantic import BaseModel, ValidationError, is_root_model
 from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule
@@ -222,6 +222,17 @@ class FlaskPlugin(BasePlugin):
                     status,
                     *rest,
                 )
+            elif expect_model and is_root_model(expect_model):
+                if not isinstance(model, expect_model):
+                    # Make it possible to return an instance of the model __root__ type
+                    # (i.e. not the root model itself).
+                    try:
+                        model = expect_model(__root__=model)
+                    except ValidationError:
+                        pass
+                if isinstance(model, expect_model):
+                    skip_validation = True
+                    result = (model.dict()["__root__"], status, *rest)
             elif expect_model and isinstance(model, expect_model):
                 skip_validation = True
                 result = (model.dict(), status, *rest)

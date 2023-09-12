@@ -1,3 +1,5 @@
+from typing import Any, Optional, Type
+
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
 PYDANTIC2 = PYDANTIC_VERSION.startswith("2")
@@ -11,6 +13,7 @@ __all__ = [
     "BaseSettings",
     "EmailStr",
     "validator",
+    "is_root_model",
 ]
 
 if PYDANTIC2:
@@ -35,3 +38,7 @@ else:
         root_validator,
         validator,
     )
+
+
+def is_root_model(value: Optional[Type[Any]]):
+    return value and issubclass(value, BaseModel) and "__root__" in value.__fields__

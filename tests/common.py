@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import BaseModel, Field, root_validator
@@ -44,6 +44,10 @@ class StrDict(BaseModel):
 class Resp(BaseModel):
     name: str
     score: List[int]
+
+
+class RootResp(BaseModel):
+    __root__: Union[JSON, List[int]]
 
 
 class Language(str, Enum):
@@ -177,3 +181,24 @@ def get_model_path_key(model_path: str) -> str:
         return model_name
 
     return f"{model_name}.{hash_module_path(module_path=model_path)}"
+
+
+def get_root_resp_data(pre_serialize: bool, return_what: str):
+    assert return_what in ("RootResp_JSON", "RootResp_List", "JSON", "List")
+    data: Any
+    if return_what == "RootResp_JSON":
+        data = RootResp(__root__=JSON(name="user1", limit=1))
+    elif return_what == "RootResp_List":
+        data = RootResp(__root__=[1, 2, 3, 4])
+    elif return_what == "JSON":
+        data = JSON(name="user1", limit=1)
+    elif return_what == "List":
+        data = [1, 2, 3, 4]
+        pre_serialize = False
+    else:
+        assert False
+    if pre_serialize:
+        data = data.dict()
+        if "__root__" in data:
+            data = data["__root__"]
+    return data

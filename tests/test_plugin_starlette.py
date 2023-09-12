@@ -22,8 +22,10 @@ from .common import (
     Order,
     Query,
     Resp,
+    RootResp,
     StrDict,
     api_tag,
+    get_root_resp_data,
 )
 
 
@@ -152,6 +154,18 @@ async def return_list(request):
     )
 
 
+@api.validate(resp=Response(HTTP_200=RootResp))
+async def return_root(request):
+    return PydanticResponse(
+        get_root_resp_data(
+            pre_serialize=bool(
+                int(request.query_params.get("pre_serialize", default=0))
+            ),
+            return_what=request.query_params.get("return_what", default="RootResp"),
+        )
+    )
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -186,6 +200,7 @@ app = Starlette(
                 Route("/file_upload", file_upload, methods=["POST"]),
                 Route("/list_json", list_json, methods=["POST"]),
                 Route("/return_list", return_list, methods=["GET"]),
+                Route("/return_root", return_root, methods=["GET"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -386,13 +401,26 @@ def test_json_list_request(client):
 
 
 @pytest.mark.parametrize("pre_serialize", [False, True])
-def test_return_list_request(client, pre_serialize: bool):
+def test_starlette_return_list_request(client, pre_serialize: bool):
     resp = client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
     assert resp.status_code == 200
     assert resp.json() == [
         {"name": "user1", "limit": 1},
         {"name": "user2", "limit": 2},
     ]
+
+
+@pytest.mark.parametrize(
+    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "List"]
+)
+def test_starlette_return_root_request_sync(client, return_what: str):
+    resp = client.get(f"/api/return_root?pre_serialize=0&return_what={return_what}")
+    assert resp.status_code == 200
+    assert resp.status_code == 200
+    if return_what in ("RootResp_JSON", "JSON"):
+        assert resp.json() == {"name": "user1", "limit": 1}
+    elif return_what in ("RootResp_List", "List"):
+        assert resp.json() == [1, 2, 3, 4]
 
 
 def test_starlette_upload_file(client):

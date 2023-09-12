@@ -14,8 +14,10 @@ from .common import (
     ListJSON,
     Query,
     Resp,
+    RootResp,
     StrDict,
     api_tag,
+    get_root_resp_data,
 )
 
 
@@ -207,6 +209,17 @@ class ReturnListView:
         resp.media = [entry.dict() if pre_serialize else entry for entry in data]
 
 
+class ReturnRootView:
+    name = "return root request view"
+
+    @api.validate(resp=Response(HTTP_200=RootResp))
+    def on_get(self, req, resp):
+        resp.media = get_root_resp_data(
+            pre_serialize=bool(int(req.params.get("pre_serialize", 0))),
+            return_what=req.params.get("return_what", "RootResp"),
+        )
+
+
 class ViewWithCustomSerializer:
     name = "view with custom serializer"
 
@@ -234,6 +247,7 @@ app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
 app.add_route("/api/return_list", ReturnListView())
+app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
 api.register(app)
 
@@ -346,6 +360,23 @@ def test_falcon_return_list_request_sync(client, pre_serialize: bool):
         {"name": "user1", "limit": 1},
         {"name": "user2", "limit": 2},
     ]
+
+
+@pytest.mark.parametrize("pre_serialize", [False, True])
+@pytest.mark.parametrize(
+    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "List"]
+)
+def test_falcon_return_root_request_sync(client, pre_serialize: bool, return_what: str):
+    resp = client.simulate_request(
+        "GET",
+        f"/api/return_root?pre_serialize={int(pre_serialize)}"
+        f"&return_what={return_what}",
+    )
+    assert resp.status_code == 200
+    if return_what in ("RootResp_JSON", "JSON"):
+        assert resp.json == {"name": "user1", "limit": 1}
+    elif return_what in ("RootResp_List", "List"):
+        assert resp.json == [1, 2, 3, 4]
 
 
 @pytest.fixture

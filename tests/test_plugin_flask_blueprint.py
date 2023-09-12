@@ -16,9 +16,11 @@ from .common import (
     Order,
     Query,
     Resp,
+    RootResp,
     StrDict,
     api_tag,
     get_paths,
+    get_root_resp_data,
 )
 
 # import tests to execute
@@ -164,6 +166,15 @@ def return_list():
     pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
     data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
     return [entry.dict() if pre_serialize else entry for entry in data]
+
+
+@app.route("/api/return_root", methods=["GET"])
+@api.validate(resp=Response(HTTP_200=RootResp))
+def return_root():
+    return get_root_resp_data(
+        pre_serialize=bool(int(request.args.get("pre_serialize", default=0))),
+        return_what=request.args.get("return_what", default="RootResp"),
+    )
 
 
 api.register(app)

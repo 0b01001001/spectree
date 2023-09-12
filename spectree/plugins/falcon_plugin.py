@@ -7,7 +7,7 @@ from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon import Response as FalconResponse
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from .._pydantic import BaseModel, ValidationError
+from .._pydantic import BaseModel, ValidationError, is_root_model
 from .._types import ModelType
 from ..response import Response
 from .base import BasePlugin
@@ -209,6 +209,17 @@ class FalconPlugin(BasePlugin):
                     (entry.dict() if isinstance(entry, BaseModel) else entry)
                     for entry in model
                 ]
+            elif expect_model and is_root_model(expect_model):
+                if not isinstance(model, expect_model):
+                    # Make it possible to return an instance of the model __root__ type
+                    # (i.e. not the root model itself).
+                    try:
+                        model = expect_model(__root__=model)
+                    except ValidationError:
+                        pass
+                if isinstance(model, expect_model):
+                    skip_validation = True
+                    falcon_response.media = model.dict()["__root__"]
             elif expect_model and isinstance(falcon_response.media, expect_model):
                 falcon_response.media = model.dict()
                 skip_validation = True
