@@ -50,7 +50,7 @@ def ping():
     """summary
 
     description"""
-    return jsonify(msg="pong")
+    return {"msg": "pong"}
 
 
 @app.route("/api/file_upload", methods=["POST"])
