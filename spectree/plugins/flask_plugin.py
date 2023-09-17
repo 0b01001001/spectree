@@ -251,16 +251,18 @@ class FlaskPlugin(BasePlugin):
 
         response = make_response(result)
 
-        if resp and resp.has_model():
+        if resp and resp.has_model() and not resp_validation_error:
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
                     model.parse_obj(response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = make_response(
-                        jsonify({"message": "response validation error"}), 500
-                    )
+
+        if resp_validation_error:
+            response = make_response(
+                jsonify({"message": "response validation error"}), 500
+            )
 
         after(request, response, resp_validation_error, None)
 
