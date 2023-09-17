@@ -26,7 +26,7 @@ class SimpleModel(BaseModel):
 
 
 class Users(BaseModel):
-    __root__: list[SimpleModel]
+    __root__: List[SimpleModel]
 
 
 @dataclass
