@@ -16,7 +16,10 @@ __all__ = [
     "EmailStr",
     "validator",
     "is_root_model",
+    "is_root_model_instance",
     "serialize_model_instance",
+    "is_base_model",
+    "is_base_model_instance",
 ]
 
 if PYDANTIC2:
