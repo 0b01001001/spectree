@@ -1,5 +1,6 @@
 from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
+import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
@@ -213,7 +214,7 @@ class FlaskPlugin(BasePlugin):
         else:
             model = result
 
-        if not skip_validation and resp:
+        if not skip_validation and resp and not isinstance(result, flask.Response):
             expect_model = resp.find_model(status)
             if resp.expect_list_result(status) and isinstance(model, list):
                 expected_list_item_type = resp.get_expected_list_item_type(status)
