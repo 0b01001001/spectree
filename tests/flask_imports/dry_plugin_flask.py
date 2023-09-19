@@ -171,6 +171,21 @@ def test_flask_return_list_request(client, pre_serialize: bool):
     ]
 
 
+@pytest.mark.parametrize("pre_serialize", [False, True])
+@pytest.mark.parametrize(
+    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "List"]
+)
+def test_flask_return_root_request(client, pre_serialize: bool, return_what: str):
+    resp = client.get(
+        f"/api/return_root?pre_serialize={int(pre_serialize)}&return_what={return_what}"
+    )
+    assert resp.status_code == 200
+    if return_what in ("RootResp_JSON", "JSON"):
+        assert resp.json == {"name": "user1", "limit": 1}
+    elif return_what in ("RootResp_List", "List"):
+        assert resp.json == [1, 2, 3, 4]
+
+
 def test_flask_upload_file(client):
     file_content = "abcdef"
     data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}

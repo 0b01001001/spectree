@@ -177,6 +177,38 @@
         "title": "Resp",
         "type": "object"
       },
+      "RootResp.7068f62": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RootResp.7068f62.JSON"
+          },
+          {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        ],
+        "title": "RootResp"
+      },
+      "RootResp.7068f62.JSON": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
       "StrDict.7068f62": {
         "additionalProperties": {
           "type": "string"

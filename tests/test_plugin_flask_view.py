@@ -17,8 +17,10 @@ from .common import (
     Order,
     Query,
     Resp,
+    RootResp,
     StrDict,
     api_tag,
+    get_root_resp_data,
 )
 
 # import tests to execute
@@ -177,6 +179,15 @@ class ReturnListView(MethodView):
         pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
         data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
         return [entry.dict() if pre_serialize else entry for entry in data]
+
+
+class ReturnRootView(MethodView):
+    @api.validate(resp=Response(HTTP_200=RootResp))
+    def get(self):
+        return get_root_resp_data(
+            pre_serialize=bool(int(request.args.get("pre_serialize", default=0))),
+            return_what=request.args.get("return_what", default="RootResp"),
+        )
 
 
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))

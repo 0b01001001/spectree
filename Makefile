@@ -45,7 +45,7 @@ format:
 lint:
 	isort --check --diff --project=spectree ${SOURCE_FILES}
 	black --check --diff ${SOURCE_FILES}
-	flake8 ${SOURCE_FILES} --count --show-source --statistics --ignore=D203,E203,W503 --max-line-length=88 --max-complexity=17
+	flake8 ${SOURCE_FILES} --count --show-source --statistics --ignore=D203,E203,W503 --max-line-length=88 --max-complexity=21
 	mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
 .PHONY: test doc

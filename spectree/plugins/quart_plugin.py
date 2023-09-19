@@ -4,7 +4,12 @@ from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from .._pydantic import BaseModel, ValidationError
+from .._pydantic import (
+    BaseModel,
+    ValidationError,
+    is_root_model,
+    serialize_model_instance,
+)
 from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule
@@ -220,7 +225,7 @@ class QuartPlugin(BasePlugin):
         else:
             model = result
 
-        if resp:
+        if not skip_validation and resp:
             expect_model = resp.find_model(status)
             if resp.expect_list_result(status) and isinstance(model, list):
                 expected_list_item_type = resp.get_expected_list_item_type(status)
@@ -228,28 +233,48 @@ class QuartPlugin(BasePlugin):
                     skip_validation = True
                 result = (
                     [
-                        (entry.dict() if isinstance(entry, BaseModel) else entry)
+                        (
+                            serialize_model_instance(entry)
+                            if isinstance(entry, BaseModel)
+                            else entry
+                        )
                         for entry in model
                     ],
                     status,
                     *rest,
                 )
+            elif (
+                expect_model
+                and is_root_model(expect_model)
+                and not isinstance(model, expect_model)
+            ):
+                # Make it possible to return an instance of the model __root__ type
+                # (i.e. not the root model itself).
+                try:
+                    model = expect_model(__root__=model)
+                except ValidationError as err:
+                    resp_validation_error = err
+                else:
+                    skip_validation = True
+                    result = (serialize_model_instance(model), status, *rest)
             elif expect_model and isinstance(model, expect_model):
                 skip_validation = True
-                result = (model.dict(), status, *rest)
+                result = (serialize_model_instance(model), status, *rest)
 
         response = await make_response(result)
 
-        if resp and resp.has_model():
+        if resp and resp.has_model() and not resp_validation_error:
             model = resp.find_model(response.status_code)
             if model and not skip_validation:
                 try:
                     model.parse_obj(await response.get_json())
                 except ValidationError as err:
                     resp_validation_error = err
-                    response = await make_response(
-                        jsonify({"message": "response validation error"}), 500
-                    )
+
+        if resp_validation_error:
+            response = await make_response(
+                jsonify({"message": "response validation error"}), 500
+            )
 
         after(request, response, resp_validation_error, None)
 
