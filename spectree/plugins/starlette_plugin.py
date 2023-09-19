@@ -18,21 +18,16 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
+class _PydanticResponseModel(BaseModel):
+    __root__: Any
+
+
 def PydanticResponse(content):
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
             return super().render(
-                [
-                    (
-                        serialize_model_instance(entry)
-                        if isinstance(entry, BaseModel)
-                        else entry
-                    )
-                    for entry in content
-                ]
-                if isinstance(content, list)
-                else serialize_model_instance(content)
+                serialize_model_instance(_PydanticResponseModel(__root__=content))
             )
 
     return _PydanticResponse(content)

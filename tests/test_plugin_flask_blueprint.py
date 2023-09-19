@@ -180,6 +180,8 @@ def return_root():
 api.register(app)
 
 flask_app = Flask(__name__)
+flask_app.config["DEBUG"] = True
+flask_app.config["TESTING"] = True
 flask_app.register_blueprint(app)
 with flask_app.app_context():
     api.spec

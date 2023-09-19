@@ -227,23 +227,7 @@ class QuartPlugin(BasePlugin):
 
         if not skip_validation and resp:
             expect_model = resp.find_model(status)
-            if resp.expect_list_result(status) and isinstance(model, list):
-                expected_list_item_type = resp.get_expected_list_item_type(status)
-                if all(isinstance(entry, expected_list_item_type) for entry in model):
-                    skip_validation = True
-                result = (
-                    [
-                        (
-                            serialize_model_instance(entry)
-                            if isinstance(entry, BaseModel)
-                            else entry
-                        )
-                        for entry in model
-                    ],
-                    status,
-                    *rest,
-                )
-            elif (
+            if (
                 expect_model
                 and is_root_model(expect_model)
                 and not isinstance(model, expect_model)
