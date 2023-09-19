@@ -2,13 +2,16 @@ import asyncio
 
 import pytest
 
+from tests.common import UserXmlData
 
-def test_quart_skip_validation(client):
+
+@pytest.mark.parametrize("response_format", ["json", "xml"])
+def test_quart_skip_validation(client, response_format: str):
     client.set_cookie("quart", "pub", "abcdefg")
 
     resp = asyncio.run(
         client.post(
-            "/api/user_skip/quart?order=1",
+            f"/api/user_skip/quart?order=1&response_format={response_format}",
             json=dict(name="quart", limit=10),
             headers={"Content-Type": "application/json"},
         )
@@ -17,8 +20,15 @@ def test_quart_skip_validation(client):
     assert resp.status_code == 200, resp_json
     assert resp.headers.get("X-Validation") is None
     assert resp.headers.get("X-API") == "OK"
-    assert resp_json["name"] == "quart"
-    assert resp_json["x_score"] == sorted(resp_json["x_score"], reverse=True)
+    if response_format == "json":
+        assert resp.content_type == "application/json"
+        assert resp.json["name"] == "quart"
+        assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+    else:
+        assert resp.content_type == "text/xml"
+        user_xml_data = UserXmlData.parse_xml(resp.text)
+        assert user_xml_data.name == "quart"
+        assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
 
 def test_quart_return_model(client):

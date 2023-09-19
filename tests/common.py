@@ -1,5 +1,7 @@
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, cast
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import BaseModel, Field, root_validator
@@ -202,3 +204,30 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
         if "__root__" in data:
             data = data["__root__"]
     return data
+
+
+@dataclass(frozen=True)
+class UserXmlData:
+    name: str
+    score: List[int]
+
+    @staticmethod
+    def parse_xml(data: str) -> "UserXmlData":
+        root = ET.ElementTree(ET.fromstring(data)).getroot()
+        assert root.tag == "user"
+        children = [node for node in root]
+        assert len(children) == 2
+        assert children[0].tag == "name"
+        assert children[1].tag == "x_score"
+        return UserXmlData(
+            name=cast(str, children[0].text),
+            score=[int(entry) for entry in cast(str, children[1].text).split(",")],
+        )
+
+    def dump_xml(self) -> str:
+        return f"""
+            <user>
+              <name>{self.name}</name>
+              <x_score>{','.join(str(entry) for entry in self.score)}</x_score>
+            </user>
+            """
