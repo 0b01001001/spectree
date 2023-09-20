@@ -229,7 +229,7 @@ class FlaskPlugin(BasePlugin):
         else:
             response = make_response(
                 (
-                    response_validation_result.validated_response_payload,
+                    response_validation_result.payload,
                     status,
                     *rest,
                 )

@@ -239,7 +239,7 @@ class FalconPlugin(BasePlugin):
                 _resp.status = HTTP_500
                 _resp.media = err.errors()
             else:
-                _resp.media = response_validation_result.validated_response_payload
+                _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)
 
@@ -340,6 +340,6 @@ class FalconAsgiPlugin(FalconPlugin):
                 _resp.status = HTTP_500
                 _resp.media = err.errors()
             else:
-                _resp.media = response_validation_result.validated_response_payload
+                _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)

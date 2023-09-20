@@ -134,7 +134,7 @@ class RawResponsePayload:
 
 @dataclass(frozen=True)
 class ResponseValidationResult:
-    validated_response_payload: Any
+    payload: Any
 
 
 def validate_response(
@@ -160,7 +160,10 @@ def validate_response(
         final_response_payload = response_payload
 
     if not skip_validation and validation_model and not final_response_payload:
-        if is_root_model(validation_model) and not isinstance(
+        if isinstance(response_payload, validation_model):
+            skip_validation = True
+            final_response_payload = serialize_model_instance(response_payload)
+        elif is_root_model(validation_model) and not isinstance(
             response_payload, validation_model
         ):
             # Make it possible to return an instance of the model __root__ type
@@ -172,9 +175,6 @@ def validate_response(
             else:
                 skip_validation = True
                 final_response_payload = serialize_model_instance(response_payload)
-        elif isinstance(response_payload, validation_model):
-            skip_validation = True
-            final_response_payload = serialize_model_instance(response_payload)
         else:
             final_response_payload = response_payload
 
@@ -186,4 +186,4 @@ def validate_response(
         )
         validator(final_response_payload)
 
-    return ResponseValidationResult(validated_response_payload=final_response_payload)
+    return ResponseValidationResult(payload=final_response_payload)
