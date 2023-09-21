@@ -141,15 +141,15 @@ def validate_response(
     skip_validation: bool,
     validation_model: OptionalModelType,
     response_payload: Any,
-):
-    """Validate a given `response_payload` against a `validation_model`.
+) -> ResponseValidationResult:
+    """Validate a given ``response_payload`` against a ``validation_model``.
 
     :param skip_validation: When set to true, validation is not carried out
-        and the input `response_payload` is returned as-is. This is equivalent
-        to not providing a `validation_model`.
+        and the input ``response_payload`` is returned as-is. This is equivalent
+        to not providing a ``validation_model``.
     :param validation_model: Pydantic model used to validate the provided
-        `response_payload`.
-    :param response_payload: Validated response payload. A `RawResponsePayload`
+        ``response_payload``.
+    :param response_payload: Validated response payload. A :class:`RawResponsePayload`
         should be provided when the plugin view function returned an already
         JSON-serialized response payload.
     """
@@ -163,9 +163,7 @@ def validate_response(
         if isinstance(response_payload, validation_model):
             skip_validation = True
             final_response_payload = serialize_model_instance(response_payload)
-        elif is_root_model(validation_model) and not isinstance(
-            response_payload, validation_model
-        ):
+        elif is_root_model(validation_model):
             # Make it possible to return an instance of the model __root__ type
             # (i.e. not the root model itself).
             try:
