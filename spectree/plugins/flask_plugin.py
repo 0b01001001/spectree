@@ -207,7 +207,7 @@ class FlaskPlugin(BasePlugin):
             else:
                 response_payload = result[0]
         else:
-            response_payload = result
+            response_payload, status = result, result.status_code
 
         try:
             response_validation_result = validate_response(
