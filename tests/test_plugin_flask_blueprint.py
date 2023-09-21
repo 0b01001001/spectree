@@ -10,7 +10,6 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
-    DemoModel,
     Form,
     FormFileUpload,
     Headers,
@@ -180,21 +179,21 @@ def return_list():
 
 
 @app.route("/api/return_make_response", methods=["POST"])
-@api.validate(json=DemoModel, resp=Response(HTTP_201=Resp))
+@api.validate(json=JSON, resp=Response(HTTP_201=Resp))
 def return_make_response_post():
-    model_data = DemoModel(**request.json)
+    model_data = JSON(**request.json)
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
     )
     return response
 
 
 @app.route("/api/return_make_response", methods=["GET"])
-@api.validate(query=DemoModel, resp=Response(HTTP_201=Resp))
+@api.validate(query=JSON, resp=Response(HTTP_201=Resp))
 def return_make_response_get():
-    model_data = DemoModel(**request.args)
+    model_data = JSON(**request.args)
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
     )
     return response
 

@@ -10,7 +10,6 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
-    DemoModel,
     Form,
     FormFileUpload,
     Headers,
@@ -193,24 +192,24 @@ class ReturnListView(MethodView):
 
 class ReturnMakeResponseView(MethodView):
     @api.validate(
-        json=DemoModel,
+        json=JSON,
         resp=Response(HTTP_201=Resp),
     )
     def post(self):
-        model_data = DemoModel(**request.json)
+        model_data = JSON(**request.json)
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
         )
         return response
 
     @api.validate(
-        query=DemoModel,
+        query=JSON,
         resp=Response(HTTP_201=Resp),
     )
     def get(self):
-        model_data = DemoModel(**request.args)
+        model_data = JSON(**request.args)
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
         )
         return response
 

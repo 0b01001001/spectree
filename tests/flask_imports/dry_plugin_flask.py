@@ -3,7 +3,7 @@ import random
 
 import pytest
 
-from tests.common import DemoModel, UserXmlData
+from tests.common import JSON, UserXmlData
 
 
 @pytest.mark.parametrize("response_format", ["json", "xml"])
@@ -183,25 +183,23 @@ def test_flask_return_list_request(client, pre_serialize: bool):
 
 
 def test_flask_make_response_post(client):
-    payload = DemoModel(
-        uid=random.randint(1, 10),
+    payload = JSON(
         limit=random.randint(1, 10),
         name="user make_response name",
     )
     resp = client.post(f"/api/return_make_response", json=payload.dict())
     assert resp.status_code == 201
-    assert resp.json == {"name": payload.name, "score": [payload.uid]}
+    assert resp.json == {"name": payload.name, "score": [payload.limit]}
 
 
 def test_flask_make_response_get(client):
-    payload = DemoModel(
-        uid=random.randint(1, 10),
+    payload = JSON(
         limit=random.randint(1, 10),
         name="user make_response name",
     )
     resp = client.get(f"/api/return_make_response", query_string=payload.dict())
     assert resp.status_code == 201
-    assert resp.json == {"name": payload.name, "score": [payload.uid]}
+    assert resp.json == {"name": payload.name, "score": [payload.limit]}
 
 
 @pytest.mark.parametrize("pre_serialize", [False, True])
