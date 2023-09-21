@@ -747,7 +747,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
@@ -755,7 +755,7 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "Accepted"
           },
           "422": {
             "content": {

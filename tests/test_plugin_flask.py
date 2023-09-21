@@ -19,6 +19,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_root_resp_data,
 )
@@ -43,25 +44,28 @@ def api_after_handler(req, resp, err, _):
 api = SpecTree("flask", before=before_handler, after=after_handler, annotations=True)
 app = Flask(__name__)
 app.config["TESTING"] = True
+app.config["DEBUG"] = True
 
 api_secure = SpecTree("flask", security_schemes=SECURITY_SCHEMAS)
 app_secure = Flask(__name__)
 app_secure.config["TESTING"] = True
+app_secure.config["DEBUG"] = True
 
 api_global_secure = SpecTree(
     "flask", security_schemes=SECURITY_SCHEMAS, security={"auth_apiKey": []}
 )
 app_global_secure = Flask(__name__)
 app_global_secure.config["TESTING"] = True
+app_global_secure.config["DEBUG"] = True
 
 
 @app.route("/ping")
-@api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
+@api.validate(headers=Headers, resp=Response(HTTP_202=StrDict), tags=["test", "health"])
 def ping():
     """summary
 
     description"""
-    return jsonify(msg="pong")
+    return jsonify(msg="pong"), 202
 
 
 @app.route("/api/file_upload", methods=["POST"])
@@ -119,11 +123,19 @@ def user_score_annotated(name, query: Query, json: JSON, form: Form, cookies: Co
     skip_validation=True,
 )
 def user_score_skip_validation(name):
+    response_format = request.args.get("response_format")
+    assert response_format in ("json", "xml")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=(request.context.query.order == Order.desc))
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=request.context.json.name, x_score=score)
+    if response_format == "json":
+        return jsonify(name=request.context.json.name, x_score=score)
+    else:
+        return app.response_class(
+            UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+            content_type="text/xml",
+        )
 
 
 @app.route("/api/user_model/<name>", methods=["POST"])
@@ -219,6 +231,7 @@ def test_client_and_api(request):
     api = SpecTree(*api_args, **api_kwargs)
     app = Flask(__name__)
     app.config["TESTING"] = True
+    app.config["DEBUG"] = True
 
     @app.route("/ping")
     @api.validate(**endpoint_kwargs)

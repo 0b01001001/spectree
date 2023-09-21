@@ -12,10 +12,14 @@ from starlette.routing import compile_path
 from .._pydantic import BaseModel, ValidationError, serialize_model_instance
 from .._types import ModelType
 from ..response import Response
-from .base import BasePlugin, Context
+from .base import BasePlugin, Context, RawResponsePayload, validate_response
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
+
+
+class _PydanticResponseModel(BaseModel):
+    __root__: Any
 
 
 def PydanticResponse(content):
@@ -23,16 +27,7 @@ def PydanticResponse(content):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
             return super().render(
-                [
-                    (
-                        serialize_model_instance(entry)
-                        if isinstance(entry, BaseModel)
-                        else entry
-                    )
-                    for entry in content
-                ]
-                if isinstance(content, list)
-                else serialize_model_instance(content)
+                serialize_model_instance(_PydanticResponseModel(__root__=content))
             )
 
     return _PydanticResponse(content)
@@ -141,13 +136,14 @@ class StarlettePlugin(BasePlugin):
             ):
                 skip_validation = True
 
-            model = resp.find_model(response.status_code)
-            if model and not skip_validation:
-                try:
-                    model.parse_raw(response.body)
-                except ValidationError as err:
-                    resp_validation_error = err
-                    response = JSONResponse(err.errors(), 500)
+            try:
+                validate_response(
+                    skip_validation=skip_validation,
+                    validation_model=resp.find_model(response.status_code),
+                    response_payload=RawResponsePayload(payload=response.body),
+                )
+            except ValidationError as err:
+                response = JSONResponse(err.errors(), 500)
 
         after(request, response, resp_validation_error, instance)
 

@@ -6,6 +6,7 @@ import pytest
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
+from starlette.responses import Response as StarletteResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
@@ -24,6 +25,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_root_resp_data,
 )
@@ -52,7 +54,7 @@ class Ping(HTTPEndpoint):
 
     @api.validate(
         headers=Headers,
-        resp=Response(HTTP_200=StrDict),
+        resp=Response(HTTP_202=StrDict),
         tags=["test", "health"],
         after=method_handler,
     )
@@ -60,7 +62,7 @@ class Ping(HTTPEndpoint):
         """summary
 
         description"""
-        return JSONResponse({"msg": "pong"})
+        return JSONResponse({"msg": "pong"}, status_code=202)
 
 
 @api.validate(
@@ -108,11 +110,18 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
     skip_validation=True,
 )
 async def user_score_skip(request):
+    response_format = request.query_params.get("response_format")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return JSONResponse({"name": request.context.json.name, "x_score": score})
+    if response_format == "json":
+        return JSONResponse({"name": request.context.json.name, "x_score": score})
+    else:
+        return StarletteResponse(
+            UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+            media_type="text/xml",
+        )
 
 
 @api.validate(
@@ -239,6 +248,7 @@ def test_starlette_validate(client):
 
     resp = client.get("/ping", headers={"lang": "en-US"})
     assert resp.json() == {"msg": "pong"}
+    assert resp.status_code == 202
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Name") == "Ping"
     assert resp.headers.get("X-Validation") is None
@@ -268,16 +278,23 @@ def test_starlette_validate(client):
         assert resp.headers.get("X-Validation") == "Pass"
 
 
-def test_starlette_skip_validation(client):
+@pytest.mark.parametrize("response_format", ["json", "xml"])
+def test_starlette_skip_validation(client, response_format: str):
     client.cookies = dict(pub="abcdefg")
+    assert response_format in ("json", "xml")
     resp = client.post(
-        "/api/user_skip/starlette?order=1",
+        f"/api/user_skip/starlette?order=1&response_format={response_format}",
         json=dict(name="starlette", limit=10),
     )
-    resp_body = resp.json()
-    assert resp_body["name"] == "starlette"
-    assert resp_body["x_score"] == sorted(resp_body["x_score"], reverse=True)
     assert resp.headers.get("X-Validation") == "Pass"
+    if response_format == "json":
+        resp_body = resp.json()
+        assert resp_body["name"] == "starlette"
+        assert resp_body["x_score"] == sorted(resp_body["x_score"], reverse=True)
+    else:
+        user_xml_data = UserXmlData.parse_xml(resp.text)
+        assert user_xml_data.name == "starlette"
+        assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
 
 def test_starlette_return_model(client):
@@ -316,7 +333,7 @@ def test_client_and_api(request):
             """summary
 
             description"""
-            return JSONResponse({"msg": "pong"})
+            return JSONResponse({"msg": "pong"}, status_code=202)
 
     app = Starlette(routes=[Route("/ping", Ping)])
     api.register(app)

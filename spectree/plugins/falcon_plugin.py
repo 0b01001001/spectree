@@ -4,18 +4,12 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 
 from falcon import HTTP_400, HTTP_415, HTTPError
-from falcon import Response as FalconResponse
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from .._pydantic import (
-    BaseModel,
-    ValidationError,
-    is_root_model,
-    serialize_model_instance,
-)
+from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
-from .base import BasePlugin
+from .base import BasePlugin, validate_response
 
 
 class OpenAPI:
@@ -194,53 +188,6 @@ class FalconPlugin(BasePlugin):
             req_form = {x.name: x.stream.read() for x in req.get_media()}
             req.context.form = form.parse_obj(req_form)
 
-    def response_validation(
-        self,
-        response_spec: Optional[Response],
-        falcon_response: FalconResponse,
-        skip_validation: bool,
-    ) -> None:
-        if not skip_validation and response_spec and response_spec.has_model():
-            model = falcon_response.media
-            status = int(falcon_response.status[:3])
-            expect_model = response_spec.find_model(status)
-            if response_spec.expect_list_result(status) and isinstance(model, list):
-                expected_list_item_type = response_spec.get_expected_list_item_type(
-                    status
-                )
-                if all(isinstance(entry, expected_list_item_type) for entry in model):
-                    skip_validation = True
-                falcon_response.media = [
-                    (
-                        serialize_model_instance(entry)
-                        if isinstance(entry, BaseModel)
-                        else entry
-                    )
-                    for entry in model
-                ]
-            elif (
-                expect_model
-                and is_root_model(expect_model)
-                and not isinstance(model, expect_model)
-            ):
-                # Make it possible to return an instance of the model __root__ type
-                # (i.e. not the root model itself).
-                try:
-                    model = expect_model(__root__=model)
-                except ValidationError:
-                    raise
-                else:
-                    falcon_response.media = serialize_model_instance(model)
-                    skip_validation = True
-            elif expect_model and isinstance(falcon_response.media, expect_model):
-                falcon_response.media = serialize_model_instance(model)
-                skip_validation = True
-
-            if self._data_set_manually(falcon_response):
-                skip_validation = True
-            if expect_model and not skip_validation:
-                expect_model.parse_obj(falcon_response.media)
-
     def validate(
         self,
         func: Callable,
@@ -279,20 +226,25 @@ class FalconPlugin(BasePlugin):
 
         func(*args, **kwargs)
 
-        try:
-            self.response_validation(
-                response_spec=resp,
-                falcon_response=_resp,
-                skip_validation=skip_validation,
-            )
-        except ValidationError as err:
-            resp_validation_error = err
-            _resp.status = HTTP_500
-            _resp.media = err.errors()
+        if not self._data_set_manually(_resp):
+            try:
+                status = int(_resp.status[:3])
+                response_validation_result = validate_response(
+                    skip_validation=skip_validation,
+                    validation_model=resp.find_model(status) if resp else None,
+                    response_payload=_resp.media,
+                )
+            except ValidationError as err:
+                resp_validation_error = err
+                _resp.status = HTTP_500
+                _resp.media = err.errors()
+            else:
+                _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)
 
-    def _data_set_manually(self, resp):
+    @staticmethod
+    def _data_set_manually(resp):
         return (resp.text is not None or resp.data is not None) and resp.media is None
 
     def bypass(self, func, method):
@@ -375,15 +327,19 @@ class FalconAsgiPlugin(FalconPlugin):
 
         await func(*args, **kwargs)
 
-        try:
-            self.response_validation(
-                response_spec=resp,
-                falcon_response=_resp,
-                skip_validation=skip_validation,
-            )
-        except ValidationError as err:
-            resp_validation_error = err
-            _resp.status = HTTP_500
-            _resp.media = err.errors()
+        if not self._data_set_manually(_resp):
+            try:
+                status = int(_resp.status[:3])
+                response_validation_result = validate_response(
+                    skip_validation=skip_validation,
+                    validation_model=resp.find_model(status) if resp else None,
+                    response_payload=_resp.media,
+                )
+            except ValidationError as err:
+                resp_validation_error = err
+                _resp.status = HTTP_500
+                _resp.media = err.errors()
+            else:
+                _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)

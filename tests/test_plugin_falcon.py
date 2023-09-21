@@ -1,8 +1,9 @@
 from random import randint
 from typing import List
 
+import falcon
 import pytest
-from falcon import App, testing
+from falcon import HTTP_202, App, testing
 
 from spectree import Response, SpecTree
 
@@ -16,6 +17,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_root_resp_data,
 )
@@ -43,6 +45,7 @@ class Ping:
         description
         """
         resp.media = {"msg": "pong"}
+        resp.status = HTTP_202
 
 
 class UserScore:
@@ -114,11 +117,17 @@ class UserScoreSkip:
         skip_validation=True,
     )
     def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
+        response_format = req.params.get("response_format")
+        assert response_format in ("json", "xml")
         score = [randint(0, req.context.json.limit) for _ in range(5)]
         score.sort(reverse=req.context.query.order)
         assert req.context.cookies.pub == "abcdefg"
         assert req.cookies["pub"] == "abcdefg"
-        resp.media = {"name": req.context.json.name, "x_score": score}
+        if response_format == "json":
+            resp.media = {"name": req.context.json.name, "x_score": score}
+        else:
+            resp.content_type = falcon.MEDIA_XML
+            resp.text = UserXmlData(name=req.context.json.name, score=score).dump_xml()
 
 
 class UserScoreModel:
@@ -267,6 +276,7 @@ def test_falcon_validate(client):
     resp = client.simulate_request(
         "GET", "/ping", headers={"lang": "en-US", "Content-Type": "text/plain"}
     )
+    assert resp.status_code == 202
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Name") == "health check"
@@ -302,16 +312,22 @@ def test_falcon_validate(client):
     assert resp.headers.get("X-Name") == "sorted random score"
 
 
-def test_falcon_skip_validation(client):
+@pytest.mark.parametrize("response_format", ["json", "xml"])
+def test_falcon_skip_validation(client, response_format: str):
     resp = client.simulate_request(
         "POST",
-        "/api/user_skip/falcon?order=1",
+        f"/api/user_skip/falcon?order=1&response_format={response_format}",
         json=dict(name="falcon", limit=10),
         headers={"Cookie": "pub=abcdefg"},
     )
-    assert resp.json["name"] == "falcon"
-    assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
     assert resp.headers.get("X-Name") == "sorted random score"
+    if response_format == "json":
+        assert resp.json["name"] == "falcon"
+        assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+    else:
+        user_xml_data = UserXmlData.parse_xml(resp.text)
+        assert user_xml_data.name == "falcon"
+        assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
 
 def test_falcon_return_model(client):

@@ -19,6 +19,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_root_resp_data,
 )
@@ -47,13 +48,13 @@ app.config["TESTING"] = True
 
 class Ping(MethodView):
     @api.validate(
-        headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"]
+        headers=Headers, resp=Response(HTTP_202=StrDict), tags=["test", "health"]
     )
     def get(self):
         """summary
 
         description"""
-        return jsonify(msg="pong")
+        return jsonify(msg="pong"), 202
 
 
 class FileUploadView(MethodView):
@@ -111,12 +112,20 @@ class UserSkip(MethodView):
         skip_validation=True,
     )
     def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+        response_format = request.args.get("response_format")
+        assert response_format in ("json", "xml")
         data_src = json or form
         score = [randint(0, int(data_src.limit)) for _ in range(5)]
         score.sort(reverse=(query.order == Order.desc))
         assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return jsonify(name=data_src.name, x_score=score)
+        if response_format == "json":
+            return jsonify(name=request.context.json.name, x_score=score)
+        else:
+            return app.response_class(
+                UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+                content_type="text/xml",
+            )
 
 
 class UserModel(MethodView):

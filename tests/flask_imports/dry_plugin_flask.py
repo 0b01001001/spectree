@@ -2,20 +2,30 @@ import io
 
 import pytest
 
+from tests.common import UserXmlData
 
-def test_flask_skip_validation(client):
+
+@pytest.mark.parametrize("response_format", ["json", "xml"])
+def test_flask_skip_validation(client, response_format: str):
     client.set_cookie(key="pub", value="abcdefg")
-
+    assert response_format in ("json", "xml")
     resp = client.post(
-        "/api/user_skip/flask?order=1",
+        f"/api/user_skip/flask?order=1&response_format={response_format}",
         json=dict(name="flask", limit=10),
         content_type="application/json",
     )
-    assert resp.status_code == 200, resp.json
+    assert resp.status_code == 200
     assert resp.headers.get("X-Validation") is None
     assert resp.headers.get("X-API") == "OK"
-    assert resp.json["name"] == "flask"
-    assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+    if response_format == "json":
+        assert resp.content_type == "application/json"
+        assert resp.json["name"] == "flask"
+        assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+    else:
+        assert resp.content_type == "text/xml"
+        user_xml_data = UserXmlData.parse_xml(resp.text)
+        assert user_xml_data.name == "flask"
+        assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
 
 def test_flask_return_model(client):

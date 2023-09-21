@@ -4,16 +4,11 @@ import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from .._pydantic import (
-    BaseModel,
-    ValidationError,
-    is_root_model,
-    serialize_model_instance,
-)
+from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule
-from .base import BasePlugin, Context
+from .base import BasePlugin, Context, RawResponsePayload, validate_response
 
 
 class FlaskPlugin(BasePlugin):
@@ -206,63 +201,38 @@ class FlaskPlugin(BasePlugin):
 
         status = 200
         rest = []
-        if resp and isinstance(result, tuple) and isinstance(result[0], BaseModel):
+        if resp and isinstance(result, tuple):
             if len(result) > 1:
-                model, status, *rest = result
+                response_payload, status, *rest = result
             else:
-                model = result[0]
+                response_payload = result[0]
         else:
-            model = result
+            response_payload = result
 
-        if not skip_validation and resp and not isinstance(result, flask.Response):
-            expect_model = resp.find_model(status)
-            if resp.expect_list_result(status) and isinstance(model, list):
-                expected_list_item_type = resp.get_expected_list_item_type(status)
-                if all(isinstance(entry, expected_list_item_type) for entry in model):
-                    skip_validation = True
-                result = (
-                    [
-                        (
-                            serialize_model_instance(entry)
-                            if isinstance(entry, BaseModel)
-                            else entry
-                        )
-                        for entry in model
-                    ],
+        try:
+            response_validation_result = validate_response(
+                skip_validation=skip_validation,
+                validation_model=resp.find_model(status) if resp else None,
+                response_payload=(
+                    RawResponsePayload(payload=response_payload.get_json())
+                    if (
+                        isinstance(response_payload, flask.Response)
+                        and not skip_validation
+                    )
+                    else response_payload
+                ),
+            )
+        except ValidationError:
+            response = make_response(
+                jsonify({"message": "response validation error"}), 500
+            )
+        else:
+            response = make_response(
+                (
+                    response_validation_result.payload,
                     status,
                     *rest,
                 )
-            elif (
-                expect_model
-                and is_root_model(expect_model)
-                and not isinstance(model, expect_model)
-            ):
-                # Make it possible to return an instance of the model __root__ type
-                # (i.e. not the root model itself).
-                try:
-                    model = expect_model(__root__=model)
-                except ValidationError as err:
-                    resp_validation_error = err
-                else:
-                    skip_validation = True
-                    result = (serialize_model_instance(model), status, *rest)
-            elif expect_model and isinstance(model, expect_model):
-                skip_validation = True
-                result = (serialize_model_instance(model), status, *rest)
-
-        response = make_response(result)
-
-        if resp and resp.has_model() and not resp_validation_error:
-            model = resp.find_model(response.status_code)
-            if model and not skip_validation:
-                try:
-                    model.parse_obj(response.get_json())
-                except ValidationError as err:
-                    resp_validation_error = err
-
-        if resp_validation_error:
-            response = make_response(
-                jsonify({"message": "response validation error"}), 500
             )
 
         after(request, response, resp_validation_error, None)

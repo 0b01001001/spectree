@@ -17,6 +17,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_root_resp_data,
 )
@@ -56,7 +57,7 @@ async def ping():
     """summary
 
     description"""
-    return jsonify(msg="pong")
+    return jsonify(msg="pong"), 202
 
 
 @app.route("/api/user/<name>", methods=["POST"])
@@ -101,11 +102,21 @@ async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies)
     skip_validation=True,
 )
 async def user_score_skip_validation(name):
+    response_format = request.args.get("response_format")
+    assert response_format in ("json", "xml")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=request.context.json.name, x_score=score)
+    if response_format == "json":
+        return jsonify(name=request.context.json.name, x_score=score)
+    else:
+        return app.response_class(
+            response=UserXmlData(
+                name=request.context.json.name, score=score
+            ).dump_xml(),
+            content_type="text/xml",
+        )
 
 
 @app.route("/api/user_model/<name>", methods=["POST"])

@@ -1,6 +1,7 @@
 from random import randint
 from typing import List
 
+import flask
 import pytest
 from flask import Blueprint, Flask, jsonify, request
 
@@ -18,6 +19,7 @@ from .common import (
     Resp,
     RootResp,
     StrDict,
+    UserXmlData,
     api_tag,
     get_paths,
     get_root_resp_data,
@@ -45,12 +47,12 @@ app = Blueprint("test_blueprint", __name__)
 
 
 @app.route("/ping")
-@api.validate(headers=Headers, resp=Response(HTTP_200=StrDict), tags=["test", "health"])
+@api.validate(headers=Headers, resp=Response(HTTP_202=StrDict), tags=["test", "health"])
 def ping():
     """summary
 
     description"""
-    return jsonify(msg="pong")
+    return jsonify(msg="pong"), 202
 
 
 @app.route("/api/file_upload", methods=["POST"])
@@ -108,11 +110,19 @@ def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies, form:
     skip_validation=True,
 )
 def user_score_skip_validation(name):
+    response_format = request.args.get("response_format")
+    assert response_format in ("json", "xml")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=True if request.context.query.order == Order.desc else False)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return jsonify(name=request.context.json.name, x_score=score)
+    if response_format == "json":
+        return jsonify(name=request.context.json.name, x_score=score)
+    else:
+        return flask.Response(
+            UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+            content_type="text/xml",
+        )
 
 
 @app.route("/api/user_model/<name>", methods=["POST"])
@@ -180,6 +190,8 @@ def return_root():
 api.register(app)
 
 flask_app = Flask(__name__)
+flask_app.config["DEBUG"] = True
+flask_app.config["TESTING"] = True
 flask_app.register_blueprint(app)
 with flask_app.app_context():
     api.spec
@@ -203,7 +215,7 @@ def test_blueprint_prefix(client, prefix):
     assert resp.headers.get("X-Error") == "Validation Error"
 
     resp = client.get(prefix + "/ping", headers={"lang": "en-US"})
-    assert resp.status_code == 200
+    assert resp.status_code == 202
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Validation") == "Pass"

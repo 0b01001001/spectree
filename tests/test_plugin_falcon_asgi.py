@@ -2,7 +2,7 @@ from random import randint
 from typing import List
 
 import pytest
-from falcon import testing
+from falcon import HTTP_202, testing
 from falcon.asgi import App
 
 from spectree import Response, SpecTree
@@ -317,6 +317,7 @@ def test_client_and_api(request):
             description
             """
             resp.media = {"msg": "pong"}
+            resp.status = HTTP_202
 
     app = App()
     app.add_route("/ping", Ping())
