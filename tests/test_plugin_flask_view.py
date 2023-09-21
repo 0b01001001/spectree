@@ -2,7 +2,7 @@ from random import randint
 from typing import List
 
 import pytest
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, make_response, request
 from flask.views import MethodView
 
 from spectree import Response, SpecTree
@@ -10,6 +10,7 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
+    DemoModel,
     Form,
     FormFileUpload,
     Headers,
@@ -190,6 +191,30 @@ class ReturnListView(MethodView):
         return [entry.dict() if pre_serialize else entry for entry in data]
 
 
+class ReturnMakeResponseView(MethodView):
+    @api.validate(
+        json=DemoModel,
+        resp=Response(HTTP_201=Resp),
+    )
+    def post(self):
+        model_data = DemoModel(**request.json)
+        response = make_response(
+            Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+        )
+        return response
+
+    @api.validate(
+        query=DemoModel,
+        resp=Response(HTTP_201=Resp),
+    )
+    def get(self):
+        model_data = DemoModel(**request.args)
+        response = make_response(
+            Resp(name=model_data.name, score=[model_data.uid]).dict(), 201
+        )
+        return response
+
+
 class ReturnRootView(MethodView):
     @api.validate(resp=Response(HTTP_200=RootResp))
     def get(self):
@@ -236,6 +261,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_list",
     view_func=ReturnListView.as_view("return_list_view"),
+)
+app.add_url_rule(
+    "/api/return_make_response",
+    view_func=ReturnMakeResponseView.as_view("return_make_response"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering
