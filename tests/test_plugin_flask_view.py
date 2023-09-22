@@ -214,6 +214,38 @@ class ReturnMakeResponseView(MethodView):
         return response
 
 
+class ReturnMakeCookiesResponseView(MethodView):
+    @api.validate(
+        json=JSON,
+        resp=Response(HTTP_201=Resp),
+    )
+    def post(self):
+        model_data = JSON(**request.json)
+        response = make_response(
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+        )
+        response.set_cookie(
+            key="test_cookie",
+            value=model_data.name,
+        )
+        return response
+
+    @api.validate(
+        query=JSON,
+        resp=Response(HTTP_201=Resp),
+    )
+    def get(self):
+        model_data = JSON(**request.args)
+        response = make_response(
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+        )
+        response.set_cookie(
+            key="test_cookie",
+            value=model_data.name,
+        )
+        return response
+
+
 class ReturnRootView(MethodView):
     @api.validate(resp=Response(HTTP_200=RootResp))
     def get(self):
@@ -264,6 +296,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_make_response",
     view_func=ReturnMakeResponseView.as_view("return_make_response"),
+)
+app.add_url_rule(
+    "/api/return_make_cookies_response",
+    view_func=ReturnMakeCookiesResponseView.as_view("return_make_cookies_response"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering
