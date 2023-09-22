@@ -3,7 +3,7 @@ from typing import List
 
 import flask
 import pytest
-from flask import Blueprint, Flask, jsonify, request
+from flask import Blueprint, Flask, jsonify, make_response, request
 
 from spectree import Response, SpecTree
 
@@ -176,6 +176,26 @@ def return_list():
     pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
     data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
     return [entry.dict() if pre_serialize else entry for entry in data]
+
+
+@app.route("/api/return_make_response", methods=["POST"])
+@api.validate(json=JSON, resp=Response(HTTP_201=Resp))
+def return_make_response_post():
+    model_data = JSON(**request.json)
+    response = make_response(
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+    )
+    return response
+
+
+@app.route("/api/return_make_response", methods=["GET"])
+@api.validate(query=JSON, resp=Response(HTTP_201=Resp))
+def return_make_response_get():
+    model_data = JSON(**request.args)
+    response = make_response(
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+    )
+    return response
 
 
 @app.route("/api/return_root", methods=["GET"])

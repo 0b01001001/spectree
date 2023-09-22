@@ -206,6 +206,8 @@ class FlaskPlugin(BasePlugin):
                 response_payload, status, *rest = result
             else:
                 response_payload = result[0]
+        elif isinstance(result, flask.Response):
+            response_payload, status = result, result.status_code
         else:
             response_payload = result
 
