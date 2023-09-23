@@ -212,7 +212,7 @@ def test_flask_make_cookies_response_post(client):
     assert resp.status_code == 201
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
     cookie_result = re.search(
-        r"^test_cookie=\"((\w+\s?)+)\"", resp.headers.get("Set-Cookie")
+        r"^test_cookie=\"((\w+\s?)+)\";\sPath=/$", resp.headers.get("Set-Cookie")
     )
     assert cookie_result.group(1) == payload.name
 
@@ -226,7 +226,7 @@ def test_flask_make_cookies_response_get(client):
     assert resp.status_code == 201
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
     cookie_result = re.search(
-        r"^test_cookie=\"((\w+\s?)+)\"", resp.headers.get("Set-Cookie")
+        r"^test_cookie=\"((\w+\s?)+)\";\sPath=/$", resp.headers.get("Set-Cookie")
     )
     assert cookie_result.group(1) == payload.name
 
