@@ -1,6 +1,8 @@
 from .dry_plugin_flask import (
     test_flask_doc,
     test_flask_list_json_request,
+    test_flask_make_cookies_response_get,
+    test_flask_make_cookies_response_post,
     test_flask_make_response_get,
     test_flask_make_response_post,
     test_flask_no_response,
@@ -24,4 +26,6 @@ __all__ = [
     "test_flask_return_list_request",
     "test_flask_make_response_post",
     "test_flask_make_response_get",
+    "test_flask_make_cookies_response_get",
+    "test_flask_make_cookies_response_post",
 ]

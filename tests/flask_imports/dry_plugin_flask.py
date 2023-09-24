@@ -1,5 +1,6 @@
 import io
 import random
+import re
 
 import pytest
 
@@ -200,6 +201,34 @@ def test_flask_make_response_get(client):
     resp = client.get("/api/return_make_response", query_string=payload.dict())
     assert resp.status_code == 201
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
+
+
+def test_flask_make_cookies_response_post(client):
+    payload = JSON(
+        limit=random.randint(1, 10),
+        name="user make_response name",
+    )
+    resp = client.post("/api/return_make_cookies_response", json=payload.dict())
+    assert resp.status_code == 201
+    assert resp.json == {"name": payload.name, "score": [payload.limit]}
+    cookie_result = re.match(
+        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
+    )
+    assert cookie_result.group(1) == payload.name
+
+
+def test_flask_make_cookies_response_get(client):
+    payload = JSON(
+        limit=random.randint(1, 10),
+        name="user make_response name",
+    )
+    resp = client.get("/api/return_make_cookies_response", query_string=payload.dict())
+    assert resp.status_code == 201
+    assert resp.json == {"name": payload.name, "score": [payload.limit]}
+    cookie_result = re.match(
+        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
+    )
+    assert cookie_result.group(1) == payload.name
 
 
 @pytest.mark.parametrize("pre_serialize", [False, True])

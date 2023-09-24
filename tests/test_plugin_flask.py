@@ -211,6 +211,34 @@ def return_make_response_get():
     return response
 
 
+@app.route("/api/return_make_cookies_response", methods=["POST"])
+@api.validate(json=JSON, resp=Response(HTTP_201=Resp))
+def return_make_cookies_response_post():
+    model_data = JSON(**request.json)
+    response = make_response(
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+    )
+    response.set_cookie(
+        key="test_cookie",
+        value=model_data.name,
+    )
+    return response
+
+
+@app.route("/api/return_make_cookies_response", methods=["GET"])
+@api.validate(query=JSON, resp=Response(HTTP_201=Resp))
+def return_make_cookies_response_get():
+    model_data = JSON(**request.args)
+    response = make_response(
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+    )
+    response.set_cookie(
+        key="test_cookie",
+        value=model_data.name,
+    )
+    return response
+
+
 @app.route("/api/return_root", methods=["GET"])
 @api.validate(resp=Response(HTTP_200=RootResp))
 def return_root():
