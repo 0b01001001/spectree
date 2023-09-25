@@ -231,7 +231,7 @@ class QuartPlugin(BasePlugin):
                     response_payload=payload,
                 )
             except ValidationError as err:
-                response = await make_response(jsonify(err.errors()), 500)
+                response = await make_response(err.errors(), 500)
             else:
                 response = await make_response(
                     (
@@ -241,7 +241,7 @@ class QuartPlugin(BasePlugin):
                     )
                 )
         else:
-            response = make_response(result)
+            response = await make_response(result)
 
         after(request, response, resp_validation_error, None)
 

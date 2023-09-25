@@ -219,7 +219,7 @@ class FlaskPlugin(BasePlugin):
                     response_payload=payload,
                 )
             except ValidationError as err:
-                response = make_response(jsonify(err.errors()), 500)
+                response = make_response(err.errors(), 500)
             else:
                 response = make_response(
                     (

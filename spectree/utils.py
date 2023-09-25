@@ -338,7 +338,7 @@ def werkzeug_parse_rule(
 def flask_response_unpack(resp: Any) -> Tuple[Any, int, Dict[str, Any]]:
     """Parse Flask response object into a tuple of (payload, status_code, headers)."""
     status = 200
-    headers = {}
+    headers: Dict[str, str] = {}
     payload = None
     if not isinstance(resp, tuple):
         return resp, status, headers
