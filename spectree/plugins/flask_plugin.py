@@ -199,15 +199,7 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        status = 200
-        additional_headers = {}
-        payload = result
-        if resp and isinstance(result, tuple):
-            if len(result) > 1:
-                # outer flask.Response
-                payload, status, additional_headers = flask_response_unpack(result)
-            else:
-                payload = result[0]
+        payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, flask.Response):
             payload, resp_status, resp_headers = (
                 payload.get_json(),

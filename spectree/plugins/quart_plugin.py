@@ -8,7 +8,7 @@ from werkzeug.routing import parse_converter_args
 from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
-from ..utils import get_multidict_items, werkzeug_parse_rule
+from ..utils import get_multidict_items, werkzeug_parse_rule, flask_response_unpack
 from .base import BasePlugin, Context, validate_response
 
 
@@ -211,15 +211,7 @@ class QuartPlugin(BasePlugin):
             else func(*args, **kwargs)
         )
 
-        status = 200
-        rest = []
-        payload = result
-        if resp and isinstance(result, tuple):
-            if len(result) > 1:
-                # outer quart.Response
-                payload, status, *rest = result
-            else:
-                payload = result[0]
+        payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, quart.Response):
             payload, resp_status, resp_headers = (
                 await payload.get_json(),
@@ -230,7 +222,7 @@ class QuartPlugin(BasePlugin):
             # no other status code
             if status == 200:
                 status = resp_status
-            rest.append(resp_headers)
+            additional_headers.append(resp_headers)
 
         if not skip_validation and resp:
             try:
@@ -245,7 +237,7 @@ class QuartPlugin(BasePlugin):
                     (
                         response_validation_result.payload,
                         status,
-                        *rest,
+                        additional_headers,
                     )
                 )
         else:
