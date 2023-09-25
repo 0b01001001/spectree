@@ -52,7 +52,7 @@ def ping():
     """summary
 
     description"""
-    return jsonify(msg="pong"), 202
+    return jsonify(msg="pong"), 202, request.context.headers.dict()
 
 
 @app.route("/api/file_upload", methods=["POST"])
@@ -179,31 +179,12 @@ def return_list():
 
 
 @app.route("/api/return_make_response", methods=["POST"])
-@api.validate(json=JSON, resp=Response(HTTP_201=Resp))
+@api.validate(json=JSON, headers=Headers, resp=Response(HTTP_201=Resp))
 def return_make_response_post():
-    model_data = JSON(**request.json)
+    model_data = request.context.json
+    headers = request.context.headers
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
-    )
-    return response
-
-
-@app.route("/api/return_make_response", methods=["GET"])
-@api.validate(query=JSON, resp=Response(HTTP_201=Resp))
-def return_make_response_get():
-    model_data = JSON(**request.args)
-    response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
-    )
-    return response
-
-
-@app.route("/api/return_make_cookies_response", methods=["POST"])
-@api.validate(json=JSON, resp=Response(HTTP_201=Resp))
-def return_make_cookies_response_post():
-    model_data = JSON(**request.json)
-    response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201, headers
     )
     response.set_cookie(
         key="test_cookie",
@@ -212,12 +193,13 @@ def return_make_cookies_response_post():
     return response
 
 
-@app.route("/api/return_make_cookies_response", methods=["GET"])
-@api.validate(query=JSON, resp=Response(HTTP_201=Resp))
-def return_make_cookies_response_get():
-    model_data = JSON(**request.args)
+@app.route("/api/return_make_response", methods=["GET"])
+@api.validate(query=JSON, headers=Headers, resp=Response(HTTP_201=Resp))
+def return_make_response_get():
+    model_data = request.context.query
+    headers = request.context.headers
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+        Resp(name=model_data.name, score=[model_data.limit]).dict(), 201, headers
     )
     response.set_cookie(
         key="test_cookie",
@@ -263,10 +245,11 @@ def test_blueprint_prefix(client, prefix):
     assert resp.headers.get("X-Error") == "Validation Error"
 
     resp = client.get(prefix + "/ping", headers={"lang": "en-US"})
-    assert resp.status_code == 202
+    assert resp.status_code == 202, resp.text
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Validation") == "Pass"
+    assert resp.headers.get("lang") == "en-US"
 
 
 @pytest.fixture

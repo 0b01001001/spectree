@@ -9,7 +9,7 @@ from .._pydantic import ValidationError
 from .._types import ModelType
 from ..response import Response
 from ..utils import get_multidict_items, werkzeug_parse_rule
-from .base import BasePlugin, Context, RawResponsePayload, validate_response
+from .base import BasePlugin, Context, validate_response
 
 
 class QuartPlugin(BasePlugin):
@@ -213,41 +213,43 @@ class QuartPlugin(BasePlugin):
 
         status = 200
         rest = []
+        payload = result
         if resp and isinstance(result, tuple):
             if len(result) > 1:
-                response_payload, status, *rest = result
+                # outer quart.Response
+                payload, status, *rest = result
             else:
-                response_payload = result[0]
-        else:
-            response_payload = result
+                payload = result[0]
+        if isinstance(payload, quart.Response):
+            payload, resp_status, resp_headers = (
+                await payload.get_json(),
+                payload.status_code,
+                payload.headers,
+            )
+            # the inner quart.Response.status_code only takes effect when there is
+            # no other status code
+            if status == 200:
+                status = resp_status
+            rest.append(resp_headers)
 
-        try:
-            response_validation_result = validate_response(
-                skip_validation=skip_validation,
-                validation_model=resp.find_model(status) if resp else None,
-                response_payload=(
-                    RawResponsePayload(
-                        payload=(await response.get_json()) if response else None
-                    )
-                    if (
-                        isinstance(response_payload, quart.Response)
-                        and not skip_validation
-                    )
-                    else response_payload
-                ),
-            )
-        except ValidationError:
-            response = await make_response(
-                jsonify({"message": "response validation error"}), 500
-            )
-        else:
-            response = await make_response(
-                (
-                    response_validation_result.payload,
-                    status,
-                    *rest,
+        if not skip_validation and resp:
+            try:
+                response_validation_result = validate_response(
+                    validation_model=resp.find_model(status),
+                    response_payload=payload,
                 )
-            )
+            except ValidationError as err:
+                response = await make_response(jsonify(err.errors()), 500)
+            else:
+                response = await make_response(
+                    (
+                        response_validation_result.payload,
+                        status,
+                        *rest,
+                    )
+                )
+        else:
+            response = make_response(result)
 
         after(request, response, resp_validation_error, None)
 

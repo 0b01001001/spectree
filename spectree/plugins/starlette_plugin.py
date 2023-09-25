@@ -129,21 +129,18 @@ class StarlettePlugin(BasePlugin):
             response = func(*args, **kwargs)
 
         if not skip_validation and resp and response:
-            if (
+            if not (
                 isinstance(response, JSONResponse)
                 and hasattr(response, "_model_class")
                 and response._model_class == resp.find_model(response.status_code)
             ):
-                skip_validation = True
-
-            try:
-                validate_response(
-                    skip_validation=skip_validation,
-                    validation_model=resp.find_model(response.status_code),
-                    response_payload=RawResponsePayload(payload=response.body),
-                )
-            except ValidationError as err:
-                response = JSONResponse(err.errors(), 500)
+                try:
+                    validate_response(
+                        validation_model=resp.find_model(response.status_code),
+                        response_payload=RawResponsePayload(payload=response.body),
+                    )
+                except ValidationError as err:
+                    response = JSONResponse(err.errors(), 500)
 
         after(request, response, resp_validation_error, instance)
 

@@ -226,12 +226,11 @@ class FalconPlugin(BasePlugin):
 
         func(*args, **kwargs)
 
-        if not self._data_set_manually(_resp):
+        if not self._data_set_manually(_resp) and not skip_validation and resp:
             try:
                 status = int(_resp.status[:3])
                 response_validation_result = validate_response(
-                    skip_validation=skip_validation,
-                    validation_model=resp.find_model(status) if resp else None,
+                    validation_model=resp.find_model(status),
                     response_payload=_resp.media,
                 )
             except ValidationError as err:
@@ -327,11 +326,10 @@ class FalconAsgiPlugin(FalconPlugin):
 
         await func(*args, **kwargs)
 
-        if not self._data_set_manually(_resp):
+        if not self._data_set_manually(_resp) and not skip_validation and resp:
             try:
                 status = int(_resp.status[:3])
                 response_validation_result = validate_response(
-                    skip_validation=skip_validation,
                     validation_model=resp.find_model(status) if resp else None,
                     response_payload=_resp.media,
                 )

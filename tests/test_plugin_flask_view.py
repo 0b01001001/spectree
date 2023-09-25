@@ -54,7 +54,7 @@ class Ping(MethodView):
         """summary
 
         description"""
-        return jsonify(msg="pong"), 202
+        return jsonify(msg="pong"), 202, request.context.headers.dict()
 
 
 class FileUploadView(MethodView):
@@ -193,36 +193,14 @@ class ReturnListView(MethodView):
 class ReturnMakeResponseView(MethodView):
     @api.validate(
         json=JSON,
+        headers=Headers,
         resp=Response(HTTP_201=Resp),
     )
     def post(self):
-        model_data = JSON(**request.json)
+        model_data = request.context.json
+        headers = request.context.headers
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
-        )
-        return response
-
-    @api.validate(
-        query=JSON,
-        resp=Response(HTTP_201=Resp),
-    )
-    def get(self):
-        model_data = JSON(**request.args)
-        response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
-        )
-        return response
-
-
-class ReturnMakeCookiesResponseView(MethodView):
-    @api.validate(
-        json=JSON,
-        resp=Response(HTTP_201=Resp),
-    )
-    def post(self):
-        model_data = JSON(**request.json)
-        response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201, headers
         )
         response.set_cookie(
             key="test_cookie",
@@ -232,12 +210,14 @@ class ReturnMakeCookiesResponseView(MethodView):
 
     @api.validate(
         query=JSON,
+        headers=Headers,
         resp=Response(HTTP_201=Resp),
     )
     def get(self):
-        model_data = JSON(**request.args)
+        model_data = request.context.query
+        headers = request.context.headers
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201
+            Resp(name=model_data.name, score=[model_data.limit]).dict(), 201, headers
         )
         response.set_cookie(
             key="test_cookie",
@@ -296,10 +276,6 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_make_response",
     view_func=ReturnMakeResponseView.as_view("return_make_response"),
-)
-app.add_url_rule(
-    "/api/return_make_cookies_response",
-    view_func=ReturnMakeCookiesResponseView.as_view("return_make_cookies_response"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

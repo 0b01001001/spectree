@@ -368,96 +368,6 @@
         "tags": []
       }
     },
-    "/api/return_make_cookies_response": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_make_cookies_response",
-        "parameters": [
-          {
-            "description": "",
-            "in": "query",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "title": "Name",
-              "type": "string"
-            }
-          },
-          {
-            "description": "",
-            "in": "query",
-            "name": "limit",
-            "required": true,
-            "schema": {
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
-                }
-              }
-            },
-            "description": "Created"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
-                }
-              }
-            },
-            "description": "Unprocessable Entity"
-          }
-        },
-        "summary": "return_make_cookies_response_get <GET>",
-        "tags": []
-      },
-      "post": {
-        "description": "",
-        "operationId": "post__api_return_make_cookies_response",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
-                }
-              }
-            },
-            "description": "Created"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
-                }
-              }
-            },
-            "description": "Unprocessable Entity"
-          }
-        },
-        "summary": "return_make_cookies_response_post <POST>",
-        "tags": []
-      }
-    },
     "/api/return_make_response": {
       "get": {
         "description": "",
@@ -481,6 +391,15 @@
             "schema": {
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "description": "",
+            "in": "header",
+            "name": "lang",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Headers.7068f62.Language"
             }
           }
         ],
@@ -512,7 +431,17 @@
       "post": {
         "description": "",
         "operationId": "post__api_return_make_response",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "",
+            "in": "header",
+            "name": "lang",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Headers.7068f62.Language"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
