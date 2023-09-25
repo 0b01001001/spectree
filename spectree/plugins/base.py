@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from .._pydantic import ValidationError, is_root_model, serialize_model_instance
+from .._pydantic import serialize_model_instance
 from .._types import JsonType, ModelType, OptionalModelType
 from ..config import Configuration
 from ..response import Response
@@ -138,50 +138,40 @@ class ResponseValidationResult:
 
 
 def validate_response(
-    skip_validation: bool,
     validation_model: OptionalModelType,
     response_payload: Any,
 ) -> ResponseValidationResult:
     """Validate a given ``response_payload`` against a ``validation_model``.
+    This does nothing if ``validation_model is None``.
 
-    :param skip_validation: When set to true, validation is not carried out
-        and the input ``response_payload`` is returned as-is. This is equivalent
-        to not providing a ``validation_model``.
     :param validation_model: Pydantic model used to validate the provided
         ``response_payload``.
     :param response_payload: Validated response payload. A :class:`RawResponsePayload`
         should be provided when the plugin view function returned an already
         JSON-serialized response payload.
     """
+    if not validation_model:
+        return ResponseValidationResult(payload=response_payload)
+
     final_response_payload = None
+    skip_validation = False
     if isinstance(response_payload, RawResponsePayload):
         final_response_payload = response_payload.payload
-    elif skip_validation or validation_model is None:
-        final_response_payload = response_payload
-
-    if not skip_validation and validation_model and not final_response_payload:
+    else:
         if isinstance(response_payload, validation_model):
             skip_validation = True
             final_response_payload = serialize_model_instance(response_payload)
-        elif is_root_model(validation_model):
-            # Make it possible to return an instance of the model __root__ type
-            # (i.e. not the root model itself).
-            try:
-                response_payload = validation_model(__root__=response_payload)
-            except ValidationError:
-                raise
-            else:
-                skip_validation = True
-                final_response_payload = serialize_model_instance(response_payload)
         else:
             final_response_payload = response_payload
 
-    if validation_model and not skip_validation:
+    if not skip_validation:
         validator = (
             validation_model.parse_raw
             if isinstance(final_response_payload, bytes)
             else validation_model.parse_obj
         )
-        validator(final_response_payload)
+        final_response_payload = serialize_model_instance(
+            validator(final_response_payload)
+        )
 
     return ResponseValidationResult(payload=final_response_payload)

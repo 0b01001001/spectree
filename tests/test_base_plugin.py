@@ -25,104 +25,87 @@ class DummyResponse:
 
 @pytest.mark.parametrize(
     [
-        "skip_validation",
         "validation_model",
         "response_payload",
         "expected_result",
     ],
     [
         (
-            False,
             Resp,
             Resp(name="user1", score=[1, 2]),
             ResponseValidationResult({"name": "user1", "score": [1, 2]}),
         ),
         (
-            False,
             Resp,
             {"name": "user1", "score": [1, 2]},
             ResponseValidationResult({"name": "user1", "score": [1, 2]}),
         ),
         (
-            False,
             Resp,
             RawResponsePayload({"name": "user1", "score": [1, 2]}),
             ResponseValidationResult({"name": "user1", "score": [1, 2]}),
         ),
         (
-            False,
             Resp,
             {},
             ValidationError,
         ),
         (
-            False,
             Resp,
             {"name": "user1"},
             ValidationError,
         ),
         (
-            False,
             RootResp,
             [1, 2, 3],
             ResponseValidationResult([1, 2, 3]),
         ),
         (
-            False,
             RootResp,
             RawResponsePayload([1, 2, 3]),
             ResponseValidationResult([1, 2, 3]),
         ),
         (
-            False,
             StrDict,
             StrDict(__root__={"key1": "value1", "key2": "value2"}),
             ResponseValidationResult({"key1": "value1", "key2": "value2"}),
         ),
         (
-            False,
             RootResp,
             {"name": "user2", "limit": 1},
             ResponseValidationResult({"name": "user2", "limit": 1}),
         ),
         (
-            False,
             RootResp,
             RawResponsePayload({"name": "user2", "limit": 1}),
             ResponseValidationResult({"name": "user2", "limit": 1}),
         ),
         (
-            False,
             RootResp,
             JSON(name="user3", limit=5),
             ResponseValidationResult({"name": "user3", "limit": 5}),
         ),
         (
-            False,
             RootResp,
             RootResp(__root__=JSON(name="user4", limit=23)),
             ResponseValidationResult({"name": "user4", "limit": 23}),
         ),
         (
-            False,
             RootResp,
             {},
             ValidationError,
         ),
         (
-            False,
             RespList,
             [],
             ResponseValidationResult([]),
         ),
         (
-            False,
             RespList,
             [{"name": "user5", "score": [5, 10]}],
             ResponseValidationResult([{"name": "user5", "score": [5, 10]}]),
         ),
         (
-            False,
             RespList,
             [Resp(name="user6", score=[10, 20]), Resp(name="user7", score=[30, 40])],
             ResponseValidationResult(
@@ -133,13 +116,11 @@ class DummyResponse:
             ),
         ),
         (
-            False,
             None,
             {"user_id": "user1", "locale": "en-gb"},
             ResponseValidationResult({"user_id": "user1", "locale": "en-gb"}),
         ),
         (
-            True,
             None,
             DummyResponse(payload="<html></html>".encode(), content_type="text/html"),
             ResponseValidationResult(
@@ -151,7 +132,6 @@ class DummyResponse:
     ],
 )
 def test_validate_response(
-    skip_validation: bool,
     validation_model: OptionalModelType,
     response_payload: Any,
     expected_result: Union[ResponseValidationResult, ValidationError],
@@ -163,7 +143,6 @@ def test_validate_response(
     )
     with runtime_expectation:
         result = validate_response(
-            skip_validation=skip_validation,
             validation_model=validation_model,
             response_payload=response_payload,
         )

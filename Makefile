@@ -20,6 +20,9 @@ test: import_test
 	pip install --force-reinstall 'pydantic[email]<2'
 	pytest tests -vv -rs
 
+update_snapshot:
+	@pytest --snapshot-update
+
 doc:
 	cd docs && make html
 

@@ -38,7 +38,7 @@ def test_flask_return_model(client):
         json=dict(name="flask", limit=10),
         content_type="application/json",
     )
-    assert resp.status_code == 200, resp.json
+    assert resp.status_code == 200, resp.text
     assert resp.headers.get("X-Validation") is None
     assert resp.headers.get("X-API") == "OK"
     assert resp.json["name"] == "flask"
@@ -119,6 +119,7 @@ def test_flask_validate_basic(client):
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Validation") == "Pass"
+    assert resp.headers.get("lang") == "en-US"
 
     resp = client.post("api/user/flask")
     assert resp.status_code == 422
@@ -188,9 +189,16 @@ def test_flask_make_response_post(client):
         limit=random.randint(1, 10),
         name="user make_response name",
     )
-    resp = client.post("/api/return_make_response", json=payload.dict())
+    resp = client.post(
+        "/api/return_make_response", json=payload.dict(), headers={"lang": "en-US"}
+    )
     assert resp.status_code == 201
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
+    assert resp.headers.get("lang") == "en-US"
+    cookie_result = re.match(
+        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
+    )
+    assert cookie_result.group(1) == payload.name
 
 
 def test_flask_make_response_get(client):
@@ -198,33 +206,14 @@ def test_flask_make_response_get(client):
         limit=random.randint(1, 10),
         name="user make_response name",
     )
-    resp = client.get("/api/return_make_response", query_string=payload.dict())
-    assert resp.status_code == 201
-    assert resp.json == {"name": payload.name, "score": [payload.limit]}
-
-
-def test_flask_make_cookies_response_post(client):
-    payload = JSON(
-        limit=random.randint(1, 10),
-        name="user make_response name",
+    resp = client.get(
+        "/api/return_make_response",
+        query_string=payload.dict(),
+        headers={"lang": "en-US"},
     )
-    resp = client.post("/api/return_make_cookies_response", json=payload.dict())
-    assert resp.status_code == 201
+    assert resp.status_code == 201, resp
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
-    cookie_result = re.match(
-        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
-    )
-    assert cookie_result.group(1) == payload.name
-
-
-def test_flask_make_cookies_response_get(client):
-    payload = JSON(
-        limit=random.randint(1, 10),
-        name="user make_response name",
-    )
-    resp = client.get("/api/return_make_cookies_response", query_string=payload.dict())
-    assert resp.status_code == 201
-    assert resp.json == {"name": payload.name, "score": [payload.limit]}
+    assert resp.headers.get("lang") == "en-US"
     cookie_result = re.match(
         r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
     )
