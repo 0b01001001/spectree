@@ -90,6 +90,11 @@ def parse_request(func: Any) -> Dict[str, Any]:
             "schema": {"$ref": f"#/components/schemas/{func.form}"}
         }
 
+    if hasattr(func, "body"):
+        content_items["text/plain"] = {
+            "schema": {"$ref": f"#/components/schemas/{func.body}"}
+        }
+
     if not content_items:
         return {}
 

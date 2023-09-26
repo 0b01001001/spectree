@@ -26,6 +26,7 @@ class Context(NamedTuple):
     query: list
     json: list
     form: list
+    body: list
     headers: dict
     cookies: dict
 
@@ -63,6 +64,7 @@ class BasePlugin(Generic[BackendRoute]):
         query: Optional[ModelType],
         json: Optional[ModelType],
         form: Optional[ModelType],
+        body: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],

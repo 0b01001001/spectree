@@ -133,7 +133,7 @@ class FlaskPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-    def request_validation(self, request, query, json, form, headers, cookies):
+    def request_validation(self, request, query, json, form, body, headers, cookies):
         """
         req_query: werkzeug.datastructures.ImmutableMultiDict
         req_json: dict
@@ -150,11 +150,13 @@ class FlaskPlugin(BasePlugin):
             and has_data
             and any([x in request.mimetype for x in self.FORM_MIMETYPE])
         )
+        use_body = body and has_data and request.mimetype == "text/plain"
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
             json.parse_obj(request.get_json(silent=True) or {}) if use_json else None,
             form.parse_obj(self._fill_form(request)) if use_form else None,
+            body.parse_obj(request.get_data() or {}) if use_body else None,
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
@@ -170,6 +172,7 @@ class FlaskPlugin(BasePlugin):
         query: Optional[ModelType],
         json: Optional[ModelType],
         form: Optional[ModelType],
+        body: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -182,10 +185,10 @@ class FlaskPlugin(BasePlugin):
     ):
         response, req_validation_error, resp_validation_error = None, None, None
         try:
-            self.request_validation(request, query, json, form, headers, cookies)
+            self.request_validation(request, query, json, form, body, headers, cookies)
             if self.config.annotations:
                 annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
+                for name in ("query", "json", "form", "body", "headers", "cookies"):
                     if annotations.get(name):
                         kwargs[name] = getattr(request.context, name)
         except ValidationError as err:

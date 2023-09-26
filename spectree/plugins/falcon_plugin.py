@@ -167,7 +167,7 @@ class FalconPlugin(BasePlugin):
 
         return f'/{"/".join(subs)}', parameters
 
-    def request_validation(self, req, query, json, form, headers, cookies):
+    def request_validation(self, req, query, json, form, body, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -175,18 +175,15 @@ class FalconPlugin(BasePlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            try:
-                media = req.media
-            except HTTPError as err:
-                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                    raise
-                media = None
+            media = self._get_req_media(req)
             req.context.json = json.parse_obj(media)
         if form:
             # TODO - possible to pass the BodyPart here?
             # req_form = {x.name: x for x in req.get_media()}
             req_form = {x.name: x.stream.read() for x in req.get_media()}
             req.context.form = form.parse_obj(req_form)
+        if body:
+            req.context.body = self._get_req_media(req)
 
     def validate(
         self,
@@ -194,6 +191,7 @@ class FalconPlugin(BasePlugin):
         query: Optional[ModelType],
         json: Optional[ModelType],
         form: Optional[ModelType],
+        body: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -208,10 +206,10 @@ class FalconPlugin(BasePlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            self.request_validation(_req, query, json, form, headers, cookies)
+            self.request_validation(_req, query, json, form, body, headers, cookies)
             if self.config.annotations:
                 annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
+                for name in ("query", "json", "form", "body", "headers", "cookies"):
                     if annotations.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
@@ -246,6 +244,14 @@ class FalconPlugin(BasePlugin):
     def _data_set_manually(resp):
         return (resp.text is not None or resp.data is not None) and resp.media is None
 
+    def _get_req_media(self, req):
+        try:
+            return req.media
+        except HTTPError as err:
+            if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                raise
+            return None
+
     def bypass(self, func, method):
         if isinstance(func, partial):
             return True
@@ -259,7 +265,7 @@ class FalconAsgiPlugin(FalconPlugin):
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
 
-    async def request_validation(self, req, query, json, form, headers, cookies):
+    async def request_validation(self, req, query, json, form, body, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -267,12 +273,7 @@ class FalconAsgiPlugin(FalconPlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            try:
-                media = await req.get_media()
-            except HTTPError as err:
-                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                    raise
-                media = None
+            media = await self._get_req_media(req)
             req.context.json = json.parse_obj(media)
         if form:
             try:
@@ -287,6 +288,8 @@ class FalconAsgiPlugin(FalconPlugin):
                     res_data[x.name] = x
                     await x.data  # TODO - how to avoid this?
                 req.context.form = form.parse_obj(res_data)
+        if body:
+            req.context.body = self._get_req_media(req)
 
     async def validate(
         self,
@@ -294,6 +297,7 @@ class FalconAsgiPlugin(FalconPlugin):
         query: Optional[ModelType],
         json: Optional[ModelType],
         form: Optional[ModelType],
+        body: Optional[ModelType],
         headers: Optional[ModelType],
         cookies: Optional[ModelType],
         resp: Optional[Response],
@@ -308,10 +312,12 @@ class FalconAsgiPlugin(FalconPlugin):
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
         try:
-            await self.request_validation(_req, query, json, form, headers, cookies)
+            await self.request_validation(
+                _req, query, json, form, body, headers, cookies
+            )
             if self.config.annotations:
                 annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
+                for name in ("query", "json", "form", "body", "headers", "cookies"):
                     if annotations.get(name):
                         kwargs[name] = getattr(_req.context, name)
 
@@ -341,3 +347,11 @@ class FalconAsgiPlugin(FalconPlugin):
                 _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)
+
+    async def _get_req_media(self, req):
+        try:
+            return await req.get_media()
+        except HTTPError as err:
+            if err.status not in self.FALCON_MEDIA_ERROR_CODE:
+                raise
+            return None
