@@ -146,11 +146,7 @@ class FlaskPlugin(BasePlugin):
         has_data = request.method not in ("GET", "DELETE")
         # flask Request.mimetype is already normalized
         use_json = json and has_data and request.mimetype not in self.FORM_MIMETYPE
-        use_form = (
-            form
-            and has_data
-            and request.mimetype in self.FORM_MIMETYPE
-        )
+        use_form = form and has_data and request.mimetype in self.FORM_MIMETYPE
 
         request.context = Context(
             query.parse_obj(req_query) if query else None,
