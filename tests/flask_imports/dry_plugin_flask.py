@@ -160,6 +160,12 @@ def test_flask_validate_post_data(client, fragment):
     assert resp.status_code == 200, resp.json
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
 
+    # POST without body
+    resp = client.post(
+        f"/api/{fragment}/flask?order=0",
+    )
+    assert resp.status_code == 422, resp.content
+
 
 def test_flask_no_response(client):
     resp = client.get("/api/no_response")

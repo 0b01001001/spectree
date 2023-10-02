@@ -144,11 +144,12 @@ class FlaskPlugin(BasePlugin):
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
         has_data = request.method not in ("GET", "DELETE")
-        use_json = json and has_data and request.mimetype == "application/json"
+        # flask Request.mimetype is already normalized
+        use_json = json and has_data and request.mimetype not in self.FORM_MIMETYPE
         use_form = (
             form
             and has_data
-            and any([x in request.mimetype for x in self.FORM_MIMETYPE])
+            and request.mimetype in self.FORM_MIMETYPE
         )
 
         request.context = Context(
