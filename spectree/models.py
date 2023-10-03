@@ -109,7 +109,7 @@ class SecuritySchemeData(BaseModel):
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
     )
 
-    @root_validator()
+    @root_validator(pre=True)
     def check_type_required_fields(cls, values: dict):
         exist_fields = {key for key in values.keys() if values[key]}
         if not values.get("type"):
@@ -118,7 +118,8 @@ class SecuritySchemeData(BaseModel):
         if not set(type_req_fields[values["type"]]).issubset(exist_fields):
             raise ValueError(
                 f"For `{values['type']}` type "
-                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required."
+                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required. "
+                f"But only found `{', '.join(exist_fields)}`."
             )
         return values
 
