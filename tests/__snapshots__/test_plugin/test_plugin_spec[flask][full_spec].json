@@ -135,6 +135,27 @@
         "title": "JSON",
         "type": "object"
       },
+      "OptionalAliasResp.7068f62": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema"
+        ],
+        "title": "OptionalAliasResp",
+        "type": "object"
+      },
       "Query.7068f62": {
         "properties": {
           "order": {
@@ -474,6 +495,37 @@
           }
         },
         "summary": "return_make_response_post <POST>",
+        "tags": []
+      }
+    },
+    "/api/return_optional_alias": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_optional_alias",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptionalAliasResp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "return_optional_alias_resp <GET>",
         "tags": []
       }
     },

@@ -7,6 +7,7 @@ from spectree._pydantic import (
     BaseModel,
     is_base_model,
     is_base_model_instance,
+    is_partial_base_model_instance,
     is_root_model,
     is_root_model_instance,
     serialize_model_instance,
@@ -124,6 +125,23 @@ def test_is_base_model(value, expected):
 )
 def test_is_base_model_instance(value, expected):
     assert is_base_model_instance(value) is expected
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (SimpleModel(user_id=1), True),
+        ([0, SimpleModel(user_id=1)], True),
+        ([1, 2, 3], False),
+        ((0, SimpleModel(user_id=1)), True),
+        ((0, 1), False),
+        ({"test": SimpleModel(user_id=1)}, True),
+        ({"test": [SimpleModel(user_id=1)]}, True),
+        ([0, [1, SimpleModel(user_id=1)]], True),
+    ],
+)
+def test_is_partial_base_model_instance(value, expected):
+    assert is_partial_base_model_instance(value) is expected, value
 
 
 @pytest.mark.parametrize(

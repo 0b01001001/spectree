@@ -14,6 +14,7 @@ from .common import (
     FormFileUpload,
     Headers,
     ListJSON,
+    OptionalAliasResp,
     Order,
     Query,
     Resp,
@@ -215,6 +216,12 @@ def return_root():
         pre_serialize=bool(int(request.args.get("pre_serialize", default=0))),
         return_what=request.args.get("return_what", default="RootResp"),
     )
+
+
+@app.route("/api/return_optional_alias", methods=["GET"])
+@api.validate(resp=Response(HTTP_200=OptionalAliasResp))
+def return_optional_alias():
+    return {"schema": "test"}
 
 
 api.register(app)

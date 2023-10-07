@@ -59,6 +59,24 @@ def is_base_model_instance(value: Any) -> bool:
     return is_base_model(type(value))
 
 
+def is_partial_base_model_instance(instance: Any) -> bool:
+    """Check if it's a Pydantic BaseModel instance or [BaseModel]
+    or {key: BaseModel} instance.
+    """
+    if not instance:
+        return False
+    if is_base_model_instance(instance):
+        return True
+    if isinstance(instance, dict):
+        return any(
+            is_partial_base_model_instance(key) or is_partial_base_model_instance(value)
+            for key, value in instance.items()
+        )
+    if isinstance(instance, list) or isinstance(instance, tuple):
+        return any(is_partial_base_model_instance(value) for value in instance)
+    return False
+
+
 def is_root_model(t: Any) -> bool:
     """Check whether a type is a Pydantic RootModel."""
     return is_base_model(t) and ROOT_FIELD in t.__fields__

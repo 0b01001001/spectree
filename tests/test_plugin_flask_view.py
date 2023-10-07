@@ -14,6 +14,7 @@ from .common import (
     FormFileUpload,
     Headers,
     ListJSON,
+    OptionalAliasResp,
     Order,
     Query,
     Resp,
@@ -235,6 +236,12 @@ class ReturnRootView(MethodView):
         )
 
 
+class ReturnOptionalAlias(MethodView):
+    @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
+    def get(self):
+        return {"schema": "test"}
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -276,6 +283,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_make_response",
     view_func=ReturnMakeResponseView.as_view("return_make_response"),
+)
+app.add_url_rule(
+    "/api/return_optional_alias",
+    view_func=ReturnOptionalAlias.as_view("return_optional_alias"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering
