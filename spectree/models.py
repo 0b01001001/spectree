@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence, Set
 
 from ._pydantic import BaseModel, Field, root_validator, validator
 
@@ -64,11 +64,11 @@ class InType(str, Enum):
     COOKIE = "cookie"
 
 
-type_req_fields: Dict[SecureType, Sequence[str]] = {
-    SecureType.HTTP: ["scheme"],
-    SecureType.API_KEY: ["name", "field_in"],
-    SecureType.OAUTH_TWO: ["flows"],
-    SecureType.OPEN_ID_CONNECT: ["openIdConnectUrl"],
+type_req_fields: Dict[SecureType, Set[str]] = {
+    SecureType.HTTP: {"scheme"},
+    SecureType.API_KEY: {"name", "field_in"},
+    SecureType.OAUTH_TWO: {"flows"},
+    SecureType.OPEN_ID_CONNECT: {"openIdConnectUrl"},
 }
 
 
@@ -109,16 +109,17 @@ class SecuritySchemeData(BaseModel):
         None, description="OpenId Connect URL to discover OAuth2 configuration values."
     )
 
-    @root_validator()
+    @root_validator
     def check_type_required_fields(cls, values: dict):
         exist_fields = {key for key in values.keys() if values[key]}
         if not values.get("type"):
             raise ValueError("Type field is required")
 
-        if not set(type_req_fields[values["type"]]).issubset(exist_fields):
+        if not type_req_fields[values["type"]].issubset(exist_fields):
             raise ValueError(
                 f"For `{values['type']}` type "
-                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required."
+                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required. "
+                f"But only found `{', '.join(exist_fields)}`."
             )
         return values
 
