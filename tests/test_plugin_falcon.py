@@ -13,6 +13,7 @@ from .common import (
     FormFileUpload,
     Headers,
     ListJSON,
+    OptionalAliasResp,
     Query,
     Resp,
     RootResp,
@@ -29,7 +30,8 @@ def before_handler(req, resp, err, instance):
 
 
 def after_handler(req, resp, err, instance):
-    resp.set_header("X-Name", instance.name)
+    if hasattr(instance, "name"):
+        resp.set_header("X-Name", instance.name)
 
 
 api = SpecTree("falcon", before=before_handler, after=after_handler, annotations=True)
@@ -229,6 +231,12 @@ class ReturnRootView:
         )
 
 
+class ReturnOptionalAliasView:
+    @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
+    def on_get(self, req, resp):
+        resp.media = {"schema": "test"}
+
+
 class ViewWithCustomSerializer:
     name = "view with custom serializer"
 
@@ -257,6 +265,7 @@ app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
 app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
+app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
 api.register(app)
 
@@ -530,3 +539,11 @@ def test_falcon_custom_serializer(client):
     assert resp.status_code == 200
     assert resp.json["name"] == "falcon"
     assert resp.json["score"] == [1, 2, 3]
+
+
+def test_falcon_optional_alias_response(client):
+    resp = client.simulate_get(
+        "/api/return_optional_alias",
+    )
+    assert resp.status_code == 200
+    assert resp.json == {"schema": "test"}, resp.json

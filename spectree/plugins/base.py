@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from .._pydantic import serialize_model_instance
+from .._pydantic import is_partial_base_model_instance, serialize_model_instance
 from .._types import JsonType, ModelType, OptionalModelType
 from ..config import Configuration
 from ..response import Response
@@ -162,6 +162,7 @@ def validate_response(
             skip_validation = True
             final_response_payload = serialize_model_instance(response_payload)
         else:
+            # non-BaseModel response or partial BaseModel response
             final_response_payload = response_payload
 
     if not skip_validation:
@@ -170,8 +171,11 @@ def validate_response(
             if isinstance(final_response_payload, bytes)
             else validation_model.parse_obj
         )
-        final_response_payload = serialize_model_instance(
-            validator(final_response_payload)
-        )
+        validated_instance = validator(final_response_payload)
+        # in case the response model contains (alias, default_none, unset fields) which
+        # might not be the what the users want, we only return the validated dict when
+        # the response contains BaseModel
+        if is_partial_base_model_instance(final_response_payload):
+            final_response_payload = serialize_model_instance(validated_instance)
 
     return ResponseValidationResult(payload=final_response_payload)

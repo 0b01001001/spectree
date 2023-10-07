@@ -251,3 +251,9 @@ def test_flask_upload_file(client):
     )
     assert resp.status_code == 200, resp.data
     assert resp.json["content"] == file_content
+
+
+def test_flask_optional_alias_response(client):
+    resp = client.get("/api/return_optional_alias")
+    assert resp.status_code == 200
+    assert resp.json == {"schema": "test"}, resp.json

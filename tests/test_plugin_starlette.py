@@ -20,6 +20,7 @@ from .common import (
     FormFileUpload,
     Headers,
     ListJSON,
+    OptionalAliasResp,
     Order,
     Query,
     Resp,
@@ -175,6 +176,11 @@ async def return_root(request):
     )
 
 
+@api.validate(resp=Response(HTTP_200=OptionalAliasResp))
+async def return_optional_alias(request):
+    return JSONResponse({"schema": "test"})
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -210,6 +216,7 @@ app = Starlette(
                 Route("/list_json", list_json, methods=["POST"]),
                 Route("/return_list", return_list, methods=["GET"]),
                 Route("/return_root", return_root, methods=["GET"]),
+                Route("/return_optional_alias", return_optional_alias, methods=["GET"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -433,7 +440,6 @@ def test_starlette_return_list_request(client, pre_serialize: bool):
 def test_starlette_return_root_request_sync(client, return_what: str):
     resp = client.get(f"/api/return_root?pre_serialize=0&return_what={return_what}")
     assert resp.status_code == 200
-    assert resp.status_code == 200
     if return_what in ("RootResp_JSON", "JSON"):
         assert resp.json() == {"name": "user1", "limit": 1}
     elif return_what in ("RootResp_List", "List"):
@@ -449,3 +455,9 @@ def test_starlette_upload_file(client):
     )
     assert resp.status_code == 200, resp.data
     assert resp.json()["file"] == file_content
+
+
+def test_starlette_return_optional_alias(client):
+    resp = client.get("/api/return_optional_alias")
+    assert resp.status_code == 200
+    assert resp.json() == {"schema": "test"}
