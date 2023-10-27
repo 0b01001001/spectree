@@ -17,7 +17,13 @@ from typing import (
 )
 
 from ._pydantic import BaseModel, ValidationError
-from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
+from ._types import (
+    ModelType,
+    MultiDict,
+    NamingStrategy,
+    NestedNamingStrategy,
+    OptionalModelType,
+)
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -273,7 +279,7 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
 
 
 def get_multidict_items(
-    multidict: MultiDict, model: Optional[type[BaseModel]] = None
+    multidict: MultiDict, model: OptionalModelType = None
 ) -> Dict[str, Union[None, str, List[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
@@ -290,7 +296,7 @@ def get_multidict_items(
     return res
 
 
-def is_list_item(key: str, model: Optional[Type[BaseModel]]) -> bool:
+def is_list_item(key: str, model: OptionalModelType) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
         return False
