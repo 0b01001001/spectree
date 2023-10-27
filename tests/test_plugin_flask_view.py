@@ -180,7 +180,7 @@ class ListJsonView(MethodView):
         return {}
 
 
-class QueryList(MethodView):
+class QueryWithList(MethodView):
     @api.validate(query=QueryList)
     def get(self):
         assert request.context.query.ids == [1, 2, 3]
@@ -284,7 +284,7 @@ app.add_url_rule(
 )
 app.add_url_rule(
     "/api/query_list",
-    view_func=QueryList.as_view("query_list_view"),
+    view_func=QueryWithList.as_view("query_list_view"),
 )
 app.add_url_rule(
     "/api/return_list",
