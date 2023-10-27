@@ -31,11 +31,10 @@ jobs:
 
   test:
     runs-on: ${{ matrix.os }}
-    needs: [lint]
     strategy:
-      max-parallel: 5
+      max-parallel: 6
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy3.9"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy3.9"]
         os: [ubuntu-latest]
 
     steps:
