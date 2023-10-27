@@ -239,7 +239,7 @@ flask_app.config["DEBUG"] = True
 flask_app.config["TESTING"] = True
 flask_app.register_blueprint(app)
 with flask_app.app_context():
-    api.spec()
+    _ = api.spec
 
 
 @pytest.fixture
@@ -302,7 +302,7 @@ def test_client_and_api(request):
     flask_app.register_blueprint(app, **register_blueprint_kwargs)
 
     with flask_app.app_context():
-        api.spec()
+        _ = api.spec
 
     with flask_app.test_client() as test_client:
         yield test_client, api

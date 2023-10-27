@@ -303,7 +303,7 @@ app.add_url_rule(
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.
 with app.app_context():
-    api.spec()
+    _ = api.spec
 
 
 api.register(app)
@@ -347,7 +347,7 @@ def test_client_and_api(request):
     # view functions for validations. This enables tests to access `api.spec`
     # without app_context.
     with app.app_context():
-        api.spec()
+        _ = api.spec
     api.register(app)
 
     with app.test_client() as test_client:
