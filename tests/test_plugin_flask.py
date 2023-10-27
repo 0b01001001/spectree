@@ -17,6 +17,7 @@ from .common import (
     OptionalAliasResp,
     Order,
     Query,
+    QueryList,
     Resp,
     RootResp,
     StrDict,
@@ -181,6 +182,13 @@ def no_response():
     json=ListJSON,
 )
 def json_list():
+    return {}
+
+
+@app.route("/api/query_list", methods=["GET"])
+@api.validate(query=QueryList)
+def query_list():
+    assert request.context.query.ids == [1, 2, 3]
     return {}
 
 

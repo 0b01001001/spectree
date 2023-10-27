@@ -257,3 +257,8 @@ def test_flask_optional_alias_response(client):
     resp = client.get("/api/return_optional_alias")
     assert resp.status_code == 200
     assert resp.json == {"schema": "test"}, resp.json
+
+
+def test_flask_query_list(client):
+    resp = client.get("/api/query_list?ids=1&ids=2&ids=3")
+    assert resp.status_code == 200

@@ -21,6 +21,10 @@ class Query(BaseModel):
     order: Order
 
 
+class QueryList(BaseModel):
+    ids: List[int]
+
+
 class FormFileUpload(BaseModel):
     file: BaseFile
 
