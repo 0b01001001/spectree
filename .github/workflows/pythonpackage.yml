@@ -31,7 +31,6 @@ jobs:
 
   test:
     runs-on: ${{ matrix.os }}
-    needs: [lint]
     strategy:
       max-parallel: 6
       matrix:
