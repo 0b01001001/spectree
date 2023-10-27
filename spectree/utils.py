@@ -272,7 +272,9 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
     return []
 
 
-def get_multidict_items(multidict: MultiDict, model: Optional[BaseModel] = None) -> Dict[str, Union[None, str, List[str]]]:
+def get_multidict_items(
+    multidict: MultiDict, model: Optional[BaseModel] = None
+) -> Dict[str, Union[None, str, List[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """

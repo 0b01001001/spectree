@@ -180,7 +180,6 @@ class ListJsonView(MethodView):
         return {}
 
 
-
 class QueryList(MethodView):
     @api.validate(query=QueryList)
     def get(self):
