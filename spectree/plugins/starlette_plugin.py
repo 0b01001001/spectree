@@ -9,10 +9,15 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from .._pydantic import BaseModel, ValidationError, serialize_model_instance
-from .._types import ModelType
-from ..response import Response
-from .base import BasePlugin, Context, RawResponsePayload, validate_response
+from spectree._pydantic import BaseModel, ValidationError, serialize_model_instance
+from spectree._types import ModelType
+from spectree.plugins.base import (
+    BasePlugin,
+    Context,
+    RawResponsePayload,
+    validate_response,
+)
+from spectree.response import Response
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
@@ -128,19 +133,23 @@ class StarlettePlugin(BasePlugin):
         else:
             response = func(*args, **kwargs)
 
-        if not skip_validation and resp and response:
-            if not (
+        if (
+            not skip_validation
+            and resp
+            and response
+            and not (
                 isinstance(response, JSONResponse)
                 and hasattr(response, "_model_class")
                 and response._model_class == resp.find_model(response.status_code)
-            ):
-                try:
-                    validate_response(
-                        validation_model=resp.find_model(response.status_code),
-                        response_payload=RawResponsePayload(payload=response.body),
-                    )
-                except ValidationError as err:
-                    response = JSONResponse(err.errors(), 500)
+            )
+        ):
+            try:
+                validate_response(
+                    validation_model=resp.find_model(response.status_code),
+                    response_payload=RawResponsePayload(payload=response.body),
+                )
+            except ValidationError as err:
+                response = JSONResponse(err.errors(), 500)
 
         after(request, response, resp_validation_error, instance)
 

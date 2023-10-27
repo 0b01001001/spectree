@@ -249,7 +249,7 @@ def return_optional_alias_resp():
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.
 with app.app_context():
-    api.spec
+    _ = api.spec
 api.register(app)
 
 
@@ -290,7 +290,7 @@ def test_client_and_api(request):
     # view functions for validations. This enables tests to access `api.spec`
     # without app_context.
     with app.app_context():
-        api.spec
+        _ = api.spec
     api.register(app)
 
     with app.test_client() as test_client:
@@ -362,7 +362,7 @@ def oauth_two_ping():
 
 
 with app_secure.app_context():
-    api_secure.spec
+    _ = api_secure.spec
 
 api_secure.register(app_secure)
 
@@ -432,6 +432,6 @@ def global_security_or():
 
 
 with app_global_secure.app_context():
-    api_global_secure.spec
+    _ = api_global_secure.spec
 
 api_global_secure.register(app_global_secure)

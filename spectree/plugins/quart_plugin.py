@@ -5,11 +5,15 @@ import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from .._pydantic import ValidationError
-from .._types import ModelType
-from ..response import Response
-from ..utils import flask_response_unpack, get_multidict_items, werkzeug_parse_rule
-from .base import BasePlugin, Context, validate_response
+from spectree._pydantic import ValidationError
+from spectree._types import ModelType
+from spectree.plugins.base import BasePlugin, Context, validate_response
+from spectree.response import Response
+from spectree.utils import (
+    flask_response_unpack,
+    get_multidict_items,
+    werkzeug_parse_rule,
+)
 
 
 class QuartPlugin(BasePlugin):
@@ -50,7 +54,7 @@ class QuartPlugin(BasePlugin):
 
         # view class: https://flask.palletsprojects.com/en/1.1.x/views/
         if getattr(func, "view_class", None):
-            cls = getattr(func, "view_class")
+            cls = func.view_class
             for method in route.methods:
                 view = getattr(cls, method.lower(), None)
                 if view:

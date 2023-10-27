@@ -115,7 +115,7 @@ def user_score_skip_validation(name):
     response_format = request.args.get("response_format")
     assert response_format in ("json", "xml")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
@@ -138,7 +138,7 @@ def user_score_skip_validation(name):
 )
 def user_score_model(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return Resp(name=request.context.json.name, score=score)
@@ -239,7 +239,7 @@ flask_app.config["DEBUG"] = True
 flask_app.config["TESTING"] = True
 flask_app.register_blueprint(app)
 with flask_app.app_context():
-    api.spec
+    _ = api.spec
 
 
 @pytest.fixture
@@ -302,7 +302,7 @@ def test_client_and_api(request):
     flask_app.register_blueprint(app, **register_blueprint_kwargs)
 
     with flask_app.app_context():
-        api.spec
+        _ = api.spec
 
     with flask_app.test_client() as test_client:
         yield test_client, api

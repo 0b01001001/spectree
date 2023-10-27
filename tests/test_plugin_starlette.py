@@ -84,7 +84,7 @@ async def file_upload(request):
 )
 async def user_score(request):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return JSONResponse({"name": request.context.json.name, "score": score})
@@ -96,7 +96,7 @@ async def user_score(request):
 )
 async def user_score_annotated(request, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return JSONResponse({"name": json.name, "score": score})
@@ -113,7 +113,7 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
 async def user_score_skip(request):
     response_format = request.query_params.get("response_format")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
@@ -134,7 +134,7 @@ async def user_score_skip(request):
 )
 async def user_score_model(request):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return PydanticResponse(Resp(name=request.context.json.name, score=score))

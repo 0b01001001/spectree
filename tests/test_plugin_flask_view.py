@@ -97,7 +97,7 @@ class UserAnnotated(MethodView):
     def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
         data_src = json or form
         score = [randint(0, int(data_src.limit)) for _ in range(5)]
-        score.sort(reverse=True if query.order == Order.desc else False)
+        score.sort(reverse=query.order == Order.desc)
         assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
         return jsonify(name=data_src.name, score=score)
@@ -303,7 +303,7 @@ app.add_url_rule(
 # view functions for validations. This enables tests to access `api.spec`
 # without app_context.
 with app.app_context():
-    api.spec
+    _ = api.spec
 
 
 api.register(app)
@@ -347,7 +347,7 @@ def test_client_and_api(request):
     # view functions for validations. This enables tests to access `api.spec`
     # without app_context.
     with app.app_context():
-        api.spec
+        _ = api.spec
     api.register(app)
 
     with app.test_client() as test_client:

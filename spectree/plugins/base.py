@@ -12,14 +12,14 @@ from typing import (
     Union,
 )
 
-from .._pydantic import is_partial_base_model_instance, serialize_model_instance
-from .._types import JsonType, ModelType, OptionalModelType
-from ..config import Configuration
-from ..response import Response
+from spectree._pydantic import is_partial_base_model_instance, serialize_model_instance
+from spectree._types import JsonType, ModelType, OptionalModelType
+from spectree.config import Configuration
+from spectree.response import Response
 
 if TYPE_CHECKING:
     # to avoid cyclic import
-    from ..spec import SpecTree
+    from spectree.spec import SpecTree
 
 
 class Context(NamedTuple):
@@ -157,13 +157,12 @@ def validate_response(
     skip_validation = False
     if isinstance(response_payload, RawResponsePayload):
         final_response_payload = response_payload.payload
+    elif isinstance(response_payload, validation_model):
+        skip_validation = True
+        final_response_payload = serialize_model_instance(response_payload)
     else:
-        if isinstance(response_payload, validation_model):
-            skip_validation = True
-            final_response_payload = serialize_model_instance(response_payload)
-        else:
-            # non-BaseModel response or partial BaseModel response
-            final_response_payload = response_payload
+        # non-BaseModel response or partial BaseModel response
+        final_response_payload = response_payload
 
     if not skip_validation:
         validator = (

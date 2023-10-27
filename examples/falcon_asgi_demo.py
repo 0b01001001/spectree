@@ -84,7 +84,7 @@ class Classification:
 
         demo for `query`, `data`, `resp`, `x`
         """
-        logger.debug(f"{source} => {target}")
+        logger.debug("%s => %s", source, target)
         logger.info(req.context.query)
         logger.info(req.context.json)
         if random() < 0.5:

@@ -72,7 +72,7 @@ def is_partial_base_model_instance(instance: Any) -> bool:
             is_partial_base_model_instance(key) or is_partial_base_model_instance(value)
             for key, value in instance.items()
         )
-    if isinstance(instance, list) or isinstance(instance, tuple):
+    if isinstance(instance, (list, tuple)):
         return any(is_partial_base_model_instance(value) for value in instance)
     return False
 

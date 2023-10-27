@@ -125,7 +125,9 @@ class Configuration(BaseSettings):
         ref: https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/
         """
         if self.client_secret:
-            warnings.warn("Do not use client_secret in production", UserWarning)
+            warnings.warn(
+                "Do not use client_secret in production", UserWarning, stacklevel=1
+            )
 
         config = self.dict(
             include={

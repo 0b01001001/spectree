@@ -208,7 +208,7 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
         data = [1, 2, 3, 4]
         pre_serialize = False
     else:
-        assert False
+        raise AssertionError()
     if pre_serialize:
         data = data.dict()
         if "__root__" in data:

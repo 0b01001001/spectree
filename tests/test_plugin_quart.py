@@ -71,7 +71,7 @@ async def ping():
 )
 async def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
@@ -85,7 +85,7 @@ async def user_score(name):
 )
 async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=True if query.order == Order.desc else False)
+    score.sort(reverse=query.order == Order.desc)
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=json.name, score=score)
@@ -105,7 +105,7 @@ async def user_score_skip_validation(name):
     response_format = request.args.get("response_format")
     assert response_format in ("json", "xml")
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
@@ -130,7 +130,7 @@ async def user_score_skip_validation(name):
 )
 async def user_score_model(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=True if request.context.query.order == Order.desc else False)
+    score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return Resp(name=request.context.json.name, score=score), 200
