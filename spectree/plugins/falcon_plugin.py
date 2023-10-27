@@ -6,10 +6,10 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from .._pydantic import ValidationError
-from .._types import ModelType
-from ..response import Response
-from .base import BasePlugin, validate_response
+from spectree._pydantic import ValidationError
+from spectree._types import ModelType
+from spectree.plugins.base import BasePlugin, validate_response
+from spectree.response import Response
 
 
 class OpenAPI:
@@ -124,8 +124,9 @@ class FalconPlugin(BasePlugin):
                         argstr = ""
 
                     arg_values = [None, None, None]
-                    for index, match in enumerate(self.INT_ARGS.finditer(argstr)):
+                    for i, match in enumerate(self.INT_ARGS.finditer(argstr)):
                         name, value = match.group("name"), match.group("value")
+                        index = i
                         if name:
                             index = self.INT_ARGS_NAMES.index(name)
                         arg_values[index] = value

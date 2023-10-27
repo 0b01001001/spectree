@@ -28,7 +28,7 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         <redoc spec-url='{spec_url}'></redoc>
         <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
     </body>
-</html>""",  # noqa: E501
+</html>""",
     # https://swagger.io
     "swagger": """
 <!-- HTML for static distribution bundle build -->
@@ -101,7 +101,7 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         }}
     </script>
     </body>
-</html>""",  # noqa: E501
+</html>""",
     "swagger/oauth2-redirect.html": """
 <!DOCTYPE html>
 <html lang="en-US">
@@ -177,5 +177,5 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
     }});
 </script>
 </body>
-</html>""",  # noqa: E501
+</html>""",
 }

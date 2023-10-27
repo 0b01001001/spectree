@@ -183,10 +183,9 @@ def default_before_handler(
     """
     if req_validation_error:
         logger.error(
-            "422 Request Validation Error: {} - {}".format(
-                req_validation_error.model.__name__,
-                req_validation_error.errors(),
-            )
+            "422 Request Validation Error: %s - %s",
+            req_validation_error.model.__name__,
+            req_validation_error.errors(),
         )
 
 
@@ -204,10 +203,9 @@ def default_after_handler(
     """
     if resp_validation_error:
         logger.error(
-            "500 Response Validation Error: {} - {}".format(
-                resp_validation_error.model.__name__,
-                resp_validation_error.errors(),
-            )
+            "500 Response Validation Error: %s - %s",
+            resp_validation_error.model.__name__,
+            resp_validation_error.errors(),
         )
 
 
@@ -286,9 +284,8 @@ def get_multidict_items(
     """
     res: Dict[str, Union[None, str, List[str]]] = {}
     for key in multidict:
-        if model is not None and is_list_item(key, model):
-            res[key] = multidict.getlist(key)
-        elif len(multidict.getlist(key)) > 1:
+        values = multidict.getlist(key)
+        if (model is not None and is_list_item(key, model)) or len(values) > 1:
             res[key] = multidict.getlist(key)
         else:
             res[key] = multidict.get(key)

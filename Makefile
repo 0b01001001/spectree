@@ -24,31 +24,27 @@ update_snapshot:
 	@pytest --snapshot-update
 
 doc:
-	cd docs && make html
+	@cd docs && make html
 
 opendoc:
-	cd docs/build/html && python -m http.server 8765 -b 127.0.0.1
+	@cd docs/build/html && python -m http.server 8765 -b 127.0.0.1
 
 clean:
-	rm -rf build/ dist/ *.egg-info .pytest_cache
-	find . -name '*.pyc' -type f -exec rm -rf {} +
-	find . -name '__pycache__' -exec rm -rf {} +
+	@-rm -rf build/ dist/ *.egg-info .pytest_cache
+	@find . -name '*.pyc' -type f -exec rm -rf {} +
+	@find . -name '__pycache__' -exec rm -rf {} +
 
 package: clean
-	python -m build
+	@python -m build
 
 publish: package
-	twine upload dist/*
+	@twine upload dist/*
 
 format:
-	autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports ${SOURCE_FILES}
-	isort --project=spectree ${SOURCE_FILES}
-	black ${SOURCE_FILES}
+	@ruff format ${SOURCE_FILES}
 
 lint:
-	isort --check --diff --project=spectree ${SOURCE_FILES}
-	black --check --diff ${SOURCE_FILES}
-	flake8 ${SOURCE_FILES} --count --show-source --statistics --ignore=D203,E203,W503 --max-line-length=88 --max-complexity=15
-	mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
+	@ruff check ${SOURCE_FILES}
+	@mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
 .PHONY: test doc

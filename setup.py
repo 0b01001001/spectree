@@ -1,6 +1,5 @@
 from setuptools import setup
 
-
 # this file is kept for GitHub's dependency graph
 
 setup(
@@ -16,10 +15,7 @@ setup(
         "starlette": ["starlette[full]"],
         "dev": [
             "pytest~=7.1",
-            "flake8>=4,<7",
-            "black>=22.3,<24.0",
-            "isort~=5.10",
-            "autoflake>=1.4,<3.0",
+            "ruff>=0.1.3",
             "mypy>=0.971",
             "syrupy>=4.0.0",
         ],

@@ -35,7 +35,7 @@ class ValidationErrorElement(BaseModel):
         ...,
         title="Error message",
     )
-    type: str = Field(  # noqa: WPS125
+    type: str = Field(
         ...,
         title="Error type",
     )
@@ -111,7 +111,7 @@ class SecuritySchemeData(BaseModel):
 
     @root_validator
     def check_type_required_fields(cls, values: dict):
-        exist_fields = {key for key in values.keys() if values[key]}
+        exist_fields = {key for key in values if values[key]}
         if not values.get("type"):
             raise ValueError("Type field is required")
 
