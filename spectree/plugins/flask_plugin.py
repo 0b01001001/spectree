@@ -140,9 +140,9 @@ class FlaskPlugin(BasePlugin):
         req_headers: werkzeug.datastructures.EnvironHeaders
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
-        req_query = get_multidict_items(request.args)
+        req_query = get_multidict_items(request.args, query)
         req_headers = dict(iter(request.headers)) or {}
-        req_cookies = get_multidict_items(request.cookies) or {}
+        req_cookies = get_multidict_items(request.cookies)
         has_data = request.method not in ("GET", "DELETE")
         # flask Request.mimetype is already normalized
         use_json = json and has_data and request.mimetype not in self.FORM_MIMETYPE

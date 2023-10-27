@@ -17,7 +17,13 @@ from typing import (
 )
 
 from ._pydantic import BaseModel, ValidationError
-from ._types import ModelType, MultiDict, NamingStrategy, NestedNamingStrategy
+from ._types import (
+    ModelType,
+    MultiDict,
+    NamingStrategy,
+    NestedNamingStrategy,
+    OptionalModelType,
+)
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -272,18 +278,32 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
     return []
 
 
-def get_multidict_items(multidict: MultiDict) -> Dict[str, Union[None, str, List[str]]]:
+def get_multidict_items(
+    multidict: MultiDict, model: OptionalModelType = None
+) -> Dict[str, Union[None, str, List[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """
     res: Dict[str, Union[None, str, List[str]]] = {}
     for key in multidict:
-        if len(multidict.getlist(key)) > 1:
+        if model is not None and is_list_item(key, model):
+            res[key] = multidict.getlist(key)
+        elif len(multidict.getlist(key)) > 1:
             res[key] = multidict.getlist(key)
         else:
             res[key] = multidict.get(key)
 
     return res
+
+
+def is_list_item(key: str, model: OptionalModelType) -> bool:
+    """Check if this key is a list item in the model."""
+    if model is None:
+        return False
+    model_filed = model.__fields__.get(key)
+    if model_filed is None:
+        return False
+    return getattr(model_filed.annotation, "__origin__", None) is list
 
 
 def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:

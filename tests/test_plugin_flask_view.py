@@ -17,6 +17,7 @@ from .common import (
     OptionalAliasResp,
     Order,
     Query,
+    QueryList,
     Resp,
     RootResp,
     StrDict,
@@ -174,10 +175,15 @@ class NoResponseView(MethodView):
 
 
 class ListJsonView(MethodView):
-    @api.validate(
-        json=ListJSON,
-    )
+    @api.validate(json=ListJSON)
     def post(self):
+        return {}
+
+
+class QueryWithList(MethodView):
+    @api.validate(query=QueryList)
+    def get(self):
+        assert request.context.query.ids == [1, 2, 3]
         return {}
 
 
@@ -275,6 +281,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/list_json",
     view_func=ListJsonView.as_view("list_json_view"),
+)
+app.add_url_rule(
+    "/api/query_list",
+    view_func=QueryWithList.as_view("query_list_view"),
 )
 app.add_url_rule(
     "/api/return_list",

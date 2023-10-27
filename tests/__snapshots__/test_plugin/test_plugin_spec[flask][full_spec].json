@@ -177,6 +177,22 @@
         "title": "Order",
         "type": "integer"
       },
+      "QueryList.7068f62": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "title": "QueryList",
+        "type": "object"
+      },
       "Resp.7068f62": {
         "properties": {
           "name": {
@@ -355,6 +371,30 @@
         },
         "responses": {},
         "summary": "no_response <POST>",
+        "tags": []
+      }
+    },
+    "/api/query_list": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_query_list",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "ids",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "title": "Ids",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {},
+        "summary": "query_list <GET>",
         "tags": []
       }
     },
