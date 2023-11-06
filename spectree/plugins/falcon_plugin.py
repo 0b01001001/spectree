@@ -225,7 +225,7 @@ class FalconPlugin(BasePlugin):
         if req_validation_error:
             return
 
-        func(*args, **kwargs)
+        result = func(*args, **kwargs)
 
         if not self._data_set_manually(_resp) and not skip_validation and resp:
             try:
@@ -242,6 +242,8 @@ class FalconPlugin(BasePlugin):
                 _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)
+
+        return result
 
     @staticmethod
     def _data_set_manually(resp):
@@ -325,7 +327,11 @@ class FalconAsgiPlugin(FalconPlugin):
         if req_validation_error:
             return
 
-        await func(*args, **kwargs)
+        result = (
+            await func(*args, **kwargs)
+            if inspect.iscoroutinefunction(func)
+            else func(*args, **kwargs)
+        )
 
         if not self._data_set_manually(_resp) and not skip_validation and resp:
             try:
@@ -342,3 +348,5 @@ class FalconAsgiPlugin(FalconPlugin):
                 _resp.media = response_validation_result.payload
 
         after(_req, _resp, resp_validation_error, _self)
+
+        return result
