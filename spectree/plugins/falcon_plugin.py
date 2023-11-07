@@ -243,6 +243,8 @@ class FalconPlugin(BasePlugin):
 
         after(_req, _resp, resp_validation_error, _self)
 
+        # `falcon` doesn't use this return value. However, some users may have
+        # their own processing logics that depend on this return value.
         return result
 
     @staticmethod
