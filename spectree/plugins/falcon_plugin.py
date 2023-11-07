@@ -223,7 +223,7 @@ class FalconPlugin(BasePlugin):
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
-            return
+            return None
 
         result = func(*args, **kwargs)
 
@@ -327,7 +327,7 @@ class FalconAsgiPlugin(FalconPlugin):
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
-            return
+            return None
 
         result = (
             await func(*args, **kwargs)
