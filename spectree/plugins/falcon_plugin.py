@@ -223,7 +223,7 @@ class FalconPlugin(BasePlugin):
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
-            return
+            return None
 
         result = func(*args, **kwargs)
 
@@ -243,6 +243,8 @@ class FalconPlugin(BasePlugin):
 
         after(_req, _resp, resp_validation_error, _self)
 
+        # `falcon` doesn't use this return value. However, some users may have
+        # their own processing logics that depend on this return value.
         return result
 
     @staticmethod
@@ -325,7 +327,7 @@ class FalconAsgiPlugin(FalconPlugin):
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
-            return
+            return None
 
         result = (
             await func(*args, **kwargs)
