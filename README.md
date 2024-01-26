@@ -9,6 +9,8 @@
 
 Yet another library to generate OpenAPI documents and validate requests & responses with Python annotations.
 
+If all you need is a framework-agnostic library that can generate OpenAPI document, check [defspec](https://github.com/kemingy/defspec/).
+
 ## Features
 
 * Less boilerplate code, only annotations, no need for YAML :sparkles:
