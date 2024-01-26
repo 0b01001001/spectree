@@ -188,5 +188,5 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
   </body>
-</html>"""
+</html>""",
 }

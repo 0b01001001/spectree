@@ -42,6 +42,7 @@ publish: package
 
 format:
 	@ruff format ${SOURCE_FILES}
+	@ruff check --fix ${PY_SOURCE}
 
 lint:
 	@ruff check ${SOURCE_FILES}
