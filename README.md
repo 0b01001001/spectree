@@ -14,7 +14,7 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
 ## Features
 
 * Less boilerplate code, only annotations, no need for YAML :sparkles:
-* Generate API document with [Redoc UI](https://github.com/Redocly/redoc) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
+* Generate API document with [Redoc UI](https://github.com/Redocly/redoc), [Scalar UI](https://github.com/scalar/scalar) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) :wink:
   * If you're using Pydantic V2, you will need to import the `BaseModel` from `pydantic.v1` to make it compatible
 * Current support:
