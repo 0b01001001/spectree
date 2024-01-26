@@ -36,37 +36,17 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Swagger UI</title>
-        <link rel="stylesheet" type="text/css"
-        href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css" >
-        <style>
-        html
-        {{
-            box-sizing: border-box;
-            overflow: -moz-scrollbars-vertical;
-            overflow-y: scroll;
-        }}
-
-        *,
-        *:before,
-        *:after
-        {{
-            box-sizing: inherit;
-        }}
-
-        body
-        {{
-            margin:0;
-            background: #fafafa;
-        }}
-        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="SwaggerUI"/>
+        <title>SwaggerUI</title>
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
     </head>
 
     <body>
         <div id="swagger-ui"></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-bundle.js" crossorigin></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-standalone-preset.js" crossorigin></script>
         <script>
         window.onload = function() {{
         var full = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
@@ -177,5 +157,36 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
     }});
 </script>
 </body>
+</html>""",
+    "scalar": """
+<!doctype html>
+<html>
+  <head>
+    <title>API Reference</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+    <style>
+      body {{
+        margin: 0;
+      }}
+    </style>
+  </head>
+  <body>
+    <script
+      id="api-reference"
+      data-url="{spec_url}">
+    </script>
+    <script>
+      var configuration = {{
+        theme: 'purple',
+      }}
+
+      var apiReference = document.getElementById('api-reference')
+      apiReference.dataset.configuration = JSON.stringify(configuration)
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
 </html>""",
 }

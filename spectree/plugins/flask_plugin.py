@@ -50,10 +50,10 @@ class FlaskPlugin(BasePlugin):
             func = current_app.view_functions[route.endpoint]
 
         # view class: https://flask.palletsprojects.com/en/1.1.x/views/
-        if getattr(func, "view_class", None):
-            cls = func.view_class
+        view_cls = getattr(func, "view_class", None)
+        if view_cls:
             for method in route.methods:
-                view = getattr(cls, method.lower(), None)
+                view = getattr(view_cls, method.lower(), None)
                 if view:
                     yield method, view
         else:
