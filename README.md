@@ -51,7 +51,7 @@ Check the [examples](examples) folder.
    * falcon: `req.context`
    * starlette: `request.context`
 5. register to the web application `api.register(app)`
-6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger`
+6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger` or `/apidoc/scalar`
 
 If the request doesn't pass the validation, it will return a 422 with a JSON error message(ctx, loc, msg, type).
 
