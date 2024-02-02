@@ -68,6 +68,7 @@ class SpecTree:
         validation_error_model: Optional[ModelType] = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
+        publish_apidoc: bool = True,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
@@ -78,6 +79,7 @@ class SpecTree:
         self.validation_error_model = validation_error_model or ValidationError
         self.config: Configuration = Configuration.parse_obj(kwargs)
         self.backend_name = backend_name
+        self.publish_apidoc = publish_apidoc
         if backend:
             self.backend = backend(self)
         else:
@@ -96,7 +98,8 @@ class SpecTree:
         init step.
         """
         self.app = app
-        self.backend.register_route(self.app)
+        if self.publish_apidoc:
+            self.backend.register_route(self.app)
 
     @property
     def spec(self):
