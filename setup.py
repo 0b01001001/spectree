@@ -14,7 +14,7 @@ setup(
         "falcon": ["falcon>=3.0.0"],
         "starlette": ["starlette[full]"],
         "dev": [
-            "pytest~=7.1",
+            "pytest>=7.1,<9.0",
             "ruff>=0.1.3",
             "mypy>=0.971",
             "syrupy>=4.0.0",
