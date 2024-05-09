@@ -22,6 +22,9 @@ from .common import (
     get_root_resp_data,
 )
 
+# import tests to execute
+from .quart_imports import *  # NOQA
+
 
 def before_handler(req, resp, err, _):
     if err:

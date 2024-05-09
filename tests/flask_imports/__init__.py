@@ -1,4 +1,9 @@
-from .dry_plugin_flask import (
+import pytest
+
+# Enable pytest assertion rewriting for dry module. Must come before module is imported.
+pytest.register_assert_rewrite("tests.flask_imports.dry_plugin_flask")
+
+from .dry_plugin_flask import (  # noqa: E402
     test_flask_doc,
     test_flask_list_json_request,
     test_flask_make_response_get,
