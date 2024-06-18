@@ -221,6 +221,7 @@ class FlaskPlugin(BasePlugin):
                 )
             except ValidationError as err:
                 response = make_response(err.errors(), 500)
+                resp_validation_error = err
             else:
                 response = make_response(
                     (
