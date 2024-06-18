@@ -150,6 +150,7 @@ class StarlettePlugin(BasePlugin):
                 )
             except ValidationError as err:
                 response = JSONResponse(err.errors(), 500)
+                resp_validation_error = err
 
         after(request, response, resp_validation_error, instance)
 
