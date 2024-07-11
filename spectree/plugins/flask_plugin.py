@@ -21,8 +21,7 @@ class FlaskPlugin(BasePlugin):
     def find_routes(self):
         for rule in current_app.url_map.iter_rules():
             if any(
-                str(rule).startswith(path)
-                for path in (f"/{self.config.path}", "/static")
+                str(rule).startswith(path) for path in (self.config.doc_root, "/static")
             ):
                 continue
             if rule.endpoint.startswith("openapi"):
@@ -258,13 +257,13 @@ class FlaskPlugin(BasePlugin):
 
                 return self.config.page_templates[ui].format(
                     spec_url=spec_url,
-                    spec_path=self.config.path,
+                    spec_path=self.config.doc_root,
                     **self.config.swagger_oauth2_config(),
                 )
 
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    rule=f"{self.config.join_doc_path(ui)}/",
                     endpoint=f"openapi_{self.config.path}_{ui.replace('.', '_')}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
@@ -273,11 +272,11 @@ class FlaskPlugin(BasePlugin):
         else:
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    rule=f"/{self.config.path}/{ui}/",
+                    rule=f"{self.config.join_doc_path(ui)}/",
                     endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: self.config.page_templates[ui].format(
                         spec_url=self.config.spec_url,
-                        spec_path=self.config.path,
+                        spec_path=self.config.doc_root,
                         **self.config.swagger_oauth2_config(),
                     ),
                 )

@@ -273,13 +273,13 @@ class QuartPlugin(BasePlugin):
 
                 return self.config.page_templates[ui].format(
                     spec_url=spec_url,
-                    spec_path=self.config.path,
+                    spec_path=self.config.doc_root,
                     **self.config.swagger_oauth2_config(),
                 )
 
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    f"/{self.config.path}/{ui}/",
+                    f"{self.config.join_doc_path(ui)}/",
                     endpoint=f"openapi_{self.config.path}_{ui.replace('.', '_')}",
                     view_func=lambda ui=ui: gen_doc_page(ui),
                 )
@@ -288,11 +288,11 @@ class QuartPlugin(BasePlugin):
         else:
             for ui in self.config.page_templates:
                 app.add_url_rule(
-                    f"/{self.config.path}/{ui}/",
+                    f"{self.config.join_doc_path(ui)}/",
                     endpoint=f"openapi_{self.config.path}_{ui}",
                     view_func=lambda ui=ui: self.config.page_templates[ui].format(
                         spec_url=self.config.spec_url,
-                        spec_path=self.config.path,
+                        spec_path=self.config.doc_root,
                         **self.config.swagger_oauth2_config(),
                     ),
                 )
