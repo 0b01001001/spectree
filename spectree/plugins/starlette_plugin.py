@@ -197,9 +197,7 @@ class StarlettePlugin(BasePlugin):
         return routes
 
     def bypass(self, func, method):
-        if method in ["HEAD", "OPTIONS"]:
-            return True
-        return False
+        return method in ["HEAD", "OPTIONS"]
 
     def parse_func(self, route):
         for method in route.methods or ["GET"]:

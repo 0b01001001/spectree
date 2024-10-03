@@ -7,7 +7,9 @@ from tests.common import UserXmlData
 
 @pytest.mark.parametrize("response_format", ["json", "xml"])
 def test_quart_skip_validation(client, response_format: str):
-    client.set_cookie("quart", "pub", "abcdefg")
+    client.set_cookie(
+        "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
 
     resp = asyncio.run(
         client.post(
@@ -32,7 +34,9 @@ def test_quart_skip_validation(client, response_format: str):
 
 
 def test_quart_return_model(client):
-    client.set_cookie("quart", "pub", "abcdefg")
+    client.set_cookie(
+        "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
 
     resp = asyncio.run(
         client.post(
@@ -129,7 +133,9 @@ def test_quart_validate(client):
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
 
-    client.set_cookie("quart", "pub", "abcdefg")
+    client.set_cookie(
+        "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
     for fragment in ("user", "user_annotated"):
         resp = asyncio.run(
             client.post(

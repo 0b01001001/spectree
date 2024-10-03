@@ -40,7 +40,7 @@ def test_config_contact():
         Configuration(contact={"name": "John", "url": "url"})
 
 
-@pytest.mark.skipif(EmailFieldType == str, reason="email-validator is not installled")
+@pytest.mark.skipif(EmailFieldType is str, reason="email-validator is not installled")
 def test_config_contact_invalid_email():
     with pytest.raises(ValidationError):
         Configuration(contact={"name": "John", "email": "hello"})

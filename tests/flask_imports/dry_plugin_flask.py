@@ -9,7 +9,9 @@ from tests.common import JSON, UserXmlData
 
 @pytest.mark.parametrize("response_format", ["json", "xml"])
 def test_flask_skip_validation(client, response_format: str):
-    client.set_cookie(key="pub", value="abcdefg")
+    client.set_cookie(
+        key="pub", value="abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
     assert response_format in ("json", "xml")
     resp = client.post(
         f"/api/user_skip/flask?order=1&response_format={response_format}",
@@ -31,7 +33,9 @@ def test_flask_skip_validation(client, response_format: str):
 
 
 def test_flask_return_model(client):
-    client.set_cookie(key="pub", value="abcdefg")
+    client.set_cookie(
+        key="pub", value="abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
 
     resp = client.post(
         "/api/user_model/flask?order=1",
@@ -134,7 +138,9 @@ def test_flask_validate_basic(client):
     ],
 )
 def test_flask_validate_post_data(client, fragment):
-    client.set_cookie(key="pub", value="abcdefg")
+    client.set_cookie(
+        key="pub", value="abcdefg", secure=True, httponly=True, samesite="Strict"
+    )
     resp = client.post(
         f"/api/{fragment}/flask?order=1",
         json=dict(name="flask", limit=10),

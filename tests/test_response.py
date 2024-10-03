@@ -43,7 +43,7 @@ def test_init_response():
     expect_400_model = gen_list_model(JSON)
     assert resp.has_model()
     assert resp.find_model(200) is None
-    assert type(resp.find_model(400)) == type(expect_400_model) and get_type_hints(
+    assert type(resp.find_model(400)) is type(expect_400_model) and get_type_hints(
         resp.find_model(400)
     ) == get_type_hints(expect_400_model)
     assert resp.find_model(401) == DemoModel
