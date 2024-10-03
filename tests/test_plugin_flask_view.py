@@ -212,6 +212,9 @@ class ReturnMakeResponseView(MethodView):
         response.set_cookie(
             key="test_cookie",
             value=model_data.name,
+            secure=True,
+            httponly=True,
+            samesite="Strict",
         )
         return response
 
@@ -229,6 +232,9 @@ class ReturnMakeResponseView(MethodView):
         response.set_cookie(
             key="test_cookie",
             value=model_data.name,
+            secure=True,
+            httponly=True,
+            samesite="Strict",
         )
         return response
 

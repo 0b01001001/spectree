@@ -211,6 +211,9 @@ def return_make_response_post():
     response.set_cookie(
         key="test_cookie",
         value=model_data.name,
+        secure=True,
+        httponly=True,
+        samesite="Strict",
     )
     return response
 
@@ -226,6 +229,9 @@ def return_make_response_get():
     response.set_cookie(
         key="test_cookie",
         value=model_data.name,
+        secure=True,
+        httponly=True,
+        samesite="Strict",
     )
     return response
 

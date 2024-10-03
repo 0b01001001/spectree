@@ -208,7 +208,8 @@ def test_flask_make_response_post(client):
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
     assert resp.headers.get("lang") == "en-US"
     cookie_result = re.match(
-        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
+        r"^test_cookie=\"((\w+\s?){3})\"; Secure; HttpOnly; Path=/; SameSite=Strict$",
+        resp.headers.get("Set-Cookie"),
     )
     assert cookie_result.group(1) == payload.name
 
@@ -227,7 +228,8 @@ def test_flask_make_response_get(client):
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
     assert resp.headers.get("lang") == "en-US"
     cookie_result = re.match(
-        r"^test_cookie=\"((\w+\s?){3})\";\sPath=/$", resp.headers.get("Set-Cookie")
+        r"^test_cookie=\"((\w+\s?){3})\"; Secure; HttpOnly; Path=/; SameSite=Strict$",
+        resp.headers.get("Set-Cookie"),
     )
     assert cookie_result.group(1) == payload.name
 
