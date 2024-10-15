@@ -1,9 +1,12 @@
+import itertools
+
 import pytest
 
 from spectree.response import Response
 from spectree.spec import SpecTree
 from spectree.utils import (
     has_model,
+    join_path,
     parse_code,
     parse_comments,
     parse_name,
@@ -279,3 +282,29 @@ def test_parse_params_with_route_param_keywords():
             "explode": True,
         },
     ]
+
+
+@pytest.mark.parametrize(
+    "paths, expected",
+    [
+        pytest.param([""], "", id="empty-string"),
+        pytest.param(["", ""], "", id="multiple-empty-string"),
+        pytest.param([" "], " ", id="space"),
+        pytest.param(["/"], "", id="slash"),
+        pytest.param(["/", "/"], "", id="multiple-slash"),
+        pytest.param(["//"], "", id="double-slash"),
+        pytest.param(["dir1"], "dir1", id="single-path"),
+        pytest.param(["dir1", "dir2"], "dir1/dir2", id="multiple-paths"),
+    ]
+    + [
+        pytest.param(paths, "dir1/dir2", id=f"leading-trailing-slashes-{num}")
+        for num, paths in enumerate(
+            itertools.product(
+                ["dir1", "/dir1", "dir1/", "/dir1/"],
+                ["dir2", "/dir2", "dir2/", "/dir2/"],
+            )
+        )
+    ],
+)
+def test_join_path(paths, expected):
+    assert join_path(paths) == expected

@@ -76,11 +76,11 @@ class FalconPlugin(BasePlugin):
         )
         for ui in self.config.page_templates:
             self.app.add_route(
-                f"/{self.config.path}/{ui}",
+                self.config.join_doc_path(ui),
                 self.DOC_PAGE_ROUTE_CLASS(
                     self.config.page_templates[ui],
                     spec_url=self.config.spec_url,
-                    spec_path=self.config.path,
+                    spec_path=self.config.doc_root,
                     **self.config.swagger_oauth2_config(),
                 ),
             )
