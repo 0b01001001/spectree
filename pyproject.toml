@@ -43,6 +43,9 @@ falcon = [
 flask = [
     "flask",
 ]
+quart = [
+    "quart"
+]
 starlette = [
     "starlette[full]",
 ]
