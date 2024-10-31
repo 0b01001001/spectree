@@ -79,7 +79,7 @@ class FalconPlugin(BasePlugin):
                 f"/{self.config.path}/{ui}",
                 self.DOC_PAGE_ROUTE_CLASS(
                     self.config.page_templates[ui],
-                    spec_url=self.config.spec_url,
+                    spec_url=self.config.filename,
                     spec_path=self.config.path,
                     **self.config.swagger_oauth2_config(),
                 ),
