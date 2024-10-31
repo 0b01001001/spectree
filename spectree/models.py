@@ -125,7 +125,7 @@ class SecuritySchemeData(BaseModel):
 
     class Config:
         validate_assignment = True
-        allow_population_by_field_name=True
+        allow_population_by_field_name = True
 
 
 class SecurityScheme(BaseModel):
