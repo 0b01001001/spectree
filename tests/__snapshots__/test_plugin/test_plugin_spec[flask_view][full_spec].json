@@ -892,11 +892,6 @@
               "schema": {
                 "$ref": "#/components/schemas/JSON.7068f62"
               }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Form.7068f62"
-              }
             }
           }
         },

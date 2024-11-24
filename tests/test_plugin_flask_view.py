@@ -113,19 +113,18 @@ class UserSkip(MethodView):
         after=api_after_handler,
         skip_validation=True,
     )
-    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+    def post(self, name):
         response_format = request.args.get("response_format")
         assert response_format in ("json", "xml")
-        data_src = json or form
-        score = [randint(0, int(data_src.limit)) for _ in range(5)]
-        score.sort(reverse=(query.order == Order.desc))
-        assert cookies.pub == "abcdefg"
+        data_src = request.get_json() or request.get_data()
+        score = [randint(0, int(data_src["limit"])) for _ in range(5)]
+        score.sort(reverse=(int(request.args["order"]) == Order.desc))
         assert request.cookies["pub"] == "abcdefg"
         if response_format == "json":
-            return jsonify(name=request.context.json.name, x_score=score)
+            return jsonify(name=name, x_score=score)
         else:
             return app.response_class(
-                UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+                UserXmlData(name=name, score=score).dump_xml(),
                 content_type="text/xml",
             )
 

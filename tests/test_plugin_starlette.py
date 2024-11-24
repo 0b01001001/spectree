@@ -82,7 +82,7 @@ async def file_upload(request):
     resp=Response(HTTP_200=Resp, HTTP_401=None),
     tags=[api_tag, "test"],
 )
-async def user_score(request):
+async def user_score(request, json: JSON, query: Query):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
@@ -112,15 +112,15 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
 )
 async def user_score_skip(request):
     response_format = request.query_params.get("response_format")
-    score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=request.context.query.order == Order.desc)
-    assert request.context.cookies.pub == "abcdefg"
+    json = await request.json()
+    score = [randint(0, json.get("limit")) for _ in range(5)]
+    score.sort(reverse=int(request.query_params.get("order")) == Order.desc)
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
-        return JSONResponse({"name": request.context.json.name, "x_score": score})
+        return JSONResponse({"name": json.get("name"), "x_score": score})
     else:
         return StarletteResponse(
-            UserXmlData(name=request.context.json.name, score=score).dump_xml(),
+            UserXmlData(name=json.get("name"), score=score).dump_xml(),
             media_type="text/xml",
         )
 

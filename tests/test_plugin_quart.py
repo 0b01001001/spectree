@@ -104,17 +104,15 @@ async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies)
 async def user_score_skip_validation(name):
     response_format = request.args.get("response_format")
     assert response_format in ("json", "xml")
-    score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=request.context.query.order == Order.desc)
-    assert request.context.cookies.pub == "abcdefg"
+    json = request.get_json()
+    score = [randint(0, json.get("limit")) for _ in range(5)]
+    score.sort(reverse=request.args.get("order") == Order.desc)
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
-        return jsonify(name=request.context.json.name, x_score=score)
+        return jsonify(name=json.get("name"), x_score=score)
     else:
         return app.response_class(
-            response=UserXmlData(
-                name=request.context.json.name, score=score
-            ).dump_xml(),
+            response=UserXmlData(name=json.get("name"), score=score).dump_xml(),
             content_type="text/xml",
         )
 

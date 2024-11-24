@@ -190,18 +190,24 @@ class QuartPlugin(BasePlugin):
         **kwargs: Any,
     ):
         response, req_validation_error, resp_validation_error = None, None, None
-        try:
-            await self.request_validation(request, query, json, form, headers, cookies)
-            if self.config.annotations:
-                annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
-                    if annotations.get(name):
-                        kwargs[name] = getattr(request.context, name)
-        except ValidationError as err:
-            req_validation_error = err
-            response = await make_response(
-                jsonify(err.errors()), validation_error_status
-            )
+        if not skip_validation:
+            try:
+                await self.request_validation(
+                    request, query, json, form, headers, cookies
+                )
+            except ValidationError as err:
+                req_validation_error = err
+                response = await make_response(
+                    jsonify(err.errors()), validation_error_status
+                )
+
+        if self.config.annotations:
+            annotations = get_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(
+                        getattr(request, "context", None), name, None
+                    )
 
         before(request, response, req_validation_error, None)
         if req_validation_error:

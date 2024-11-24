@@ -1,3 +1,4 @@
+import warnings
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from enum import Enum, IntEnum
@@ -6,6 +7,9 @@ from typing import Any, Dict, List, Optional, Union, cast
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import BaseModel, Field, root_validator
 from spectree.utils import hash_module_path
+
+# suppress warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
