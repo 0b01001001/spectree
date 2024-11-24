@@ -64,19 +64,14 @@ spec = SpecTree(
 
 
 @app.route("/ping", methods=["POST"])
-@spec.validate(
-    json=Req,
-)
-def ping():
+@spec.validate()
+def ping(json: Req):
     return "pong"
 
 
 @app.route("/ping/oauth", methods=["POST"])
-@spec.validate(
-    json=Req,
-    security=[{"auth_oauth2": ["read"]}],
-)
-def oauth_only():
+@spec.validate(security=[{"auth_oauth2": ["read"]}])
+def oauth_only(json: Req):
     return "pong"
 
 

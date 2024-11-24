@@ -16,7 +16,7 @@ from typing import (
     Union,
 )
 
-from ._pydantic import BaseModel, ValidationError
+from ._pydantic import BaseModel, ValidationError, is_pydantic_model
 from ._types import (
     ModelType,
     MultiDict,
@@ -255,10 +255,9 @@ def get_model_schema(
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
         request or response
     """
-    assert issubclass(model, BaseModel)
+    assert is_pydantic_model(model), f"{model} is not a pydantic model"
 
     nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
-
     return model.schema(ref_template=f"#/components/schemas/{nested_key}")
 
 

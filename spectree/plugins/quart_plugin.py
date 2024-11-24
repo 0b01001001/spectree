@@ -232,7 +232,7 @@ class QuartPlugin(BasePlugin):
             # no other status code
             if status == 200:
                 status = resp_status
-            additional_headers.append(resp_headers)
+            additional_headers.update(resp_headers)
 
         if not skip_validation and resp:
             try:

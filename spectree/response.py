@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-from ._pydantic import BaseModel
+from ._pydantic import is_pydantic_model
 from ._types import BaseModelSubclassType, ModelType, NamingStrategy, OptionalModelType
 from .utils import gen_list_model, get_model_key, parse_code
 
@@ -84,7 +84,9 @@ class Response:
                     list_item_type = model.__args__[0]  # type: ignore
                     model = gen_list_model(list_item_type)
                     self.code_list_item_types[code] = list_item_type
-                assert issubclass(model, BaseModel), "invalid `pydantic.BaseModel`"
+                assert is_pydantic_model(
+                    model
+                ), f"invalid `pydantic.BaseModel`: {model}"
                 assert description is None or isinstance(
                     description, str
                 ), "invalid HTTP status code description"

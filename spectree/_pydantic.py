@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
@@ -33,6 +33,7 @@ if PYDANTIC2:
         root_validator,
         validator,
     )
+    from pydantic_core import core_schema  # noqa
 else:
     from pydantic import (  # type: ignore[no-redef,assignment]
         AnyUrl,
@@ -44,6 +45,80 @@ else:
         root_validator,
         validator,
     )
+
+
+@runtime_checkable
+class PydanticModelProtocol(Protocol):
+    def dict(
+        self,
+        *,
+        include=None,
+        exclude=None,
+        by_alias=False,
+        skip_defaults=None,
+        exclude_unset=False,
+        exclude_defaults=False,
+        exclude_none=False,
+    ):
+        pass
+
+    def json(
+        self,
+        *,
+        include=None,
+        exclude=None,
+        by_alias=False,
+        skip_defaults=None,
+        exclude_unset=False,
+        exclude_defaults=False,
+        exclude_none=False,
+        encoder=None,
+        models_as_dict=True,
+        **dumps_kwargs,
+    ):
+        pass
+
+    @classmethod
+    def parse_obj(cls, obj):
+        pass
+
+    @classmethod
+    def parse_raw(
+        cls, b, *, content_type=None, encoding="utf8", proto=None, allow_pickle=False
+    ):
+        pass
+
+    @classmethod
+    def parse_file(
+        cls, path, *, content_type=None, encoding="utf8", proto=None, allow_pickle=False
+    ):
+        pass
+
+    @classmethod
+    def construct(cls, _fields_set=None, **values):
+        pass
+
+    @classmethod
+    def copy(cls, *, include=None, exclude=None, update=None, deep=False):
+        pass
+
+    @classmethod
+    def schema(cls, by_alias=True, ref_template="#/definitions/{model}"):
+        pass
+
+    @classmethod
+    def schema_json(
+        cls, *, by_alias=True, ref_template="#/definitions/{model}", **dumps_kwargs
+    ):
+        pass
+
+    @classmethod
+    def validate(cls, value):
+        pass
+
+
+def is_pydantic_model(t: Any) -> bool:
+    return issubclass(t, PydanticModelProtocol)
 
 
 def is_base_model(t: Any) -> bool:

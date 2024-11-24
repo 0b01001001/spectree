@@ -13,6 +13,7 @@ logger = logging.getLogger()
 
 spec = SpecTree(
     "falcon",
+    annotations=True,
     title="Demo Service",
     version="0.1.2",
     description="This is a demo service.",
@@ -79,18 +80,16 @@ class Classification:
         """
         resp.media = {"msg": f"hello from {source} to {target}"}
 
-    @spec.validate(
-        query=Query, json=Data, resp=Response(HTTP_200=Resp, HTTP_403=BadLuck)
-    )
-    def on_post(self, req, resp, source, target):
+    @spec.validate(resp=Response(HTTP_200=Resp, HTTP_403=BadLuck))
+    def on_post(self, req, resp, source, target, query: Query, json: Data):
         """
         post demo
 
-        demo for `query`, `data`, `resp`, `x`
+        demo for `query`, `data`, `resp`
         """
         logger.debug("%s => %s", source, target)
-        logger.info(req.context.query)
-        logger.info(req.context.json)
+        logger.info(query)
+        logger.info(json)
         if random() < 0.5:
             resp.status = falcon.HTTP_403
             resp.media = {"loc": "unknown", "msg": "bad luck", "typ": "random"}
@@ -103,14 +102,14 @@ class FileUpload:
     file-handling demo
     """
 
-    @spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-    def on_post(self, req, resp):
+    @spec.validate(resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+    def on_post(self, req, resp, form: File):
         """
         post multipart/form-data demo
 
         demo for 'form'
         """
-        file = req.context.form.file
+        file = form.file
         resp.media = {"filename": file.filename, "type": file.type}
 
 

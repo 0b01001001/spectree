@@ -8,7 +8,7 @@ from starlette.routing import Mount, Route
 from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
 
-spec = SpecTree("starlette")
+spec = SpecTree("starlette", annotations=True)
 
 
 class Resp(BaseModel):
@@ -30,27 +30,27 @@ class Data(BaseModel):
     vip: bool
 
 
-@spec.validate(query=Query, json=Data, resp=Response(HTTP_200=Resp), tags=["api"])
-async def predict(request):
+@spec.validate(resp=Response(HTTP_200=Resp), tags=["api"])
+async def predict(request, query: Query, json: Data):
     """
     async api
 
     descriptions about this function
     """
     print(request.path_params)
-    print(request.context)
+    print(query, json)
     return JSONResponse({"label": 5, "score": 0.5})
     # return PydanticResponse(Resp(label=5, score=0.5))
 
 
-@spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-async def file_upload(request):
+@spec.validate(resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+async def file_upload(request, form: File):
     """
     post multipart/form-data demo
 
     demo for 'form'
     """
-    file = request.context.form.file
+    file = form.file
     return JSONResponse({"filename": file.filename, "type": file.type})
 
 
