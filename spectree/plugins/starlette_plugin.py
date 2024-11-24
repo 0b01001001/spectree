@@ -105,24 +105,32 @@ class StarlettePlugin(BasePlugin):
         response = None
         req_validation_error = resp_validation_error = json_decode_error = None
 
-        try:
-            await self.request_validation(request, query, json, form, headers, cookies)
-            if self.config.annotations:
-                annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
-                    if annotations.get(name):
-                        kwargs[name] = getattr(request.context, name)
-        except ValidationError as err:
-            req_validation_error = err
-            response = JSONResponse(err.errors(), validation_error_status)
-        except JSONDecodeError as err:
-            json_decode_error = err
-            self.logger.info(
-                "%s Validation Error",
-                validation_error_status,
-                extra={"spectree_json_decode_error": str(err)},
-            )
-            response = JSONResponse({"error_msg": str(err)}, validation_error_status)
+        if not skip_validation:
+            try:
+                await self.request_validation(
+                    request, query, json, form, headers, cookies
+                )
+            except ValidationError as err:
+                req_validation_error = err
+                response = JSONResponse(err.errors(), validation_error_status)
+            except JSONDecodeError as err:
+                json_decode_error = err
+                self.logger.info(
+                    "%s Validation Error",
+                    validation_error_status,
+                    extra={"spectree_json_decode_error": str(err)},
+                )
+                response = JSONResponse(
+                    {"error_msg": str(err)}, validation_error_status
+                )
+
+        if self.config.annotations:
+            annotations = get_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(
+                        getattr(request, "context", None), name, None
+                    )
 
         before(request, response, req_validation_error, instance)
         if req_validation_error or json_decode_error:

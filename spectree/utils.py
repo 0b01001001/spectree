@@ -113,7 +113,7 @@ def parse_params(
     attr_to_spec_key = {"query": "query", "headers": "header", "cookies": "cookie"}
     route_param_keywords = ("explode", "style", "allowReserved")
 
-    for attr in attr_to_spec_key:
+    for attr, position in attr_to_spec_key.items():
         if hasattr(func, attr):
             model = models[getattr(func, attr)]
             properties = model.get("properties", {model.get("title"): model})
@@ -125,7 +125,7 @@ def parse_params(
                 params.append(
                     {
                         "name": name,
-                        "in": attr_to_spec_key[attr],
+                        "in": position,
                         "schema": schema,
                         "required": name in model.get("required", []),
                         "description": schema.get("description", ""),

@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "1.2.11"
+version = "1.3.0"
 dynamic = []
 description = "generate OpenAPI document and validate request&response with Python annotations."
 readme = "README.md"
@@ -67,7 +67,7 @@ target-version = "py38"
 line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "B", "G", "I", "SIM", "TID", "PL", "RUF"]
-ignore = ["E501", "PLR2004", "RUF012"]
+ignore = ["E501", "PLR2004", "RUF012", "B009"]
 [tool.ruff.lint.pylint]
 max-args = 12
 max-branches = 15

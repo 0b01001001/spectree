@@ -263,7 +263,11 @@ You can change the `validation_error_status` in SpecTree (global) or a specific 
 
 > How can I skip the validation?
 
-Add `skip_validation=True` to the decorator. For now, this only skip the response validation.
+Add `skip_validation=True` to the decorator.
+
+Before v1.3.0, this only skip the response validation.
+
+Starts from v1.3.0, this will skip all the validations. As an result, you won't be able to access the validated data from `context`.
 
 ```py
 @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)

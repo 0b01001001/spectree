@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
@@ -167,12 +168,22 @@ class SpecTree:
             in :meth:`spectree.spec.SpecTree`.
         :param path_parameter_descriptions: A dictionary of path parameter names and
             their description.
+        :param skip_validation: If set to `True`, the endpoint will skip
+            request / response validations.
         :param operation_id: a string override for operationId for the given endpoint
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
         if validation_error_status == 0:
             validation_error_status = self.validation_error_status
+
+        if self.config.annotations and skip_validation:
+            warnings.warn(
+                "`skip_validation` cannot be used with `annotations` enabled. The instances"
+                " of `json`, `headers`, `cookies`, etc. read from function will be `None`.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         def decorate_validation(func: Callable):
             # for sync framework

@@ -14,6 +14,7 @@ from .common import (
     Headers,
     ListJSON,
     OptionalAliasResp,
+    Order,
     Query,
     Resp,
     RootResp,
@@ -121,15 +122,14 @@ class UserScoreSkip:
     def on_post(self, req, resp, name, query: Query, json: JSON, cookies: Cookies):
         response_format = req.params.get("response_format")
         assert response_format in ("json", "xml")
-        score = [randint(0, req.context.json.limit) for _ in range(5)]
-        score.sort(reverse=req.context.query.order)
-        assert req.context.cookies.pub == "abcdefg"
+        score = [randint(0, req.media.get("limit")) for _ in range(5)]
+        score.sort(reverse=int(req.params.get("order")) == Order.desc)
         assert req.cookies["pub"] == "abcdefg"
         if response_format == "json":
-            resp.media = {"name": req.context.json.name, "x_score": score}
+            resp.media = {"name": req.media.get("name"), "x_score": score}
         else:
             resp.content_type = falcon.MEDIA_XML
-            resp.text = UserXmlData(name=req.context.json.name, score=score).dump_xml()
+            resp.text = UserXmlData(name=req.media.get("name"), score=score).dump_xml()
 
 
 class UserScoreModel:

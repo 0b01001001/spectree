@@ -208,18 +208,20 @@ class FalconPlugin(BasePlugin):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
-        try:
-            self.request_validation(_req, query, json, form, headers, cookies)
-            if self.config.annotations:
-                annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
-                    if annotations.get(name):
-                        kwargs[name] = getattr(_req.context, name)
+        if not skip_validation:
+            try:
+                self.request_validation(_req, query, json, form, headers, cookies)
 
-        except ValidationError as err:
-            req_validation_error = err
-            _resp.status = f"{validation_error_status} Validation Error"
-            _resp.media = err.errors()
+            except ValidationError as err:
+                req_validation_error = err
+                _resp.status = f"{validation_error_status} Validation Error"
+                _resp.media = err.errors()
+
+        if self.config.annotations:
+            annotations = get_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(_req.context, name, None)
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
@@ -312,18 +314,20 @@ class FalconAsgiPlugin(FalconPlugin):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
         req_validation_error, resp_validation_error = None, None
-        try:
-            await self.request_validation(_req, query, json, form, headers, cookies)
-            if self.config.annotations:
-                annotations = get_type_hints(func)
-                for name in ("query", "json", "form", "headers", "cookies"):
-                    if annotations.get(name):
-                        kwargs[name] = getattr(_req.context, name)
+        if not skip_validation:
+            try:
+                await self.request_validation(_req, query, json, form, headers, cookies)
 
-        except ValidationError as err:
-            req_validation_error = err
-            _resp.status = f"{validation_error_status} Validation Error"
-            _resp.media = err.errors()
+            except ValidationError as err:
+                req_validation_error = err
+                _resp.status = f"{validation_error_status} Validation Error"
+                _resp.media = err.errors()
+
+        if self.config.annotations:
+            annotations = get_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(_req.context, name, None)
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
