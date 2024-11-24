@@ -14,6 +14,7 @@ from .common import (
     Headers,
     ListJSON,
     OptionalAliasResp,
+    Order,
     Query,
     Resp,
     RootResp,
@@ -122,7 +123,7 @@ class UserScoreSkip:
         response_format = req.params.get("response_format")
         assert response_format in ("json", "xml")
         score = [randint(0, req.media.get("limit")) for _ in range(5)]
-        score.sort(reverse=int(req.params.get("order")))
+        score.sort(reverse=int(req.params.get("order")) == Order.desc)
         assert req.cookies["pub"] == "abcdefg"
         if response_format == "json":
             resp.media = {"name": req.media.get("name"), "x_score": score}
