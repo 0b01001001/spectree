@@ -69,7 +69,7 @@ class Configuration(BaseSettings):
     #: OpenAPI file route path suffix (i.e. /apidoc/openapi.json)
     filename: str = "openapi.json"
     #: OpenAPI version (doesn't affect anything)
-    openapi_version: str = "3.0.3"
+    openapi_version: str = "3.1.0"
     #: the mode of the SpecTree validator :class:`ModeEnum`
     mode: ModeEnum = ModeEnum.normal
     #: A dictionary of documentation page templates. The key is the
@@ -79,7 +79,7 @@ class Configuration(BaseSettings):
     #: the rendered documentation page
     page_templates: Dict[str, str] = DEFAULT_PAGE_TEMPLATES
     #: opt-in type annotation feature, see the README examples
-    annotations: bool = False
+    annotations: bool = True
     #: servers section of OAS :py:class:`spectree.models.Server`
     servers: Optional[List[Server]] = []
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`

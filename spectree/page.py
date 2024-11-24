@@ -10,6 +10,7 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         <!-- needed for adaptive design -->
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>📄</text></svg>">
         <link href=
         "https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700"
         rel="stylesheet">
@@ -39,14 +40,15 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="SwaggerUI"/>
         <title>SwaggerUI</title>
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>📄</text></svg>">
     </head>
 
     <body>
         <div id="swagger-ui"></div>
 
-        <script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-bundle.js" crossorigin></script>
-        <script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-standalone-preset.js" crossorigin></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
+        <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js" crossorigin></script>
         <script>
         window.onload = function() {{
         var full = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
@@ -54,17 +56,13 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         const ui = SwaggerUIBundle({{
             url: "{spec_url}",
             dom_id: '#swagger-ui',
-            deepLinking: true,
             presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIStandalonePreset
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
             ],
-            plugins: [
-            SwaggerUIBundle.plugins.DownloadUrl
-            ],
+            layout: "StandaloneLayout",
             oauth2RedirectUrl: full + "/{spec_path}/swagger/oauth2-redirect.html",
-            layout: "StandaloneLayout"
-        }})
+        }});
         ui.initOAuth({{
             clientId: "{client_id}",
             clientSecret: "{client_secret}",
@@ -73,11 +71,11 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
             scopeSeparator: "{scope_separator}",
             additionalQueryStringParams: {additional_query_string_params},
             useBasicAuthenticationWithAccessCodeGrant: {use_basic_authentication_with_access_code_grant},
-            usePkceWithAuthorizationCodeGrant: {use_pkce_with_authorization_code_grant}
-        }})
+            usePkceWithAuthorizationCodeGrant: {use_pkce_with_authorization_code_grant},
+        }});
         // End Swagger UI call region
 
-        window.ui = ui
+        window.ui = ui;
         }}
     </script>
     </body>
@@ -172,6 +170,7 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
         margin: 0;
       }}
     </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>📄</text></svg>">
   </head>
   <body>
     <script

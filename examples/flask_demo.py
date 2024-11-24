@@ -1,7 +1,7 @@
 from enum import Enum
 from random import random
 
-from flask import Flask, abort, jsonify, request
+from flask import Flask, abort, jsonify
 from flask.views import MethodView
 from pydantic import BaseModel, Field
 
@@ -52,21 +52,16 @@ class Cookie(BaseModel):
 @app.route(
     "/api/predict/<string(length=2):source>/<string(length=2):target>", methods=["POST"]
 )
-@spec.validate(
-    query=Query, json=Data, resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"]
-)
-def predict(source, target):
+@spec.validate(resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"])
+def predict(source, target, query: Query, json: Data):
     """
     predict demo
 
-    demo for `query`, `data`, `resp`, `x`
-
-    query with
-    ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
+    demo for `query`, `data`, `resp`
     """
     print(f"=> from {source} to {target}")  # path
-    print(f"JSON: {request.context.json}")  # Data
-    print(f"Query: {request.context.query}")  # Query
+    print(f"JSON: {json}")  # Data
+    print(f"Query: {query}")  # Query
     if random() < 0.5:
         abort(403)
 
@@ -74,33 +69,29 @@ def predict(source, target):
 
 
 @app.route("/api/header", methods=["POST"])
-@spec.validate(
-    headers=Header, cookies=Cookie, resp=Response("HTTP_203"), tags=["test", "demo"]
-)
-def with_code_header():
+@spec.validate(resp=Response("HTTP_203"), tags=["test", "demo"])
+def with_code_header(headers: Header, cookies: Cookie):
     """
     demo for JSON with status code and header
-
-    query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
-    return jsonify(language=request.context.headers.Lang), 203, {"X": 233}
+    return jsonify(language=headers.Lang), 203, {"X": 233}
 
 
 @app.route("/api/file_upload", methods=["POST"])
-@spec.validate(form=File, resp=Response(HTTP_200=FileResp), tags=["file-upload"])
-def with_file():
+@spec.validate(resp=Response(HTTP_200=FileResp), tags=["file-upload"])
+def with_file(form: File):
     """
     post multipart/form-data demo
 
     demo for 'form'
     """
-    file = request.context.form.file
+    file = form.file
     return {"filename": file.filename, "type": file.content_type}
 
 
 class UserAPI(MethodView):
-    @spec.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
-    def post(self):
+    @spec.validate(resp=Response(HTTP_200=Resp), tags=["test"])
+    def post(self, json: Data):
         return jsonify(label=int(10 * random()), score=random())
 
 

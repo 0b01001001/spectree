@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence, Set
 
-from ._pydantic import BaseModel, Field, root_validator, validator
+from ._pydantic import PYDANTIC2, BaseModel, Field, root_validator, validator
 
 # OpenAPI names validation regexp
 OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
@@ -189,6 +189,19 @@ class BaseFile:
     @classmethod
     def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
         field_schema.update(format="binary", type="string")
+
+    # pydantic v2
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema: Dict[str, Any], _handler):
+        return {"format": "binary", "type": "string"}
+
+    # pydantic v2
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source_type, _handler):
+        if PYDANTIC2:
+            from ._pydantic import core_schema
+
+            return core_schema.with_info_plain_validator_function(cls.validate)
 
     @classmethod
     def validate(cls, value: Any):

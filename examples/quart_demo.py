@@ -2,13 +2,13 @@ from enum import Enum
 from random import random
 
 from pydantic import BaseModel, Field
-from quart import Quart, abort, jsonify, request
+from quart import Quart, abort, jsonify
 from quart.views import MethodView
 
 from spectree import Response, SpecTree
 
 app = Quart(__name__)
-spec = SpecTree("quart")
+spec = SpecTree("quart", annotations=True)
 
 
 class Query(BaseModel):
@@ -55,21 +55,16 @@ class Cookie(BaseModel):
 @app.route(
     "/api/predict/<string(length=2):source>/<string(length=2):target>", methods=["POST"]
 )
-@spec.validate(
-    query=Query, json=Data, resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"]
-)
-def predict(source, target):
+@spec.validate(resp=Response("HTTP_403", HTTP_200=Resp), tags=["model"])
+def predict(source, target, json: Data, query: Query):
     """
     predict demo
 
-    demo for `query`, `data`, `resp`, `x`
-
-    query with
-    ``http POST ':8000/api/predict/zh/en?text=hello' uid=xxx limit=5 vip=false ``
+    demo for `query`, `data`, `resp`
     """
     print(f"=> from {source} to {target}")  # path
-    print(f"JSON: {request.json}")  # Data
-    print(f"Query: {request.args}")  # Query
+    print(f"JSON: {json}")  # Data
+    print(f"Query: {query}")  # Query
     if random() < 0.5:
         abort(403)
 
@@ -77,21 +72,17 @@ def predict(source, target):
 
 
 @app.route("/api/header", methods=["POST"])
-@spec.validate(
-    headers=Header, cookies=Cookie, resp=Response("HTTP_203"), tags=["test", "demo"]
-)
-async def with_code_header():
+@spec.validate(resp=Response("HTTP_203"), tags=["test", "demo"])
+async def with_code_header(headers: Header, cookies: Cookie):
     """
     demo for JSON with status code and header
-
-    query with ``http POST :8000/api/header Lang:zh-CN Cookie:key=hello``
     """
-    return jsonify(language=request.headers.get("Lang")), 203, {"X": 233}
+    return jsonify(language=headers.get("Lang")), 203, {"X": 233}
 
 
 class UserAPI(MethodView):
-    @spec.validate(json=Data, resp=Response(HTTP_200=Resp), tags=["test"])
-    async def post(self):
+    @spec.validate(resp=Response(HTTP_200=Resp), tags=["test"])
+    async def post(self, json: Data):
         return jsonify(label=int(10 * random()), score=random())
         # return Resp(label=int(10 * random()), score=random())
 
