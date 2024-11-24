@@ -7,19 +7,19 @@ ROOT_FIELD = "__root__"
 
 
 __all__ = [
-    "BaseModel",
-    "ValidationError",
-    "Field",
-    "root_validator",
     "AnyUrl",
+    "BaseModel",
     "BaseSettings",
     "EmailStr",
-    "validator",
-    "is_root_model",
-    "is_root_model_instance",
-    "serialize_model_instance",
+    "Field",
+    "ValidationError",
     "is_base_model",
     "is_base_model_instance",
+    "is_root_model",
+    "is_root_model_instance",
+    "root_validator",
+    "serialize_model_instance",
+    "validator",
 ]
 
 if PYDANTIC2:

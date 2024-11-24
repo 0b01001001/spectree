@@ -13,4 +13,4 @@ PLUGINS = {
     "starlette": Plugin(".starlette_plugin", __name__, "StarlettePlugin"),
 }
 
-__all__ = ["BasePlugin", "PLUGINS", "Plugin"]
+__all__ = ["PLUGINS", "BasePlugin", "Plugin"]

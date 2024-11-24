@@ -5,13 +5,13 @@ from .response import Response
 from .spec import SpecTree
 
 __all__ = [
-    "SpecTree",
-    "Response",
-    "Tag",
-    "SecurityScheme",
     "BaseFile",
     "ExternalDocs",
+    "Response",
+    "SecurityScheme",
     "SecuritySchemeData",
+    "SpecTree",
+    "Tag",
 ]
 
 # setup library logging
