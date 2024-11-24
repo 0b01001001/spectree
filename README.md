@@ -95,6 +95,22 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
 
+> How can I skip the validation?
+
+Add `skip_validation=True` to the decorator.
+
+Before v1.3.0, this only skip the response validation.
+
+Starts from v1.3.0, this will skip all the validations. As an result, you won't be able to access the validated data from `context`.
+
+```py
+@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
+```
+
+> How can I use the validation without the OpenAPI document?
+
+The OpenAPI endpoints are added by `spectree.register(app)`. If you don't want to add the OpenAPI endpoints, you don't need to register it to the application.
+
 > How to secure API endpoints?
 
 For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. Then there are two ways to enforce security:
@@ -260,18 +276,6 @@ This library provides `before` and `after` hooks to do these. Check the [doc](ht
 > How to change the default `ValidationError` status code?
 
 You can change the `validation_error_status` in SpecTree (global) or a specific endpoint (local). This also takes effect in the OpenAPI documentation.
-
-> How can I skip the validation?
-
-Add `skip_validation=True` to the decorator.
-
-Before v1.3.0, this only skip the response validation.
-
-Starts from v1.3.0, this will skip all the validations. As an result, you won't be able to access the validated data from `context`.
-
-```py
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
-```
 
 > How can I return my model directly?
 
