@@ -3,29 +3,9 @@ from syrupy.extensions.json import JSONSnapshotExtension
 from syrupy.filters import paths
 
 
-class JSONSnapshotExtensionPatch(JSONSnapshotExtension):
-    def serialize(
-        self,
-        data,
-        *,
-        exclude=None,
-        include=None,
-        matcher=None,
-    ):
-        data = super().serialize(
-            data, exclude=exclude, include=include, matcher=matcher
-        )
-        # match the RFC 9110 updated in Python 3.13
-        # ref: https://docs.python.org/3/library/http.html
-        return data.replace(
-            '"description": "Unprocessable Entity"',
-            '"description": "Unprocessable Content"',
-        )
-
-
 @pytest.fixture
 def snapshot_json(snapshot):
-    return snapshot.use_extension(JSONSnapshotExtensionPatch)
+    return snapshot.use_extension(JSONSnapshotExtension)
 
 
 @pytest.fixture

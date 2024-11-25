@@ -1,7 +1,7 @@
 import pytest
 
 from spectree.models import ValidationError
-from spectree.response import Response
+from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
     has_model,
@@ -209,7 +209,7 @@ def test_parse_resp():
     assert parse_resp(undecorated_func) == {}
     resp_spec = parse_resp(demo_func)
 
-    assert resp_spec["422"]["description"] == "Unprocessable Entity"
+    assert resp_spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     model_path_key = get_model_path_key(
         f"{ValidationError.__module__}.{ValidationError.__name__}"
     )
