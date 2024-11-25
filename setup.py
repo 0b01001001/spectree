@@ -23,6 +23,7 @@ setup(
             "Sphinx",
             "shibuya",
             "myst-parser",
+            "sphinx-sitemap",
         ],
     },
 )

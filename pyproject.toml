@@ -54,6 +54,7 @@ docs = [
     "Sphinx",
     "shibuya",
     "myst-parser",
+    "sphinx-sitemap",
 ]
 
 [project.urls]
