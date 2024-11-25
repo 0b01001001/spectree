@@ -39,6 +39,7 @@ class License(InternalBaseModel):
 
 
 class Configuration(InternalBaseModel):
+    """Global configuration."""
     # OpenAPI configurations
     #: title of the service
     title: str = "Service API Document"
