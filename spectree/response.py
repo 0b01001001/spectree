@@ -1,3 +1,4 @@
+import sys
 from http import HTTPStatus
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
@@ -11,12 +12,16 @@ from .utils import gen_list_model, get_model_key, parse_code
 DEFAULT_CODE_DESC: Dict[str, str] = dict(
     (f"HTTP_{status.value}", f"{status.phrase}") for status in HTTPStatus
 )
-# additional status codes
-for code, phrase in [
-    ("HTTP_418", "I'm a teapot"),
-    ("HTTP_425", "Too Early"),
-]:
-    DEFAULT_CODE_DESC[code] = phrase
+# additional status codes and fixes
+if sys.version_info < (3, 13):
+    # https://docs.python.org/3/library/http.html
+    # https://datatracker.ietf.org/doc/html/rfc9110.html
+    for code, phrase in [
+        ("HTTP_418", "I'm a teapot"),
+        ("HTTP_425", "Too Early"),
+    ]:
+        DEFAULT_CODE_DESC[code] = phrase
+    DEFAULT_CODE_DESC["HTTP_422"] = "Unprocessable Content"
 
 
 class Response:

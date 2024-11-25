@@ -5,8 +5,10 @@ name: Python document
 
 on:
   push:
-    branches: [ master ]
-    paths: 
+    branches:
+      - master
+      - main
+    paths:
       - 'spectree/**'
       - 'docs/**'
       - '.github/workflows/pythondoc.yml'

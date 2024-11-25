@@ -63,7 +63,7 @@ repository = "https://github.com/0b01001001/spectree"
 changelog = "https://github.com/0b01001001/spectree/releases"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "B", "G", "I", "SIM", "TID", "PL", "RUF"]
