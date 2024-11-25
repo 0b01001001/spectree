@@ -9,7 +9,11 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from spectree._pydantic import BaseModel, ValidationError, serialize_model_instance
+from spectree._pydantic import (
+    ValidationError,
+    generate_root_model,
+    serialize_model_instance,
+)
 from spectree._types import ModelType
 from spectree.plugins.base import (
     BasePlugin,
@@ -18,13 +22,13 @@ from spectree.plugins.base import (
     validate_response,
 )
 from spectree.response import Response
+from spectree.utils import get_multidict_items_starlette
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
-class _PydanticResponseModel(BaseModel):
-    __root__: Any
+_PydanticResponseModel = generate_root_model(Any, name="_PydanticResponseModel")
 
 
 def PydanticResponse(content):
@@ -32,7 +36,7 @@ def PydanticResponse(content):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
             return super().render(
-                serialize_model_instance(_PydanticResponseModel(__root__=content))
+                serialize_model_instance(_PydanticResponseModel.parse_obj(content))
             )
 
     return _PydanticResponse(content)
@@ -72,7 +76,9 @@ class StarlettePlugin(BasePlugin):
             form and has_data and any([x in content_type for x in self.FORM_MIMETYPE])
         )
         request.context = Context(
-            query.parse_obj(request.query_params) if query else None,
+            query.parse_obj(get_multidict_items_starlette(request.query_params))
+            if query
+            else None,
             json.parse_obj(await request.json() or {}) if use_json else None,
             form.parse_obj(await request.form() or {}) if use_form else None,
             headers.parse_obj(request.headers) if headers else None,

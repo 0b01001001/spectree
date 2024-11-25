@@ -16,10 +16,16 @@ from typing import (
     Union,
 )
 
-from ._pydantic import BaseModel, ValidationError, is_pydantic_model
+from ._pydantic import (
+    BaseModel,
+    ValidationError,
+    generate_root_model,
+    is_pydantic_model,
+)
 from ._types import (
     ModelType,
     MultiDict,
+    MultiDictStarlette,
     NamingStrategy,
     NestedNamingStrategy,
     OptionalModelType,
@@ -184,7 +190,8 @@ def default_before_handler(
     if req_validation_error:
         logger.error(
             "422 Request Validation Error: %s - %s",
-            req_validation_error.model.__name__,
+            getattr(req_validation_error, "title", None)
+            or req_validation_error.model.__name__,
             req_validation_error.errors(),
         )
 
@@ -292,6 +299,23 @@ def get_multidict_items(
     return res
 
 
+def get_multidict_items_starlette(
+    multidict: MultiDictStarlette, model: OptionalModelType = None
+):
+    """
+    return the items of a :class:`starlette.datastructures.ImmutableMultiDict`
+    """
+    res = {}
+    for key in multidict:
+        values = multidict.getlist(key)
+        if (model is not None and is_list_item(key, model)) or len(values) > 1:
+            res[key] = multidict.getlist(key)
+        else:
+            res[key] = multidict[key]
+
+    return res
+
+
 def is_list_item(key: str, model: OptionalModelType) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
@@ -304,17 +328,12 @@ def is_list_item(key: str, model: OptionalModelType) -> bool:
 
 def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """
-    generate the corresponding list[model] class for a given model class
+    Generate the corresponding list[model] class for a given model class.
+
+    This only works for Pydantic V1. For V2, use `pydantic.RootModel` directly.
     """
-    assert issubclass(model, BaseModel)
-    ListModel = type(
-        f"{model.__name__}List",
-        (BaseModel,),
-        {
-            "__annotations__": {"__root__": List[model]},  # type: ignore
-        },
-    )
-    return ListModel
+    assert is_pydantic_model(model), f"{model} is not a pydantic model"
+    return generate_root_model(List[model], name=f"{model.__name__}List")  # type: ignore
 
 
 def werkzeug_parse_rule(

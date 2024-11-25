@@ -34,6 +34,17 @@ class MultiDict(Protocol):
         pass
 
 
+class MultiDictStarlette(Protocol):
+    def __iter__(self) -> Iterator[str]:
+        pass
+
+    def getlist(self, key: Any) -> List[Any]:
+        pass
+
+    def __getitem__(self, key: Any) -> Any:
+        pass
+
+
 class FunctionDecorator(Protocol):
     resp: Any
     tags: Sequence[Any]

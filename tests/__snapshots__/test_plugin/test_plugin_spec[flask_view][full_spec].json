@@ -59,7 +59,7 @@
         "type": "object"
       },
       "Headers.7068f62.Language": {
-        "description": "An enumeration.",
+        "description": "Language enum",
         "enum": [
           "en-US",
           "zh-CN"
@@ -110,51 +110,12 @@
         "title": "JSON",
         "type": "object"
       },
-      "ListJSON.7068f62": {
+      "ListJSON.a9993e3": {
         "items": {
-          "$ref": "#/components/schemas/ListJSON.7068f62.JSON"
+          "$ref": "#/components/schemas/ListJSON.a9993e3.JSON"
         },
         "title": "ListJSON",
         "type": "array"
-      },
-      "ListJSON.7068f62.JSON": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "limit"
-        ],
-        "title": "JSON",
-        "type": "object"
-      },
-      "OptionalAliasResp.7068f62": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "schema": {
-            "title": "Schema",
-            "type": "string"
-          }
-        },
-        "required": [
-          "schema"
-        ],
-        "title": "OptionalAliasResp",
-        "type": "object"
       },
       "Query.7068f62": {
         "properties": {
@@ -169,7 +130,7 @@
         "type": "object"
       },
       "Query.7068f62.Order": {
-        "description": "An enumeration.",
+        "description": "Order enum",
         "enum": [
           0,
           1
@@ -214,21 +175,7 @@
         "title": "Resp",
         "type": "object"
       },
-      "RootResp.7068f62": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/RootResp.7068f62.JSON"
-          },
-          {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array"
-          }
-        ],
-        "title": "RootResp"
-      },
-      "RootResp.7068f62.JSON": {
+      "RootResp.a9993e3.JSON": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -244,52 +191,6 @@
           "limit"
         ],
         "title": "JSON",
-        "type": "object"
-      },
-      "StrDict.7068f62": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "title": "StrDict",
-        "type": "object"
-      },
-      "ValidationError.6a07bef": {
-        "description": "Model of a validation error response.",
-        "items": {
-          "$ref": "#/components/schemas/ValidationError.6a07bef.ValidationErrorElement"
-        },
-        "title": "ValidationError",
-        "type": "array"
-      },
-      "ValidationError.6a07bef.ValidationErrorElement": {
-        "description": "Model of a validation error response element.",
-        "properties": {
-          "ctx": {
-            "title": "Error context",
-            "type": "object"
-          },
-          "loc": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Missing field name",
-            "type": "array"
-          },
-          "msg": {
-            "title": "Error message",
-            "type": "string"
-          },
-          "type": {
-            "title": "Error type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationErrorElement",
         "type": "object"
       }
     }
@@ -328,7 +229,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListJSON.7068f62"
+                "$ref": "#/components/schemas/ListJSON.a9993e3"
               }
             }
           }
@@ -947,7 +848,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StrDict.7068f62"
+                  "$ref": "#/components/schemas/StrDict.a9993e3"
                 }
               }
             },

@@ -140,18 +140,13 @@ async def user_score_model(request):
     return PydanticResponse(Resp(name=request.context.json.name, score=score))
 
 
-@api.validate(
-    json=StrDict,
-    resp=Response(HTTP_200=None),
-)
-async def no_response(request):
+@api.validate(resp=Response(HTTP_200=None))
+async def no_response(request, json: StrDict):  # type: ignore
     return JSONResponse({})
 
 
-@api.validate(
-    json=ListJSON,
-)
-async def list_json(request):
+@api.validate()
+async def list_json(request, json: ListJSON):  # type: ignore
     return JSONResponse({})
 
 
@@ -415,12 +410,12 @@ def test_starlette_no_response(client):
     resp = client.get("/api/no_response")
     assert resp.status_code == 200, resp.text
 
-    resp = client.post("/api/no_response", json={"name": "starlette", "limit": 1})
+    resp = client.post("/api/no_response", json={"name": "starlette", "limit": "1"})
     assert resp.status_code == 200, resp.text
 
 
 def test_json_list_request(client):
-    resp = client.post("/api/list_json", json=[{"name": "starlette", "limit": 1}])
+    resp = client.post("/api/list_json", json=[{"name": "starlette", "limit": "1"}])
     assert resp.status_code == 200, resp.text
 
 

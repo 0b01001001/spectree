@@ -203,10 +203,8 @@ class FileUploadView:
 class ListJsonView:
     name = "json list request view"
 
-    @api.validate(
-        json=ListJSON,
-    )
-    def on_post(self, req, resp, json: ListJSON):
+    @api.validate()
+    def on_post(self, req, resp, json: ListJSON):  # type: ignore
         pass
 
 
@@ -545,5 +543,5 @@ def test_falcon_optional_alias_response(client):
     resp = client.simulate_get(
         "/api/return_optional_alias",
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.json
     assert resp.json == {"schema": "test"}, resp.json

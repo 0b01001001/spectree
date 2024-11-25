@@ -1,8 +1,8 @@
 from typing import List, get_type_hints
 
 import pytest
+from pydantic import BaseModel
 
-from spectree._pydantic import BaseModel
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import gen_list_model
@@ -98,10 +98,10 @@ def test_response_spec():
     assert spec["402"]["description"] == "custom code description"
     assert spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
-    ] == get_model_path_key("tests.common.DemoModel")
+    ] == get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
     assert spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
-    ] == get_model_path_key("spectree.models.ValidationError")
+    ] == get_model_path_key(f"{ValidationError.__module__}.{ValidationError.__name__}")
 
     assert spec.get(200) is None
     assert spec.get(404) is None
@@ -121,7 +121,10 @@ def test_list_model():
         {"name": "b", "limit": 2},
     ]
     instance = model.parse_obj(data)
-    for i, item in enumerate(instance.dict()["__root__"]):
+    items = instance.dict()
+    if isinstance(items, dict):
+        items = items["__root__"]
+    for i, item in enumerate(items):
         obj = JSON.parse_obj(item)
         assert obj.name == data[i]["name"]
         assert obj.limit == data[i]["limit"]

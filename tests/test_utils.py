@@ -1,5 +1,6 @@
 import pytest
 
+from spectree.models import ValidationError
 from spectree.response import Response
 from spectree.spec import SpecTree
 from spectree.utils import (
@@ -209,12 +210,14 @@ def test_parse_resp():
     resp_spec = parse_resp(demo_func)
 
     assert resp_spec["422"]["description"] == "Unprocessable Entity"
-    model_path_key = get_model_path_key("spectree.models.ValidationError")
+    model_path_key = get_model_path_key(
+        f"{ValidationError.__module__}.{ValidationError.__name__}"
+    )
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
     )
-    model_path_key = get_model_path_key("tests.common.DemoModel")
+    model_path_key = get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
     assert (
         resp_spec["200"]["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
@@ -222,7 +225,7 @@ def test_parse_resp():
 
 
 def test_parse_request():
-    model_path_key = get_model_path_key("tests.common.DemoModel")
+    model_path_key = get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
     assert (
         parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
@@ -232,9 +235,9 @@ def test_parse_request():
 
 def test_parse_params():
     models = {
-        get_model_path_key("tests.common.DemoModel"): DemoModel.schema(
-            ref_template="#/components/schemas/{model}"
-        )
+        get_model_path_key(
+            f"{DemoModel.__module__}.{DemoModel.__name__}"
+        ): DemoModel.schema(ref_template="#/components/schemas/{model}")
     }
     assert parse_params(demo_func, [], models) == []
     params = parse_params(demo_class.demo_method, [], models)

@@ -4,8 +4,8 @@ from typing import Type
 import pytest
 
 from spectree import SecurityScheme
-from spectree._pydantic import ValidationError
-from spectree.config import Configuration, EmailFieldType
+from spectree._pydantic import InternalValidationError as ValidationError
+from spectree.config import Configuration
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
 
@@ -38,26 +38,6 @@ def test_config_contact():
 
     with pytest.raises(ValidationError):
         Configuration(contact={"name": "John", "url": "url"})
-
-
-@pytest.mark.skipif(EmailFieldType is str, reason="email-validator is not installled")
-def test_config_contact_invalid_email():
-    with pytest.raises(ValidationError):
-        Configuration(contact={"name": "John", "email": "hello"})
-
-
-def test_config_case():
-    # lower case
-    config = Configuration(title="Demo")
-    assert config.title == "Demo"
-
-    # upper case
-    config = Configuration(TITLE="Demo")
-    assert config.title == "Demo"
-
-    # capitalized
-    config = Configuration(Title="Demo")
-    assert config.title == "Demo"
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)

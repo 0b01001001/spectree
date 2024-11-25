@@ -113,17 +113,21 @@ class FileUpload:
         resp.media = {"filename": file.filename, "type": file.type}
 
 
+def create_app():
+    app = falcon.App()
+    app.add_route("/ping", Ping())
+    app.add_route("/api/{source}/{target}", Classification())
+    app.add_route("/api/file_upload", FileUpload())
+    spec.register(app)
+    return app
+
+
 if __name__ == "__main__":
     """
     cmd:
         http :8000/ping
         http ':8000/api/zh/en?text=hi' uid=neo limit=1 vip=true
     """
-    app = falcon.App()
-    app.add_route("/ping", Ping())
-    app.add_route("/api/{source}/{target}", Classification())
-    app.add_route("/api/file_upload", FileUpload())
-    spec.register(app)
-
+    app = create_app()
     httpd = simple_server.make_server("localhost", 8000, app)
     httpd.serve_forever()
