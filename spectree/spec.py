@@ -365,11 +365,13 @@ class SpecTree:
         """
         definitions = {}
         for name, schema in self.models.items():
-            if "definitions" in schema:
-                for key, value in schema["definitions"].items():
-                    composed_key = self.nested_naming_strategy(name, key)
-                    if composed_key not in definitions:
-                        definitions[composed_key] = value
-                del schema["definitions"]
+            # handle pydantic v1 & v2 def keys
+            for def_key in ["definitions", "$defs"]:
+                if def_key in schema:
+                    for key, value in schema[def_key].items():
+                        composed_key = self.nested_naming_strategy(name, key)
+                        if composed_key not in definitions:
+                            definitions[composed_key] = value
+                    del schema[def_key]
 
         return definitions

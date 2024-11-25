@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import Any, List
 
 import pytest
+from pydantic import BaseModel
 
 from spectree._pydantic import (
-    BaseModel,
+    generate_root_model,
     is_base_model,
     is_base_model_instance,
     is_partial_base_model_instance,
@@ -13,21 +14,16 @@ from spectree._pydantic import (
     serialize_model_instance,
 )
 
+DummyRootModel = generate_root_model(List[int], name="DummyRootModel")
 
-class DummyRootModel(BaseModel):
-    __root__: List[int]
-
-
-class NestedRootModel(BaseModel):
-    __root__: DummyRootModel
+NestedRootModel = generate_root_model(DummyRootModel, name="NestedRootModel")
 
 
 class SimpleModel(BaseModel):
     user_id: int
 
 
-class Users(BaseModel):
-    __root__: List[SimpleModel]
+Users = generate_root_model(List[SimpleModel], name="Users")
 
 
 @dataclass
@@ -39,9 +35,9 @@ class RootModelLookalike:
     "value, expected",
     [
         (DummyRootModel, True),
-        (DummyRootModel(__root__=[1, 2, 3]), False),
+        (DummyRootModel.parse_obj([1, 2, 3]), False),
         (NestedRootModel, True),
-        (NestedRootModel(__root__=DummyRootModel(__root__=[1, 2, 3])), False),
+        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), False),
         (SimpleModel, False),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -62,9 +58,9 @@ def test_is_root_model(value: Any, expected: bool):
     "value, expected",
     [
         (DummyRootModel, False),
-        (DummyRootModel(__root__=[1, 2, 3]), True),
+        (DummyRootModel.parse_obj([1, 2, 3]), True),
         (NestedRootModel, False),
-        (NestedRootModel(__root__=DummyRootModel(__root__=[1, 2, 3])), True),
+        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), True),
         (SimpleModel, False),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -85,9 +81,9 @@ def test_is_root_model_instance(value, expected):
     "value, expected",
     [
         (DummyRootModel, True),
-        (DummyRootModel(__root__=[1, 2, 3]), False),
+        (DummyRootModel.parse_obj([1, 2, 3]), False),
         (NestedRootModel, True),
-        (NestedRootModel(__root__=DummyRootModel(__root__=[1, 2, 3])), False),
+        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), False),
         (SimpleModel, True),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -108,9 +104,9 @@ def test_is_base_model(value, expected):
     "value, expected",
     [
         (DummyRootModel, False),
-        (DummyRootModel(__root__=[1, 2, 3]), True),
+        (DummyRootModel.parse_obj([1, 2, 3]), True),
         (NestedRootModel, False),
-        (NestedRootModel(__root__=DummyRootModel(__root__=[1, 2, 3])), True),
+        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), True),
         (SimpleModel, False),
         (SimpleModel(user_id=1), True),
         (RootModelLookalike, False),
@@ -148,11 +144,11 @@ def test_is_partial_base_model_instance(value, expected):
     "value, expected",
     [
         (SimpleModel(user_id=1), {"user_id": 1}),
-        (DummyRootModel(__root__=[1, 2, 3]), [1, 2, 3]),
-        (NestedRootModel(__root__=DummyRootModel(__root__=[1, 2, 3])), [1, 2, 3]),
+        (DummyRootModel.parse_obj([1, 2, 3]), [1, 2, 3]),
+        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), [1, 2, 3]),
         (
-            Users(
-                __root__=[
+            Users.parse_obj(
+                [
                     SimpleModel(user_id=1),
                     SimpleModel(user_id=2),
                 ]

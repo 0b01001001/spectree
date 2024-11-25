@@ -120,7 +120,7 @@ class ListJsonView:
     @api.validate(
         json=ListJSON,
     )
-    async def on_post(self, req, resp, json: ListJSON):
+    async def on_post(self, req, resp, json: ListJSON):  # type: ignore
         pass
 
 

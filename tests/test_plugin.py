@@ -22,16 +22,17 @@ from .test_plugin_starlette import api as starlette_api
         pytest.param(falcon_api, id="falcon"),
     ],
 )
-def test_plugin_spec(api, snapshot_json):
+def test_plugin_spec(api, snapshot_json_exclude_diff):
     models = {
         get_model_key(model=m): get_model_schema(model=m)
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():
         schema.pop("definitions", None)
+        schema.pop("$defs", None)
         assert api.spec["components"]["schemas"][name] == schema
 
-    assert api.spec == snapshot_json(name="full_spec")
+    assert api.spec == snapshot_json_exclude_diff(name="full_spec")
 
 
 def test_secure_spec():

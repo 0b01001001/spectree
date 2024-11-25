@@ -1,4 +1,5 @@
-from typing import Any, Protocol, runtime_checkable
+from enum import Enum
+from typing import Any, Protocol, Type, runtime_checkable
 
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
@@ -9,12 +10,15 @@ ROOT_FIELD = "__root__"
 __all__ = [
     "AnyUrl",
     "BaseModel",
-    "BaseSettings",
-    "EmailStr",
     "Field",
+    "InternalBaseModel",
+    "InternalField",
+    "InternalValidationError",
     "ValidationError",
+    "generate_root_model",
     "is_base_model",
     "is_base_model_instance",
+    "is_pydantic_model",
     "is_root_model",
     "is_root_model_instance",
     "root_validator",
@@ -22,28 +26,45 @@ __all__ = [
     "validator",
 ]
 
+
+class UNSET_TYPE(Enum):
+    NODEFAULT = "NO_DEFAULT"
+
+
+NODEFAULT = UNSET_TYPE.NODEFAULT
+
 if PYDANTIC2:
-    from pydantic.v1 import (
+    from pydantic import BaseModel, Field, RootModel, ValidationError
+    from pydantic.v1 import AnyUrl, root_validator, validator
+    from pydantic.v1 import BaseModel as InternalBaseModel
+    from pydantic.v1 import Field as InternalField
+    from pydantic.v1 import ValidationError as InternalValidationError
+    from pydantic_core import core_schema  # noqa
+
+else:
+    from pydantic import (  # type: ignore[no-redef,assignment]
         AnyUrl,
         BaseModel,
-        BaseSettings,
-        EmailStr,
         Field,
         ValidationError,
         root_validator,
         validator,
     )
-    from pydantic_core import core_schema  # noqa
-else:
-    from pydantic import (  # type: ignore[no-redef,assignment]
-        AnyUrl,
-        BaseModel,
-        BaseSettings,
-        EmailStr,
-        Field,
-        ValidationError,
-        root_validator,
-        validator,
+
+    InternalBaseModel = BaseModel  # type: ignore
+    InternalValidationError = ValidationError  # type: ignore
+    InternalField = Field  # type: ignore
+
+
+def generate_root_model(root_type, name="GeneratedRootModel") -> Type:
+    if PYDANTIC2:
+        return type(name, (RootModel[root_type],), {})
+    return type(
+        name,
+        (BaseModel,),
+        {
+            "__annotations__": {ROOT_FIELD: root_type},
+        },
     )
 
 
@@ -124,7 +145,7 @@ def is_pydantic_model(t: Any) -> bool:
 def is_base_model(t: Any) -> bool:
     """Check whether a type is a Pydantic BaseModel"""
     try:
-        return issubclass(t, BaseModel)
+        return is_pydantic_model(t)
     except TypeError:
         return False
 
@@ -154,7 +175,12 @@ def is_partial_base_model_instance(instance: Any) -> bool:
 
 def is_root_model(t: Any) -> bool:
     """Check whether a type is a Pydantic RootModel."""
-    return is_base_model(t) and ROOT_FIELD in t.__fields__
+    pydantic_v1_root = is_base_model(t) and ROOT_FIELD in t.__fields__
+    pydantic_v2_root = is_base_model(t) and any(
+        f"{m.__module__}.{m.__name__}" == "pydantic.root_model.RootModel"
+        for m in t.mro()
+    )
+    return pydantic_v1_root or pydantic_v2_root
 
 
 def is_root_model_instance(value: Any):

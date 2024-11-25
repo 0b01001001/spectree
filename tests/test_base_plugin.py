@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from typing import Any, Union
 
 import pytest
+from pydantic import ValidationError
 
-from spectree._pydantic import ValidationError
 from spectree._types import OptionalModelType
 from spectree.plugins.base import (
     RawResponsePayload,
@@ -67,7 +67,7 @@ class DummyResponse:
         ),
         (
             StrDict,
-            StrDict(__root__={"key1": "value1", "key2": "value2"}),
+            StrDict.parse_obj({"key1": "value1", "key2": "value2"}),
             ResponseValidationResult({"key1": "value1", "key2": "value2"}),
         ),
         (
@@ -87,7 +87,7 @@ class DummyResponse:
         ),
         (
             RootResp,
-            RootResp(__root__=JSON(name="user4", limit=23)),
+            RootResp.parse_obj(JSON(name="user4", limit=23)),
             ResponseValidationResult({"name": "user4", "limit": 23}),
         ),
         (

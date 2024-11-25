@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
+from pydantic import BaseModel, Field, root_validator
+
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
-from spectree._pydantic import BaseModel, Field, root_validator
+from spectree._pydantic import generate_root_model
 from spectree.utils import hash_module_path
 
 # suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
@@ -17,6 +20,8 @@ api_tag = Tag(
 
 
 class Order(IntEnum):
+    """Order enum"""
+
     asce = 0
     desc = 1
 
@@ -43,17 +48,14 @@ class JSON(BaseModel):
     limit: int
 
 
-class ListJSON(BaseModel):
-    __root__: List[JSON]
+ListJSON = generate_root_model(List[JSON], name="ListJSON")
 
-
-class StrDict(BaseModel):
-    __root__: Dict[str, str]
+StrDict = generate_root_model(Dict[str, str], name="StrDict")
 
 
 class OptionalAliasResp(BaseModel):
     alias_schema: str = Field(alias="schema")
-    name: Optional[str]
+    name: Optional[str] = None
     limit: Optional[int] = None
 
 
@@ -62,11 +64,12 @@ class Resp(BaseModel):
     score: List[int]
 
 
-class RootResp(BaseModel):
-    __root__: Union[JSON, List[int]]
+RootResp = generate_root_model(Union[JSON, List[int]], name="RootResp")
 
 
 class Language(str, Enum):
+    """Language enum"""
+
     en = "en-US"
     zh = "zh-CN"
 
@@ -91,7 +94,7 @@ class DemoModel(BaseModel):
 
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
-    names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")
+    names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")  # type: ignore
 
 
 def get_paths(spec):
@@ -203,9 +206,9 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
     assert return_what in ("RootResp_JSON", "RootResp_List", "JSON", "List")
     data: Any
     if return_what == "RootResp_JSON":
-        data = RootResp(__root__=JSON(name="user1", limit=1))
+        data = RootResp.parse_obj(JSON(name="user1", limit=1))
     elif return_what == "RootResp_List":
-        data = RootResp(__root__=[1, 2, 3, 4])
+        data = RootResp.parse_obj([1, 2, 3, 4])
     elif return_what == "JSON":
         data = JSON(name="user1", limit=1)
     elif return_what == "List":

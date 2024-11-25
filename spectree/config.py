@@ -1,20 +1,10 @@
 import warnings
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
-from ._pydantic import AnyUrl, BaseModel, BaseSettings, EmailStr, root_validator
+from ._pydantic import AnyUrl, InternalBaseModel, root_validator
 from .models import SecurityScheme, Server
 from .page import DEFAULT_PAGE_TEMPLATES
-
-# Fall back to a str field if email-validator is not installed.
-if TYPE_CHECKING:
-    EmailFieldType = str
-else:
-    try:
-        EmailStr.validate("a@b.com")
-        EmailFieldType = EmailStr
-    except ImportError:
-        EmailFieldType = str
 
 
 class ModeEnum(str, Enum):
@@ -28,7 +18,7 @@ class ModeEnum(str, Enum):
     greedy = "greedy"
 
 
-class Contact(BaseModel):
+class Contact(InternalBaseModel):
     """contact information"""
 
     #: name of the contact
@@ -36,10 +26,10 @@ class Contact(BaseModel):
     #: contact url
     url: Optional[AnyUrl] = None
     #: contact email address
-    email: Optional[EmailFieldType] = None
+    email: Optional[str] = None
 
 
-class License(BaseModel):
+class License(InternalBaseModel):
     """license information"""
 
     #: name of the license
@@ -48,7 +38,7 @@ class License(BaseModel):
     url: Optional[AnyUrl] = None
 
 
-class Configuration(BaseSettings):
+class Configuration(InternalBaseModel):
     # OpenAPI configurations
     #: title of the service
     title: str = "Service API Document"
@@ -106,8 +96,8 @@ class Configuration(BaseSettings):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
+    # Pydantic v1 config
     class Config:
-        env_prefix = "spectree_"
         validate_assignment = True
 
     @root_validator(pre=True)
