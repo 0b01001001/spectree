@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
 from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from spectree._pydantic import ValidationError
+from spectree._pydantic import InternalValidationError, ValidationError
 from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
@@ -211,7 +211,7 @@ class FalconPlugin(BasePlugin):
             try:
                 self.request_validation(_req, query, json, form, headers, cookies)
 
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = err.errors()
@@ -235,7 +235,7 @@ class FalconPlugin(BasePlugin):
                     validation_model=resp.find_model(status),
                     response_payload=_resp.media,
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 resp_validation_error = err
                 _resp.status = HTTP_500
                 _resp.media = err.errors()
@@ -317,7 +317,7 @@ class FalconAsgiPlugin(FalconPlugin):
             try:
                 await self.request_validation(_req, query, json, form, headers, cookies)
 
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = err.errors()
@@ -345,7 +345,7 @@ class FalconAsgiPlugin(FalconPlugin):
                     validation_model=resp.find_model(status) if resp else None,
                     response_payload=_resp.media,
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 resp_validation_error = err
                 _resp.status = HTTP_500
                 _resp.media = err.errors()
