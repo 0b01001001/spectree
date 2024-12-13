@@ -256,8 +256,6 @@ class ViewWithCustomSerializer:
         resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
 
 
-
-
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -556,7 +554,6 @@ def test_falcon_optional_alias_response(client):
 
 @pytest.mark.skipif(not PYDANTIC2, reason="only matters if using both model types")
 def test_falcon_validate_both_v1_and_v2_validation_errors(client):
-
     class CompatibilityView:
         name = "validation works for both pydantic v1 and v2 models simultaneously"
 
