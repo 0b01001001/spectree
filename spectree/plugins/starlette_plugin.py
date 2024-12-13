@@ -10,6 +10,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
 from spectree._pydantic import (
+    InternalValidationError,
     ValidationError,
     generate_root_model,
     serialize_model_instance,
@@ -114,7 +115,7 @@ class StarlettePlugin(BasePlugin):
                 await self.request_validation(
                     request, query, json, form, headers, cookies
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 response = JSONResponse(err.errors(), validation_error_status)
             except JSONDecodeError as err:
@@ -160,7 +161,7 @@ class StarlettePlugin(BasePlugin):
                     validation_model=resp.find_model(response.status_code),
                     response_payload=RawResponsePayload(payload=response.body),
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 response = JSONResponse(err.errors(), 500)
                 resp_validation_error = err
 

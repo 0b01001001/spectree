@@ -5,7 +5,7 @@ import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from spectree._pydantic import ValidationError
+from spectree._pydantic import InternalValidationError, ValidationError
 from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, Context, validate_response
 from spectree.response import Response
@@ -195,7 +195,7 @@ class QuartPlugin(BasePlugin):
                 await self.request_validation(
                     request, query, json, form, headers, cookies
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 response = await make_response(
                     jsonify(err.errors()), validation_error_status
@@ -240,7 +240,7 @@ class QuartPlugin(BasePlugin):
                     validation_model=resp.find_model(status),
                     response_payload=payload,
                 )
-            except ValidationError as err:
+            except (InternalValidationError, ValidationError) as err:
                 response = await make_response(err.errors(), 500)
                 resp_validation_error = err
             else:
