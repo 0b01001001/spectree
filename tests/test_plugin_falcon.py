@@ -6,6 +6,11 @@ import pytest
 from falcon import HTTP_202, App, testing
 
 from spectree import Response, SpecTree
+from spectree._pydantic import (
+    PYDANTIC2,
+    BaseModel,
+    InternalBaseModel,
+)
 
 from .common import (
     JSON,
@@ -251,6 +256,28 @@ class ViewWithCustomSerializer:
         resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
 
 
+class CompatibilityView:
+    name = "validation works for both pydantic v1 and v2 models simultaneously"
+
+    class V1(InternalBaseModel):
+        value: str
+
+    class V2(BaseModel):
+        value: str
+
+    @api.validate(
+        resp=Response(HTTP_200=Resp),
+    )
+    def on_post_v1(self, req, resp, json: V1):
+        resp.media = 'V1'
+
+    @api.validate(
+        resp=Response(HTTP_200=Resp),
+    )
+    def on_post_v2(self, req, resp, json: V2):
+        resp.media = 'V2'
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -265,6 +292,8 @@ app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
+app.add_route("/api/compatibility/v1", CompatibilityView(), suffix='v1')
+app.add_route("/api/compatibility/v2", CompatibilityView(), suffix='v2')
 api.register(app)
 
 
@@ -545,3 +574,17 @@ def test_falcon_optional_alias_response(client):
     )
     assert resp.status_code == 200, resp.json
     assert resp.json == {"schema": "test"}, resp.json
+
+
+@pytest.mark.skipif(not PYDANTIC2, reason="only matters if using both model types")
+def test_falcon_validate_both_v1_and_v2_validation_errors(client):
+    resp = client.simulate_request(
+            "POST", "/api/compatibility/v1", json={"value": id(object())}
+     )
+    assert resp.status_code == 422
+
+    resp = client.simulate_request(
+            "POST", "/api/compatibility/v2", json={"value": id(object())}
+     )
+    assert resp.status_code == 422
+
