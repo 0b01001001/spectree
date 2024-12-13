@@ -256,26 +256,6 @@ class ViewWithCustomSerializer:
         resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
 
 
-class CompatibilityView:
-    name = "validation works for both pydantic v1 and v2 models simultaneously"
-
-    class V1(InternalBaseModel):
-        value: int
-
-    class V2(BaseModel):
-        value: int
-
-    @api.validate(
-        resp=Response(HTTP_200=Resp),
-    )
-    def on_post_v1(self, req, resp, json: V1):
-        resp.media = Resp(name="falcon v1", score=[1, 2, 3])
-
-    @api.validate(
-        resp=Response(HTTP_200=Resp),
-    )
-    def on_post_v2(self, req, resp, json: V2):
-        resp.media = Resp(name="falcon v2", score=[1, 2, 3])
 
 
 app = App()
@@ -292,8 +272,6 @@ app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
-app.add_route("/api/compatibility/v1", CompatibilityView(), suffix="v1")
-app.add_route("/api/compatibility/v2", CompatibilityView(), suffix="v2")
 api.register(app)
 
 
@@ -578,6 +556,31 @@ def test_falcon_optional_alias_response(client):
 
 @pytest.mark.skipif(not PYDANTIC2, reason="only matters if using both model types")
 def test_falcon_validate_both_v1_and_v2_validation_errors(client):
+
+    class CompatibilityView:
+        name = "validation works for both pydantic v1 and v2 models simultaneously"
+
+        class V1(InternalBaseModel):
+            value: int
+
+        class V2(BaseModel):
+            value: int
+
+        @api.validate(
+            resp=Response(HTTP_200=Resp),
+        )
+        def on_post_v1(self, req, resp, json: V1):
+            resp.media = Resp(name="falcon v1", score=[1, 2, 3])
+
+        @api.validate(
+            resp=Response(HTTP_200=Resp),
+        )
+        def on_post_v2(self, req, resp, json: V2):
+            resp.media = Resp(name="falcon v2", score=[1, 2, 3])
+
+    app.add_route("/api/compatibility/v1", CompatibilityView(), suffix="v1")
+    app.add_route("/api/compatibility/v2", CompatibilityView(), suffix="v2")
+
     resp = client.simulate_request(
         "POST", "/api/compatibility/v1", json={"value": "invalid"}
     )
