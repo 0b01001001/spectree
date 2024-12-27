@@ -9,12 +9,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -29,6 +28,3 @@ jobs:
       run: make package
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_PASSWORD }}
