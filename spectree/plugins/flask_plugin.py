@@ -187,7 +187,8 @@ class FlaskPlugin(BasePlugin):
                 self.request_validation(request, query, json, form, headers, cookies)
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
-                response = make_response(jsonify(err.errors()), validation_error_status)
+                errors = err.errors() if isinstance(err, InternalValidationError) else err.errors(include_context=False)
+                response = make_response(jsonify(errors), validation_error_status)
 
         if self.config.annotations:
             annotations = get_type_hints(func)
@@ -224,7 +225,8 @@ class FlaskPlugin(BasePlugin):
                     response_payload=payload,
                 )
             except (InternalValidationError, ValidationError) as err:
-                response = make_response(err.errors(), 500)
+                errors = err.errors() if isinstance(err, InternalValidationError) else err.errors(include_context=False)
+                response = make_response(errors, 500)
                 resp_validation_error = err
             else:
                 response = make_response(
