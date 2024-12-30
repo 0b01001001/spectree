@@ -211,7 +211,8 @@ def default_after_handler(
     if resp_validation_error:
         logger.error(
             "500 Response Validation Error: %s - %s",
-            resp_validation_error.model.__name__,
+            getattr(resp_validation_error, "title", None)
+            or resp_validation_error.model.__name__,
             resp_validation_error.errors(),
         )
 
