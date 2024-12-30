@@ -265,7 +265,7 @@ def get_model_schema(
     assert is_pydantic_model(model), f"{model} is not a pydantic model"
 
     nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
-    return model.schema(ref_template=f"#/components/schemas/{nested_key}")
+    return model.model_json_schema(ref_template=f"#/components/schemas/{nested_key}")
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:

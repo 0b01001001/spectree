@@ -237,7 +237,7 @@ def test_parse_params():
     models = {
         get_model_path_key(
             f"{DemoModel.__module__}.{DemoModel.__name__}"
-        ): DemoModel.schema(ref_template="#/components/schemas/{model}")
+        ): DemoModel.model_json_schema(ref_template="#/components/schemas/{model}")
     }
     assert parse_params(demo_func, [], models) == []
     params = parse_params(demo_class.demo_method, [], models)
@@ -254,7 +254,7 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        get_model_path_key("tests.common.DemoQuery"): DemoQuery.schema(
+        get_model_path_key("tests.common.DemoQuery"): DemoQuery.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )
     }
