@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+# legacy code of: from pydantic import model_validator, field_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import generate_root_model
@@ -77,10 +78,14 @@ class Language(str, Enum):
 class Headers(BaseModel):
     lang: Language
 
-    @model_validator(mode="before")
-    @classmethod
-    def lower_keys(cls, data: Any):
-        return {key.lower(): value for key, value in data.items()}
+    # @model_validator(mode="before")
+    # @classmethod
+    # def lower_keys(cls, data: Any):
+    #     return {key.lower(): value for key, value in data.items()}
+
+    @root_validator(pre=True)
+    def lower_keys(cls, values):
+        return {key.lower(): value for key, value in values.items()}
 
 
 class Cookies(BaseModel):
@@ -101,7 +106,8 @@ class DemoQuery(BaseModel):
 class CustomError(BaseModel):
     foo: str
 
-    @field_validator("foo")
+    # @field_validator("foo")
+    @validator("foo")
     def value_must_be_foo(cls, value):
         if value != "foo":
             # this is not JSON serializable if included in the error context
