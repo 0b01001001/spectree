@@ -17,6 +17,7 @@ from spectree.plugins.starlette_plugin import PydanticResponse
 from .common import (
     JSON,
     Cookies,
+    CustomError,
     FormFileUpload,
     Headers,
     ListJSON,
@@ -176,6 +177,11 @@ async def return_optional_alias(request):
     return JSONResponse({"schema": "test"})
 
 
+@api.validate(resp=Response(HTTP_200=CustomError))
+async def custom_error(request, json: CustomError):
+    return JSONResponse({"foo": "bar"})
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -212,6 +218,7 @@ app = Starlette(
                 Route("/return_list", return_list, methods=["GET"]),
                 Route("/return_root", return_root, methods=["GET"]),
                 Route("/return_optional_alias", return_optional_alias, methods=["GET"]),
+                Route("/custom_error", custom_error, methods=["POST"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -456,3 +463,13 @@ def test_starlette_return_optional_alias(client):
     resp = client.get("/api/return_optional_alias")
     assert resp.status_code == 200
     assert resp.json() == {"schema": "test"}
+
+
+def test_custom_error(client):
+    # request error
+    resp = client.post("/api/custom_error", json={"foo": "bar"})
+    assert resp.status_code == 422
+
+    # response error
+    resp = client.post("/api/custom_error", json={"foo": "foo"})
+    assert resp.status_code == 500

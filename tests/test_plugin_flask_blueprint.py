@@ -10,6 +10,7 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
+    CustomError,
     Form,
     FormFileUpload,
     Headers,
@@ -236,6 +237,12 @@ def return_root():
 @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
 def return_optional_alias():
     return {"schema": "test"}
+
+
+@app.route("/api/custom_error", methods=["POST"])
+@api.validate(resp=Response(HTTP_200=CustomError))
+def custom_error(json: CustomError):
+    return {"foo": "bar"}
 
 
 api.register(app)

@@ -214,7 +214,11 @@ class FalconPlugin(BasePlugin):
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
-                _resp.media = err.errors()
+                _resp.media = (
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False)
+                )
 
         if self.config.annotations:
             annotations = get_type_hints(func)
@@ -238,7 +242,11 @@ class FalconPlugin(BasePlugin):
             except (InternalValidationError, ValidationError) as err:
                 resp_validation_error = err
                 _resp.status = HTTP_500
-                _resp.media = err.errors()
+                _resp.media = (
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False)
+                )
             else:
                 _resp.media = response_validation_result.payload
 
@@ -320,7 +328,11 @@ class FalconAsgiPlugin(FalconPlugin):
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
-                _resp.media = err.errors()
+                _resp.media = (
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False)
+                )
 
         if self.config.annotations:
             annotations = get_type_hints(func)
@@ -348,7 +360,11 @@ class FalconAsgiPlugin(FalconPlugin):
             except (InternalValidationError, ValidationError) as err:
                 resp_validation_error = err
                 _resp.status = HTTP_500
-                _resp.media = err.errors()
+                _resp.media = (
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False)
+                )
             else:
                 _resp.media = response_validation_result.payload
 

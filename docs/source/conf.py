@@ -47,7 +47,7 @@ exclude_patterns = []
 source_suffix = [".rst", ".md"]
 language = "en"
 html_baseurl = "https://0b01001001.github.io/spectree/"
-html_extra_path = ['robots.txt']
+html_extra_path = ["robots.txt"]
 
 # -- Options for HTML output -------------------------------------------------
 

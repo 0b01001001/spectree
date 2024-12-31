@@ -489,8 +489,8 @@ if __name__ == "__main__":
 > ValidationError: missing field for headers
 
 The HTTP headers' keys in Flask are capitalized, in Falcon are upper cases, in Starlette are lower cases.
-You can use [`pydantic.root_validators(pre=True)`](https://pydantic-docs.helpmanual.io/usage/validators/#root-validators) to change all the keys into lower cases or upper cases.
+You can use [`pydantic.model_validator(mode="before")`](https://docs.pydantic.dev/dev/concepts/validators/#model-validators) to change all the keys into lower cases or upper cases.
 
 > ValidationError: value is not a valid list for the query
 
-Since there is no standard for HTTP queries with multiple values, it's hard to find a way to handle this for different web frameworks. So I suggest not to use list type in query until I find a suitable way to fix it.
+Since there is no standard for HTTP queries with multiple values, it's hard to find a way to handle this for different web frameworks.

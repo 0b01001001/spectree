@@ -10,6 +10,7 @@ from .common import (
     JSON,
     SECURITY_SCHEMAS,
     Cookies,
+    CustomError,
     Form,
     FormFileUpload,
     Headers,
@@ -62,12 +63,12 @@ app_global_secure.config["DEBUG"] = True
 
 
 @app.route("/ping")
-@api.validate(headers=Headers, resp=Response(HTTP_202=StrDict), tags=["test", "health"])
-def ping():
+@api.validate(resp=Response(HTTP_202=StrDict), tags=["test", "health"])
+def ping(headers: Headers):
     """summary
 
     description"""
-    return jsonify(msg="pong"), 202
+    return jsonify(msg="pong"), 202, headers
 
 
 @app.route("/api/file_upload", methods=["POST"])
@@ -249,6 +250,12 @@ def return_root():
 @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
 def return_optional_alias_resp():
     return {"schema": "test"}
+
+
+@app.route("/api/custom_error", methods=["POST"])
+@api.validate(resp=Response(HTTP_200=CustomError))
+def custom_error(json: CustomError):
+    return {"foo": "bar"}
 
 
 # INFO: ensures that spec is calculated and cached _after_ registering
