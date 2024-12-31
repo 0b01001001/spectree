@@ -123,7 +123,7 @@ def test_flask_validate_basic(client):
     assert resp.json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Validation") == "Pass"
-    assert resp.headers.get("lang") == "en-US"
+    assert resp.headers.get("lang") == "en-US", resp.headers
 
     resp = client.post("api/user/flask")
     assert resp.status_code == 422
@@ -270,3 +270,13 @@ def test_flask_optional_alias_response(client):
 def test_flask_query_list(client):
     resp = client.get("/api/query_list?ids=1&ids=2&ids=3")
     assert resp.status_code == 200
+
+
+def test_flask_custom_error(client):
+    # request error
+    resp = client.post("/api/custom_error", json={"foo": "bar"})
+    assert resp.status_code == 422
+
+    # response error
+    resp = client.post("/api/custom_error", json={"foo": "foo"})
+    assert resp.status_code == 500

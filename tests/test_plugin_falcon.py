@@ -15,6 +15,7 @@ from spectree._pydantic import (
 from .common import (
     JSON,
     Cookies,
+    CustomError,
     FormFileUpload,
     Headers,
     ListJSON,
@@ -234,6 +235,15 @@ class ReturnRootView:
         )
 
 
+class CustomErrorView:
+    name = "custom error view"
+
+    @api.validate(resp=Response(HTTP_200=CustomError))
+    def on_post(self, req, resp, json: CustomError):
+        resp.media = {"foo": "bar"}
+        resp.status = falcon.HTTP_422
+
+
 class ReturnOptionalAliasView:
     @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
     def on_get(self, req, resp):
@@ -270,6 +280,7 @@ app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
+app.add_route("/api/custom_error", CustomErrorView())
 api.register(app)
 
 
@@ -587,3 +598,13 @@ def test_falcon_validate_both_v1_and_v2_validation_errors(client):
         "POST", "/api/compatibility/v2", json={"value": "invalid"}
     )
     assert resp.status_code == 422
+
+
+def test_custom_error(client):
+    # error in request
+    resp = client.simulate_post("/api/custom_error", json={"foo": "bar"})
+    assert resp.status_code == 422
+
+    # error in response
+    resp = client.simulate_post("/api/custom_error", json={"foo": "foo"})
+    assert resp.status_code == 500

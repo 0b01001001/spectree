@@ -10,6 +10,7 @@ from .common import (
     JSON,
     SECURITY_SCHEMAS,
     Cookies,
+    CustomError,
     Headers,
     ListJSON,
     Order,
@@ -177,6 +178,12 @@ def return_root():
         pre_serialize=bool(int(request.args.get("pre_serialize", default=0))),
         return_what=request.args.get("return_what", default="RootResp"),
     )
+
+
+@app.route("/api/custom_error", methods=["POST"])
+@api.validate(resp=Response(HTTP_200=CustomError))
+def custom_error(json: CustomError):
+    return jsonify(foo="bar")
 
 
 # INFO: ensures that spec is calculated and cached _after_ registering

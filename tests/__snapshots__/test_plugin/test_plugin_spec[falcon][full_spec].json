@@ -14,6 +14,19 @@
         "title": "Cookies",
         "type": "object"
       },
+      "CustomError.7068f62": {
+        "properties": {
+          "foo": {
+            "title": "Foo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "foo"
+        ],
+        "title": "CustomError",
+        "type": "object"
+      },
       "FormFileUpload.7068f62": {
         "properties": {
           "file": {
@@ -167,6 +180,46 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/custom_error": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_custom_error",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomError.7068f62"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomError.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "on_post <POST>",
+        "tags": []
+      }
+    },
     "/api/custom_serializer": {
       "get": {
         "description": "",

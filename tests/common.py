@@ -4,15 +4,15 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import generate_root_model
 from spectree.utils import hash_module_path
 
 # suppress warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning, append=True)
+warnings.filterwarnings("ignore", category=DeprecationWarning, append=True)
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
@@ -77,9 +77,10 @@ class Language(str, Enum):
 class Headers(BaseModel):
     lang: Language
 
-    @root_validator(pre=True)
-    def lower_keys(cls, values):
-        return {key.lower(): value for key, value in values.items()}
+    @model_validator(mode="before")
+    @classmethod
+    def lower_keys(cls, data: Any):
+        return {key.lower(): value for key, value in data.items()}
 
 
 class Cookies(BaseModel):
@@ -95,6 +96,17 @@ class DemoModel(BaseModel):
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
     names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")  # type: ignore
+
+
+class CustomError(BaseModel):
+    foo: str
+
+    @field_validator("foo")
+    def value_must_be_foo(cls, value):
+        if value != "foo":
+            # this is not JSON serializable if included in the error context
+            raise ValueError("value must be foo")
+        return value
 
 
 def get_paths(spec):

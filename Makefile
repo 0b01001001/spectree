@@ -16,9 +16,9 @@ import_test:
 
 test: import_test
 	pip install -U -e .[email,flask,quart,falcon,starlette]
-	pytest tests -vv -rs
+	pytest tests -vv -rs --disable-warnings
 	pip install --force-reinstall 'pydantic[email]<2'
-	pytest tests -vv -rs
+	pytest tests -vv -rs --disable-warnings
 
 update_snapshot:
 	@pytest --snapshot-update

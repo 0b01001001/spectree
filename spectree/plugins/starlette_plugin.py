@@ -117,7 +117,12 @@ class StarlettePlugin(BasePlugin):
                 )
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
-                response = JSONResponse(err.errors(), validation_error_status)
+                response = JSONResponse(
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False),
+                    validation_error_status,
+                )
             except JSONDecodeError as err:
                 json_decode_error = err
                 self.logger.info(
@@ -162,7 +167,12 @@ class StarlettePlugin(BasePlugin):
                     response_payload=RawResponsePayload(payload=response.body),
                 )
             except (InternalValidationError, ValidationError) as err:
-                response = JSONResponse(err.errors(), 500)
+                response = JSONResponse(
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False),
+                    500,
+                )
                 resp_validation_error = err
 
         after(request, response, resp_validation_error, instance)

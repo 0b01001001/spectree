@@ -393,7 +393,7 @@ def flask_response_unpack(resp: Any) -> Tuple[Any, int, Dict[str, Any]]:
             f"Invalid return tuple: {resp}, expect (body,), (body, status), "
             "(body, headers), or (body, status, headers)."
         )
-    return payload, status, headers
+    return payload, status, dict(headers)
 
 
 def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):

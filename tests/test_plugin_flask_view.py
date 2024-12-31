@@ -10,6 +10,7 @@ from spectree import Response, SpecTree
 from .common import (
     JSON,
     Cookies,
+    CustomError,
     Form,
     FormFileUpload,
     Headers,
@@ -253,6 +254,12 @@ class ReturnOptionalAlias(MethodView):
         return {"schema": "test"}
 
 
+class CustomErrorView(MethodView):
+    @api.validate(resp=Response(HTTP_200=CustomError))
+    def post(self, json: CustomError):
+        return jsonify(foo="bar")
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -302,6 +309,14 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_optional_alias",
     view_func=ReturnOptionalAlias.as_view("return_optional_alias"),
+)
+app.add_url_rule(
+    "/api/return_root",
+    view_func=ReturnRootView.as_view("return_root_view"),
+)
+app.add_url_rule(
+    "/api/custom_error",
+    view_func=CustomErrorView.as_view("custom_error_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

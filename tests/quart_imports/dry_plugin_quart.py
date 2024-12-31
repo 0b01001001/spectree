@@ -190,3 +190,13 @@ def test_quart_return_list_request(client, pre_serialize: bool):
         {"name": "user1", "limit": 1},
         {"name": "user2", "limit": 2},
     ]
+
+
+def test_quart_custom_error(client):
+    # request error
+    resp = asyncio.run(client.post("/api/custom_error", json={"foo": "bar"}))
+    assert resp.status_code == 422
+
+    # response error
+    resp = asyncio.run(client.post("/api/custom_error", json={"foo": "foo"}))
+    assert resp.status_code == 500
