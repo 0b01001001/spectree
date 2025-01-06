@@ -1,6 +1,6 @@
 from typing import Dict
 
-DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
+ONLINE_PAGE_TEMPLATES: Dict[str, str] = {
     # https://github.com/Redocly/redoc
     "redoc": """
 <!DOCTYPE html>
@@ -189,3 +189,14 @@ DEFAULT_PAGE_TEMPLATES: Dict[str, str] = {
   </body>
 </html>""",
 }
+
+try:
+    from offapi import OpenAPITemplate
+
+    PAGE_TEMPLATES = {
+        "redoc": OpenAPITemplate.REDOC.value,
+        "swagger": OpenAPITemplate.SWAGGER.value,
+        "scalar": OpenAPITemplate.SCALAR.value,
+    }
+except ImportError:
+    PAGE_TEMPLATES = ONLINE_PAGE_TEMPLATES

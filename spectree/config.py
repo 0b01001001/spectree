@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 from ._pydantic import AnyUrl, InternalBaseModel, root_validator
 from .models import SecurityScheme, Server
-from .page import DEFAULT_PAGE_TEMPLATES
+from .page import PAGE_TEMPLATES
 
 
 class ModeEnum(str, Enum):
@@ -69,7 +69,7 @@ class Configuration(InternalBaseModel):
     #: to render the documentation page content. (Each page template should contain a
     #: `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
     #: the rendered documentation page
-    page_templates: Dict[str, str] = DEFAULT_PAGE_TEMPLATES
+    page_templates: Dict[str, str] = PAGE_TEMPLATES
     #: opt-in type annotation feature, see the README examples
     annotations: bool = True
     #: servers section of OAS :py:class:`spectree.models.Server`
