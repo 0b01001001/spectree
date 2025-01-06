@@ -24,7 +24,19 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
 
 ## Quick Start
 
-Install with pip: `pip install spectree`. If you'd like for email fields to be validated, use `pip install spectree[email]`.
+Install with pip:
+
+```bash
+pip install spectree
+```
+
+If you want to install with offline OpenAPI web pages support:
+
+> Offline mode doesn't support SwaggerUI OAuth2 redirection.
+
+```bash
+pip install spectree[offline]
+```
 
 ### Examples
 
