@@ -19,6 +19,7 @@ class FlaskPlugin(BasePlugin):
     blueprint_state = None
 
     def find_routes(self):
+        # https://werkzeug.palletsprojects.com/en/stable/routing/#werkzeug.routing.Rule
         for rule in current_app.url_map.iter_rules():
             if any(
                 str(rule).startswith(path)
