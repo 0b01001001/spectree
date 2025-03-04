@@ -27,6 +27,8 @@ class FlaskPlugin(BasePlugin):
                 continue
             if rule.endpoint.startswith("openapi"):
                 continue
+            if rule.websocket:
+                continue
             if (
                 self.blueprint_state
                 and self.blueprint_state.url_prefix
