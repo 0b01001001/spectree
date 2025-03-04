@@ -22,6 +22,7 @@ class QuartPlugin(BasePlugin):
     ASYNC = True
 
     def find_routes(self):
+        # https://werkzeug.palletsprojects.com/en/stable/routing/#werkzeug.routing.Rule
         for rule in current_app.url_map.iter_rules():
             if any(
                 str(rule).startswith(path)
@@ -29,6 +30,8 @@ class QuartPlugin(BasePlugin):
             ):
                 continue
             if rule.endpoint.startswith("openapi"):
+                continue
+            if rule.websocket:
                 continue
             if (
                 self.blueprint_state

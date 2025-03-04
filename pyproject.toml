@@ -1,8 +1,8 @@
 [project]
 name = "spectree"
-version = "1.4.4"
+version = "1.4.5"
 dynamic = []
-description = "generate OpenAPI document and validate request&response with Python annotations."
+description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
