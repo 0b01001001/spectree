@@ -31,7 +31,7 @@ class QuartPlugin(BasePlugin):
                 continue
             if rule.endpoint.startswith("openapi"):
                 continue
-            if rule.websocket:
+            if getattr(rule, "websocket", False):
                 continue
             if (
                 self.blueprint_state
