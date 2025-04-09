@@ -192,7 +192,11 @@ def serialize_model_instance(value: BaseModel):
     """Serialize a Pydantic BaseModel (equivalent of calling `.dict()` on a BaseModel,
     but additionally takes care of stripping __root__ for root models.
     """
-    serialized = value.dict()
+    if PYDANTIC2: # noqa: SIM108
+        serialized = value.model_dump()
+    else:
+        serialized = value.dict()
+
     if is_root_model_instance(value) and ROOT_FIELD in serialized:
         return serialized[ROOT_FIELD]
     return serialized
