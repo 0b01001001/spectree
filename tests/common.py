@@ -263,6 +263,6 @@ class UserXmlData:
         return f"""
             <user>
               <name>{self.name}</name>
-              <x_score>{','.join(str(entry) for entry in self.score)}</x_score>
+              <x_score>{",".join(str(entry) for entry in self.score)}</x_score>
             </user>
             """

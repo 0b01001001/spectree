@@ -165,7 +165,7 @@ class FalconPlugin(BasePlugin):
                     }
                 )
 
-        return f'/{"/".join(subs)}', parameters
+        return f"/{'/'.join(subs)}", parameters
 
     def request_validation(self, req, query, json, form, headers, cookies):
         if query:
