@@ -89,12 +89,12 @@ class Response:
                     list_item_type = model.__args__[0]  # type: ignore
                     model = gen_list_model(list_item_type)
                     self.code_list_item_types[code] = list_item_type
-                assert is_pydantic_model(
-                    model
-                ), f"invalid `pydantic.BaseModel`: {model}"
-                assert description is None or isinstance(
-                    description, str
-                ), "invalid HTTP status code description"
+                assert is_pydantic_model(model), (
+                    f"invalid `pydantic.BaseModel`: {model}"
+                )
+                assert description is None or isinstance(description, str), (
+                    "invalid HTTP status code description"
+                )
                 self.code_models[code] = model
             else:
                 self.codes.append(code)

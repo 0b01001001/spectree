@@ -43,6 +43,7 @@ pip install spectree[offline]
 Check the [examples](examples) folder.
 
 * [flask example](examples/flask_demo.py)
+* [quart example](examples/quart_demo.py)
 * [falcon example with logging when validation failed](examples/falcon_demo.py)
 * [starlette example](examples/starlette_demo.py)
 

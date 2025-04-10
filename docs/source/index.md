@@ -5,6 +5,8 @@
 ```
 
 ```{include} ../../README.md
+:relative-docs: examples/
+:relative-images:
 ```
 
 ```{toctree}
