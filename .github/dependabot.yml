@@ -8,19 +8,25 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "saturday"
+      interval: "monthly"
     reviewers:
       - "kemingy"
     commit-message:
       prefix: "chore(pip)"
+    groups:
+      all-pips:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "saturday"
+      interval: "monthly"
     reviewers:
       - "kemingy"
     commit-message:
       prefix: "chore(actions)"
+    groups:
+      all-actions:
+        patterns:
+          - "*"
