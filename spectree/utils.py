@@ -1,3 +1,4 @@
+import functools
 import inspect
 import logging
 import re
@@ -14,6 +15,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    get_type_hints,
 )
 
 from ._pydantic import (
@@ -49,6 +51,7 @@ RE_FLASK_RULE = re.compile(
     re.VERBOSE,
 )
 
+cached_type_hints = functools.cache(get_type_hints)
 
 logger = logging.getLogger(__name__)
 

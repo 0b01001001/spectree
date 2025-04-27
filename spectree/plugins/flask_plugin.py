@@ -1,5 +1,4 @@
-from functools import cache
-from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
+from typing import Any, Callable, Mapping, Optional, Tuple
 
 import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
@@ -10,12 +9,11 @@ from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, Context, validate_response
 from spectree.response import Response
 from spectree.utils import (
+    cached_type_hints,
     flask_response_unpack,
     get_multidict_items,
     werkzeug_parse_rule,
 )
-
-cached_type_hints: Callable = cache(get_type_hints)
 
 
 class FlaskPlugin(BasePlugin):

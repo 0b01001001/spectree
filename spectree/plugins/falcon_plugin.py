@@ -1,7 +1,7 @@
 import inspect
 import re
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, get_type_hints
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from falcon import HTTP_400, HTTP_415, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
@@ -10,6 +10,7 @@ from spectree._pydantic import InternalValidationError, ValidationError
 from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
+from spectree.utils import cached_type_hints
 
 
 class OpenAPI:
@@ -220,15 +221,15 @@ class FalconPlugin(BasePlugin):
                     else err.errors(include_context=False)
                 )
 
-        if self.config.annotations:
-            annotations = get_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(_req.context, name, None)
-
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
             return None
+
+        if self.config.annotations:
+            annotations = cached_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(_req.context, name, None)
 
         result = func(*args, **kwargs)
 
@@ -334,15 +335,15 @@ class FalconAsgiPlugin(FalconPlugin):
                     else err.errors(include_context=False)
                 )
 
-        if self.config.annotations:
-            annotations = get_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(_req.context, name, None)
-
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
             return None
+
+        if self.config.annotations:
+            annotations = cached_type_hints(func)
+            for name in ("query", "json", "form", "headers", "cookies"):
+                if annotations.get(name):
+                    kwargs[name] = getattr(_req.context, name, None)
 
         result = (
             await func(*args, **kwargs)
