@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "1.4.6"
+version = "1.4.7"
 dynamic = []
 description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"

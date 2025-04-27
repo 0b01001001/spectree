@@ -2,7 +2,7 @@ import inspect
 from collections import namedtuple
 from functools import partial
 from json import JSONDecodeError
-from typing import Any, Callable, Optional, get_type_hints
+from typing import Any, Callable, Optional
 
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
@@ -23,7 +23,7 @@ from spectree.plugins.base import (
     validate_response,
 )
 from spectree.response import Response
-from spectree.utils import get_multidict_items_starlette
+from spectree.utils import cached_type_hints, get_multidict_items_starlette
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
@@ -134,17 +134,17 @@ class StarlettePlugin(BasePlugin):
                     {"error_msg": str(err)}, validation_error_status
                 )
 
+        before(request, response, req_validation_error, instance)
+        if req_validation_error or json_decode_error:
+            return response
+
         if self.config.annotations:
-            annotations = get_type_hints(func)
+            annotations = cached_type_hints(func)
             for name in ("query", "json", "form", "headers", "cookies"):
                 if annotations.get(name):
                     kwargs[name] = getattr(
                         getattr(request, "context", None), name, None
                     )
-
-        before(request, response, req_validation_error, instance)
-        if req_validation_error or json_decode_error:
-            return response
 
         if inspect.iscoroutinefunction(func):
             response = await func(*args, **kwargs)
