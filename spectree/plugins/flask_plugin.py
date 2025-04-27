@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Any, Callable, Mapping, Optional, Tuple, get_type_hints
 
 import flask
@@ -13,6 +14,8 @@ from spectree.utils import (
     get_multidict_items,
     werkzeug_parse_rule,
 )
+
+cached_type_hints: Callable = cache(get_type_hints)
 
 
 class FlaskPlugin(BasePlugin):
@@ -197,18 +200,19 @@ class FlaskPlugin(BasePlugin):
                 )
                 response = make_response(jsonify(errors), validation_error_status)
 
+        before(request, response, req_validation_error, None)
+
+        if req_validation_error is not None:
+            assert response  # make mypy happy
+            abort(response)
+
         if self.config.annotations:
-            annotations = get_type_hints(func)
+            annotations = cached_type_hints(func)
             for name in ("query", "json", "form", "headers", "cookies"):
                 if annotations.get(name):
                     kwargs[name] = getattr(
                         getattr(request, "context", None), name, None
                     )
-
-        before(request, response, req_validation_error, None)
-        if req_validation_error:
-            assert response  # make mypy happy
-            abort(response)
 
         result = func(*args, **kwargs)
 
