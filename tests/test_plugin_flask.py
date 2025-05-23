@@ -187,8 +187,8 @@ def json_list():
 
 
 @app.route("/api/set_cookies", methods=["GET"])
-@api.validate()
-def set_cookies(resp=Response(HTTP_200=StrDict)):
+@api.validate(resp=Response(HTTP_200=StrDict))
+def set_cookies():
     # related to GitHub issue #415
     resp = make_response(jsonify(msg="ping"))
     resp.set_cookie("foo", "hello")
