@@ -165,6 +165,16 @@ def no_response():
     return {}
 
 
+@app.route("/api/set_cookies", methods=["GET"])
+@api.validate(resp=Response(HTTP_200=StrDict))
+def set_cookies():
+    # related to GitHub issue #415
+    resp = make_response(jsonify(msg="ping"))
+    resp.set_cookie("foo", "hello")
+    resp.set_cookie("bar", "world")
+    return resp
+
+
 @app.route("/api/list_json", methods=["POST"])
 @api.validate(
     json=ListJSON,

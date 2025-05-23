@@ -554,6 +554,37 @@
         "tags": []
       }
     },
+    "/api/set_cookies": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_set_cookies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrDict.a9993e3"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "set_cookies <GET>",
+        "tags": []
+      }
+    },
     "/api/user/{name}": {
       "post": {
         "description": "",

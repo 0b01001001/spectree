@@ -280,3 +280,12 @@ def test_flask_custom_error(client):
     # response error
     resp = client.post("/api/custom_error", json={"foo": "foo"})
     assert resp.status_code == 500
+
+
+def test_flask_set_cookies(client):
+    resp = client.get("/api/set_cookies")
+    assert resp.status_code == 200
+    set_cookies = resp.headers.getlist("Set-Cookie")
+    assert len(set_cookies) == 2
+    assert "foo=hello" in set_cookies
+    assert "bar=world" in set_cookies
