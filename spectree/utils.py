@@ -374,10 +374,10 @@ def werkzeug_parse_rule(
         yield None, None, remaining
 
 
-def flask_response_unpack(resp: Any) -> Tuple[Any, int, Dict[str, Any]]:
+def flask_response_unpack(resp: Any) -> Tuple[Any, int, List[Tuple[str, str]]]:
     """Parse Flask response object into a tuple of (payload, status_code, headers)."""
     status = 200
-    headers: Dict[str, str] = {}
+    headers: List[Tuple[str, str]] = []
     payload = None
     if not isinstance(resp, tuple):
         return resp, status, headers
@@ -396,7 +396,7 @@ def flask_response_unpack(resp: Any) -> Tuple[Any, int, Dict[str, Any]]:
             f"Invalid return tuple: {resp}, expect (body,), (body, status), "
             "(body, headers), or (body, status, headers)."
         )
-    return payload, status, dict(headers)
+    return payload, status, headers
 
 
 def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):

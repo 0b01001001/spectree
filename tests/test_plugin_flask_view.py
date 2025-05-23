@@ -174,6 +174,18 @@ class NoResponseView(MethodView):
         return {}
 
 
+class SetCookiesView(MethodView):
+    @api.validate(
+        resp=Response(HTTP_200=StrDict),
+    )
+    def get(self):
+        # related to GitHub issue #415
+        resp = make_response(jsonify(msg="ping"))
+        resp.set_cookie("foo", "hello")
+        resp.set_cookie("bar", "world")
+        return resp
+
+
 class ListJsonView(MethodView):
     @api.validate(json=ListJSON)
     def post(self):

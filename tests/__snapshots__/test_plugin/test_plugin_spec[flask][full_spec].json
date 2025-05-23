@@ -554,6 +554,16 @@
         "tags": []
       }
     },
+    "/api/set_cookies": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_set_cookies",
+        "parameters": [],
+        "responses": {},
+        "summary": "set_cookies <GET>",
+        "tags": []
+      }
+    },
     "/api/user/{name}": {
       "post": {
         "description": "",
