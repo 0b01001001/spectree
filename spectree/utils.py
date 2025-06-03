@@ -108,7 +108,7 @@ def parse_request(func: Any) -> Dict[str, Any]:
     if not content_items:
         return {}
 
-    return {"content": content_items}
+    return {"content": content_items, "required": True}
 
 
 def parse_params(
