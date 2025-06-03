@@ -248,7 +248,7 @@ class UserXmlData:
 
     @staticmethod
     def parse_xml(data: str) -> "UserXmlData":
-        root = ET.ElementTree(ET.fromstring(data)).getroot()
+        root = ET.fromstring(data)
         assert root.tag == "user"
         children = [node for node in root]
         assert len(children) == 2
