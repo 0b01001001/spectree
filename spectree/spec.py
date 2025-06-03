@@ -309,7 +309,9 @@ class SpecTree:
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
-                            tag.dict(exclude_none=True) if isinstance(tag, Tag) else {"name": tag}
+                            tag.dict(exclude_none=True)
+                            if isinstance(tag, Tag)
+                            else {"name": tag}
                         )
 
                 routes[path][method.lower()] = {

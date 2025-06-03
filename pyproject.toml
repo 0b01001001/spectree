@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "1.4.8"
+version = "1.4.9"
 dynamic = []
 description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"
@@ -80,10 +80,10 @@ warn_untyped_fields = true
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
+    "mypy>=1.16.0",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
-    "ruff>=0.11.4",
+    "ruff>=0.11.12",
     "syrupy>=4.9.1",
 ]
 docs = [
