@@ -3,6 +3,6 @@
 
 def build():
     base(dev=True)
-    install.conda()
-    install.python()
+    install.uv()
+    shell("fish")
     runtime.init(["make install"])
