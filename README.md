@@ -21,6 +21,7 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
   * Quart [demo](#quart)
   * Falcon [demo](#falcon)
   * Starlette [demo](#starlette)
+  * Lilya [demo](#lilya)
 
 ## Quick Start
 
@@ -487,6 +488,61 @@ if __name__ == "__main__":
                 "/api",
                 routes=[
                     Route("/user", user_profile, methods=["POST"]),
+                ],
+            )
+        ]
+    )
+    spec.register(app)
+
+    uvicorn.run(app)
+```
+
+### Lilya
+
+```py
+import uvicorn
+from pydantic import BaseModel, Field
+from lilya.apps import Lilya
+from lilya.responses import JSONResponse
+from lilya.routing import Include, Path
+
+from spectree import Response, SpecTree
+
+# from spectree.plugins.starlette_plugin import PydanticResponse
+
+
+class Profile(BaseModel):
+    name: str
+    age: int = Field(..., gt=0, lt=150, description="user age(Human)")
+
+
+class Message(BaseModel):
+    text: str
+
+
+spec = SpecTree("lilya")
+
+
+@spec.validate(resp=Response(HTTP_200=Message, HTTP_403=None), tags=["api"])
+async def user_profile(request, json: Profile):
+    """
+    verify user profile (summary of this endpoint)
+
+    user's name, user's age, ... (long description)
+    """
+    print(json)  # or await request.json()
+    return JSONResponse(
+        {"text": "it works"}
+    )  # or `return PydanticResponse(Message(text='it works'))`
+
+
+if __name__ == "__main__":
+    app = Lilya(
+        routes=[
+            Include(
+                "/api",
+                routes=[
+                    Path("/user", user_profile, methods=["POST"]),
                 ],
             )
         ]

@@ -12,3 +12,6 @@ Plugins
 
 .. automodule:: spectree.plugins.starlette_plugin
    :members:
+
+.. automodule:: spectree.plugins.lilya_plugin
+   :members:

@@ -42,6 +42,9 @@ flask = [
 quart = [
     "quart>=0.16",
 ]
+lilya = [
+    "lilya>=0.13.7",
+]
 
 [project.urls]
 Homepage = "https://github.com/0b01001001/spectree"

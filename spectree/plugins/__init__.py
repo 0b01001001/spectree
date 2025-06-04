@@ -11,6 +11,7 @@ PLUGINS = {
     "falcon": Plugin(".falcon_plugin", __name__, "FalconPlugin"),
     "falcon-asgi": Plugin(".falcon_plugin", __name__, "FalconAsgiPlugin"),
     "starlette": Plugin(".starlette_plugin", __name__, "StarlettePlugin"),
+    "lilya": Plugin(".lilya_plugin", __name__, "LilyaPlugin"),
 }
 
 __all__ = ["PLUGINS", "BasePlugin", "Plugin"]
