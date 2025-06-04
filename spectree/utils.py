@@ -320,6 +320,22 @@ def get_multidict_items_starlette(
     return res
 
 
+def get_multidict_items_lilya(
+    multidict: MultiDictStarlette, model: OptionalModelType = None
+):
+    """
+    return the items of a :class:`lilya.datastructures.ImmutableMultiDict`
+    """
+    res = {}
+    for key in multidict:
+        values = multidict.getall(key)
+        if (model is not None and is_list_item(key, model)) or len(values) > 1:
+            res[key] = multidict.getall(key)
+        else:
+            res[key] = multidict[key]
+    return res
+
+
 def is_list_item(key: str, model: OptionalModelType) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
