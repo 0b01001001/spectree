@@ -36,7 +36,7 @@ def PydanticResponse(content):
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
-            return super().render(
+            return super().make_response(
                 serialize_model_instance(_PydanticResponseModel.parse_obj(content))
             )
 
@@ -159,7 +159,7 @@ class LilyaPlugin(BasePlugin):
             and not (
                 isinstance(response, JSONResponse)
                 and hasattr(response, "_model_class")
-                and response._model_class == resp.find_model(response.status_code)
+                and response._model_class == resp.find_model(response.status_code)  # type: ignore
             )
         ):
             try:
