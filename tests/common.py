@@ -1,6 +1,8 @@
+import uuid
 import warnings
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -66,6 +68,11 @@ class Resp(BaseModel):
 
 
 RootResp = generate_root_model(Union[JSON, List[int]], name="RootResp")
+
+
+class ComplexResp(BaseModel):
+    date: datetime
+    uuid: uuid.UUID
 
 
 class Language(str, Enum):

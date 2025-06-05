@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 from typing import Any, Protocol, Type, runtime_checkable
 
@@ -189,10 +190,13 @@ def is_root_model_instance(value: Any):
 
 
 def serialize_model_instance(value: BaseModel):
-    """Serialize a Pydantic BaseModel (equivalent of calling `.dict()` on a BaseModel,
-    but additionally takes care of stripping __root__ for root models.
+    """Serialize a Pydantic BaseModel to json-compatible format (equivalent of calling `.json()`
+    on a BaseModel, but additionally takes care of stripping __root__ for root models.
     """
-    serialized = value.model_dump() if PYDANTIC2 else value.dict()
+    # Pydantic V1 doesn't have a way to output json-compatible object, only json string
+    serialized = (
+        value.model_dump(mode="json") if PYDANTIC2 else json.loads(value.json())
+    )
 
     if is_root_model_instance(value) and ROOT_FIELD in serialized:
         return serialized[ROOT_FIELD]
