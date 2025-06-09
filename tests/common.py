@@ -228,7 +228,13 @@ def get_model_path_key(model_path: str) -> str:
 
 
 def get_root_resp_data(pre_serialize: bool, return_what: str):
-    assert return_what in ("RootResp_JSON", "RootResp_List", "JSON", "List")
+    assert return_what in (
+        "RootResp_JSON",
+        "RootResp_List",
+        "JSON",
+        "List",
+        "ModelList",
+    )
     data: Any
     if return_what == "RootResp_JSON":
         data = RootResp.parse_obj(JSON(name="user1", limit=1))
@@ -238,6 +244,9 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
         data = JSON(name="user1", limit=1)
     elif return_what == "List":
         data = [1, 2, 3, 4]
+        pre_serialize = False
+    elif return_what == "ModelList":
+        data = [JSON(name="user1", limit=1)]
         pre_serialize = False
     else:
         raise AssertionError()

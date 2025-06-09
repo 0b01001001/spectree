@@ -1,3 +1,4 @@
+import json
 import uuid
 from contextlib import nullcontext as does_not_raise
 from dataclasses import dataclass
@@ -7,6 +8,7 @@ from typing import Any, Union
 import pytest
 from pydantic import ValidationError
 
+from spectree._pydantic import SerializedPydanticResponse
 from spectree._types import OptionalModelType
 from spectree.plugins.base import (
     RawResponsePayload,
@@ -162,4 +164,9 @@ def test_validate_response(
             response_payload=response_payload,
         )
         assert isinstance(result, ResponseValidationResult)
-        assert result == expected_result
+        payload = (
+            ResponseValidationResult(json.loads(result.payload.data))
+            if isinstance(result.payload, SerializedPydanticResponse)
+            else result
+        )
+        assert payload == expected_result

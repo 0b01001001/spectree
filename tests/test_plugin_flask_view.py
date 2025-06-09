@@ -260,6 +260,15 @@ class ReturnRootView(MethodView):
         )
 
 
+class ReturnModelView(MethodView):
+    @api.validate()
+    def get(self):
+        return get_root_resp_data(
+            pre_serialize=False,
+            return_what=request.args.get("return_what", default="RootResp"),
+        )
+
+
 class ReturnOptionalAlias(MethodView):
     @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
     def get(self):
@@ -325,6 +334,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_root",
     view_func=ReturnRootView.as_view("return_root_view"),
+)
+app.add_url_rule(
+    "/api/return_model",
+    view_func=ReturnModelView.as_view("return_model_view"),
 )
 app.add_url_rule(
     "/api/custom_error",
