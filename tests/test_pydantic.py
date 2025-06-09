@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import Any, List
 
@@ -158,4 +159,4 @@ def test_is_partial_base_model_instance(value, expected):
     ],
 )
 def test_serialize_model_instance(value, expected):
-    assert serialize_model_instance(value) == expected
+    assert json.loads(serialize_model_instance(value).data) == expected

@@ -235,6 +235,17 @@ class ReturnRootView:
         )
 
 
+class ReturnModelView:
+    name = "return model request view"
+
+    @api.validate()
+    def on_get(self, req, resp):
+        resp.media = get_root_resp_data(
+            pre_serialize=False,
+            return_what=req.params.get("return_what", "RootResp"),
+        )
+
+
 class CustomErrorView:
     name = "custom error view"
 
@@ -278,6 +289,7 @@ app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
 app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
+app.add_route("/api/return_model", ReturnModelView())
 app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
 app.add_route("/api/custom_error", CustomErrorView())
@@ -416,6 +428,23 @@ def test_falcon_return_root_request_sync(client, pre_serialize: bool, return_wha
         assert resp.json == {"name": "user1", "limit": 1}
     elif return_what in ("RootResp_List", "List"):
         assert resp.json == [1, 2, 3, 4]
+
+
+@pytest.mark.parametrize(
+    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "ModelList"]
+)
+def test_falcon_return_model_request_sync(client, return_what: str):
+    resp = client.simulate_request(
+        "GET",
+        f"/api/return_model?return_what={return_what}",
+    )
+    assert resp.status_code == 200
+    if return_what in ("RootResp_JSON", "JSON"):
+        assert resp.json == {"name": "user1", "limit": 1}
+    elif return_what in ("RootResp_List"):
+        assert resp.json == [1, 2, 3, 4]
+    elif return_what in ("ModelList"):
+        assert resp.json == [{"name": "user1", "limit": 1}]
 
 
 @pytest.fixture

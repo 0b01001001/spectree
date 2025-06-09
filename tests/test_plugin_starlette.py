@@ -172,6 +172,14 @@ async def return_root(request):
     )
 
 
+@api.validate()
+async def return_model(request):
+    return get_root_resp_data(
+        pre_serialize=False,
+        return_what=request.query_params.get("return_what", default="RootResp"),
+    )
+
+
 @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
 async def return_optional_alias(request):
     return JSONResponse({"schema": "test"})
@@ -217,6 +225,7 @@ app = Starlette(
                 Route("/list_json", list_json, methods=["POST"]),
                 Route("/return_list", return_list, methods=["GET"]),
                 Route("/return_root", return_root, methods=["GET"]),
+                Route("/return_model", return_model, methods=["GET"]),
                 Route("/return_optional_alias", return_optional_alias, methods=["GET"]),
                 Route("/custom_error", custom_error, methods=["POST"]),
             ],

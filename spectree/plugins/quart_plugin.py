@@ -5,7 +5,13 @@ import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 from werkzeug.routing import parse_converter_args
 
-from spectree._pydantic import InternalValidationError, ValidationError
+from spectree._pydantic import (
+    InternalValidationError,
+    SerializedPydanticResponse,
+    ValidationError,
+    is_partial_base_model_instance,
+    serialize_model_instance,
+)
 from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, Context, validate_response
 from spectree.response import Response
@@ -258,13 +264,26 @@ class QuartPlugin(BasePlugin):
             else:
                 response = await make_response(
                     (
-                        response_validation_result.payload,
+                        current_app.response_class(
+                            response_validation_result.payload.data,
+                            mimetype="application/json",
+                        )
+                        if isinstance(
+                            response_validation_result.payload,
+                            SerializedPydanticResponse,
+                        )
+                        else response_validation_result.payload,
                         status,
                         additional_headers,
                     )
                 )
         else:
-            response = await make_response(result)
+            if is_partial_base_model_instance(result):
+                result = current_app.response_class(
+                    serialize_model_instance(result).data,
+                    mimetype="application/json",
+                )
+            response = await make_response(result, status, additional_headers)
 
         after(request, response, resp_validation_error, None)
 

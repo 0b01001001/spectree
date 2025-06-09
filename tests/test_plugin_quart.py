@@ -180,6 +180,15 @@ def return_root():
     )
 
 
+@app.route("/api/return_model", methods=["GET"])
+@api.validate()
+def return_model():
+    return get_root_resp_data(
+        pre_serialize=False,
+        return_what=request.args.get("return_what", default="RootResp"),
+    )
+
+
 @app.route("/api/custom_error", methods=["POST"])
 @api.validate(resp=Response(HTTP_200=CustomError))
 def custom_error(json: CustomError):

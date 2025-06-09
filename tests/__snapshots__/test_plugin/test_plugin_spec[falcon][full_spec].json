@@ -394,6 +394,16 @@
         "tags": []
       }
     },
+    "/api/return_model": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_model",
+        "parameters": [],
+        "responses": {},
+        "summary": "on_get <GET>",
+        "tags": []
+      }
+    },
     "/api/return_optional_alias": {
       "get": {
         "description": "",

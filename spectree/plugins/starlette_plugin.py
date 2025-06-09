@@ -36,9 +36,9 @@ def PydanticResponse(content):
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
-            return super().render(
-                serialize_model_instance(_PydanticResponseModel.parse_obj(content))
-            )
+            return serialize_model_instance(
+                _PydanticResponseModel.parse_obj(content)
+            ).data
 
     return _PydanticResponse(content)
 
