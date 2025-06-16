@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Protocol, TypeGuard, Union, runtime_checkable
+from typing import Any, Protocol, Union, cast, runtime_checkable
 
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
@@ -151,7 +151,7 @@ def is_base_model(t: Any) -> bool:
         return False
 
 
-def is_base_model_instance(value: Any) -> TypeGuard[BaseModel]:
+def is_base_model_instance(value: Any) -> bool:
     """Check whether a value is a Pydantic BaseModel instance."""
     return is_base_model(type(value))
 
@@ -203,5 +203,7 @@ def serialize_model_instance(
     """Serialize a (partial) Pydantic BaseModel to json string."""
     if not is_base_model_instance(value):
         value = _PydanticResponseModel.parse_obj(value)
+    else:
+        value = cast(BaseModel, value)
     serialized = value.model_dump_json() if PYDANTIC2 else value.json()
     return SerializedPydanticResponse(serialized.encode("utf-8"))
