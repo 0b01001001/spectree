@@ -12,7 +12,10 @@ from typing import (
     Union,
 )
 
-from spectree._pydantic import is_partial_base_model_instance, serialize_model_instance
+from spectree._pydantic import (
+    is_partial_base_model_instance,
+    serialize_model_instance,
+)
 from spectree._types import JsonType, ModelType, OptionalModelType
 from spectree.config import Configuration
 from spectree.response import Response
@@ -153,7 +156,7 @@ def validate_response(
     if not validation_model:
         return ResponseValidationResult(payload=response_payload)
 
-    final_response_payload = None
+    final_response_payload: Any = None
     skip_validation = False
     if isinstance(response_payload, RawResponsePayload):
         final_response_payload = response_payload.payload

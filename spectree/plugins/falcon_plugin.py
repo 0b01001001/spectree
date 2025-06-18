@@ -3,10 +3,16 @@ import re
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
-from falcon import HTTP_400, HTTP_415, HTTPError
+from falcon import HTTP_400, HTTP_415, MEDIA_JSON, HTTPError
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
-from spectree._pydantic import InternalValidationError, ValidationError
+from spectree._pydantic import (
+    InternalValidationError,
+    SerializedPydanticResponse,
+    ValidationError,
+    is_partial_base_model_instance,
+    serialize_model_instance,
+)
 from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
@@ -233,23 +239,33 @@ class FalconPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        if not self._data_set_manually(_resp) and not skip_validation and resp:
-            try:
-                status = int(_resp.status[:3])
-                response_validation_result = validate_response(
-                    validation_model=resp.find_model(status),
-                    response_payload=_resp.media,
-                )
-            except (InternalValidationError, ValidationError) as err:
-                resp_validation_error = err
-                _resp.status = HTTP_500
-                _resp.media = (
-                    err.errors()
-                    if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
-                )
-            else:
-                _resp.media = response_validation_result.payload
+        if not self._data_set_manually(_resp):
+            if not skip_validation and resp:
+                try:
+                    status = int(_resp.status[:3])
+                    response_validation_result = validate_response(
+                        validation_model=resp.find_model(status),
+                        response_payload=_resp.media,
+                    )
+                except (InternalValidationError, ValidationError) as err:
+                    resp_validation_error = err
+                    _resp.status = HTTP_500
+                    _resp.media = (
+                        err.errors()
+                        if isinstance(err, InternalValidationError)
+                        else err.errors(include_context=False)
+                    )
+                else:
+                    if isinstance(
+                        response_validation_result.payload, SerializedPydanticResponse
+                    ):
+                        _resp.data = response_validation_result.payload.data
+                        _resp.content_type = MEDIA_JSON
+                    else:
+                        _resp.media = response_validation_result.payload
+            elif is_partial_base_model_instance(_resp.media):
+                _resp.data = serialize_model_instance(_resp.media).data
+                _resp.content_type = MEDIA_JSON
 
         after(_req, _resp, resp_validation_error, _self)
 
@@ -351,23 +367,33 @@ class FalconAsgiPlugin(FalconPlugin):
             else func(*args, **kwargs)
         )
 
-        if not self._data_set_manually(_resp) and not skip_validation and resp:
-            try:
-                status = int(_resp.status[:3])
-                response_validation_result = validate_response(
-                    validation_model=resp.find_model(status) if resp else None,
-                    response_payload=_resp.media,
-                )
-            except (InternalValidationError, ValidationError) as err:
-                resp_validation_error = err
-                _resp.status = HTTP_500
-                _resp.media = (
-                    err.errors()
-                    if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
-                )
-            else:
-                _resp.media = response_validation_result.payload
+        if not self._data_set_manually(_resp):
+            if not skip_validation and resp:
+                try:
+                    status = int(_resp.status[:3])
+                    response_validation_result = validate_response(
+                        validation_model=resp.find_model(status) if resp else None,
+                        response_payload=_resp.media,
+                    )
+                except (InternalValidationError, ValidationError) as err:
+                    resp_validation_error = err
+                    _resp.status = HTTP_500
+                    _resp.media = (
+                        err.errors()
+                        if isinstance(err, InternalValidationError)
+                        else err.errors(include_context=False)
+                    )
+                else:
+                    if isinstance(
+                        response_validation_result.payload, SerializedPydanticResponse
+                    ):
+                        _resp.data = response_validation_result.payload.data
+                        _resp.content_type = MEDIA_JSON
+                    else:
+                        _resp.media = response_validation_result.payload
+            elif is_partial_base_model_instance(_resp.media):
+                _resp.data = serialize_model_instance(_resp.media).data
+                _resp.content_type = MEDIA_JSON
 
         after(_req, _resp, resp_validation_error, _self)
 

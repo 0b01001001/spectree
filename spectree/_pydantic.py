@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Protocol, Type, runtime_checkable
+from typing import Any, Protocol, Union, cast, runtime_checkable
 
 from pydantic.version import VERSION as PYDANTIC_VERSION
 
@@ -56,7 +57,7 @@ else:
     InternalField = Field  # type: ignore
 
 
-def generate_root_model(root_type, name="GeneratedRootModel") -> Type:
+def generate_root_model(root_type, name="GeneratedRootModel") -> type[BaseModel]:
     if PYDANTIC2:
         return type(name, (RootModel[root_type],), {})
     return type(
@@ -188,12 +189,21 @@ def is_root_model_instance(value: Any):
     return is_root_model(type(value))
 
 
-def serialize_model_instance(value: BaseModel):
-    """Serialize a Pydantic BaseModel (equivalent of calling `.dict()` on a BaseModel,
-    but additionally takes care of stripping __root__ for root models.
-    """
-    serialized = value.model_dump() if PYDANTIC2 else value.dict()
+@dataclass(frozen=True)
+class SerializedPydanticResponse:
+    data: bytes
 
-    if is_root_model_instance(value) and ROOT_FIELD in serialized:
-        return serialized[ROOT_FIELD]
-    return serialized
+
+_PydanticResponseModel = generate_root_model(Any, name="_PydanticResponseModel")
+
+
+def serialize_model_instance(
+    value: Union[BaseModel, list[BaseModel], dict[Any, BaseModel]],
+) -> SerializedPydanticResponse:
+    """Serialize a (partial) Pydantic BaseModel to json string."""
+    if not is_base_model_instance(value):
+        value = _PydanticResponseModel.parse_obj(value)
+    else:
+        value = cast(BaseModel, value)
+    serialized = value.model_dump_json() if PYDANTIC2 else value.json()
+    return SerializedPydanticResponse(serialized.encode("utf-8"))
