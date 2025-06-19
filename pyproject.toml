@@ -1,14 +1,12 @@
 [project]
 name = "spectree"
-version = "1.4.9"
+version = "1.4.10"
 dynamic = []
 description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = { text = "Apache-2.0" }
 requires-python = ">=3.9"
-authors = [
-    { name = "Keming Yang", email = "kemingy94@gmail.com" },
-]
+authors = [{ name = "Keming Yang", email = "kemingy94@gmail.com" }]
 classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
@@ -22,26 +20,14 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = [
-    "pydantic>=1.2,<3",
-]
+dependencies = ["pydantic>=1.2,<3"]
 
 [project.optional-dependencies]
-offline = [
-    "offapi>=0.1.0",
-]
-falcon = [
-    "falcon>=3",
-]
-starlette = [
-    "starlette[full]>=0.16",
-]
-flask = [
-    "flask>=2",
-]
-quart = [
-    "quart>=0.16",
-]
+offline = ["offapi>=0.1.0"]
+falcon = ["falcon>=3"]
+starlette = ["starlette[full]>=0.16"]
+flask = ["flask>=2"]
+quart = ["quart>=0.16"]
 
 [project.urls]
 Homepage = "https://github.com/0b01001001/spectree"
