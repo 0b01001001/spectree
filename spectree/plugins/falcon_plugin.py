@@ -1,9 +1,11 @@
 import inspect
 import re
 from functools import partial
+from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from falcon import HTTP_400, HTTP_415, MEDIA_JSON, HTTPError
+from falcon import Response as FalconResponse
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
 from spectree._pydantic import (
@@ -174,7 +176,19 @@ class FalconPlugin(BasePlugin):
 
         return f"/{'/'.join(subs)}", parameters
 
-    def request_validation(self, req, query, json, form, headers, cookies):
+    @staticmethod
+    def get_status_code_from_resp(resp: FalconResponse) -> int:
+        status = resp.status
+        if isinstance(status, str):
+            return int(status[:3])
+        elif isinstance(status, int):
+            return status
+        elif isinstance(status, HTTPStatus):
+            return status.value
+
+        raise RuntimeError("unknown falcon response status type")
+
+    def validate_request(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -195,6 +209,46 @@ class FalconPlugin(BasePlugin):
             req_form = {x.name: x.stream.read() for x in req.get_media()}
             req.context.form = form.parse_obj(req_form)
 
+    def validate_response(
+        self,
+        resp: FalconResponse,
+        resp_model: Optional[Response],
+        skip_validation: bool,
+    ):
+        resp_validation_error = None
+        if not self._data_set_manually(resp):
+            if not skip_validation and resp_model:
+                try:
+                    status = self.get_status_code_from_resp(resp)
+                    response_validation_result = validate_response(
+                        validation_model=resp_model.find_model(status)
+                        if resp_model
+                        else None,
+                        response_payload=resp.media,
+                    )
+                except (InternalValidationError, ValidationError) as err:
+                    resp_validation_error = err
+                    resp.status = HTTP_500
+                    resp.media = (
+                        err.errors()
+                        if isinstance(err, InternalValidationError)
+                        else err.errors(include_context=False)
+                    )
+                else:
+                    # mark the data from SerializedPydanticResponse as JSON
+                    if isinstance(
+                        response_validation_result.payload, SerializedPydanticResponse
+                    ):
+                        resp.data = response_validation_result.payload.data
+                        resp.content_type = MEDIA_JSON
+                    else:
+                        resp.media = response_validation_result.payload
+            elif is_partial_base_model_instance(resp.media):
+                resp.data = serialize_model_instance(resp.media).data
+                resp.content_type = MEDIA_JSON
+
+        return resp_validation_error
+
     def validate(
         self,
         func: Callable,
@@ -213,10 +267,10 @@ class FalconPlugin(BasePlugin):
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
-        req_validation_error, resp_validation_error = None, None
+        req_validation_error = None
         if not skip_validation:
             try:
-                self.request_validation(_req, query, json, form, headers, cookies)
+                self.validate_request(_req, query, json, form, headers, cookies)
 
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
@@ -239,36 +293,8 @@ class FalconPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        if not self._data_set_manually(_resp):
-            if not skip_validation and resp:
-                try:
-                    status = int(_resp.status[:3])
-                    response_validation_result = validate_response(
-                        validation_model=resp.find_model(status),
-                        response_payload=_resp.media,
-                    )
-                except (InternalValidationError, ValidationError) as err:
-                    resp_validation_error = err
-                    _resp.status = HTTP_500
-                    _resp.media = (
-                        err.errors()
-                        if isinstance(err, InternalValidationError)
-                        else err.errors(include_context=False)
-                    )
-                else:
-                    if isinstance(
-                        response_validation_result.payload, SerializedPydanticResponse
-                    ):
-                        _resp.data = response_validation_result.payload.data
-                        _resp.content_type = MEDIA_JSON
-                    else:
-                        _resp.media = response_validation_result.payload
-            elif is_partial_base_model_instance(_resp.media):
-                _resp.data = serialize_model_instance(_resp.media).data
-                _resp.content_type = MEDIA_JSON
-
+        resp_validation_error = self.validate_response(_resp, resp, skip_validation)
         after(_req, _resp, resp_validation_error, _self)
-
         # `falcon` doesn't use this return value. However, some users may have
         # their own processing logics that depend on this return value.
         return result
@@ -290,7 +316,7 @@ class FalconAsgiPlugin(FalconPlugin):
     OPEN_API_ROUTE_CLASS = OpenAPIAsgi
     DOC_PAGE_ROUTE_CLASS = DocPageAsgi
 
-    async def request_validation(self, req, query, json, form, headers, cookies):
+    async def validate_async_request(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
         if headers:
@@ -337,10 +363,12 @@ class FalconAsgiPlugin(FalconPlugin):
     ):
         # falcon endpoint method arguments: (self, req, resp)
         _self, _req, _resp = args[:3]
-        req_validation_error, resp_validation_error = None, None
+        req_validation_error = None
         if not skip_validation:
             try:
-                await self.request_validation(_req, query, json, form, headers, cookies)
+                await self.validate_async_request(
+                    _req, query, json, form, headers, cookies
+                )
 
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
@@ -367,34 +395,6 @@ class FalconAsgiPlugin(FalconPlugin):
             else func(*args, **kwargs)
         )
 
-        if not self._data_set_manually(_resp):
-            if not skip_validation and resp:
-                try:
-                    status = int(_resp.status[:3])
-                    response_validation_result = validate_response(
-                        validation_model=resp.find_model(status) if resp else None,
-                        response_payload=_resp.media,
-                    )
-                except (InternalValidationError, ValidationError) as err:
-                    resp_validation_error = err
-                    _resp.status = HTTP_500
-                    _resp.media = (
-                        err.errors()
-                        if isinstance(err, InternalValidationError)
-                        else err.errors(include_context=False)
-                    )
-                else:
-                    if isinstance(
-                        response_validation_result.payload, SerializedPydanticResponse
-                    ):
-                        _resp.data = response_validation_result.payload.data
-                        _resp.content_type = MEDIA_JSON
-                    else:
-                        _resp.media = response_validation_result.payload
-            elif is_partial_base_model_instance(_resp.media):
-                _resp.data = serialize_model_instance(_resp.media).data
-                _resp.content_type = MEDIA_JSON
-
+        resp_validation_error = self.validate_response(_resp, resp, skip_validation)
         after(_req, _resp, resp_validation_error, _self)
-
         return result
