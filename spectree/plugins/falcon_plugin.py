@@ -212,17 +212,17 @@ class FalconPlugin(BasePlugin):
     def validate_response(
         self,
         resp: FalconResponse,
-        resp_mdoel: Optional[Response],
+        resp_model: Optional[Response],
         skip_validation: bool,
     ):
         resp_validation_error = None
         if not self._data_set_manually(resp):
-            if not skip_validation and resp_mdoel:
+            if not skip_validation and resp_model:
                 try:
                     status = self.get_status_code_from_resp(resp)
                     response_validation_result = validate_response(
-                        validation_model=resp_mdoel.find_model(status)
-                        if resp_mdoel
+                        validation_model=resp_model.find_model(status)
+                        if resp_model
                         else None,
                         response_payload=resp.media,
                     )
