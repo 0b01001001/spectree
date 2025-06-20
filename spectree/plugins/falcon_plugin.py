@@ -1,10 +1,9 @@
 import inspect
 import re
 from functools import partial
-from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
-from falcon import HTTP_400, HTTP_415, MEDIA_JSON, HTTPError
+from falcon import HTTP_400, HTTP_415, MEDIA_JSON, HTTPError, http_status_to_code
 from falcon import Response as FalconResponse
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 
@@ -176,18 +175,6 @@ class FalconPlugin(BasePlugin):
 
         return f"/{'/'.join(subs)}", parameters
 
-    @staticmethod
-    def get_status_code_from_resp(resp: FalconResponse) -> int:
-        status = resp.status
-        if isinstance(status, str):
-            return int(status[:3])
-        elif isinstance(status, int):
-            return status
-        elif isinstance(status, HTTPStatus):
-            return status.value
-
-        raise RuntimeError("unknown falcon response status type")
-
     def validate_request(self, req, query, json, form, headers, cookies):
         if query:
             req.context.query = query.parse_obj(req.params)
@@ -219,7 +206,7 @@ class FalconPlugin(BasePlugin):
         if not self._data_set_manually(resp):
             if not skip_validation and resp_model:
                 try:
-                    status = self.get_status_code_from_resp(resp)
+                    status = http_status_to_code(resp.status)
                     response_validation_result = validate_response(
                         validation_model=resp_model.find_model(status)
                         if resp_model
