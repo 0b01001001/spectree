@@ -267,11 +267,11 @@ class FlaskPlugin(BasePlugin):
                 )
         else:
             if is_partial_base_model_instance(result):
-                result = current_app.response_class(
+                payload = current_app.response_class(
                     serialize_model_instance(result).data,
                     mimetype="application/json",
                 )
-            response = make_response(result, status, additional_headers)
+            response = make_response(payload, status, additional_headers)
 
         after(request, response, resp_validation_error, None)
 
