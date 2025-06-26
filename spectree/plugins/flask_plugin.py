@@ -2,6 +2,7 @@ from typing import Any, Callable, Mapping, Optional, Tuple
 
 import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
+from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
 
 from spectree._pydantic import (
@@ -224,7 +225,8 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        payload, status, additional_headers = flask_response_unpack(result)
+        payload, status, additional_headers_list = flask_response_unpack(result)
+        additional_headers = Headers(additional_headers_list)
         if isinstance(payload, flask.Response):
             resp_status, resp_headers = (
                 payload.status_code,
