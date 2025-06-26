@@ -236,10 +236,14 @@ class QuartPlugin(BasePlugin):
 
         payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, quart.Response):
-            payload, resp_status, resp_headers = (
-                (await payload.get_json() if (await payload.get_json()) is not None else await payload.get_data()),
+            resp_status, resp_headers = (
                 payload.status_code,
                 payload.headers,
+            )
+            payload = (
+                await payload.get_json()
+                if (await payload.get_json()) is not None
+                else await payload.get_data()
             )
             # the inner quart.Response.status_code only takes effect when there is
             # no other status code

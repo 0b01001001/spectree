@@ -226,10 +226,14 @@ class FlaskPlugin(BasePlugin):
 
         payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, flask.Response):
-            payload, resp_status, resp_headers = (
-                payload.get_json() if payload.get_json() is not None else payload.get_data(),
+            resp_status, resp_headers = (
                 payload.status_code,
                 payload.headers,
+            )
+            payload = (
+                payload.get_json()
+                if payload.get_json() is not None
+                else payload.get_data()
             )
             # the inner flask.Response.status_code only takes effect when there is
             # no other status code
