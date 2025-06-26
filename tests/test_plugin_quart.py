@@ -189,6 +189,12 @@ def return_model():
     )
 
 
+@app.route("/api/return_string_status", methods=["GET"])
+@api.validate()
+def return_string_status():
+    return "Response text string", 200
+
+
 @app.route("/api/custom_error", methods=["POST"])
 @api.validate(resp=Response(HTTP_200=CustomError))
 def custom_error(json: CustomError):

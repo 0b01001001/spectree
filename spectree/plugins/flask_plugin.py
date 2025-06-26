@@ -12,7 +12,11 @@ from spectree._pydantic import (
     serialize_model_instance,
 )
 from spectree._types import ModelType
-from spectree.plugins.base import BasePlugin, Context, validate_response, RawResponsePayload
+from spectree.plugins.base import (
+    BasePlugin,
+    Context,
+    validate_response,
+)
 from spectree.response import Response
 from spectree.utils import (
     cached_type_hints,

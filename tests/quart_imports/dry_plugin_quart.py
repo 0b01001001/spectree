@@ -53,6 +53,12 @@ def test_quart_return_model(client):
     assert resp_json["score"] == sorted(resp_json["score"], reverse=True)
 
 
+def test_quart_return_string_status(client):
+    resp = client.get("/api/return_string_status")
+    assert resp.status_code == 200
+    assert resp.text == "Response text string"
+
+
 @pytest.mark.parametrize(
     ["test_client_and_api", "expected_status_code"],
     [

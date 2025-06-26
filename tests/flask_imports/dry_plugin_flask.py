@@ -265,7 +265,6 @@ def test_flask_return_model_request(client, return_what: str):
 
 def test_flask_return_string_status(client):
     resp = client.get("/api/return_string_status")
-    print(resp)
     assert resp.status_code == 200
     assert resp.text == "Response text string"
 
