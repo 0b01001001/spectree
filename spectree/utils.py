@@ -7,7 +7,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterator,
     List,
     Mapping,
     Optional,
@@ -35,21 +34,6 @@ from ._types import (
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
-
-RE_FLASK_RULE = re.compile(
-    r"""
-    (?P<static>[^<]*)                           # static rule data
-    <
-    (?:
-        (?P<converter>[a-zA-Z_][a-zA-Z0-9_]*)   # converter name
-        (?:\((?P<args>.*?)\))?                  # converter arguments
-        \:                                      # variable delimiter
-    )?
-    (?P<variable>[a-zA-Z_][a-zA-Z0-9_]*)        # variable name
-    >
-    """,
-    re.VERBOSE,
-)
 
 cached_type_hints = functools.cache(get_type_hints)
 
@@ -338,65 +322,6 @@ def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """
     assert is_pydantic_model(model), f"{model} is not a pydantic model"
     return generate_root_model(List[model], name=f"{model.__name__}List")  # type: ignore
-
-
-def werkzeug_parse_rule(
-    rule: str,
-) -> Iterator[Tuple[Optional[str], Optional[str], str]]:
-    """A copy of werkzeug.parse_rule which is now removed.
-
-    Parse a rule and return it as generator. Each iteration yields tuples
-    in the form ``(converter, arguments, variable)``. If the converter is
-    `None` it's a static url part, otherwise it's a dynamic one.
-    """
-    pos = 0
-    end = len(rule)
-    do_match = RE_FLASK_RULE.match
-    used_names = set()
-    while pos < end:
-        m = do_match(rule, pos)
-        if m is None:
-            break
-        data = m.groupdict()
-        if data["static"]:
-            yield None, None, data["static"]
-        variable = data["variable"]
-        converter = data["converter"] or "default"
-        if variable in used_names:
-            raise ValueError(f"variable name {variable!r} used twice.")
-        used_names.add(variable)
-        yield converter, data["args"] or None, variable
-        pos = m.end()
-    if pos < end:
-        remaining = rule[pos:]
-        if ">" in remaining or "<" in remaining:
-            raise ValueError(f"malformed url rule: {rule!r}")
-        yield None, None, remaining
-
-
-def flask_response_unpack(resp: Any) -> Tuple[Any, int, List[Tuple[str, str]]]:
-    """Parse Flask response object into a tuple of (payload, status_code, headers)."""
-    status = 200
-    headers: List[Tuple[str, str]] = []
-    payload = None
-    if not isinstance(resp, tuple):
-        return resp, status, headers
-    if len(resp) == 1:
-        payload = resp[0]
-    elif len(resp) == 2:
-        payload = resp[0]
-        if isinstance(resp[1], int):
-            status = resp[1]
-        else:
-            headers = resp[1]
-    elif len(resp) == 3:
-        payload, status, headers = resp
-    else:
-        raise ValueError(
-            f"Invalid return tuple: {resp}, expect (body,), (body, status), "
-            "(body, headers), or (body, status, headers)."
-        )
-    return payload, status, headers
 
 
 def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
