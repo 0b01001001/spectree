@@ -252,6 +252,12 @@ def return_model():
     )
 
 
+@app.route("/api/return_string_status", methods=["GET"])
+@api.validate()
+def return_string_status():
+    return "Response text string", 200
+
+
 @app.route("/api/return_optional_alias", methods=["GET"])
 @api.validate(resp=Response(HTTP_200=OptionalAliasResp))
 def return_optional_alias():
