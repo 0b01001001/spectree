@@ -12,7 +12,7 @@ from spectree._pydantic import (
     serialize_model_instance,
 )
 from spectree._types import ModelType
-from spectree.plugins.base import BasePlugin, Context, validate_response
+from spectree.plugins.base import BasePlugin, Context, validate_response, RawResponsePayload
 from spectree.response import Response
 from spectree.utils import (
     cached_type_hints,
@@ -223,7 +223,7 @@ class FlaskPlugin(BasePlugin):
         payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, flask.Response):
             payload, resp_status, resp_headers = (
-                payload.get_json(),
+                payload.get_json() if payload.get_json() is not None else payload.get_data(),
                 payload.status_code,
                 payload.headers,
             )
