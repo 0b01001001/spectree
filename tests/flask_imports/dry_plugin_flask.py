@@ -263,6 +263,12 @@ def test_flask_return_model_request(client, return_what: str):
         assert resp.json == [{"name": "user1", "limit": 1}]
 
 
+def test_flask_return_string_status(client):
+    resp = client.get("/api/return_string_status")
+    assert resp.status_code == 200
+    assert resp.text == "Response text string"
+
+
 def test_flask_upload_file(client):
     file_content = "abcdef"
     data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}

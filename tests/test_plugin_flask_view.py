@@ -281,6 +281,12 @@ class CustomErrorView(MethodView):
         return jsonify(foo="bar")
 
 
+class StringStatusView(MethodView):
+    @api.validate()
+    def get(self):
+        return "Response text string", 200
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -338,6 +344,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/return_model",
     view_func=ReturnModelView.as_view("return_model_view"),
+)
+app.add_url_rule(
+    "/api/return_string_status",
+    view_func=StringStatusView.as_view("string_status_view"),
 )
 app.add_url_rule(
     "/api/custom_error",

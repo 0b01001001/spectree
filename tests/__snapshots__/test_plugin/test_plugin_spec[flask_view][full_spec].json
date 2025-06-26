@@ -574,6 +574,16 @@
         "tags": []
       }
     },
+    "/api/return_string_status": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_string_status",
+        "parameters": [],
+        "responses": {},
+        "summary": "get <GET>",
+        "tags": []
+      }
+    },
     "/api/user/{name}": {
       "post": {
         "description": "",

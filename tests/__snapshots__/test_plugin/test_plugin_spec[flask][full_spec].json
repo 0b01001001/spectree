@@ -570,6 +570,16 @@
         "tags": []
       }
     },
+    "/api/return_string_status": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_return_string_status",
+        "parameters": [],
+        "responses": {},
+        "summary": "return_string_status <GET>",
+        "tags": []
+      }
+    },
     "/api/set_cookies": {
       "get": {
         "description": "",

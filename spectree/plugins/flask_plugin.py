@@ -2,6 +2,7 @@ from typing import Any, Callable, Mapping, Optional, Tuple
 
 import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
+from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
 
 from spectree._pydantic import (
@@ -12,7 +13,11 @@ from spectree._pydantic import (
     serialize_model_instance,
 )
 from spectree._types import ModelType
-from spectree.plugins.base import BasePlugin, Context, validate_response
+from spectree.plugins.base import (
+    BasePlugin,
+    Context,
+    validate_response,
+)
 from spectree.response import Response
 from spectree.utils import (
     cached_type_hints,
@@ -220,12 +225,17 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        payload, status, additional_headers = flask_response_unpack(result)
+        payload, status, additional_headers_list = flask_response_unpack(result)
+        additional_headers = Headers(additional_headers_list)
         if isinstance(payload, flask.Response):
-            payload, resp_status, resp_headers = (
-                payload.get_json(),
+            resp_status, resp_headers = (
                 payload.status_code,
                 payload.headers,
+            )
+            payload = (
+                payload.get_json()
+                if payload.get_json() is not None
+                else payload.get_data()
             )
             # the inner flask.Response.status_code only takes effect when there is
             # no other status code
@@ -267,11 +277,11 @@ class FlaskPlugin(BasePlugin):
                 )
         else:
             if is_partial_base_model_instance(result):
-                result = current_app.response_class(
+                payload = current_app.response_class(
                     serialize_model_instance(result).data,
                     mimetype="application/json",
                 )
-            response = make_response(result, status, additional_headers)
+            response = make_response(payload, status, additional_headers)
 
         after(request, response, resp_validation_error, None)
 
