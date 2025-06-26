@@ -201,7 +201,7 @@ class FalconPlugin(BasePlugin):
         resp: FalconResponse,
         resp_model: Optional[Response],
         skip_validation: bool,
-    ):
+    ) -> Optional[ValueError]:
         resp_validation_error = None
         if not self._data_set_manually(resp):
             if not skip_validation and resp_model:

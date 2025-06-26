@@ -179,9 +179,7 @@ def no_response():
 
 
 @app.route("/api/list_json", methods=["POST"])
-@api.validate(
-    json=ListJSON,
-)
+@api.validate(json=ListJSON)
 def json_list():
     return {}
 

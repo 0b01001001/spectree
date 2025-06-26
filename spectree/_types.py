@@ -14,7 +14,7 @@ from typing import (
 
 from typing_extensions import Protocol
 
-from ._pydantic import BaseModel
+from spectree._pydantic import BaseModel
 
 BaseModelSubclassType = TypeVar("BaseModelSubclassType", bound=BaseModel)
 ModelType = Type[BaseModelSubclassType]
