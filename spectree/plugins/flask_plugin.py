@@ -2,7 +2,6 @@ from typing import Any, Callable, Mapping, Optional, Tuple
 
 import flask
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
-from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
 
 from spectree._pydantic import (
@@ -225,17 +224,12 @@ class FlaskPlugin(BasePlugin):
 
         result = func(*args, **kwargs)
 
-        payload, status, additional_headers_list = flask_response_unpack(result)
-        additional_headers = Headers(additional_headers_list)
+        payload, status, additional_headers = flask_response_unpack(result)
         if isinstance(payload, flask.Response):
-            resp_status, resp_headers = (
+            payload, resp_status, resp_headers = (
+                payload.get_data(),
                 payload.status_code,
                 payload.headers,
-            )
-            payload = (
-                payload.get_json()
-                if payload.get_json() is not None
-                else payload.get_data()
             )
             # the inner flask.Response.status_code only takes effect when there is
             # no other status code
@@ -276,9 +270,9 @@ class FlaskPlugin(BasePlugin):
                     )
                 )
         else:
-            if is_partial_base_model_instance(result):
+            if is_partial_base_model_instance(payload):
                 payload = current_app.response_class(
-                    serialize_model_instance(result).data,
+                    serialize_model_instance(payload).data,
                     mimetype="application/json",
                 )
             response = make_response(payload, status, additional_headers)
