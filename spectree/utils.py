@@ -18,7 +18,6 @@ from typing import (
     Union,
     get_type_hints,
 )
-from unittest.mock import patch
 
 from ._pydantic import (
     BaseModel,
@@ -366,5 +365,52 @@ def json_compatible_deepcopy(obj: Any) -> Any:
             return "Infinity" if x > 0 else "-Infinity"
         return x
 
-    with patch.dict(copy._deepcopy_dispatch, {float: deepcopy_float}):
-        return copy.deepcopy(obj)
+    json_compatible_dispatch = copy._deepcopy_dispatch.copy()
+    json_compatible_dispatch[float] = deepcopy_float
+
+    def naive_deepcopy(x, memo=None, _nil=()):
+        """Copied from the std `copy`, with modifications to handle float and fix lints."""
+
+        nonlocal json_compatible_dispatch
+
+        if memo is None:
+            memo = {}
+
+        d = id(x)
+        y = memo.get(d, _nil)
+        if y is not _nil:
+            return y
+
+        cls = type(x)
+
+        copier = json_compatible_dispatch.get(cls)
+        if copier is not None:
+            y = copier(x, memo)
+        elif issubclass(cls, type):
+            y = x
+        else:
+            copier = getattr(x, "__deepcopy__", None)
+            if copier is not None:
+                y = copier(memo)
+            else:
+                # current usage doesn't need to handle other cases
+                raise copy.Error("un(deep)copyable object of type %s" % cls)
+
+        # If is its own copy, don't memoize.
+        if y is not x:
+            memo[d] = y
+            copy._keep_alive(x, memo)  # Make sure x lives at least as long as d
+        return y
+
+    # patch the `deepcopy` function used in std copy's copier
+    json_compatible_dispatch[list] = functools.partial(
+        copy._deepcopy_list, deepcopy=naive_deepcopy
+    )
+    json_compatible_dispatch[dict] = functools.partial(
+        copy._deepcopy_dict, deepcopy=naive_deepcopy
+    )
+    json_compatible_dispatch[tuple] = functools.partial(
+        copy._deepcopy_tuple, deepcopy=naive_deepcopy
+    )
+
+    return naive_deepcopy(obj)

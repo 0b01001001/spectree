@@ -295,4 +295,4 @@ def test_json_compatible_schema():
         json.dumps(schema, allow_nan=False)
 
     json_schema = json_compatible_deepcopy(schema)
-    assert json.dumps(json_schema)
+    assert json.dumps(json_schema, allow_nan=False)
