@@ -1,6 +1,5 @@
 import warnings
 from collections import defaultdict
-from copy import deepcopy
 from functools import wraps
 from importlib import import_module
 from typing import (
@@ -26,6 +25,7 @@ from .utils import (
     get_model_schema,
     get_nested_key,
     get_security,
+    json_compatible_deepcopy,
     parse_comments,
     parse_name,
     parse_params,
@@ -273,16 +273,14 @@ class SpecTree:
         """
         unified model processing
         """
-
         model_key = self.naming_strategy(model)
-        self.models[model_key] = deepcopy(
+        self.models[model_key] = json_compatible_deepcopy(
             get_model_schema(
                 model=model,
                 naming_strategy=self.naming_strategy,
                 nested_naming_strategy=self.nested_naming_strategy,
             )
         )
-
         return model_key
 
     def _generate_spec(self) -> Dict[str, Any]:

@@ -1,8 +1,10 @@
+import copy
 import functools
 import inspect
 import logging
 import re
 from hashlib import sha1
+from math import isinf, isnan
 from typing import (
     Any,
     Callable,
@@ -16,6 +18,7 @@ from typing import (
     Union,
     get_type_hints,
 )
+from unittest.mock import patch
 
 from ._pydantic import (
     BaseModel,
@@ -337,3 +340,31 @@ def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
         responses = func.resp.generate_spec(naming_strategy)
 
     return responses
+
+
+def json_compatible_deepcopy(obj: Any) -> Any:
+    """
+    A custom deepcopy implementation that shadows the original with the following changes:
+
+    Special numeric values will be replaced with their string representations.
+
+    - `float("inf")` becomes `"Infinity"`
+    - `float("-inf")` becomes `"-Infinity"`
+    - `float("nan")` becomes `"NaN"`
+
+    This is for compatibility with the general JSON spec, as defined in:
+
+    - https://datatracker.ietf.org/doc/html/rfc7159.html
+
+    **Warning**: DO NOT use this function on performance-critical paths.
+    """
+
+    def deepcopy_float(x, memo):
+        if isnan(x):
+            return "NaN"
+        elif isinf(x):
+            return "Infinity" if x > 0 else "-Infinity"
+        return x
+
+    with patch.dict(copy._deepcopy_dispatch, {float: deepcopy_float}):
+        return copy.deepcopy(obj)
