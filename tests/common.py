@@ -122,6 +122,13 @@ class CustomError(BaseModel):
         return value
 
 
+class Numeric(BaseModel):
+    normal: float = 0.0
+    large: float = Field(default=float("inf"))
+    small: float = Field(default=float("-inf"))
+    unknown: float = Field(default=float("nan"))
+
+
 def get_paths(spec):
     paths = []
     for path in spec["paths"]:

@@ -1,10 +1,14 @@
+import json
+
 import pytest
 
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
+    get_model_schema,
     has_model,
+    json_compatible_deepcopy,
     parse_code,
     parse_comments,
     parse_name,
@@ -13,7 +17,7 @@ from spectree.utils import (
     parse_resp,
 )
 
-from .common import DemoModel, DemoQuery, get_model_path_key
+from .common import DemoModel, DemoQuery, Numeric, get_model_path_key
 
 api = SpecTree()
 
@@ -282,3 +286,13 @@ def test_parse_params_with_route_param_keywords():
             "explode": True,
         },
     ]
+
+
+def test_json_compatible_schema():
+    schema = get_model_schema(Numeric)
+
+    with pytest.raises(ValueError):
+        json.dumps(schema, allow_nan=False)
+
+    json_schema = json_compatible_deepcopy(schema)
+    assert json.dumps(json_schema, allow_nan=False)

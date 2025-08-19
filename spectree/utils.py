@@ -3,6 +3,7 @@ import inspect
 import logging
 import re
 from hashlib import sha1
+from math import isinf, isnan
 from typing import (
     Any,
     Callable,
@@ -337,3 +338,52 @@ def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
         responses = func.resp.generate_spec(naming_strategy)
 
     return responses
+
+
+def json_compatible_deepcopy(obj: Any) -> Any:
+    """
+    A custom deepcopy implementation that modifies the behavior of:
+
+    Special numeric values will be replaced with their string representations.
+
+    - `float("inf")` becomes `"Infinity"`
+    - `float("-inf")` becomes `"-Infinity"`
+    - `float("nan")` becomes `"NaN"`
+
+    This is for compatibility with the general JSON spec, as defined in:
+
+    - https://datatracker.ietf.org/doc/html/rfc7159.html
+
+    This only works for the generated schema. It does not handle the recursive objects.
+    DO NOT use this for other purposes.
+    """
+
+    def handle_float(x):
+        if isnan(x):
+            return "NaN"
+        elif isinf(x):
+            return "Infinity" if x > 0 else "-Infinity"
+        return x
+
+    _immutable_types = (int, float, bool, str, bytes, type(None))
+
+    def naive_deepcopy(obj):
+        """This does not handle the recursive objects."""
+        cls = type(obj)
+        if cls is dict:
+            res = {
+                naive_deepcopy(key): naive_deepcopy(value) for key, value in obj.items()
+            }
+        elif cls is list:
+            res = [naive_deepcopy(item) for item in obj]
+        elif cls is tuple:
+            res = tuple(naive_deepcopy(item) for item in obj)
+        elif cls is float:
+            res = handle_float(obj)
+        elif cls in _immutable_types:
+            res = obj
+        else:
+            raise TypeError(f"Unsupported type for this custom deepcopy: {cls}")
+        return res
+
+    return naive_deepcopy(obj)
