@@ -354,7 +354,8 @@ def json_compatible_deepcopy(obj: Any) -> Any:
 
     - https://datatracker.ietf.org/doc/html/rfc7159.html
 
-    This only works for the generated schema. DO NOT use this for other purposes.
+    This only works for the generated schema. It does not handle the recursive objects.
+    DO NOT use this for other purposes.
     """
 
     def handle_float(x):
@@ -363,6 +364,8 @@ def json_compatible_deepcopy(obj: Any) -> Any:
         elif isinf(x):
             return "Infinity" if x > 0 else "-Infinity"
         return x
+
+    _immutable_types = (int, float, bool, str, bytes, type(None))
 
     def naive_deepcopy(obj):
         """This does not handle the recursive objects."""
@@ -377,8 +380,10 @@ def json_compatible_deepcopy(obj: Any) -> Any:
             res = tuple(naive_deepcopy(item) for item in obj)
         elif cls is float:
             res = handle_float(obj)
-        elif cls in (int, bool, str, bytes, type(None)):
+        elif cls in _immutable_types:
             res = obj
+        else:
+            raise TypeError(f"Unsupported type for this custom deepcopy: {cls}")
         return res
 
     return naive_deepcopy(obj)
