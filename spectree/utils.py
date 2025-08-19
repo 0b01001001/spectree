@@ -1,4 +1,3 @@
-import copy
 import functools
 import inspect
 import logging
@@ -343,7 +342,7 @@ def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
 
 def json_compatible_deepcopy(obj: Any) -> Any:
     """
-    A custom deepcopy implementation that shadows the original with the following changes:
+    A custom deepcopy implementation that modifies the behavior of:
 
     Special numeric values will be replaced with their string representations.
 
@@ -355,62 +354,31 @@ def json_compatible_deepcopy(obj: Any) -> Any:
 
     - https://datatracker.ietf.org/doc/html/rfc7159.html
 
-    **Warning**: DO NOT use this function on performance-critical paths.
+    This only works for the generated schema. DO NOT use this for other purposes.
     """
 
-    def deepcopy_float(x, memo):
+    def handle_float(x):
         if isnan(x):
             return "NaN"
         elif isinf(x):
             return "Infinity" if x > 0 else "-Infinity"
         return x
 
-    json_compatible_dispatch = copy._deepcopy_dispatch.copy()
-    json_compatible_dispatch[float] = deepcopy_float
-
-    def naive_deepcopy(x, memo=None, _nil=()):
-        """Copied from the std `copy`, with modifications to handle float and fix lints."""
-
-        nonlocal json_compatible_dispatch
-
-        if memo is None:
-            memo = {}
-
-        d = id(x)
-        y = memo.get(d, _nil)
-        if y is not _nil:
-            return y
-
-        cls = type(x)
-
-        copier = json_compatible_dispatch.get(cls)
-        if copier is not None:
-            y = copier(x, memo)
-        elif issubclass(cls, type):
-            y = x
-        else:
-            copier = getattr(x, "__deepcopy__", None)
-            if copier is not None:
-                y = copier(memo)
-            else:
-                # current usage doesn't need to handle other cases
-                raise copy.Error("un(deep)copyable object of type %s" % cls)
-
-        # If is its own copy, don't memoize.
-        if y is not x:
-            memo[d] = y
-            copy._keep_alive(x, memo)  # Make sure x lives at least as long as d
-        return y
-
-    # patch the `deepcopy` function used in std copy's copier
-    json_compatible_dispatch[list] = functools.partial(
-        copy._deepcopy_list, deepcopy=naive_deepcopy
-    )
-    json_compatible_dispatch[dict] = functools.partial(
-        copy._deepcopy_dict, deepcopy=naive_deepcopy
-    )
-    json_compatible_dispatch[tuple] = functools.partial(
-        copy._deepcopy_tuple, deepcopy=naive_deepcopy
-    )
+    def naive_deepcopy(obj):
+        """This does not handle the recursive objects."""
+        cls = type(obj)
+        if cls is dict:
+            res = {
+                naive_deepcopy(key): naive_deepcopy(value) for key, value in obj.items()
+            }
+        elif cls is list:
+            res = [naive_deepcopy(item) for item in obj]
+        elif cls is tuple:
+            res = tuple(naive_deepcopy(item) for item in obj)
+        elif cls is float:
+            res = handle_float(obj)
+        elif cls in (int, bool, str, bytes, type(None)):
+            res = obj
+        return res
 
     return naive_deepcopy(obj)
