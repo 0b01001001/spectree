@@ -4,6 +4,7 @@ from random import random
 from flask import Flask, abort, jsonify
 from flask.views import MethodView
 from pydantic import BaseModel, Field
+from werkzeug.datastructures import FileStorage
 
 from examples.common import File, FileResp, Query
 from spectree import Response, SpecTree
@@ -85,7 +86,7 @@ def with_file(form: File):
 
     demo for 'form'
     """
-    file = form.file
+    file: FileStorage = form.file
     return {"filename": file.filename, "type": file.content_type}
 
 

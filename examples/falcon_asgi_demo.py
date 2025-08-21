@@ -3,6 +3,7 @@ from random import random
 
 import falcon.asgi
 import uvicorn
+from falcon.asgi.multipart import BodyPart
 from pydantic import BaseModel, Field
 
 from examples.common import File, FileResp, Query
@@ -105,8 +106,8 @@ class FileUpload:
 
         demo for 'form'
         """
-        file = req.context.form.file
-        resp.media = {"filename": file.filename, "type": file.type}
+        file: BodyPart = req.context.form.file
+        resp.media = {"filename": file.secure_filename, "type": file.content_type}
 
 
 if __name__ == "__main__":

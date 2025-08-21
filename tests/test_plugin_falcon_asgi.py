@@ -164,7 +164,7 @@ class FileUploadView:
     )
     async def on_post(self, req, resp, form: FormFileUpload):
         assert form.file
-        file_content = await form.file.get_data()
+        file_content: bytes = await form.file.get_data()
         resp.media = {"file": file_content.decode("utf-8")}
 
 

@@ -202,7 +202,7 @@ class FileUploadView:
     )
     def on_post(self, req, resp, form: FormFileUpload):
         assert form.file
-        file_content = form.file
+        file_content = form.file.data
         resp.media = {"file": file_content.decode("utf-8")}
 
 

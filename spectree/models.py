@@ -193,7 +193,7 @@ if PYDANTIC2:
 
         @classmethod
         def __get_pydantic_core_schema__(cls, _source_type, _handler):
-            from ._pydantic import core_schema
+            from ._pydantic import core_schema  # noqa: PLC0415
 
             return core_schema.with_info_plain_validator_function(cls.validate)
 

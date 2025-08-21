@@ -3,6 +3,7 @@ from random import random
 from wsgiref import simple_server
 
 import falcon
+from falcon.media.multipart import BodyPart
 from pydantic import BaseModel, Field
 
 from examples.common import File, FileResp, Query
@@ -109,8 +110,8 @@ class FileUpload:
 
         demo for 'form'
         """
-        file = form.file
-        resp.media = {"filename": file.filename, "type": file.type}
+        file: BodyPart = form.file
+        resp.media = {"filename": file.secure_filename, "type": file.content_type}
 
 
 def create_app():
