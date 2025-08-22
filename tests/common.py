@@ -38,7 +38,7 @@ class QueryList(BaseModel):
 
 
 class FormFileUpload(BaseModel):
-    file: BaseFile
+    file: Optional[BaseFile]
     other: str
 
 

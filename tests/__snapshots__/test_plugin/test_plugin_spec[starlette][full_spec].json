@@ -30,9 +30,16 @@
       "FormFileUpload.7068f62": {
         "properties": {
           "file": {
-            "format": "binary",
-            "title": "File",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "binary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
           },
           "other": {
             "title": "Other",
