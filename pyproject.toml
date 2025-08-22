@@ -23,7 +23,7 @@ classifiers = [
 dependencies = ["pydantic>=1.2,<3"]
 
 [project.optional-dependencies]
-offline = ["offapi>=0.1.0"]
+offline = ["offapi>=0.1.1"]
 falcon = ["falcon>=3"]
 starlette = ["starlette[full]>=0.16"]
 flask = ["flask>=2"]
