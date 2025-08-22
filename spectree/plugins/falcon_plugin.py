@@ -16,7 +16,6 @@ from spectree._pydantic import (
     serialize_model_instance,
 )
 from spectree._types import ModelType
-from spectree.models import BaseFile
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
 from spectree.utils import cached_type_hints
@@ -193,16 +192,15 @@ class FalconPlugin(BasePlugin):
                 media = None
             req.context.json = json.parse_obj(media)
         if form:
-            fields = form.__fields__
             req_form = {}
             for part in req.get_media():
-                if part.name in fields and fields[part.name].annotation is BaseFile:
-                    # pass the `falcon.BodyPart` if it's annotated as BaseFile
+                if part.filename is None:
+                    req_form[part.name] = part.data
+                else:
+                    # pass the `falcon.BodyPart` if it's attached as a file
                     req_form[part.name] = part
                     # try to consume the file data, otherwise it will be lost
                     _ = part.data
-                else:
-                    req_form[part.name] = part.data
             req.context.form = form.parse_obj(req_form)
 
     def validate_response(
@@ -336,15 +334,14 @@ class FalconAsgiPlugin(FalconPlugin):
                 req.context.form = None
             else:
                 req_form = {}
-                fields = form.__fields__
                 async for part in form_data:
-                    if part.name in fields and fields[part.name].annotation is BaseFile:
+                    if part.filename is None:
+                        req_form[part.name] = await part.data
+                    else:
                         # pass the `falcon.BodyPart` if it's annotated as BaseFile
                         req_form[part.name] = part
                         # try to consume the file data, otherwise it will be lost
                         await part.data
-                    else:
-                        req_form[part.name] = await part.data
                 req.context.form = form.parse_obj(req_form)
 
     async def validate(
