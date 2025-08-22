@@ -118,9 +118,9 @@ class StarlettePlugin(BasePlugin):
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 response = JSONResponse(
-                    err.errors()
+                    err.json()
                     if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False),
+                    else err.json(include_context=False),
                     validation_error_status,
                 )
             except JSONDecodeError as err:

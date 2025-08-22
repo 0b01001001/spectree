@@ -199,6 +199,8 @@ class FalconPlugin(BasePlugin):
                 if part.name in fields and fields[part.name].annotation is BaseFile:
                     # pass the `falcon.BodyPart` if it's annotated as BaseFile
                     req_form[part.name] = part
+                    # try to consume the file data, otherwise it will be lost
+                    _ = part.data
                 else:
                     req_form[part.name] = part.data
             req.context.form = form.parse_obj(req_form)
@@ -270,9 +272,9 @@ class FalconPlugin(BasePlugin):
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = (
-                    err.errors()
+                    err.json()
                     if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
+                    else err.json(include_context=False)
                 )
 
         before(_req, _resp, req_validation_error, _self)
@@ -339,6 +341,8 @@ class FalconAsgiPlugin(FalconPlugin):
                     if part.name in fields and fields[part.name].annotation is BaseFile:
                         # pass the `falcon.BodyPart` if it's annotated as BaseFile
                         req_form[part.name] = part
+                        # try to consume the file data, otherwise it will be lost
+                        await part.data
                     else:
                         req_form[part.name] = await part.data
                 req.context.form = form.parse_obj(req_form)
@@ -372,9 +376,9 @@ class FalconAsgiPlugin(FalconPlugin):
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = (
-                    err.errors()
+                    err.json()
                     if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
+                    else err.json(include_context=False)
                 )
 
         before(_req, _resp, req_validation_error, _self)

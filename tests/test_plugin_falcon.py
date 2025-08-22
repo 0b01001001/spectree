@@ -203,7 +203,7 @@ class FileUploadView:
     def on_post(self, req, resp, form: FormFileUpload):
         assert form.file
         file_content = form.file.data
-        resp.media = {"file": file_content.decode("utf-8")}
+        resp.media = {"file": file_content.decode("utf-8"), "other": form.other}
 
 
 class ListJsonView:
@@ -553,6 +553,9 @@ def test_falcon_file_upload_sync(client):
         'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'
         "Content-Type: text/plain\r\n\r\n"
         f"{file_content}\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="other"\r\n\r\n'
+        "test\r\n"
         f"--{boundary}--\r\n"
     )
 
@@ -566,6 +569,7 @@ def test_falcon_file_upload_sync(client):
     assert resp.status_code == 200, resp.text
     assert resp.headers["content-type"] == "application/json"
     assert resp.json["file"] == file_content
+    assert resp.json["other"] == "test"
 
 
 def test_falcon_custom_serializer(client):

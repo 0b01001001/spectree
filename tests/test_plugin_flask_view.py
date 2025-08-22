@@ -67,7 +67,7 @@ class FileUploadView(MethodView):
     def post(self, form: FormFileUpload):
         upload = form.file
         assert upload
-        return {"content": upload.stream.read().decode("utf-8")}
+        return {"content": upload.stream.read().decode("utf-8"), "other": form.other}
 
 
 class User(MethodView):

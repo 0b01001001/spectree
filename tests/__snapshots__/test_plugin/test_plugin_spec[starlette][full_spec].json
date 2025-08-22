@@ -33,10 +33,15 @@
             "format": "binary",
             "title": "File",
             "type": "string"
+          },
+          "other": {
+            "title": "Other",
+            "type": "string"
           }
         },
         "required": [
-          "file"
+          "file",
+          "other"
         ],
         "title": "FormFileUpload",
         "type": "object"
