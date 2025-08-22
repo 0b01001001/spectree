@@ -192,10 +192,10 @@ class FalconPlugin(BasePlugin):
                     raise
                 media = None
             req.context.json = json.parse_obj(media)
-        if form and req.content_type in self.FORM_MIMETYPE:
+        if form and req.content_type:
             if req.content_type == "application/x-www-form-urlencoded":
                 req_form = req.get_media()
-            elif req.content_type == "multipart/form-data":
+            elif req.content_type.startswith("multipart/form-data"):
                 req_form = {}
                 for part in req.get_media():
                     if part.filename is None:
@@ -331,7 +331,7 @@ class FalconAsgiPlugin(FalconPlugin):
                     raise
                 media = None
             req.context.json = json.parse_obj(media)
-        if form and req.content_type in self.FORM_MIMETYPE:
+        if form and req.content_type:
             try:
                 form_data = await req.get_media()
             except HTTPError as err:
@@ -341,7 +341,7 @@ class FalconAsgiPlugin(FalconPlugin):
             else:
                 if req.content_type == "application/x-www-form-urlencoded":
                     req_form = form_data
-                elif req.content_type == "multipart/form-data":
+                elif req.content_type.startswith("multipart/form-data"):
                     req_form = {}
                     async for part in form_data:
                         if part.filename is None:
