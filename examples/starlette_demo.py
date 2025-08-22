@@ -1,6 +1,7 @@
 import uvicorn
 from pydantic import BaseModel, Field
 from starlette.applications import Starlette
+from starlette.datastructures import UploadFile
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
@@ -50,8 +51,8 @@ async def file_upload(request, form: File):
 
     demo for 'form'
     """
-    file = form.file
-    return JSONResponse({"filename": file.filename, "type": file.type})
+    file: UploadFile = form.file
+    return JSONResponse({"filename": file.filename, "type": file.content_type})
 
 
 class Ping(HTTPEndpoint):

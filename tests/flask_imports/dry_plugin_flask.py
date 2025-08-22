@@ -271,7 +271,10 @@ def test_flask_return_string_status(client):
 
 def test_flask_upload_file(client):
     file_content = "abcdef"
-    data = {"file": (io.BytesIO(file_content.encode("utf-8")), "test.txt")}
+    data = {
+        "file": (io.BytesIO(file_content.encode("utf-8")), "test.txt"),
+        "other": "test",
+    }
     resp = client.post(
         "/api/file_upload",
         data=data,
@@ -279,6 +282,7 @@ def test_flask_upload_file(client):
     )
     assert resp.status_code == 200, resp.data
     assert resp.json["content"] == file_content
+    assert resp.json["other"] == "test"
 
 
 def test_flask_optional_alias_response(client):

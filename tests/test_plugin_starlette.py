@@ -73,7 +73,9 @@ class Ping(HTTPEndpoint):
 async def file_upload(request):
     assert request.context.form.file
     content = await request.context.form.file.read()
-    return JSONResponse({"file": content.decode("utf-8")})
+    return JSONResponse(
+        {"file": content.decode("utf-8"), "other": request.context.form.other}
+    )
 
 
 @api.validate(
@@ -463,9 +465,11 @@ def test_starlette_upload_file(client):
     resp = client.post(
         "/api/file_upload",
         files={"file": ("test.txt", file_io, "text/plain")},
+        data={"other": "test"},
     )
     assert resp.status_code == 200, resp.data
     assert resp.json()["file"] == file_content
+    assert resp.json()["other"] == "test"
 
 
 def test_starlette_return_optional_alias(client):

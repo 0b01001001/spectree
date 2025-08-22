@@ -65,7 +65,10 @@ def ping():
 def file_upload():
     upload = request.context.form.file
     assert upload
-    return {"content": upload.stream.read().decode("utf-8")}
+    return {
+        "content": upload.stream.read().decode("utf-8"),
+        "other": request.context.form.other,
+    }
 
 
 @app.route("/api/user/<name>", methods=["POST"])

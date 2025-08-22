@@ -39,6 +39,7 @@ class QueryList(BaseModel):
 
 class FormFileUpload(BaseModel):
     file: BaseFile
+    other: str
 
 
 class Form(BaseModel):
