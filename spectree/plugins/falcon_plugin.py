@@ -338,7 +338,7 @@ class FalconAsgiPlugin(FalconPlugin):
                     if part.filename is None:
                         req_form[part.name] = await part.data
                     else:
-                        # pass the `falcon.BodyPart` if it's annotated as BaseFile
+                        # pass the `falcon.BodyPart` if it's attached as a file
                         req_form[part.name] = part
                         # try to consume the file data, otherwise it will be lost
                         await part.data
