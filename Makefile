@@ -5,6 +5,7 @@ MYPY_SOURCE_FILES=spectree tests # temporary
 
 install:
 	uv sync --all-extras --all-groups
+	uv run -- prek install
 
 import_test:
 	for module in flask quart falcon starlette; do \
