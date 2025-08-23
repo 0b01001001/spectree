@@ -27,7 +27,7 @@ class StreamWrapper:
     def __init__(self, stream):
         self._buf = BytesIO(stream)
 
-    def read(self, size: int | None = -1, /) -> bytes:
+    def read(self, size: Optional[int] = -1, /) -> bytes:
         return self._buf.read(size)
 
     def exhaust(self) -> None:
@@ -36,7 +36,7 @@ class StreamWrapper:
 
 
 class AsyncStreamWrapper(StreamWrapper):
-    async def read(self, size: int | None = -1, /) -> bytes:  # type: ignore[override]
+    async def read(self, size: Optional[int] = -1, /) -> bytes:  # type: ignore[override]
         return super().read(size)
 
     async def exhaust(self) -> None:  # type: ignore[override]
