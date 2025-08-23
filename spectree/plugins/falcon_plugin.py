@@ -1,9 +1,10 @@
 import inspect
 import re
 from functools import partial
+from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
-from falcon import HTTP_400, HTTP_415, MEDIA_JSON, HTTPError, http_status_to_code
+from falcon import MEDIA_JSON, http_status_to_code
 from falcon import Request as FalconRequest
 from falcon import Response as FalconResponse
 from falcon.asgi import Request as FalconASGIRequest
@@ -20,6 +21,26 @@ from spectree._types import ModelType
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
 from spectree.utils import cached_type_hints
+
+
+class StreamWrapper:
+    def __init__(self, stream):
+        self._buf = BytesIO(stream)
+
+    def read(self, size: int | None = -1, /) -> bytes:
+        return self._buf.read(size)
+
+    def exhaust(self) -> None:
+        self._buf.seek(0)
+        self._buf.truncate(0)
+
+
+class AsyncStreamWrapper(StreamWrapper):
+    async def read(self, size: int | None = -1, /) -> bytes:  # type: ignore[override]
+        return super().read(size)
+
+    async def exhaust(self) -> None:  # type: ignore[override]
+        super().exhaust()
 
 
 class OpenAPI:
@@ -63,7 +84,6 @@ class FalconPlugin(BasePlugin):
     def __init__(self, spectree):
         super().__init__(spectree)
 
-        self.FALCON_MEDIA_ERROR_CODE = (HTTP_400, HTTP_415)
         # NOTE from `falcon.routing.compiled.CompiledRouterNode`
         self.ESCAPE = r"[\.\(\)\[\]\?\$\*\+\^\|]"
         self.ESCAPE_TO = r"\\\g<0>"
@@ -185,26 +205,23 @@ class FalconPlugin(BasePlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            try:
-                media = req.media
-            except HTTPError as err:
-                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                    raise
-                media = None
+            media = req.media
             req.context.json = json.parse_obj(media)
         if form and req.content_type:
+            form_data = req.get_media()
             if req.content_type == "application/x-www-form-urlencoded":
-                req_form = req.get_media()
+                req_form = form_data
             elif req.content_type.startswith("multipart/form-data"):
                 req_form = {}
-                for part in req.get_media():
+                for part in form_data:
                     if part.filename is None:
-                        req_form[part.name] = part.data
+                        req_form[part.name] = part.get_data()
                     else:
                         # pass the `falcon.BodyPart` if it's attached as a file
                         req_form[part.name] = part
                         # try to consume the file data, otherwise it will be lost
-                        _ = part.data
+                        # this is hacky since it changed the underlying stream type
+                        part.stream = StreamWrapper(part.stream.read())
             req.context.form = form.parse_obj(req_form)
 
     def validate_response(
@@ -324,34 +341,23 @@ class FalconAsgiPlugin(FalconPlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            try:
-                media = await req.get_media()
-            except HTTPError as err:
-                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                    raise
-                media = None
+            media = await req.get_media()
             req.context.json = json.parse_obj(media)
         if form and req.content_type:
-            try:
-                form_data = await req.get_media()
-            except HTTPError as err:
-                if err.status not in self.FALCON_MEDIA_ERROR_CODE:
-                    raise
-                req.context.form = None
-            else:
-                if req.content_type == "application/x-www-form-urlencoded":
-                    req_form = form_data
-                elif req.content_type.startswith("multipart/form-data"):
-                    req_form = {}
-                    async for part in form_data:
-                        if part.filename is None:
-                            req_form[part.name] = await part.data
-                        else:
-                            # pass the `falcon.BodyPart` if it's attached as a file
-                            req_form[part.name] = part
-                            # try to consume the file data, otherwise it will be lost
-                            await part.data
-                req.context.form = form.parse_obj(req_form)
+            form_data = await req.get_media()
+            if req.content_type == "application/x-www-form-urlencoded":
+                req_form = form_data
+            elif req.content_type.startswith("multipart/form-data"):
+                req_form = {}
+                async for part in form_data:
+                    if part.filename is None:
+                        req_form[part.name] = await part.get_data()
+                    else:
+                        # pass the `falcon.BodyPart` if it's attached as a file
+                        req_form[part.name] = part
+                        # try to consume the file data, otherwise it will be lost
+                        part.stream = AsyncStreamWrapper(await part.stream.read())
+            req.context.form = form.parse_obj(req_form)
 
     async def validate(
         self,

@@ -201,9 +201,11 @@ class FileUploadView:
         form=FormFileUpload,
     )
     def on_post(self, req, resp, form: FormFileUpload):
-        assert form.file
-        file_content = form.file.data
-        resp.media = {"file": file_content.decode("utf-8"), "other": form.other}
+        if form.file:
+            file_content = form.file.stream.read()
+            resp.media = {"file": file_content.decode("utf-8"), "other": form.other}
+        else:
+            resp.media = {"file": None, "other": form.other}
 
 
 class ListJsonView:
@@ -569,6 +571,16 @@ def test_falcon_file_upload_sync(client):
     assert resp.status_code == 200, resp.text
     assert resp.headers["content-type"] == "application/json"
     assert resp.json["file"] == file_content
+    assert resp.json["other"] == "test"
+
+    resp = client.simulate_post(
+        "/api/file_upload",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        body="other=test".encode("utf-8"),
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.headers["content-type"] == "application/json"
+    assert resp.json["file"] is None
     assert resp.json["other"] == "test"
 
 
