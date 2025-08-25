@@ -1,8 +1,16 @@
 import inspect
 import re
 from functools import partial
-from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional
+
+try:
+    # some platforms may ban `tempfile`, e.g. Google App Engine
+    # this is similar to what `werkzeug` did in `werkzeug.formparser`
+    from tempfile import SpooledTemporaryFile
+
+    CachedFile = partial(SpooledTemporaryFile, max_size=1024 * 1024)
+except ImportError:
+    from io import BytesIO as CachedFile  # type: ignore[assignment]
 
 from falcon import MEDIA_JSON, http_status_to_code
 from falcon import Request as FalconRequest
@@ -25,7 +33,9 @@ from spectree.utils import cached_type_hints
 
 class StreamWrapper:
     def __init__(self, stream):
-        self._buf = BytesIO(stream)
+        self._buf = CachedFile()
+        self._buf.write(stream)
+        self._buf.seek(0)
 
     def read(self, size: Optional[int] = -1, /) -> bytes:
         return self._buf.read(size)
