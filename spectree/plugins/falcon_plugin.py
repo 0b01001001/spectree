@@ -215,15 +215,13 @@ class FalconPlugin(BasePlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            media = req.media
-            req.context.json = json.parse_obj(media)
+            req.context.json = json.parse_obj(req.get_media())
         if form and req.content_type:
-            form_data = req.get_media()
+            req_form = {}
             if req.content_type == "application/x-www-form-urlencoded":
-                req_form = form_data
+                req_form = req.get_media()
             elif req.content_type.startswith("multipart/form-data"):
-                req_form = {}
-                for part in form_data:
+                for part in req.get_media():
                     if part.filename is None:
                         req_form[part.name] = part.get_data()
                     else:
@@ -354,12 +352,11 @@ class FalconAsgiPlugin(FalconPlugin):
             media = await req.get_media()
             req.context.json = json.parse_obj(media)
         if form and req.content_type:
-            form_data = await req.get_media()
+            req_form = {}
             if req.content_type == "application/x-www-form-urlencoded":
-                req_form = form_data
+                req_form = await req.get_media()
             elif req.content_type.startswith("multipart/form-data"):
-                req_form = {}
-                async for part in form_data:
+                async for part in await req.get_media():
                     if part.filename is None:
                         req_form[part.name] = await part.get_data()
                     else:
