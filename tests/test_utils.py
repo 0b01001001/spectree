@@ -17,7 +17,7 @@ from spectree.utils import (
     parse_resp,
 )
 
-from .common import DemoModel, DemoQuery, Numeric, get_model_path_key
+from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
 
 api = SpecTree()
 
@@ -296,3 +296,6 @@ def test_json_compatible_schema():
 
     json_schema = json_compatible_deepcopy(schema)
     assert json.dumps(json_schema, allow_nan=False)
+
+    schema = get_model_schema(DefaultEnumValue)
+    json_schema = json_compatible_deepcopy(schema)
