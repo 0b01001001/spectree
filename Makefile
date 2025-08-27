@@ -13,13 +13,18 @@ import_test:
 		bash -c "uv run tests/import_module/test_$${module}_plugin.py" || exit 1; \
 	done
 
-test: import_test install
+test: import_test
+	uv pip sync pylock.toml
 	uv run -- pytest tests -vv -rs --disable-warnings
-	uv pip install --force-reinstall 'pydantic<2'
-	uv run -- pytest tests -vv -rs --disable-warnings
+	uv pip sync pylock.legacy.toml --strict
+	uv run --no-sync -- pytest tests -vv -rs --disable-warnings
 
 update_snapshot:
 	@uv run -- pytest --snapshot-update
+
+update_lock:
+	uv pip compile --all-extras --group docs --group dev -o pylock.toml pyproject.toml
+	uv pip compile --all-extras --group docs --group dev -o pylock.legacy.toml pyproject.toml requirements-legacy.txt
 
 doc:
 	@cd docs && make html
