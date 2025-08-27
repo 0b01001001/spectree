@@ -39,6 +39,7 @@
                 "type": "null"
               }
             ],
+            "default": null,
             "title": "File"
           },
           "other": {
@@ -47,7 +48,6 @@
           }
         },
         "required": [
-          "file",
           "other"
         ],
         "title": "FormFileUpload",
