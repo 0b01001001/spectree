@@ -11,13 +11,9 @@ def snapshot_json(snapshot):
 @pytest.fixture
 def snapshot_json_exclude_diff(snapshot_json):
     return snapshot_json.with_defaults(
+        # exclude those fields that differ between the pydantic v1 & v2
         exclude=paths(
-            # exclude those fields that differ between the pydantic v1 & v2
-            "components.schemas.RootResp.a9993e3",
-            "components.schemas.ListJSON.a9993e3.JSON",
+            "components.schemas.FormFileUpload.7068f62",
             "components.schemas.OptionalAliasResp.7068f62",
-            "components.schemas.StrDict.a9993e3",
-            "components.schemas.ValidationError.6a07bef",
-            "components.schemas.ValidationError.6a07bef.ValidationErrorElement",
         )
     )

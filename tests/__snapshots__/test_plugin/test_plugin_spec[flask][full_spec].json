@@ -45,32 +45,6 @@
         "title": "Form",
         "type": "object"
       },
-      "FormFileUpload.7068f62": {
-        "properties": {
-          "file": {
-            "anyOf": [
-              {
-                "format": "binary",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "File"
-          },
-          "other": {
-            "title": "Other",
-            "type": "string"
-          }
-        },
-        "required": [
-          "other"
-        ],
-        "title": "FormFileUpload",
-        "type": "object"
-      },
       "Headers.7068f62": {
         "properties": {
           "lang": {
@@ -142,6 +116,24 @@
         "title": "ListJSON",
         "type": "array"
       },
+      "ListJSON.a9993e3.JSON": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "JSON",
+        "type": "object"
+      },
       "Query.7068f62": {
         "properties": {
           "order": {
@@ -200,6 +192,20 @@
         "title": "Resp",
         "type": "object"
       },
+      "RootResp.a9993e3": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RootResp.a9993e3.JSON"
+          },
+          {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        ],
+        "title": "RootResp"
+      },
       "RootResp.a9993e3.JSON": {
         "properties": {
           "limit": {
@@ -216,6 +222,52 @@
           "limit"
         ],
         "title": "JSON",
+        "type": "object"
+      },
+      "StrDict.a9993e3": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "title": "StrDict",
+        "type": "object"
+      },
+      "ValidationError.6a07bef": {
+        "description": "Model of a validation error response.",
+        "items": {
+          "$ref": "#/components/schemas/ValidationError.6a07bef.ValidationErrorElement"
+        },
+        "title": "ValidationError",
+        "type": "array"
+      },
+      "ValidationError.6a07bef.ValidationErrorElement": {
+        "description": "Model of a validation error response element.",
+        "properties": {
+          "ctx": {
+            "title": "Error context",
+            "type": "object"
+          },
+          "loc": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing field name",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Error message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationErrorElement",
         "type": "object"
       }
     }

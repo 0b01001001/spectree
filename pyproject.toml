@@ -20,7 +20,9 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["pydantic>=1.2,<3"]
+dependencies = [
+    "pydantic>=1.2,<3",
+]
 
 [project.optional-dependencies]
 offline = ["offapi>=0.1.1"]
