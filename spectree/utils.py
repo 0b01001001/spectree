@@ -2,6 +2,7 @@ import functools
 import inspect
 import logging
 import re
+from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
 from typing import (
@@ -382,6 +383,8 @@ def json_compatible_deepcopy(obj: Any) -> Any:
             res = handle_float(obj)
         elif cls in _immutable_types:
             res = obj
+        elif isinstance(obj, Enum):
+            res = obj.value
         else:
             raise TypeError(f"Unsupported type for this custom deepcopy: {cls}")
         return res

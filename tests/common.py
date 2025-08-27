@@ -130,6 +130,10 @@ class Numeric(BaseModel):
     unknown: float = Field(default=float("nan"))
 
 
+class DefaultEnumValue(BaseModel):
+    langs: frozenset[Language] = frozenset((Language.en,))
+
+
 def get_paths(spec):
     paths = []
     for path in spec["paths"]:
