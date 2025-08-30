@@ -79,9 +79,9 @@ class QuartPlugin(WerkzeugPlugin):
             except (InternalValidationError, ValidationError) as err:
                 req_validation_error = err
                 errors = (
-                    err.json()
+                    err.errors()
                     if isinstance(err, InternalValidationError)
-                    else err.json(include_context=False)
+                    else err.errors(include_context=False)
                 )
                 response = await make_response(jsonify(errors), validation_error_status)
 
