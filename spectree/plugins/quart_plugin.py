@@ -87,8 +87,7 @@ class QuartPlugin(WerkzeugPlugin):
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
-            assert response  # make mypy happy
-            abort(response)  # type: ignore
+            abort(response)
 
         if self.config.annotations:
             annotations = cached_type_hints(func)
