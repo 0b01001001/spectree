@@ -299,9 +299,9 @@ class FalconPlugin(BasePlugin):
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = (
-                    err.json()
+                    err.errors()
                     if isinstance(err, InternalValidationError)
-                    else err.json(include_context=False)
+                    else err.errors(include_context=False)
                 )
 
         before(_req, _resp, req_validation_error, _self)
@@ -395,9 +395,9 @@ class FalconAsgiPlugin(FalconPlugin):
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = (
-                    err.json()
+                    err.errors()
                     if isinstance(err, InternalValidationError)
-                    else err.json(include_context=False)
+                    else err.errors(include_context=False)
                 )
 
         before(_req, _resp, req_validation_error, _self)
