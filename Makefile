@@ -45,9 +45,10 @@ publish: package
 
 format:
 	@uv run -- ruff format ${SOURCE_FILES}
-	@uv run -- ruff check --fix ${PY_SOURCE}
+	@uv run -- ruff check --fix ${SOURCE_FILES}
 
 lint:
+	@uv run -- ruff format --check ${SOURCE_FILES}
 	@uv run -- ruff check ${SOURCE_FILES}
 	@uv run -- mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
