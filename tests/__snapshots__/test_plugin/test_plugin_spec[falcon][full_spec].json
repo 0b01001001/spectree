@@ -913,6 +913,47 @@
         ]
       }
     },
+    "/api/user_optional": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_user_optional",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptionalJSON.7068f62"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "on_post <POST>",
+        "tags": []
+      }
+    },
     "/api/user_skip/{name}": {
       "get": {
         "description": "",
