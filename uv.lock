@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.9"
 resolution-markers = [
     "python_full_version >= '3.11'",
@@ -1056,7 +1056,7 @@ wheels = [
 
 [[package]]
 name = "spectree"
-version = "1.5.4"
+version = "1.5.5"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
