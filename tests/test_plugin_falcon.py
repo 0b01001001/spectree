@@ -20,6 +20,7 @@ from .common import (
     Headers,
     ListJSON,
     OptionalAliasResp,
+    OptionalJSON,
     Order,
     Query,
     Resp,
@@ -104,6 +105,22 @@ class UserScoreAnnotated:
         assert req.context.cookies.pub == "abcdefg"
         assert req.cookies["pub"] == "abcdefg"
         resp.media = {"name": req.context.json.name, "score": score}
+
+
+class OptionalUserScore:
+    name = "optional random score"
+
+    def extra_method(self):
+        pass
+
+    @api.validate(resp=Response(HTTP_200=Resp))
+    def on_post(self, req, resp, json: OptionalJSON):
+        # make sure the decorator doesn't break those method calls
+        self.extra_method()
+        name = json.name or "unknown"
+        limit = json.limit or 10
+        score = [randint(0, limit) for _ in range(5)]
+        resp.media = Resp(name=name, score=score)
 
 
 class UserScoreSkip:
@@ -285,6 +302,7 @@ app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/user/{name}/address/{address_id}", UserAddress())
 app.add_route("/api/user_skip/{name}", UserScoreSkip())
+app.add_route("/api/user_optional", OptionalUserScore())
 app.add_route("/api/user_model/{name}", UserScoreModel())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
@@ -365,6 +383,21 @@ def test_falcon_skip_validation(client, response_format: str):
         user_xml_data = UserXmlData.parse_xml(resp.text)
         assert user_xml_data.name == "falcon"
         assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
+
+
+def test_falcon_optional_json(client):
+    resp = client.simulate_post("/api/user_optional")
+    assert resp.status_code == 200
+    assert resp.json["name"] == "unknown"
+
+    limit = 5
+    resp = client.simulate_post(
+        "/api/user_optional", json=dict(name="optional", limit=limit)
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "optional"
+    assert resp.json["score"]
+    assert all(0 <= score <= limit for score in resp.json["score"])
 
 
 def test_falcon_return_model(client):

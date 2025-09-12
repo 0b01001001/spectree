@@ -215,7 +215,10 @@ class FalconPlugin(BasePlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            req.context.json = json.parse_obj(req.get_media())
+            # https://falcon.readthedocs.io/en/stable/api/media.html#exception-handling
+            # but `json` could be something optional, so we need to provide a default
+            # value here to avoid `falcon.MediaNotFoundError`
+            req.context.json = json.parse_obj(req.get_media(default_when_empty={}))
         if form and req.content_type:
             req_form = {}
             if req.content_type == "application/x-www-form-urlencoded":
@@ -349,7 +352,10 @@ class FalconAsgiPlugin(FalconPlugin):
         if cookies:
             req.context.cookies = cookies.parse_obj(req.cookies)
         if json:
-            media = await req.get_media()
+            # https://falcon.readthedocs.io/en/stable/api/media.html#exception-handling
+            # but `json` could be something optional, so we need to provide a default
+            # value here to avoid `falcon.MediaNotFoundError`
+            media = await req.get_media(default_when_empty={})
             req.context.json = json.parse_obj(media)
         if form and req.content_type:
             req_form = {}
