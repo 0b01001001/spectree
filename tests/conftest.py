@@ -15,5 +15,6 @@ def snapshot_json_exclude_diff(snapshot_json):
         exclude=paths(
             "components.schemas.FormFileUpload.7068f62",
             "components.schemas.OptionalAliasResp.7068f62",
+            "components.schemas.OptionalJSON.7068f62",
         )
     )

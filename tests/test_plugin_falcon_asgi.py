@@ -13,6 +13,7 @@ from .common import (
     FormFileUpload,
     Headers,
     ListJSON,
+    OptionalJSON,
     Query,
     Resp,
     RootResp,
@@ -96,6 +97,22 @@ class UserScoreAnnotated:
         assert req.context.cookies.pub == "abcdefg"
         assert req.cookies["pub"] == "abcdefg"
         resp.media = {"name": req.context.json.name, "score": score}
+
+
+class OptionalUserScore:
+    name = "optional random score"
+
+    def extra_method(self):
+        pass
+
+    @api.validate(resp=Response(HTTP_200=Resp))
+    async def on_post(self, req, resp, json: OptionalJSON):
+        # make sure the decorator doesn't break those method calls
+        self.extra_method()
+        name = json.name or "unknown"
+        limit = json.limit or 10
+        score = [randint(0, limit) for _ in range(5)]
+        resp.media = Resp(name=name, score=score)
 
 
 class NoResponseView:
@@ -190,6 +207,7 @@ app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
 app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
+app.add_route("/api/user_optional", OptionalUserScore())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
 app.add_route("/api/list_json", ListJsonView())
@@ -205,7 +223,7 @@ def client():
     return testing.TestClient(app)
 
 
-def test_falcon_no_response(client):
+def test_falcon_no_response_async(client):
     resp = client.simulate_request(
         "GET",
         "/api/no_response",
@@ -277,7 +295,7 @@ def test_falcon_return_model_request_async(client, return_what: str):
         assert resp.json == [{"name": "user1", "limit": 1}]
 
 
-def test_falcon_validate(client):
+def test_falcon_validate_async(client):
     resp = client.simulate_request(
         "GET", "/ping", headers={"Content-Type": "text/plain"}
     )
@@ -320,6 +338,21 @@ def test_falcon_validate(client):
     assert resp.json["name"] == "falcon"
     assert resp.json["score"] == sorted(resp.json["score"], reverse=False)
     assert resp.headers.get("X-Name") == "sorted random score"
+
+
+def test_falcon_optional_json_async(client):
+    resp = client.simulate_post("/api/user_optional")
+    assert resp.status_code == 200
+    assert resp.json["name"] == "unknown"
+
+    limit = 5
+    resp = client.simulate_post(
+        "/api/user_optional", json=dict(name="optional", limit=limit)
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "optional"
+    assert resp.json["score"]
+    assert all(0 <= score <= limit for score in resp.json["score"])
 
 
 @pytest.fixture
@@ -410,7 +443,7 @@ def test_validation_error_response_status_code(
     ],
     indirect=["test_client_and_api"],
 )
-def test_falcon_doc(test_client_and_api, expected_doc_pages):
+def test_falcon_doc_async(test_client_and_api, expected_doc_pages):
     client, api = test_client_and_api
 
     resp = client.simulate_get("/apidoc/openapi.json")
@@ -456,7 +489,7 @@ def test_falcon_file_upload_async(client):
     assert resp.json["other"] == "test"
 
 
-def test_falcon_custom_serializer(client):
+def test_falcon_custom_serializer_async(client):
     resp = client.simulate_get(
         "/api/custom_serializer",
     )

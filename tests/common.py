@@ -52,6 +52,11 @@ class JSON(BaseModel):
     limit: int
 
 
+class OptionalJSON(BaseModel):
+    name: Optional[str] = None
+    limit: Optional[int] = None
+
+
 ListJSON = generate_root_model(List[JSON], name="ListJSON")
 
 StrDict = generate_root_model(Dict[str, str], name="StrDict")
