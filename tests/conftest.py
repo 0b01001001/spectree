@@ -4,6 +4,11 @@ from syrupy.filters import paths
 
 
 @pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.fixture
 def snapshot_json(snapshot):
     return snapshot.use_extension(JSONSnapshotExtension)
 
