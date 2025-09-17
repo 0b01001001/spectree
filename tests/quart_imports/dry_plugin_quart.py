@@ -26,7 +26,7 @@ async def test_quart_skip_validation(client, response_format: str):
         assert resp_json["x_score"] == sorted(resp_json["x_score"], reverse=True)
     else:
         assert resp.content_type == "text/xml"
-        user_xml_data = UserXmlData.parse_xml(await resp.get_data())
+        user_xml_data = UserXmlData.parse_xml(await resp.get_data(as_text=True))
         assert user_xml_data.name == "quart"
         assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
