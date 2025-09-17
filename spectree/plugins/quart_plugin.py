@@ -4,10 +4,16 @@ from typing import Any, Callable, Optional
 import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 
-from spectree._pydantic import InternalValidationError, ValidationError
+from spectree._pydantic import (
+    InternalValidationError,
+    SerializedPydanticResponse,
+    ValidationError,
+    is_partial_base_model_instance,
+    serialize_model_instance,
+)
 from spectree._types import ModelType
-from spectree.plugins.base import Context
-from spectree.plugins.werkzeug_utils import WerkzeugPlugin
+from spectree.plugins.base import Context, validate_response
+from spectree.plugins.werkzeug_utils import WerkzeugPlugin, flask_response_unpack
 from spectree.response import Response
 from spectree.utils import cached_type_hints, get_multidict_items
 
@@ -53,6 +59,64 @@ class QuartPlugin(WerkzeugPlugin):
             headers.parse_obj(req_headers) if headers else None,
             cookies.parse_obj(req_cookies) if cookies else None,
         )
+
+    async def validate_response(
+        self,
+        resp,
+        resp_model: Optional[Response],
+        skip_validation: bool,
+    ):
+        resp_validation_error = None
+        payload, status, additional_headers = flask_response_unpack(resp)
+
+        if self.is_app_response(payload):
+            resp_status, resp_headers = payload.status_code, payload.headers
+            payload = await payload.get_data()
+            # the inner flask.Response.status_code only takes effect when there is
+            # no other status code
+            if status == 200:
+                status = resp_status
+            # use the `Header` object to avoid deduplicated by `make_response`
+            resp_headers.extend(additional_headers)
+            additional_headers = resp_headers
+
+        if not skip_validation and resp_model:
+            try:
+                response_validation_result = validate_response(
+                    validation_model=resp_model.find_model(status),
+                    response_payload=payload,
+                )
+            except (InternalValidationError, ValidationError) as err:
+                errors = (
+                    err.errors()
+                    if isinstance(err, InternalValidationError)
+                    else err.errors(include_context=False)
+                )
+                response = await make_response(errors, 500)
+                resp_validation_error = err
+            else:
+                response = await make_response(
+                    self.get_current_app().response_class(
+                        response_validation_result.payload.data,
+                        mimetype="application/json",
+                    )
+                    if isinstance(
+                        response_validation_result.payload,
+                        SerializedPydanticResponse,
+                    )
+                    else response_validation_result.payload,
+                    status,
+                    additional_headers,
+                )
+        else:
+            if is_partial_base_model_instance(payload):
+                payload = self.get_current_app().response_class(
+                    serialize_model_instance(payload).data,
+                    mimetype="application/json",
+                )
+            response = await make_response(payload, status, additional_headers)
+
+        return response, resp_validation_error
 
     async def validate(
         self,
@@ -104,7 +168,7 @@ class QuartPlugin(WerkzeugPlugin):
             else func(*args, **kwargs)
         )
 
-        response, resp_validation_error = self.validate_response(
+        response, resp_validation_error = await self.validate_response(
             result, resp, skip_validation
         )
         after(request, response, resp_validation_error, None)

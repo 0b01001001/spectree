@@ -1056,7 +1056,7 @@ wheels = [
 
 [[package]]
 name = "spectree"
-version = "1.5.5"
+version = "1.5.6"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
@@ -1081,12 +1081,12 @@ starlette = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "anyio" },
     { name = "mypy" },
     { name = "prek" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "syrupy" },
-    { name = "types-aiofiles" },
     { name = "uvicorn" },
 ]
 docs = [
@@ -1112,12 +1112,12 @@ provides-extras = ["offline", "falcon", "starlette", "flask", "quart"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "anyio", specifier = ">=4.10.0" },
     { name = "mypy", specifier = ">=1.16.0" },
     { name = "prek", specifier = ">=0.1.2" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "ruff", specifier = ">=0.11.12" },
     { name = "syrupy", specifier = ">=4.9.1" },
-    { name = "types-aiofiles", specifier = ">=24.1.0.20250822" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]
 docs = [
@@ -1385,15 +1385,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/b9/1ed31d167be802da0fc95020d04cd27b7d7065cc6fbefdd2f9186f60d7bd/tomli-2.2.1-cp313-cp313-win32.whl", hash = "sha256:d3f5614314d758649ab2ab3a62d4f2004c825922f9e370b29416484086b264ec", size = 98724, upload-time = "2024-11-27T22:38:32.837Z" },
     { url = "https://files.pythonhosted.org/packages/c7/32/b0963458706accd9afcfeb867c0f9175a741bf7b19cd424230714d722198/tomli-2.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:a38aa0308e754b0e3c67e344754dff64999ff9b513e691d0e786265c93583c69", size = 109383, upload-time = "2024-11-27T22:38:34.455Z" },
     { url = "https://files.pythonhosted.org/packages/6e/c2/61d3e0f47e2b74ef40a68b9e6ad5984f6241a942f7cd3bbfbdbd03861ea9/tomli-2.2.1-py3-none-any.whl", hash = "sha256:cb55c73c5f4408779d0cf3eef9f762b9c9f147a77de7b258bef0a5628adc85cc", size = 14257, upload-time = "2024-11-27T22:38:35.385Z" },
-]
-
-[[package]]
-name = "types-aiofiles"
-version = "24.1.0.20250822"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/19/48/c64471adac9206cc844afb33ed311ac5a65d2f59df3d861e0f2d0cad7414/types_aiofiles-24.1.0.20250822.tar.gz", hash = "sha256:9ab90d8e0c307fe97a7cf09338301e3f01a163e39f3b529ace82466355c84a7b", size = 14484, upload-time = "2025-08-22T03:02:23.039Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/8e/5e6d2215e1d8f7c2a94c6e9d0059ae8109ce0f5681956d11bb0a228cef04/types_aiofiles-24.1.0.20250822-py3-none-any.whl", hash = "sha256:0ec8f8909e1a85a5a79aed0573af7901f53120dd2a29771dd0b3ef48e12328b0", size = 14322, upload-time = "2025-08-22T03:02:21.918Z" },
 ]
 
 [[package]]

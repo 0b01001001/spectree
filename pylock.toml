@@ -835,12 +835,6 @@ wheels = [
 ]
 
 [[packages]]
-name = "types-aiofiles"
-version = "24.1.0.20250822"
-sdist = { url = "https://files.pythonhosted.org/packages/19/48/c64471adac9206cc844afb33ed311ac5a65d2f59df3d861e0f2d0cad7414/types_aiofiles-24.1.0.20250822.tar.gz", upload-time = 2025-08-22T03:02:23Z, size = 14484, hashes = { sha256 = "9ab90d8e0c307fe97a7cf09338301e3f01a163e39f3b529ace82466355c84a7b" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/bc/8e/5e6d2215e1d8f7c2a94c6e9d0059ae8109ce0f5681956d11bb0a228cef04/types_aiofiles-24.1.0.20250822-py3-none-any.whl", upload-time = 2025-08-22T03:02:21Z, size = 14322, hashes = { sha256 = "0ec8f8909e1a85a5a79aed0573af7901f53120dd2a29771dd0b3ef48e12328b0" } }]
-
-[[packages]]
 name = "typing-extensions"
 version = "4.15.0"
 sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", upload-time = 2025-08-25T13:49:26Z, size = 109391, hashes = { sha256 = "0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466" } }

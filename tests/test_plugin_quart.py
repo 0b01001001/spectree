@@ -23,6 +23,12 @@ from .common import (
     get_root_resp_data,
 )
 
+# import tests to execute
+from .quart_imports import *  # NOQA
+
+# need to be set here for async tests in `quart_imports`
+pytestmark = pytest.mark.anyio
+
 
 def before_handler(req, resp, err, _):
     if err:
@@ -72,7 +78,7 @@ async def ping():
 )
 async def user_score(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=request.context.query.order == Order.desc)
+    score.sort(reverse=(request.context.query.order == Order.desc))
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=request.context.json.name, score=score)
@@ -86,7 +92,7 @@ async def user_score(name):
 )
 async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
     score = [randint(0, json.limit) for _ in range(5)]
-    score.sort(reverse=query.order == Order.desc)
+    score.sort(reverse=(query.order == Order.desc))
     assert cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return jsonify(name=json.name, score=score)
@@ -105,9 +111,9 @@ async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies)
 async def user_score_skip_validation(name):
     response_format = request.args.get("response_format")
     assert response_format in ("json", "xml")
-    json = request.get_json()
+    json = await request.get_json()
     score = [randint(0, json.get("limit")) for _ in range(5)]
-    score.sort(reverse=request.args.get("order") == Order.desc)
+    score.sort(reverse=(int(request.args.get("order")) == Order.desc))
     assert request.cookies["pub"] == "abcdefg"
     if response_format == "json":
         return jsonify(name=json.get("name"), x_score=score)
@@ -129,7 +135,7 @@ async def user_score_skip_validation(name):
 )
 async def user_score_model(name):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
-    score.sort(reverse=request.context.query.order == Order.desc)
+    score.sort(reverse=(request.context.query.order == Order.desc))
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
     return Resp(name=request.context.json.name, score=score), 200

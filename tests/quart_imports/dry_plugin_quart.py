@@ -1,51 +1,47 @@
-import asyncio
-
 import pytest
 
 from tests.common import UserXmlData
 
+pytestmark = pytest.mark.anyio
+
 
 @pytest.mark.parametrize("response_format", ["json", "xml"])
-def test_quart_skip_validation(client, response_format: str):
+async def test_quart_skip_validation(client, response_format: str):
     client.set_cookie(
         "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
     )
 
-    resp = asyncio.run(
-        client.post(
-            f"/api/user_skip/quart?order=1&response_format={response_format}",
-            json=dict(name="quart", limit=10),
-            headers={"Content-Type": "application/json"},
-        )
+    resp = await client.post(
+        f"/api/user_skip/quart?order=1&response_format={response_format}",
+        json=dict(name="quart", limit=10),
+        headers={"Content-Type": "application/json"},
     )
-    resp_json = asyncio.run(resp.json)
+    resp_json = await resp.json
     assert resp.status_code == 200, resp_json
     assert resp.headers.get("X-Validation") is None
     assert resp.headers.get("X-API") == "OK"
     if response_format == "json":
         assert resp.content_type == "application/json"
-        assert resp.json["name"] == "quart"
-        assert resp.json["x_score"] == sorted(resp.json["x_score"], reverse=True)
+        assert resp_json["name"] == "quart"
+        assert resp_json["x_score"] == sorted(resp_json["x_score"], reverse=True)
     else:
         assert resp.content_type == "text/xml"
-        user_xml_data = UserXmlData.parse_xml(resp.text)
+        user_xml_data = UserXmlData.parse_xml(await resp.get_data(as_text=True))
         assert user_xml_data.name == "quart"
         assert user_xml_data.score == sorted(user_xml_data.score, reverse=True)
 
 
-def test_quart_return_model(client):
+async def test_quart_return_model(client):
     client.set_cookie(
         "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
     )
 
-    resp = asyncio.run(
-        client.post(
-            "/api/user_model/quart?order=1",
-            json=dict(name="quart", limit=10),
-            headers={"Content-Type": "application/json"},
-        )
+    resp = await client.post(
+        "/api/user_model/quart?order=1",
+        json=dict(name="quart", limit=10),
+        headers={"Content-Type": "application/json"},
     )
-    resp_json = asyncio.run(resp.json)
+    resp_json = await resp.json
     assert resp.status_code == 200, resp_json
     assert resp.headers.get("X-Validation") is None
     assert resp.headers.get("X-API") == "OK"
@@ -53,10 +49,11 @@ def test_quart_return_model(client):
     assert resp_json["score"] == sorted(resp_json["score"], reverse=True)
 
 
-def test_quart_return_string_status(client):
-    resp = client.get("/api/return_string_status")
+async def test_quart_return_string_status(client):
+    resp = await client.get("/api/return_string_status")
     assert resp.status_code == 200
-    assert resp.text == "Response text string"
+    text = await resp.get_data(as_text=True)
+    assert text == "Response text string"
 
 
 @pytest.mark.parametrize(
@@ -88,13 +85,11 @@ def test_quart_return_string_status(client):
     ],
     indirect=["test_client_and_api"],
 )
-def test_quart_validation_error_response_status_code(
+async def test_quart_validation_error_response_status_code(
     test_client_and_api, expected_status_code
 ):
     app_client, _ = test_client_and_api
-
-    resp = asyncio.run(app_client.get("/ping"))
-
+    resp = await app_client.get("/ping")
     assert resp.status_code == expected_status_code
 
 
@@ -110,32 +105,32 @@ def test_quart_validation_error_response_status_code(
     ],
     indirect=["test_client_and_api"],
 )
-def test_quart_doc(test_client_and_api, expected_doc_pages):
+async def test_quart_doc(test_client_and_api, expected_doc_pages):
     client, api = test_client_and_api
 
-    resp = asyncio.run(client.get("/apidoc/openapi.json"))
-    assert asyncio.run(resp.json) == api.spec
+    resp = await client.get("/apidoc/openapi.json")
+    assert (await resp.json) == api.spec
 
     for doc_page in expected_doc_pages:
-        resp = asyncio.run(client.get(f"/apidoc/{doc_page}/"))
+        resp = await client.get(f"/apidoc/{doc_page}/")
         assert resp.status_code == 200
 
-        resp = asyncio.run(client.get(f"/apidoc/{doc_page}"))
+        resp = await client.get(f"/apidoc/{doc_page}")
         assert resp.status_code == 308
 
 
-def test_quart_validate(client):
-    resp = asyncio.run(client.get("/ping"))
+async def test_quart_validate(client):
+    resp = await client.get("/ping")
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
 
-    resp = asyncio.run(client.get("/ping", headers={"lang": "en-US"}))
-    resp_json = asyncio.run(resp.json)
+    resp = await client.get("/ping", headers={"lang": "en-US"})
+    resp_json = await resp.json
     assert resp_json == {"msg": "pong"}
     assert resp.headers.get("X-Error") is None
     assert resp.headers.get("X-Validation") == "Pass"
 
-    resp = asyncio.run(client.post("api/user/quart"))
+    resp = await client.post("api/user/quart")
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
 
@@ -143,66 +138,57 @@ def test_quart_validate(client):
         "quart", "pub", "abcdefg", secure=True, httponly=True, samesite="Strict"
     )
     for fragment in ("user", "user_annotated"):
-        resp = asyncio.run(
-            client.post(
-                f"/api/{fragment}/quart?order=1",
-                json=dict(name="quart", limit=10),
-                headers={"Content-Type": "application/json"},
-            )
+        resp = await client.post(
+            f"/api/{fragment}/quart?order=1",
+            json=dict(name="quart", limit=10),
+            headers={"Content-Type": "application/json"},
         )
-        resp_json = asyncio.run(resp.json)
+        resp_json = await resp.json
         assert resp.status_code == 200, resp_json
         assert resp.headers.get("X-Validation") is None
         assert resp.headers.get("X-API") == "OK"
         assert resp_json["name"] == "quart"
         assert resp_json["score"] == sorted(resp_json["score"], reverse=True)
 
-        resp = asyncio.run(
-            client.post(
-                f"/api/{fragment}/quart?order=0",
-                json=dict(name="quart", limit=10),
-                headers={"Content-Type": "application/json"},
-            )
+        resp = await client.post(
+            f"/api/{fragment}/quart?order=0",
+            json=dict(name="quart", limit=10),
+            headers={"Content-Type": "application/json"},
         )
-        resp_json = asyncio.run(resp.json)
+        resp_json = await resp.json
         assert resp.status_code == 200, resp_json
         assert resp_json["score"] == sorted(resp_json["score"], reverse=False)
 
 
-def test_quart_no_response(client):
-    resp = asyncio.run(client.get("/api/no_response"))
+async def test_quart_no_response(client):
+    resp = await client.get("/api/no_response")
     assert resp.status_code == 200
 
-    resp = asyncio.run(
-        client.post("/api/no_response", json={"name": "foo", "limit": 1})
-    )
+    resp = await client.post("/api/no_response", json={"name": "foo", "limit": 1})
     assert resp.status_code == 200
 
 
-def test_quart_list_json_request(client):
-    resp = asyncio.run(
-        client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
-    )
+async def test_quart_list_json_request(client):
+    resp = await client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
     assert resp.status_code == 200
 
 
 @pytest.mark.parametrize("pre_serialize", [False, True])
-def test_quart_return_list_request(client, pre_serialize: bool):
-    resp = asyncio.run(
-        client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
-    )
+async def test_quart_return_list_request(client, pre_serialize: bool):
+    resp = await client.get(f"/api/return_list?pre_serialize={int(pre_serialize)}")
     assert resp.status_code == 200
-    assert resp.json == [
+    json = await resp.json
+    assert json == [
         {"name": "user1", "limit": 1},
         {"name": "user2", "limit": 2},
     ]
 
 
-def test_quart_custom_error(client):
+async def test_quart_custom_error(client):
     # request error
-    resp = asyncio.run(client.post("/api/custom_error", json={"foo": "bar"}))
+    resp = await client.post("/api/custom_error", json={"foo": "bar"})
     assert resp.status_code == 422
 
     # response error
-    resp = asyncio.run(client.post("/api/custom_error", json={"foo": "foo"}))
+    resp = await client.post("/api/custom_error", json={"foo": "foo"})
     assert resp.status_code == 500
