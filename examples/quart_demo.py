@@ -77,7 +77,7 @@ async def with_code_header(headers: Header, cookies: Cookie):
     """
     demo for JSON with status code and header
     """
-    return jsonify(language=headers.get("Lang")), 203, {"X": 233}
+    return jsonify(language=headers.Lang), 203, {"X": cookies.key}
 
 
 class UserAPI(MethodView):

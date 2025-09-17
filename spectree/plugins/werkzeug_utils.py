@@ -4,15 +4,7 @@ from typing import Any, Iterator, List, Mapping, Optional, Tuple, Union
 from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
 
-from spectree._pydantic import (
-    InternalValidationError,
-    SerializedPydanticResponse,
-    ValidationError,
-    is_partial_base_model_instance,
-    serialize_model_instance,
-)
-from spectree.plugins.base import BasePlugin, validate_response
-from spectree.response import Response
+from spectree.plugins.base import BasePlugin
 from spectree.utils import get_multidict_items
 
 RE_FLASK_RULE = re.compile(
@@ -238,68 +230,6 @@ class WerkzeugPlugin(BasePlugin):
         req_data = get_multidict_items(request.form)
         req_data.update(get_multidict_items(request.files) if request.files else {})
         return req_data
-
-    def validate_response(
-        self,
-        resp,
-        resp_model: Optional[Response],
-        skip_validation: bool,
-    ):
-        resp_validation_error = None
-        payload, status, additional_headers = flask_response_unpack(resp)
-
-        if self.is_app_response(payload):
-            resp_status, resp_headers = payload.status_code, payload.headers
-            payload = payload.get_data()
-            # the inner flask.Response.status_code only takes effect when there is
-            # no other status code
-            if status == 200:
-                status = resp_status
-            # use the `Header` object to avoid deduplicated by `make_response`
-            resp_headers.extend(additional_headers)
-            additional_headers = resp_headers
-
-        if not skip_validation and resp_model:
-            try:
-                response_validation_result = validate_response(
-                    validation_model=resp_model.find_model(status),
-                    response_payload=payload,
-                )
-            except (InternalValidationError, ValidationError) as err:
-                errors = (
-                    err.errors()
-                    if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
-                )
-                response = self.make_response_with_addition(errors, 500)
-                resp_validation_error = err
-            else:
-                response = self.make_response_with_addition(
-                    (
-                        self.get_current_app().response_class(
-                            response_validation_result.payload.data,
-                            mimetype="application/json",
-                        )
-                        if isinstance(
-                            response_validation_result.payload,
-                            SerializedPydanticResponse,
-                        )
-                        else response_validation_result.payload,
-                        status,
-                        additional_headers,
-                    )
-                )
-        else:
-            if is_partial_base_model_instance(payload):
-                payload = self.get_current_app().response_class(
-                    serialize_model_instance(payload).data,
-                    mimetype="application/json",
-                )
-            response = self.make_response_with_addition(
-                payload, status, additional_headers
-            )
-
-        return response, resp_validation_error
 
     def register_route(self, app):
         app.add_url_rule(
