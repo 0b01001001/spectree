@@ -42,7 +42,7 @@ class StreamWrapper:
 
     def read(self, size: Optional[int] = -1, /) -> bytes:
         """read bytes from the stream, size -1 or None means max bytes"""
-        return self._buf.read(size or -1)
+        return self._buf.read(size if size is not None else -1)
 
     def exhaust(self) -> None:
         self._buf.seek(0)
