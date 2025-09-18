@@ -1,5 +1,7 @@
+import asyncio
 import inspect
 import re
+from collections.abc import AsyncIterator
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
@@ -16,7 +18,9 @@ from falcon import MEDIA_JSON, http_status_to_code
 from falcon import Request as FalconRequest
 from falcon import Response as FalconResponse
 from falcon.asgi import Request as FalconASGIRequest
+from falcon.asgi.reader import BufferedReader as ASGIBufferedReader
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
+from falcon.util.reader import DEFAULT_CHUNK_SIZE, BufferedReader
 
 from spectree._pydantic import (
     InternalValidationError,
@@ -32,13 +36,14 @@ from spectree.utils import cached_type_hints
 
 
 class StreamWrapper:
-    def __init__(self, stream):
+    def __init__(self, stream: BufferedReader):
         self._buf = CachedFile()
-        self._buf.write(stream)
+        stream.pipe(self._buf)
         self._buf.seek(0)
 
     def read(self, size: Optional[int] = -1, /) -> bytes:
-        return self._buf.read(size)
+        """read bytes from the stream, size -1 or None means max bytes"""
+        return self._buf.read(size if size is not None else -1)
 
     def exhaust(self) -> None:
         self._buf.seek(0)
@@ -46,8 +51,28 @@ class StreamWrapper:
 
 
 class AsyncStreamWrapper(StreamWrapper):
+    def __init__(self):
+        self._buf = CachedFile()
+
+    @classmethod
+    async def from_stream(cls, stream: ASGIBufferedReader):
+        obj = cls()
+        loop = asyncio.get_running_loop()
+        async for chunk in stream:
+            await loop.run_in_executor(None, obj._buf.write, chunk)
+        await loop.run_in_executor(None, obj._buf.seek, 0)
+        return obj
+
     async def read(self, size: Optional[int] = -1, /) -> bytes:  # type: ignore[override]
-        return super().read(size)
+        return await asyncio.get_running_loop().run_in_executor(
+            None, super().read, size
+        )
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        chunk = await self.read(DEFAULT_CHUNK_SIZE)
+        while chunk:
+            yield chunk
+            chunk = await self.read(DEFAULT_CHUNK_SIZE)
 
     async def exhaust(self) -> None:  # type: ignore[override]
         super().exhaust()
@@ -232,7 +257,7 @@ class FalconPlugin(BasePlugin):
                         req_form[part.name] = part
                         # try to consume the file data, otherwise it will be lost
                         # this is hacky since it changed the underlying stream type
-                        part.stream = StreamWrapper(part.stream.read())
+                        part.stream = StreamWrapper(part.stream)
             req.context.form = form.parse_obj(req_form)
 
     def validate_response(
@@ -369,7 +394,7 @@ class FalconAsgiPlugin(FalconPlugin):
                         # pass the `falcon.BodyPart` if it's attached as a file
                         req_form[part.name] = part
                         # try to consume the file data, otherwise it will be lost
-                        part.stream = AsyncStreamWrapper(await part.stream.read())
+                        part.stream = await AsyncStreamWrapper.from_stream(part.stream)
             req.context.form = form.parse_obj(req_form)
 
     async def validate(
