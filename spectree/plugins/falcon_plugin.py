@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import re
+from collections.abc import AsyncIterator
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
@@ -19,7 +20,7 @@ from falcon import Response as FalconResponse
 from falcon.asgi import Request as FalconASGIRequest
 from falcon.asgi.reader import BufferedReader as ASGIBufferedReader
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
-from falcon.util.reader import BufferedReader
+from falcon.util.reader import DEFAULT_CHUNK_SIZE, BufferedReader
 
 from spectree._pydantic import (
     InternalValidationError,
@@ -59,11 +60,19 @@ class AsyncStreamWrapper(StreamWrapper):
         loop = asyncio.get_running_loop()
         async for chunk in stream:
             await loop.run_in_executor(None, obj._buf.write, chunk)
-        obj._buf.seek(0)
+        await loop.run_in_executor(None, obj._buf.seek, 0)
         return obj
 
     async def read(self, size: Optional[int] = -1, /) -> bytes:  # type: ignore[override]
-        return super().read(size)
+        return await asyncio.get_running_loop().run_in_executor(
+            None, super().read, size
+        )
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        chunk = await self.read(DEFAULT_CHUNK_SIZE)
+        while chunk:
+            yield chunk
+            chunk = await self.read(DEFAULT_CHUNK_SIZE)
 
     async def exhaust(self) -> None:  # type: ignore[override]
         super().exhaust()

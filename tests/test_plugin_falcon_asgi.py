@@ -187,6 +187,18 @@ class FileUploadView:
             resp.media = {"file": None, "other": form.other}
 
 
+class FileIterView:
+    name = "file iter view"
+
+    @api.validate()
+    async def on_post(self, req, resp, form: FormFileUpload):
+        if form.file:
+            length = 0
+            async for chunk in form.file.stream:
+                length += len(chunk)
+            resp.media = {"length": length, "other": form.other}
+
+
 class ViewWithCustomSerializer:
     name = "view with custom serializer"
 
@@ -210,6 +222,7 @@ app.add_route("/api/user_annotated/{name}", UserScoreAnnotated())
 app.add_route("/api/user_optional", OptionalUserScore())
 app.add_route("/api/no_response", NoResponseView())
 app.add_route("/api/file_upload", FileUploadView())
+app.add_route("/api/file_iter", FileIterView())
 app.add_route("/api/list_json", ListJsonView())
 app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
@@ -486,6 +499,32 @@ def test_falcon_file_upload_async(client):
     assert resp.status_code == 200, resp.text
     assert resp.headers["content-type"] == "application/json"
     assert resp.json["file"] is None
+    assert resp.json["other"] == "test"
+
+
+def test_falcon_file_iter_async(client):
+    boundary = "xxx"
+    file_content = "abcdefghijklmn" * 1000  # make sure it's large enough
+    body = (
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'
+        "Content-Type: text/plain\r\n\r\n"
+        f"{file_content}\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="other"\r\n\r\n'
+        "test\r\n"
+        f"--{boundary}--\r\n"
+    )
+
+    resp = client.simulate_post(
+        "/api/file_iter",
+        headers={
+            "Content-Type": "multipart/form-data; boundary=%s" % boundary,
+        },
+        body=body.encode("utf-8"),
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json["length"] == len(file_content)
     assert resp.json["other"] == "test"
 
 

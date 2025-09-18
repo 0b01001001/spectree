@@ -184,7 +184,8 @@ if PYDANTIC2:
 
     class BaseFile:
         """
-        An uploaded file included as part of the request data.
+        An uploaded file, will be assigned as the corresponding web framework's
+        file object.
         """
 
         @classmethod
@@ -204,7 +205,8 @@ else:
 
     class BaseFile:  # type: ignore
         """
-        An uploaded file included as part of the request data.
+        An uploaded file, will be assigned as the corresponding web framework's
+        file object.
         """
 
         @classmethod
