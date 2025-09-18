@@ -57,8 +57,7 @@ class AsyncStreamWrapper(StreamWrapper):
     async def from_stream(cls, stream: ASGIBufferedReader):
         obj = cls()
         loop = asyncio.get_running_loop()
-        # copied from the falcon ASGIBufferedReader pipe implementation
-        async for chunk in stream._iter_with_buffer():
+        async for chunk in stream:
             await loop.run_in_executor(None, obj._buf.write, chunk)
         obj._buf.seek(0)
         return obj
