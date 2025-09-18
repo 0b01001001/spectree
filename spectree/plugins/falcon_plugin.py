@@ -41,7 +41,8 @@ class StreamWrapper:
         self._buf.seek(0)
 
     def read(self, size: Optional[int] = -1, /) -> bytes:
-        return self._buf.read(size or 0)
+        """read bytes from the stream, size -1 or None means max bytes"""
+        return self._buf.read(size or -1)
 
     def exhaust(self) -> None:
         self._buf.seek(0)
@@ -55,7 +56,8 @@ class AsyncStreamWrapper(StreamWrapper):
     @classmethod
     async def from_stream(cls, stream: ASGIBufferedReader):
         obj = cls()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        # copied from the falcon ASGIBufferedReader pipe implementation
         async for chunk in stream._iter_with_buffer():
             await loop.run_in_executor(None, obj._buf.write, chunk)
         obj._buf.seek(0)
