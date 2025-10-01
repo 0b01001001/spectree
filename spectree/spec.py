@@ -243,7 +243,7 @@ class SpecTree:
                 (query, json, form, headers, cookies),
             ):
                 if model is not None:
-                    model_key = self._add_model(model=model)
+                    model_key = self._add_model(model=model, mode="validation")
                     setattr(validation, name, model_key)
 
             if resp:
@@ -253,7 +253,7 @@ class SpecTree:
                     validation_error_status, self.validation_error_model, replace=False
                 )
                 for model in resp.models:
-                    self._add_model(model=model)
+                    self._add_model(model=model, mode="serialization")
                 validation.resp = resp
 
             if tags:
@@ -269,9 +269,13 @@ class SpecTree:
 
         return decorate_validation
 
-    def _add_model(self, model: ModelType) -> str:
+    def _add_model(self, model: ModelType, mode: str = "validation") -> str:
         """
         unified model processing
+
+        :param model: pydantic model to add to the schema
+        :param mode: schema generation mode - 'validation' for input models,
+            'serialization' for output models (Pydantic v2 only)
         """
         model_key = self.naming_strategy(model)
         self.models[model_key] = json_compatible_deepcopy(
@@ -279,6 +283,7 @@ class SpecTree:
                 model=model,
                 naming_strategy=self.naming_strategy,
                 nested_naming_strategy=self.nested_naming_strategy,
+                mode=mode,
             )
         )
         return model_key
