@@ -20,10 +20,6 @@ from spectree.utils import (
 
 from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
 
-if PYDANTIC2:
-    from pydantic import BaseModel as PydanticBaseModel
-    from pydantic import computed_field
-
 api = SpecTree()
 
 
@@ -306,10 +302,11 @@ def test_json_compatible_schema():
     json_schema = json_compatible_deepcopy(schema)
 
 
+@pytest.mark.skipif(not PYDANTIC2, reason="Pydantic v2 only")
 def test_get_model_schema_mode_parameter():
     """Test get_model_schema mode parameter for Pydantic v2"""
-    if not PYDANTIC2:
-        pytest.skip("Pydantic v2 only")
+    from pydantic import BaseModel as PydanticBaseModel  # noqa: PLC0415
+    from pydantic import computed_field  # noqa: PLC0415
 
     class TestModel(PydanticBaseModel):
         """Model with computed field"""
