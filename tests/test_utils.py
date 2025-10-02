@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from spectree._pydantic import PYDANTIC2
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
@@ -18,6 +19,10 @@ from spectree.utils import (
 )
 
 from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
+
+if PYDANTIC2:
+    from pydantic import BaseModel as PydanticBaseModel
+    from pydantic import computed_field
 
 api = SpecTree()
 
@@ -299,3 +304,41 @@ def test_json_compatible_schema():
 
     schema = get_model_schema(DefaultEnumValue)
     json_schema = json_compatible_deepcopy(schema)
+
+
+def test_get_model_schema_mode_parameter():
+    """Test get_model_schema mode parameter for Pydantic v2"""
+    if not PYDANTIC2:
+        pytest.skip("Pydantic v2 only")
+
+    class TestModel(PydanticBaseModel):
+        """Model with computed field"""
+
+        name: str
+        value: int
+
+        @computed_field
+        @property
+        def computed_name(self) -> str:
+            """Computed field - only in serialization"""
+            return f"computed_{self.name}"
+
+    # Test validation mode - computed fields excluded
+    validation_schema = get_model_schema(TestModel, mode="validation")
+    assert "name" in validation_schema["properties"]
+    assert "value" in validation_schema["properties"]
+    assert "computed_name" not in validation_schema["properties"], (
+        "Computed field should NOT be in validation mode"
+    )
+
+    # Test serialization mode - computed fields included
+    serialization_schema = get_model_schema(TestModel, mode="serialization")
+    assert "name" in serialization_schema["properties"]
+    assert "value" in serialization_schema["properties"]
+    assert "computed_name" in serialization_schema["properties"], (
+        "Computed field SHOULD be in serialization mode"
+    )
+
+    # Verify computed field is marked as readOnly and required
+    assert serialization_schema["properties"]["computed_name"].get("readOnly") is True
+    assert "computed_name" in serialization_schema["required"]

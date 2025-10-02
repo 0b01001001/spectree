@@ -244,6 +244,7 @@ def get_model_schema(
     model: ModelType,
     naming_strategy: NamingStrategy = get_model_key,
     nested_naming_strategy: NestedNamingStrategy = get_nested_key,
+    mode: str = "validation",
 ):
     """
     return a dictionary representing the model as JSON Schema with a hashed
@@ -251,11 +252,21 @@ def get_model_schema(
 
     :param model: `pydantic.BaseModel` query, json, headers or cookies from
         request or response
+    :param mode: schema generation mode - 'validation' for input models,
+        'serialization' for output models (Pydantic v2 only)
     """
     assert is_pydantic_model(model), f"{model} is not a pydantic model"
 
     nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
-    return model.schema(ref_template=f"#/components/schemas/{nested_key}")
+    ref_template = f"#/components/schemas/{nested_key}"
+
+    # Use model_json_schema for Pydantic v2, schema for v1
+    if hasattr(model, "model_json_schema"):
+        # Pydantic v2 - supports mode parameter
+        return model.model_json_schema(ref_template=ref_template, mode=mode)
+    else:
+        # Pydantic v1 or InternalBaseModel - mode parameter is ignored
+        return model.schema(ref_template=ref_template)
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
