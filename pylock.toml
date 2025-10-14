@@ -2,7 +2,7 @@
 #    uv pip compile --all-extras --group docs --group dev -o pylock.toml pyproject.toml
 lock-version = "1.0"
 created-by = "uv"
-requires-python = ">=3.9.22"
+requires-python = ">=3.10.18"
 
 [[packages]]
 name = "aiofiles"
@@ -257,13 +257,6 @@ name = "imagesize"
 version = "1.4.1"
 sdist = { url = "https://files.pythonhosted.org/packages/a7/84/62473fb57d61e31fef6e36d64a179c8781605429fd927b5dd608c997be31/imagesize-1.4.1.tar.gz", upload-time = 2022-07-01T12:21:05Z, size = 1280026, hashes = { sha256 = "69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a" } }
 wheels = [{ url = "https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl", upload-time = 2022-07-01T12:21:02Z, size = 8769, hashes = { sha256 = "0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b" } }]
-
-[[packages]]
-name = "importlib-metadata"
-version = "8.7.0"
-marker = "python_full_version < '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", upload-time = 2025-04-27T15:29:01Z, size = 56641, hashes = { sha256 = "d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl", upload-time = 2025-04-27T15:29:00Z, size = 27656, hashes = { sha256 = "e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd" } }]
 
 [[packages]]
 name = "iniconfig"
@@ -869,10 +862,3 @@ name = "wsproto"
 version = "1.2.0"
 sdist = { url = "https://files.pythonhosted.org/packages/c9/4a/44d3c295350d776427904d73c189e10aeae66d7f555bb2feee16d1e4ba5a/wsproto-1.2.0.tar.gz", upload-time = 2022-08-23T19:58:21Z, size = 53425, hashes = { sha256 = "ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065" } }
 wheels = [{ url = "https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl", upload-time = 2022-08-23T19:58:19Z, size = 24226, hashes = { sha256 = "b9acddd652b585d75b20477888c56642fdade28bdfd3579aa24a4d2c037dd736" } }]
-
-[[packages]]
-name = "zipp"
-version = "3.23.0"
-marker = "python_full_version < '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/e3/02/0f2892c661036d50ede074e376733dca2ae7c6eb617489437771209d4180/zipp-3.23.0.tar.gz", upload-time = 2025-06-08T17:06:39Z, size = 25547, hashes = { sha256 = "a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl", upload-time = 2025-06-08T17:06:38Z, size = 10276, hashes = { sha256 = "071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e" } }]

@@ -241,6 +241,7 @@ class SpecTree:
             for name, model in zip(
                 ("query", "json", "form", "headers", "cookies"),
                 (query, json, form, headers, cookies),
+                strict=True,
             ):
                 if model is not None:
                     model_key = self._add_model(model=model, mode="validation")

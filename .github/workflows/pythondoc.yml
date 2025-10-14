@@ -37,7 +37,7 @@ jobs:
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: make install
     - name: Generate docs
