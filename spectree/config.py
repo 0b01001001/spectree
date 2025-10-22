@@ -2,9 +2,10 @@ import warnings
 from enum import Enum
 from typing import Any, Dict, List, Mapping, Optional, Union
 
-from ._pydantic import AnyUrl, InternalBaseModel, root_validator
-from .models import SecurityScheme, Server
-from .page import PAGE_TEMPLATES
+from pydantic import AnyUrl, BaseModel, ConfigDict, model_validator
+
+from spectree.models import SecurityScheme, Server
+from spectree.page import PAGE_TEMPLATES
 
 
 class ModeEnum(str, Enum):
@@ -18,7 +19,7 @@ class ModeEnum(str, Enum):
     greedy = "greedy"
 
 
-class Contact(InternalBaseModel):
+class Contact(BaseModel):
     """contact information"""
 
     #: name of the contact
@@ -29,7 +30,7 @@ class Contact(InternalBaseModel):
     email: Optional[str] = None
 
 
-class License(InternalBaseModel):
+class License(BaseModel):
     """license information"""
 
     #: name of the license
@@ -38,7 +39,7 @@ class License(InternalBaseModel):
     url: Optional[AnyUrl] = None
 
 
-class Configuration(InternalBaseModel):
+class Configuration(BaseModel):
     """Global configuration."""
 
     # OpenAPI configurations
@@ -98,11 +99,9 @@ class Configuration(InternalBaseModel):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
-    # Pydantic v1 config
-    class Config:
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
         return {k.lower(): v for k, v in values.items()}
 
@@ -121,7 +120,7 @@ class Configuration(InternalBaseModel):
                 "Do not use client_secret in production", UserWarning, stacklevel=1
             )
 
-        config = self.dict(
+        config = self.model_dump(
             include={
                 "client_id",
                 "client_secret",
@@ -145,7 +144,7 @@ class Configuration(InternalBaseModel):
         return config
 
     def openapi_info(self) -> Dict[str, str]:
-        info = self.dict(
+        info = self.model_dump(
             include={
                 "title",
                 "description",

@@ -1,8 +1,8 @@
 import json
 
 import pytest
+from pydantic import BaseModel, computed_field
 
-from spectree._pydantic import PYDANTIC2
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
@@ -242,7 +242,7 @@ def test_parse_params():
     models = {
         get_model_path_key(
             f"{DemoModel.__module__}.{DemoModel.__name__}"
-        ): DemoModel.schema(ref_template="#/components/schemas/{model}")
+        ): DemoModel.model_json_schema(ref_template="#/components/schemas/{model}")
     }
     assert parse_params(demo_func, [], models) == []
     params = parse_params(demo_class.demo_method, [], models)
@@ -259,7 +259,7 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        get_model_path_key("tests.common.DemoQuery"): DemoQuery.schema(
+        get_model_path_key("tests.common.DemoQuery"): DemoQuery.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )
     }
@@ -302,13 +302,10 @@ def test_json_compatible_schema():
     json_schema = json_compatible_deepcopy(schema)
 
 
-@pytest.mark.skipif(not PYDANTIC2, reason="Pydantic v2 only")
 def test_get_model_schema_mode_parameter():
     """Test get_model_schema mode parameter for Pydantic v2"""
-    from pydantic import BaseModel as PydanticBaseModel  # noqa: PLC0415
-    from pydantic import computed_field  # noqa: PLC0415
 
-    class TestModel(PydanticBaseModel):
+    class TestModel(BaseModel):
         """Model with computed field"""
 
         name: str

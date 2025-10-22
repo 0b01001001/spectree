@@ -158,7 +158,7 @@ async def return_list(request):
     pre_serialize = bool(int(request.query_params.get("pre_serialize", 0)))
     data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
     return PydanticResponse(
-        [entry.dict() if pre_serialize else entry for entry in data]
+        [entry.model_dump() if pre_serialize else entry for entry in data]
     )
 
 

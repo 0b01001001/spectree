@@ -169,9 +169,9 @@ def validate_response(
 
     if not skip_validation:
         validator = (
-            validation_model.parse_raw
+            validation_model.model_validate_json
             if isinstance(final_response_payload, bytes)
-            else validation_model.parse_obj
+            else validation_model.model_validate
         )
         validated_instance = validator(final_response_payload)
         # in case the response model contains (alias, default_none, unset fields) which

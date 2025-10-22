@@ -120,11 +120,11 @@ def test_list_model():
         {"name": "a", "limit": 1},
         {"name": "b", "limit": 2},
     ]
-    instance = model.parse_obj(data)
-    items = instance.dict()
+    instance = model.model_validate(data)
+    items = instance.model_dump()
     if isinstance(items, dict):
         items = items["__root__"]
     for i, item in enumerate(items):
-        obj = JSON.parse_obj(item)
+        obj = JSON.model_validate(item)
         assert obj.name == data[i]["name"]
         assert obj.limit == data[i]["limit"]

@@ -3,6 +3,6 @@
 
 def build():
     base(dev=True)
-    install.uv(python_version="3.9")
+    install.uv(python_version="3.10")
     shell("fish")
     runtime.init(["make install"])

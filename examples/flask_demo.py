@@ -3,7 +3,7 @@ from random import random
 
 from flask import Flask, abort, jsonify
 from flask.views import MethodView
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from werkzeug.datastructures import FileStorage
 
 from examples.common import File, FileResp, Query
@@ -27,14 +27,15 @@ class Data(BaseModel):
     limit: int = 5
     vip: bool
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        schema_extra={
             "example": {
                 "uid": "very_important_user",
                 "limit": 10,
                 "vip": True,
             }
         }
+    )
 
 
 class Language(str, Enum):

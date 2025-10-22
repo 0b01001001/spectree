@@ -36,9 +36,12 @@ class RootModelLookalike:
     "value, expected",
     [
         (DummyRootModel, True),
-        (DummyRootModel.parse_obj([1, 2, 3]), False),
+        (DummyRootModel.model_validate([1, 2, 3]), False),
         (NestedRootModel, True),
-        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), False),
+        (
+            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
+            False,
+        ),
         (SimpleModel, False),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -59,9 +62,12 @@ def test_is_root_model(value: Any, expected: bool):
     "value, expected",
     [
         (DummyRootModel, False),
-        (DummyRootModel.parse_obj([1, 2, 3]), True),
+        (DummyRootModel.model_validate([1, 2, 3]), True),
         (NestedRootModel, False),
-        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), True),
+        (
+            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
+            True,
+        ),
         (SimpleModel, False),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -82,9 +88,12 @@ def test_is_root_model_instance(value, expected):
     "value, expected",
     [
         (DummyRootModel, True),
-        (DummyRootModel.parse_obj([1, 2, 3]), False),
+        (DummyRootModel.model_validate([1, 2, 3]), False),
         (NestedRootModel, True),
-        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), False),
+        (
+            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
+            False,
+        ),
         (SimpleModel, True),
         (SimpleModel(user_id=1), False),
         (RootModelLookalike, False),
@@ -105,9 +114,12 @@ def test_is_base_model(value, expected):
     "value, expected",
     [
         (DummyRootModel, False),
-        (DummyRootModel.parse_obj([1, 2, 3]), True),
+        (DummyRootModel.model_validate([1, 2, 3]), True),
         (NestedRootModel, False),
-        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), True),
+        (
+            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
+            True,
+        ),
         (SimpleModel, False),
         (SimpleModel(user_id=1), True),
         (RootModelLookalike, False),
@@ -145,10 +157,13 @@ def test_is_partial_base_model_instance(value, expected):
     "value, expected",
     [
         (SimpleModel(user_id=1), {"user_id": 1}),
-        (DummyRootModel.parse_obj([1, 2, 3]), [1, 2, 3]),
-        (NestedRootModel.parse_obj(DummyRootModel.parse_obj([1, 2, 3])), [1, 2, 3]),
+        (DummyRootModel.model_validate([1, 2, 3]), [1, 2, 3]),
         (
-            Users.parse_obj(
+            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
+            [1, 2, 3],
+        ),
+        (
+            Users.model_validate(
                 [
                     SimpleModel(user_id=1),
                     SimpleModel(user_id=2),

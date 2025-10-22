@@ -2,9 +2,14 @@ import sys
 from http import HTTPStatus
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-from ._pydantic import is_pydantic_model
-from ._types import BaseModelSubclassType, ModelType, NamingStrategy, OptionalModelType
-from .utils import gen_list_model, get_model_key, parse_code
+from spectree._pydantic import is_pydantic_model
+from spectree._types import (
+    BaseModelSubclassType,
+    ModelType,
+    NamingStrategy,
+    OptionalModelType,
+)
+from spectree.utils import gen_list_model, get_model_key, parse_code
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1

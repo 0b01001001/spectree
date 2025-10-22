@@ -6,13 +6,12 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Protocol,
     Sequence,
     Type,
     TypeVar,
     Union,
 )
-
-from typing_extensions import Protocol
 
 from spectree._pydantic import BaseModel
 

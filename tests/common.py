@@ -1,21 +1,15 @@
 import uuid
-import warnings
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
-# legacy code of: from pydantic import model_validator, field_validator
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import generate_root_model
 from spectree.utils import hash_module_path
-
-# suppress warnings
-warnings.filterwarnings("ignore", category=UserWarning, append=True)
-warnings.filterwarnings("ignore", category=DeprecationWarning, append=True)
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
@@ -91,14 +85,10 @@ class Language(str, Enum):
 class Headers(BaseModel):
     lang: Language
 
-    # @model_validator(mode="before")
-    # @classmethod
-    # def lower_keys(cls, data: Any):
-    #     return {key.lower(): value for key, value in data.items()}
-
-    @root_validator(pre=True)
-    def lower_keys(cls, values):
-        return {key.lower(): value for key, value in values.items()}
+    @model_validator(mode="before")
+    @classmethod
+    def lower_keys(cls, data: Any):
+        return {key.lower(): value for key, value in data.items()}
 
 
 class Cookies(BaseModel):
@@ -113,14 +103,16 @@ class DemoModel(BaseModel):
 
 class DemoQuery(BaseModel):
     names1: List[str] = Field(...)
-    names2: List[str] = Field(..., style="matrix", explode=True, non_keyword="dummy")  # type: ignore
+    names2: List[str] = Field(
+        ..., json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy")
+    )  # type: ignore
 
 
 class CustomError(BaseModel):
     foo: str
 
     # @field_validator("foo")
-    @validator("foo")
+    @field_validator("foo")
     def value_must_be_foo(cls, value):
         if value != "foo":
             # this is not JSON serializable if included in the error context
@@ -153,27 +145,27 @@ def get_paths(spec):
 SECURITY_SCHEMAS = [
     SecurityScheme(
         name="auth_apiKey",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "Authorization", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="auth_apiKey_backup",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {"type": "apiKey", "name": "Authorization", "in": "header"}
         ),
     ),
     SecurityScheme(
         name="auth_BasicAuth",
-        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "basic"}),
+        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "basic"}),
     ),
     SecurityScheme(
         name="auth_BearerAuth",
-        data=SecuritySchemeData.parse_obj({"type": "http", "scheme": "bearer"}),
+        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "bearer"}),
     ),
     SecurityScheme(
         name="auth_openID",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "openIdConnect",
                 "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
@@ -182,7 +174,7 @@ SECURITY_SCHEMAS = [
     ),
     SecurityScheme(
         name="auth_oauth2",
-        data=SecuritySchemeData.parse_obj(
+        data=SecuritySchemeData.model_validate(
             {
                 "type": "oauth2",
                 "flows": {
@@ -217,14 +209,8 @@ WRONG_SECURITY_SCHEMAS_DATA = [
         "name": "auth_openID_openIdConnectUrl",
         "data": {"type": "openIdConnect"},
     },
-    {
-        "name": "auth_oauth2_flows",
-        "data": {"type": "oauth2"},
-    },
-    {
-        "name": "empty_Data",
-        "data": {},
-    },
+    {"name": "auth_oauth2_flows", "data": {"type": "oauth2"}},
+    {"name": "empty_Data", "data": {}},
     {"name": "wrong_Data", "data": {"x": "y"}},
 ]
 
@@ -254,9 +240,9 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
     )
     data: Any
     if return_what == "RootResp_JSON":
-        data = RootResp.parse_obj(JSON(name="user1", limit=1))
+        data = RootResp.model_validate(JSON(name="user1", limit=1))
     elif return_what == "RootResp_List":
-        data = RootResp.parse_obj([1, 2, 3, 4])
+        data = RootResp.model_validate([1, 2, 3, 4])
     elif return_what == "JSON":
         data = JSON(name="user1", limit=1)
     elif return_what == "List":
@@ -268,7 +254,7 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
     else:
         raise AssertionError()
     if pre_serialize:
-        data = data.dict()
+        data = data.model_dump()
         if "__root__" in data:
             data = data["__root__"]
     return data
