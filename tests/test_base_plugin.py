@@ -71,7 +71,7 @@ class DummyResponse:
         ),
         (
             StrDict,
-            StrDict.parse_obj({"key1": "value1", "key2": "value2"}),
+            StrDict.model_validate({"key1": "value1", "key2": "value2"}),
             ResponseValidationResult({"key1": "value1", "key2": "value2"}),
         ),
         (
@@ -91,7 +91,7 @@ class DummyResponse:
         ),
         (
             RootResp,
-            RootResp.parse_obj(JSON(name="user4", limit=23)),
+            RootResp.model_validate(JSON(name="user4", limit=23)),
             ResponseValidationResult({"name": "user4", "limit": 23}),
         ),
         (

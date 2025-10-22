@@ -13,12 +13,17 @@ from typing import (
     get_type_hints,
 )
 
-from ._types import FunctionDecorator, ModelType, NamingStrategy, NestedNamingStrategy
-from .config import Configuration, ModeEnum
-from .models import Tag, ValidationError
-from .plugins import PLUGINS, BasePlugin
-from .response import Response
-from .utils import (
+from spectree._types import (
+    FunctionDecorator,
+    ModelType,
+    NamingStrategy,
+    NestedNamingStrategy,
+)
+from spectree.config import Configuration, ModeEnum
+from spectree.models import Tag, ValidationError
+from spectree.plugins import PLUGINS, BasePlugin
+from spectree.response import Response
+from spectree.utils import (
     default_after_handler,
     default_before_handler,
     get_model_key,
@@ -77,7 +82,7 @@ class SpecTree:
         self.after = after
         self.validation_error_status = validation_error_status
         self.validation_error_model = validation_error_model or ValidationError
-        self.config: Configuration = Configuration.parse_obj(kwargs)
+        self.config: Configuration = Configuration.model_validate(kwargs)
         self.backend_name = backend_name
         if backend:
             self.backend = backend(self)
@@ -313,7 +318,7 @@ class SpecTree:
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
-                            tag.dict(exclude_none=True)
+                            tag.model_dump(exclude_none=True)
                             if isinstance(tag, Tag)
                             else {"name": tag}
                         )
@@ -353,12 +358,12 @@ class SpecTree:
 
         if self.config.servers:
             spec["servers"] = [
-                server.dict(exclude_none=True) for server in self.config.servers
+                server.model_dump(exclude_none=True) for server in self.config.servers
             ]
 
         if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
-                scheme.name: scheme.data.dict(exclude_none=True, by_alias=True)
+                scheme.name: scheme.data.model_dump(exclude_none=True, by_alias=True)
                 for scheme in self.config.security_schemes
             }
 
@@ -370,14 +375,13 @@ class SpecTree:
         handle nested models
         """
         definitions = {}
+        def_key = "$defs"
         for name, schema in self.models.items():
-            # handle pydantic v1 & v2 def keys
-            for def_key in ["definitions", "$defs"]:
-                if def_key in schema:
-                    for key, value in schema[def_key].items():
-                        composed_key = self.nested_naming_strategy(name, key)
-                        if composed_key not in definitions:
-                            definitions[composed_key] = value
-                    del schema[def_key]
+            if def_key in schema:
+                for key, value in schema[def_key].items():
+                    composed_key = self.nested_naming_strategy(name, key)
+                    if composed_key not in definitions:
+                        definitions[composed_key] = value
+                del schema[def_key]
 
         return definitions

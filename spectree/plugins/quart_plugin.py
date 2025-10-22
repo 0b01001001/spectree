@@ -2,12 +2,11 @@ import inspect
 from typing import Any, Callable, Optional
 
 import quart
+from pydantic import ValidationError
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 
 from spectree._pydantic import (
-    InternalValidationError,
     SerializedPydanticResponse,
-    ValidationError,
     is_partial_base_model_instance,
     serialize_model_instance,
 )
@@ -51,13 +50,13 @@ class QuartPlugin(WerkzeugPlugin):
         )
 
         request.context = Context(
-            query.parse_obj(req_query) if query else None,
-            json.parse_obj(await request.get_json(silent=True) or {})
+            query.model_validate(req_query) if query else None,
+            json.model_validate(await request.get_json(silent=True) or {})
             if use_json
             else None,
-            form.parse_obj(self.fill_form(request)) if use_form else None,
-            headers.parse_obj(req_headers) if headers else None,
-            cookies.parse_obj(req_cookies) if cookies else None,
+            form.model_validate(self.fill_form(request)) if use_form else None,
+            headers.model_validate(req_headers) if headers else None,
+            cookies.model_validate(req_cookies) if cookies else None,
         )
 
     async def validate_response(
@@ -86,12 +85,8 @@ class QuartPlugin(WerkzeugPlugin):
                     validation_model=resp_model.find_model(status),
                     response_payload=payload,
                 )
-            except (InternalValidationError, ValidationError) as err:
-                errors = (
-                    err.errors()
-                    if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
-                )
+            except ValidationError as err:
+                errors = err.errors(include_context=False)
                 response = await make_response(errors, 500)
                 resp_validation_error = err
             else:
@@ -140,13 +135,9 @@ class QuartPlugin(WerkzeugPlugin):
                 await self.request_validation(
                     request, query, json, form, headers, cookies
                 )
-            except (InternalValidationError, ValidationError) as err:
+            except ValidationError as err:
                 req_validation_error = err
-                errors = (
-                    err.errors()
-                    if isinstance(err, InternalValidationError)
-                    else err.errors(include_context=False)
-                )
+                errors = err.errors(include_context=False)
                 response = await make_response(jsonify(errors), validation_error_status)
 
         before(request, response, req_validation_error, None)

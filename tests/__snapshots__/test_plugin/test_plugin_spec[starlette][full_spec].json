@@ -27,6 +27,32 @@
         "title": "CustomError",
         "type": "object"
       },
+      "FormFileUpload.7068f62": {
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "format": "binary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "File"
+          },
+          "other": {
+            "title": "Other",
+            "type": "string"
+          }
+        },
+        "required": [
+          "other"
+        ],
+        "title": "FormFileUpload",
+        "type": "object"
+      },
       "Headers.7068f62": {
         "properties": {
           "lang": {
@@ -114,6 +140,43 @@
           "limit"
         ],
         "title": "JSON",
+        "type": "object"
+      },
+      "OptionalAliasResp.7068f62": {
+        "properties": {
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema"
+        ],
+        "title": "OptionalAliasResp",
         "type": "object"
       },
       "Query.7068f62": {
@@ -209,8 +272,17 @@
         "description": "Model of a validation error response element.",
         "properties": {
           "ctx": {
-            "title": "Error context",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error context"
           },
           "loc": {
             "items": {

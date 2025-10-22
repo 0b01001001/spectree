@@ -19,13 +19,10 @@ from typing import (
     get_type_hints,
 )
 
-from ._pydantic import (
-    BaseModel,
-    ValidationError,
-    generate_root_model,
-    is_pydantic_model,
-)
-from ._types import (
+from pydantic import BaseModel, ValidationError
+
+from spectree._pydantic import generate_root_model, is_pydantic_model
+from spectree._types import (
     ModelType,
     MultiDict,
     MultiDictStarlette,
@@ -259,14 +256,7 @@ def get_model_schema(
 
     nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
     ref_template = f"#/components/schemas/{nested_key}"
-
-    # Use model_json_schema for Pydantic v2, schema for v1
-    if hasattr(model, "model_json_schema"):
-        # Pydantic v2 - supports mode parameter
-        return model.model_json_schema(ref_template=ref_template, mode=mode)
-    else:
-        # Pydantic v1 or InternalBaseModel - mode parameter is ignored
-        return model.schema(ref_template=ref_template)
+    return model.model_json_schema(ref_template=ref_template, mode=mode)
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
@@ -321,7 +311,7 @@ def is_list_item(key: str, model: OptionalModelType) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
         return False
-    model_filed = model.__fields__.get(key)
+    model_filed = model.model_fields.get(key)
     if model_filed is None:
         return False
     return getattr(model_filed.annotation, "__origin__", None) is list

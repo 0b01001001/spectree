@@ -148,7 +148,7 @@ class ReturnListView:
     async def on_get(self, req, resp):
         pre_serialize = bool(int(req.params.get("pre_serialize", 0)))
         data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
-        resp.media = [entry.dict() if pre_serialize else entry for entry in data]
+        resp.media = [entry.model_dump() if pre_serialize else entry for entry in data]
 
 
 class ReturnRootView:
@@ -206,13 +206,15 @@ class ViewWithCustomSerializer:
         resp=Response(HTTP_200=Resp),
     )
     async def on_get(self, req, resp):
-        resp.data = Resp(name="falcon", score=[1, 2, 3]).json().encode("utf-8")
+        resp.data = (
+            Resp(name="falcon", score=[1, 2, 3]).model_dump_json().encode("utf-8")
+        )
 
     @api.validate(
         resp=Response(HTTP_200=Resp),
     )
     async def on_post(self, req, resp):
-        resp.text = Resp(name="falcon", score=[1, 2, 3]).json()
+        resp.text = Resp(name="falcon", score=[1, 2, 3]).model_dump_json()
 
 
 app = App()

@@ -288,7 +288,7 @@ You can change the `validation_error_status` in SpecTree (global) or a specific 
 
 > How can I return my model directly?
 
-Yes, returning an instance of `BaseModel` will assume the model is valid and bypass spectree's validation and automatically call `.dict()` on the model.
+Yes, returning an instance of `BaseModel` will assume the model is valid and bypass spectree's validation and automatically call `.model_dump()` on the model.
 
 For starlette you should return a `PydanticResponse`:
 ```py
@@ -305,7 +305,7 @@ Try it with `http post :8000/api/user name=alice age=18`. (if you are using `htt
 
 ```py
 from flask import Flask, jsonify
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from spectree import Response, SpecTree
 
@@ -314,7 +314,7 @@ class Profile(BaseModel):
     name: str
     age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
-    class Config:
+    model_config = ConfigDict(
         schema_extra = {
             # provide an example
             "example": {
@@ -322,6 +322,7 @@ class Profile(BaseModel):
                 "age": 42,
             }
         }
+    )
 
 
 class Message(BaseModel):
@@ -352,7 +353,7 @@ if __name__ == "__main__":
 ### Quart
 
 ```py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from quart import Quart, jsonify
 
 from spectree import Response, SpecTree
@@ -362,7 +363,7 @@ class Profile(BaseModel):
     name: str
     age: int = Field(..., gt=0, lt=150, description="user age")
 
-    class Config:
+    model_config = ConfigDict(
         schema_extra = {
             # provide an example
             "example": {
@@ -370,6 +371,7 @@ class Profile(BaseModel):
                 "age": 42,
             }
         }
+    )
 
 
 class Message(BaseModel):

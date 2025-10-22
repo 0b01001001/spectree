@@ -1,146 +1,26 @@
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Protocol, Union, cast, runtime_checkable
+from typing import Any, Union, cast
 
-from pydantic.version import VERSION as PYDANTIC_VERSION
-
-PYDANTIC2 = PYDANTIC_VERSION.startswith("2")
-ROOT_FIELD = "__root__"
-
+from pydantic import BaseModel, RootModel
 
 __all__ = [
-    "AnyUrl",
     "BaseModel",
-    "Field",
-    "InternalBaseModel",
-    "InternalField",
-    "InternalValidationError",
-    "ValidationError",
     "generate_root_model",
     "is_base_model",
     "is_base_model_instance",
     "is_pydantic_model",
     "is_root_model",
     "is_root_model_instance",
-    "root_validator",
     "serialize_model_instance",
-    "validator",
 ]
 
 
-class UNSET_TYPE(Enum):
-    NODEFAULT = "NO_DEFAULT"
-
-
-NODEFAULT = UNSET_TYPE.NODEFAULT
-
-if PYDANTIC2:
-    from pydantic import BaseModel, Field, RootModel, ValidationError
-    from pydantic.v1 import AnyUrl, root_validator, validator
-    from pydantic.v1 import BaseModel as InternalBaseModel
-    from pydantic.v1 import Field as InternalField
-    from pydantic.v1 import ValidationError as InternalValidationError
-    from pydantic_core import core_schema  # noqa
-
-else:
-    from pydantic import (  # type: ignore[no-redef,assignment]
-        AnyUrl,
-        BaseModel,
-        Field,
-        ValidationError,
-        root_validator,
-        validator,
-    )
-
-    InternalBaseModel = BaseModel  # type: ignore
-    InternalValidationError = ValidationError  # type: ignore
-    InternalField = Field  # type: ignore
-
-
 def generate_root_model(root_type, name="GeneratedRootModel") -> type[BaseModel]:
-    if PYDANTIC2:
-        return type(name, (RootModel[root_type],), {})
-    return type(
-        name,
-        (BaseModel,),
-        {
-            "__annotations__": {ROOT_FIELD: root_type},
-        },
-    )
-
-
-@runtime_checkable
-class PydanticModelProtocol(Protocol):
-    def dict(
-        self,
-        *,
-        include=None,
-        exclude=None,
-        by_alias=False,
-        skip_defaults=None,
-        exclude_unset=False,
-        exclude_defaults=False,
-        exclude_none=False,
-    ):
-        pass
-
-    def json(
-        self,
-        *,
-        include=None,
-        exclude=None,
-        by_alias=False,
-        skip_defaults=None,
-        exclude_unset=False,
-        exclude_defaults=False,
-        exclude_none=False,
-        encoder=None,
-        models_as_dict=True,
-        **dumps_kwargs,
-    ):
-        pass
-
-    @classmethod
-    def parse_obj(cls, obj):
-        pass
-
-    @classmethod
-    def parse_raw(
-        cls, b, *, content_type=None, encoding="utf8", proto=None, allow_pickle=False
-    ):
-        pass
-
-    @classmethod
-    def parse_file(
-        cls, path, *, content_type=None, encoding="utf8", proto=None, allow_pickle=False
-    ):
-        pass
-
-    @classmethod
-    def construct(cls, _fields_set=None, **values):
-        pass
-
-    @classmethod
-    def copy(cls, *, include=None, exclude=None, update=None, deep=False):
-        pass
-
-    @classmethod
-    def schema(cls, by_alias=True, ref_template="#/definitions/{model}"):
-        pass
-
-    @classmethod
-    def schema_json(
-        cls, *, by_alias=True, ref_template="#/definitions/{model}", **dumps_kwargs
-    ):
-        pass
-
-    @classmethod
-    def validate(cls, value):
-        pass
+    return type(name, (RootModel[root_type],), {})
 
 
 def is_pydantic_model(t: Any) -> bool:
-    return issubclass(t, PydanticModelProtocol)
+    return issubclass(t, BaseModel)
 
 
 def is_base_model(t: Any) -> bool:
@@ -176,12 +56,11 @@ def is_partial_base_model_instance(instance: Any) -> bool:
 
 def is_root_model(t: Any) -> bool:
     """Check whether a type is a Pydantic RootModel."""
-    pydantic_v1_root = is_base_model(t) and ROOT_FIELD in t.__fields__
     pydantic_v2_root = is_base_model(t) and any(
         f"{m.__module__}.{m.__name__}" == "pydantic.root_model.RootModel"
         for m in t.mro()
     )
-    return pydantic_v1_root or pydantic_v2_root
+    return pydantic_v2_root
 
 
 def is_root_model_instance(value: Any):
@@ -202,8 +81,8 @@ def serialize_model_instance(
 ) -> SerializedPydanticResponse:
     """Serialize a (partial) Pydantic BaseModel to json string."""
     if not is_base_model_instance(value):
-        value = _PydanticResponseModel.parse_obj(value)
+        value = _PydanticResponseModel.model_validate(value)
     else:
         value = cast(BaseModel, value)
-    serialized = value.model_dump_json() if PYDANTIC2 else value.json()
+    serialized = value.model_dump_json()
     return SerializedPydanticResponse(serialized.encode("utf-8"))

@@ -202,7 +202,9 @@ def test_flask_make_response_post(client):
         name="user make_response name",
     )
     resp = client.post(
-        "/api/return_make_response", json=payload.dict(), headers={"lang": "en-US"}
+        "/api/return_make_response",
+        json=payload.model_dump(),
+        headers={"lang": "en-US"},
     )
     assert resp.status_code == 201
     assert resp.json == {"name": payload.name, "score": [payload.limit]}
@@ -221,7 +223,7 @@ def test_flask_make_response_get(client):
     )
     resp = client.get(
         "/api/return_make_response",
-        query_string=payload.dict(),
+        query_string=payload.model_dump(),
         headers={"lang": "en-US"},
     )
     assert resp.status_code == 201, resp

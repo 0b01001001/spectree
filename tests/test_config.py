@@ -2,9 +2,9 @@ import string
 from typing import Type
 
 import pytest
+from pydantic import ValidationError
 
 from spectree import SecurityScheme
-from spectree._pydantic import InternalValidationError as ValidationError
 from spectree.config import Configuration
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
@@ -18,7 +18,7 @@ def test_config_license():
         license={"name": "MIT", "url": "https://opensource.org/licenses/MIT"}
     )
     assert config.license.name == "MIT"
-    assert config.license.url == "https://opensource.org/licenses/MIT"
+    assert str(config.license.url) == "https://opensource.org/licenses/MIT"
 
     with pytest.raises(ValidationError):
         Configuration(license={"name": "MIT", "url": "url"})
@@ -30,7 +30,7 @@ def test_config_contact():
 
     config = Configuration(contact={"name": "John", "url": "https://example.com"})
     assert config.contact.name == "John"
-    assert config.contact.url == "https://example.com"
+    assert str(config.contact.url).rstrip("/") == "https://example.com"
 
     config = Configuration(contact={"name": "John", "email": "hello@github.com"})
     assert config.contact.name == "John"
@@ -46,9 +46,9 @@ def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     config = Configuration(
         security_schemes=[SecurityScheme(name=secure_item.name, data=secure_item.data)]
     )
-    assert config.security_schemes == [
-        {"name": secure_item.name, "data": secure_item.data}
-    ]
+    assert config.security_schemes
+    assert config.security_schemes[0].name == secure_item.name
+    assert config.security_schemes[0].data == secure_item.data
 
 
 def test_update_security_schemes():
@@ -60,7 +60,7 @@ def test_update_security_schemes():
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
 def test_update_security_scheme_wrong_type(secure_item: SecurityScheme):
     # update and validate each schema type
-    with pytest.raises(ValidationError):
+    with pytest.raises((ValidationError)):
         secure_item.data.type += "_wrong"  # type: ignore
 
 
