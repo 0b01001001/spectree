@@ -20,6 +20,8 @@ from .common import (
     Query,
     QueryList,
     Resp,
+    RespFromAttrs,
+    RespObject,
     RootResp,
     StrDict,
     UserXmlData,
@@ -291,6 +293,12 @@ class StringStatusView(MethodView):
         return "Response text string", 200
 
 
+class ForcedSerializeView(MethodView):
+    @api.validate(resp=Response(HTTP_200=RespFromAttrs), serialize=True)
+    def get(self):
+        return RespObject(name="flask", score=[1, 2, 3], comment="hello")
+
+
 app.add_url_rule("/ping", view_func=Ping.as_view("ping"))
 app.add_url_rule("/api/user/<name>", view_func=User.as_view("user"), methods=["POST"])
 app.add_url_rule(
@@ -356,6 +364,10 @@ app.add_url_rule(
 app.add_url_rule(
     "/api/custom_error",
     view_func=CustomErrorView.as_view("custom_error_view"),
+)
+app.add_url_rule(
+    "/api/force_serialize",
+    view_func=ForcedSerializeView.as_view("force_serialize_view"),
 )
 
 # INFO: ensures that spec is calculated and cached _after_ registering

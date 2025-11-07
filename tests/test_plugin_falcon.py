@@ -18,6 +18,8 @@ from tests.common import (
     Order,
     Query,
     Resp,
+    RespFromAttrs,
+    RespObject,
     RootResp,
     StrDict,
     UserXmlData,
@@ -292,6 +294,17 @@ class ViewWithCustomSerializer:
         resp.text = Resp(name="falcon", score=[1, 2, 3]).model_dump_json()
 
 
+class WithForcedSerializer:
+    name = "view with forced response serialization"
+
+    @api.validate(
+        resp=Response(HTTP_200=RespFromAttrs),
+        serialize=True,
+    )
+    def on_get(self, req, resp):
+        resp.media = RespObject(name="falcon", score=[1, 2, 3], comment="hello")
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -308,6 +321,7 @@ app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/return_model", ReturnModelView())
 app.add_route("/api/return_optional_alias", ReturnOptionalAliasView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
+app.add_route("/api/force_serialize", WithForcedSerializer())
 app.add_route("/api/custom_error", CustomErrorView())
 api.register(app)
 
@@ -645,3 +659,13 @@ def test_custom_error(client):
     # error in response
     resp = client.simulate_post("/api/custom_error", json={"foo": "foo"})
     assert resp.status_code == 500
+
+
+def test_falcon_forced_serializer_async(client):
+    resp = client.simulate_get(
+        "/api/force_serialize",
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "falcon"
+    assert resp.json["score"] == [1, 2, 3]
+    assert "comment" not in resp.json

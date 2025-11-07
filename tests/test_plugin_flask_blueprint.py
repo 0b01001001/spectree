@@ -20,6 +20,8 @@ from .common import (
     Query,
     QueryList,
     Resp,
+    RespFromAttrs,
+    RespObject,
     RootResp,
     StrDict,
     UserXmlData,
@@ -271,6 +273,12 @@ def return_optional_alias():
 @api.validate(resp=Response(HTTP_200=CustomError))
 def custom_error(json: CustomError):
     return {"foo": "bar"}
+
+
+@app.route("/api/force_serialize", methods=["GET"])
+@api.validate(resp=Response(HTTP_200=RespFromAttrs), serialize=True)
+def force_serialize():
+    return RespObject(name="flask", score=[1, 2, 3], comment="hello")
 
 
 api.register(app)

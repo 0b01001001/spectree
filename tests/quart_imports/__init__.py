@@ -1,6 +1,7 @@
 from .dry_plugin_quart import (
     test_quart_custom_error,
     test_quart_doc,
+    test_quart_forced_serializer,
     test_quart_list_json_request,
     test_quart_no_response,
     test_quart_return_list_request,
@@ -14,6 +15,7 @@ from .dry_plugin_quart import (
 __all__ = [
     "test_quart_custom_error",
     "test_quart_doc",
+    "test_quart_forced_serializer",
     "test_quart_list_json_request",
     "test_quart_no_response",
     "test_quart_return_list_request",

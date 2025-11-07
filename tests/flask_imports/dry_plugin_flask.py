@@ -315,3 +315,11 @@ def test_flask_set_cookies(client):
     assert len(set_cookies) == 2
     assert "foo=hello" in set_cookies
     assert "bar=world" in set_cookies
+
+
+def test_flask_forced_serializer(client):
+    resp = client.get("/api/force_serialize")
+    assert resp.status_code == 200
+    assert resp.json["name"] == "flask"
+    assert resp.json["score"] == [1, 2, 3]
+    assert "comment" not in resp.json

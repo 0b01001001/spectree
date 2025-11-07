@@ -16,6 +16,8 @@ from .common import (
     OptionalJSON,
     Query,
     Resp,
+    RespFromAttrs,
+    RespObject,
     RootResp,
     StrDict,
     api_tag,
@@ -217,6 +219,17 @@ class ViewWithCustomSerializer:
         resp.text = Resp(name="falcon", score=[1, 2, 3]).model_dump_json()
 
 
+class WithForcedSerializer:
+    name = "view with forced response serialization"
+
+    @api.validate(
+        resp=Response(HTTP_200=RespFromAttrs),
+        serialize=True,
+    )
+    async def on_get(self, req, resp):
+        resp.media = RespObject(name="falcon", score=[1, 2, 3], comment="hello")
+
+
 app = App()
 app.add_route("/ping", Ping())
 app.add_route("/api/user/{name}", UserScore())
@@ -230,6 +243,7 @@ app.add_route("/api/return_list", ReturnListView())
 app.add_route("/api/return_root", ReturnRootView())
 app.add_route("/api/return_model", ReturnModelView())
 app.add_route("/api/custom_serializer", ViewWithCustomSerializer())
+app.add_route("/api/force_serialize", WithForcedSerializer())
 api.register(app)
 
 
@@ -544,3 +558,13 @@ def test_falcon_custom_serializer_async(client):
     assert resp.status_code == 200
     assert resp.json["name"] == "falcon"
     assert resp.json["score"] == [1, 2, 3]
+
+
+def test_falcon_forced_serializer_async(client):
+    resp = client.simulate_get(
+        "/api/force_serialize",
+    )
+    assert resp.status_code == 200
+    assert resp.json["name"] == "falcon"
+    assert resp.json["score"] == [1, 2, 3]
+    assert "comment" not in resp.json

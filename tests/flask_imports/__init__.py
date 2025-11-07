@@ -1,6 +1,7 @@
 from .dry_plugin_flask import (
     test_flask_custom_error,
     test_flask_doc,
+    test_flask_forced_serializer,
     test_flask_list_json_request,
     test_flask_make_response_get,
     test_flask_make_response_post,
@@ -22,6 +23,7 @@ from .dry_plugin_flask import (
 __all__ = [
     "test_flask_custom_error",
     "test_flask_doc",
+    "test_flask_forced_serializer",
     "test_flask_list_json_request",
     "test_flask_make_response_get",
     "test_flask_make_response_post",
