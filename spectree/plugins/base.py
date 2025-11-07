@@ -73,6 +73,7 @@ class BasePlugin(Generic[BackendRoute]):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
+        serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -143,6 +144,7 @@ class ResponseValidationResult:
 def validate_response(
     validation_model: OptionalModelType,
     response_payload: Any,
+    force_serialize: bool = False,
 ) -> ResponseValidationResult:
     """Validate a given ``response_payload`` against a ``validation_model``.
     This does nothing if ``validation_model is None``.
@@ -152,6 +154,7 @@ def validate_response(
     :param response_payload: Validated response payload. A :class:`RawResponsePayload`
         should be provided when the plugin view function returned an already
         JSON-serialized response payload.
+    :param force_serialize: Always serialize the model instance.
     """
     if not validation_model:
         return ResponseValidationResult(payload=response_payload)
@@ -177,7 +180,7 @@ def validate_response(
         # in case the response model contains (alias, default_none, unset fields) which
         # might not be the what the users want, we only return the validated dict when
         # the response contains BaseModel
-        if is_partial_base_model_instance(final_response_payload):
+        if force_serialize or is_partial_base_model_instance(final_response_payload):
             final_response_payload = serialize_model_instance(validated_instance)
 
     return ResponseValidationResult(payload=final_response_payload)
