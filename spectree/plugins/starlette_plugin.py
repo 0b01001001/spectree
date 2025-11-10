@@ -10,7 +10,11 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from spectree._pydantic import generate_root_model, serialize_model_instance
+from spectree._pydantic import (
+    SerializedPydanticResponse,
+    generate_root_model,
+    serialize_model_instance,
+)
 from spectree._types import ModelType
 from spectree.plugins.base import (
     BasePlugin,
@@ -95,6 +99,7 @@ class StarlettePlugin(BasePlugin):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -155,9 +160,10 @@ class StarlettePlugin(BasePlugin):
             )
         ):
             try:
-                validate_response(
+                response_validation_result = validate_response(
                     validation_model=resp.find_model(response.status_code),
                     response_payload=RawResponsePayload(payload=response.body),
+                    force_serialize=force_resp_serialize,
                 )
             except ValidationError as err:
                 response = JSONResponse(
@@ -165,6 +171,12 @@ class StarlettePlugin(BasePlugin):
                     500,
                 )
                 resp_validation_error = err
+            else:
+                # replace the body of the response if it was serialized during validation
+                if isinstance(
+                    response_validation_result.payload, SerializedPydanticResponse
+                ):
+                    response.body = response_validation_result.payload.data
 
         after(request, response, resp_validation_error, instance)
 

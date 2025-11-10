@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree._pydantic import generate_root_model
@@ -65,6 +65,19 @@ class OptionalAliasResp(BaseModel):
 class Resp(BaseModel):
     name: str
     score: List[int]
+
+
+class RespFromAttrs(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    score: List[int]
+
+
+@dataclass
+class RespObject:
+    name: str
+    score: List[int]
+    comment: str
 
 
 RootResp = generate_root_model(Union[JSON, List[int]], name="RootResp")

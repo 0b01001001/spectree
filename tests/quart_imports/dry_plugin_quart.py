@@ -192,3 +192,12 @@ async def test_quart_custom_error(client):
     # response error
     resp = await client.post("/api/custom_error", json={"foo": "foo"})
     assert resp.status_code == 500
+
+
+async def test_quart_forced_serializer(client):
+    resp = await client.get("/api/force_serialize")
+    assert resp.status_code == 200
+    json = await resp.json
+    assert json["name"] == "flask"
+    assert json["score"] == [1, 2, 3]
+    assert "comment" not in json

@@ -147,6 +147,7 @@ class SpecTree:
         path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,
         operation_id: Optional[str] = None,
+        force_resp_serialize: bool = False,
     ) -> Callable:
         """
         - validate query, json, headers in request
@@ -176,6 +177,8 @@ class SpecTree:
         :param skip_validation: If set to `True`, the endpoint will skip
             request / response validations.
         :param operation_id: a string override for operationId for the given endpoint
+        :force_resp_serialize: Always return the serialized result of the validated response.
+            Requires `skip_validation` to be `False`.
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
@@ -206,6 +209,7 @@ class SpecTree:
                     after or self.after,
                     validation_error_status,
                     skip_validation,
+                    force_resp_serialize,
                     *args,
                     **kwargs,
                 )
@@ -225,6 +229,7 @@ class SpecTree:
                     after or self.after,
                     validation_error_status,
                     skip_validation,
+                    force_resp_serialize,
                     *args,
                     **kwargs,
                 )

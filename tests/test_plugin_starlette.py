@@ -25,6 +25,8 @@ from .common import (
     Order,
     Query,
     Resp,
+    RespFromAttrs,
+    RespObject,
     RootResp,
     StrDict,
     UserXmlData,
@@ -192,6 +194,13 @@ async def custom_error(request, json: CustomError):
     return JSONResponse({"foo": "bar"})
 
 
+@api.validate(resp=Response(HTTP_200=RespFromAttrs), force_resp_serialize=True)
+async def force_serialize(request):
+    return PydanticResponse(
+        RespObject(name="starlette", score=[1, 2, 3], comment="hello")
+    )
+
+
 app = Starlette(
     routes=[
         Route("/ping", Ping),
@@ -230,6 +239,7 @@ app = Starlette(
                 Route("/return_model", return_model, methods=["GET"]),
                 Route("/return_optional_alias", return_optional_alias, methods=["GET"]),
                 Route("/custom_error", custom_error, methods=["POST"]),
+                Route("/force_serialize", force_serialize, methods=["GET"]),
             ],
         ),
         Mount("/static", app=StaticFiles(directory="docs"), name="static"),
@@ -486,3 +496,9 @@ def test_custom_error(client):
     # response error
     resp = client.post("/api/custom_error", json={"foo": "foo"})
     assert resp.status_code == 500
+
+
+def test_starlette_forced_serializer(client):
+    resp = client.get("/api/force_serialize")
+    assert resp.status_code == 200
+    assert resp.json() == {"name": "starlette", "score": [1, 2, 3]}

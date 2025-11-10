@@ -221,6 +221,27 @@
         "title": "Resp",
         "type": "object"
       },
+      "RespFromAttrs.7068f62": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "score": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Score",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "score"
+        ],
+        "title": "RespFromAttrs",
+        "type": "object"
+      },
       "RootResp.a9993e3": {
         "anyOf": [
           {
@@ -374,6 +395,37 @@
         },
         "responses": {},
         "summary": "file_upload <POST>",
+        "tags": []
+      }
+    },
+    "/api/force_serialize": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_force_serialize",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespFromAttrs.7068f62"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "force_serialize <GET>",
         "tags": []
       }
     },
