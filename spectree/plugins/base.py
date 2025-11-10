@@ -178,8 +178,8 @@ def validate_response(
         )
         validated_instance = validator(final_response_payload)
         # in case the response model contains (alias, default_none, unset fields) which
-        # might not be the what the users want, we only return the validated dict when
-        # the response contains BaseModel
+        # might not be what the users want, we only return the validated dict when
+        # the response contains BaseModel or the user explicitly sets `force_serialize`
         if force_serialize or is_partial_base_model_instance(final_response_payload):
             final_response_payload = serialize_model_instance(validated_instance)
 
