@@ -264,7 +264,7 @@ class FalconPlugin(BasePlugin):
         resp: FalconResponse,
         resp_model: Optional[Response],
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
     ) -> Optional[ValueError]:
         resp_validation_error = None
         if not self._data_set_manually(resp):
@@ -276,7 +276,7 @@ class FalconPlugin(BasePlugin):
                         if resp_model
                         else None,
                         response_payload=resp.media,
-                        force_serialize=serialize,
+                        force_serialize=force_resp_serialize,
                     )
                 except ValidationError as err:
                     resp_validation_error = err
@@ -310,7 +310,7 @@ class FalconPlugin(BasePlugin):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -339,7 +339,7 @@ class FalconPlugin(BasePlugin):
         result = func(*args, **kwargs)
 
         resp_validation_error = self.validate_response(
-            _resp, resp, skip_validation, serialize
+            _resp, resp, skip_validation, force_resp_serialize
         )
         after(_req, _resp, resp_validation_error, _self)
         # `falcon` doesn't use this return value. However, some users may have
@@ -406,7 +406,7 @@ class FalconAsgiPlugin(FalconPlugin):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -441,7 +441,7 @@ class FalconAsgiPlugin(FalconPlugin):
         )
 
         resp_validation_error = self.validate_response(
-            _resp, resp, skip_validation, serialize
+            _resp, resp, skip_validation, force_resp_serialize
         )
         after(_req, _resp, resp_validation_error, _self)
         return result

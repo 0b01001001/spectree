@@ -294,7 +294,7 @@ class StringStatusView(MethodView):
 
 
 class ForcedSerializeView(MethodView):
-    @api.validate(resp=Response(HTTP_200=RespFromAttrs), serialize=True)
+    @api.validate(resp=Response(HTTP_200=RespFromAttrs), force_resp_serialize=True)
     def get(self):
         return RespObject(name="flask", score=[1, 2, 3], comment="hello")
 

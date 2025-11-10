@@ -287,7 +287,7 @@ def custom_error(json: CustomError):
 
 
 @app.route("/api/force_serialize", methods=["GET"])
-@api.validate(resp=Response(HTTP_200=RespFromAttrs), serialize=True)
+@api.validate(resp=Response(HTTP_200=RespFromAttrs), force_resp_serialize=True)
 def force_serialize():
     return RespObject(name="flask", score=[1, 2, 3], comment="hello")
 

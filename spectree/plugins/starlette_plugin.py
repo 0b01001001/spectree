@@ -99,7 +99,7 @@ class StarlettePlugin(BasePlugin):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -163,7 +163,7 @@ class StarlettePlugin(BasePlugin):
                 response_validation_result = validate_response(
                     validation_model=resp.find_model(response.status_code),
                     response_payload=RawResponsePayload(payload=response.body),
-                    force_serialize=serialize,
+                    force_serialize=force_resp_serialize,
                 )
             except ValidationError as err:
                 response = JSONResponse(

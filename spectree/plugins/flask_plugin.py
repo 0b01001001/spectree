@@ -57,7 +57,7 @@ class FlaskPlugin(WerkzeugPlugin):
         resp,
         resp_model: Optional[Response],
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
     ):
         resp_validation_error = None
         payload, status, additional_headers = flask_response_unpack(resp)
@@ -78,7 +78,7 @@ class FlaskPlugin(WerkzeugPlugin):
                 response_validation_result = validate_response(
                     validation_model=resp_model.find_model(status),
                     response_payload=payload,
-                    force_serialize=serialize,
+                    force_serialize=force_resp_serialize,
                 )
             except ValidationError as err:
                 errors = err.errors(include_context=False)
@@ -121,7 +121,7 @@ class FlaskPlugin(WerkzeugPlugin):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -154,7 +154,7 @@ class FlaskPlugin(WerkzeugPlugin):
             result,
             resp,
             skip_validation,
-            serialize,
+            force_resp_serialize,
         )
         after(request, response, resp_validation_error, None)
 

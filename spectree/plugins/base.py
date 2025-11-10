@@ -73,7 +73,7 @@ class BasePlugin(Generic[BackendRoute]):
         after: Callable,
         validation_error_status: int,
         skip_validation: bool,
-        serialize: bool,
+        force_resp_serialize: bool,
         *args: Any,
         **kwargs: Any,
     ):
@@ -154,7 +154,7 @@ def validate_response(
     :param response_payload: Validated response payload. A :class:`RawResponsePayload`
         should be provided when the plugin view function returned an already
         JSON-serialized response payload.
-    :param force_serialize: Always serialize the model instance.
+    :param force_serialize: Always serialize the validation model instance.
     """
     if not validation_model:
         return ResponseValidationResult(payload=response_payload)

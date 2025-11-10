@@ -194,7 +194,7 @@ async def custom_error(request, json: CustomError):
     return JSONResponse({"foo": "bar"})
 
 
-@api.validate(resp=Response(HTTP_200=RespFromAttrs), serialize=True)
+@api.validate(resp=Response(HTTP_200=RespFromAttrs), force_resp_serialize=True)
 async def force_serialize(request):
     return PydanticResponse(
         RespObject(name="starlette", score=[1, 2, 3], comment="hello")

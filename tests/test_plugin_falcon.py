@@ -299,7 +299,7 @@ class WithForcedSerializer:
 
     @api.validate(
         resp=Response(HTTP_200=RespFromAttrs),
-        serialize=True,
+        force_resp_serialize=True,
     )
     def on_get(self, req, resp):
         resp.media = RespObject(name="falcon", score=[1, 2, 3], comment="hello")
