@@ -99,6 +99,39 @@ class Configuration(BaseModel):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
+    def get_openapi_metadata(self) -> Dict[str, Any]:
+        """Extract OpenAPI metadata (title, version, description, etc.).
+        
+        Returns:
+            Dictionary containing OpenAPI info section data
+        """
+        return self.openapi_info()
+
+    def get_spectree_settings(self) -> Dict[str, Any]:
+        """Extract SpecTree-specific settings (path, filename, mode, etc.).
+        
+        Returns:
+            Dictionary containing SpecTree behavior configuration
+        """
+        return {
+            "path": self.path,
+            "filename": self.filename,
+            "openapi_version": self.openapi_version,
+            "mode": self.mode,
+            "annotations": self.annotations,
+        }
+
+    def get_security_settings(self) -> Dict[str, Any]:
+        """Extract security-related settings.
+        
+        Returns:
+            Dictionary containing security schemes and global security config
+        """
+        return {
+            "security_schemes": self.security_schemes,
+            "security": self.security,
+        }
+
     model_config = ConfigDict(validate_assignment=True)
 
     @model_validator(mode="before")
