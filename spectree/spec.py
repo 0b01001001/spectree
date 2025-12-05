@@ -185,7 +185,12 @@ class SpecTree:
         if validation_error_status == 0:
             validation_error_status = self.validation_error_status
 
-        if self.config.annotations and skip_validation:
+        # Add explaining variables before the conditional (before line 159)
+        annotations_enabled = self.config.annotations
+        validation_skipped = skip_validation
+        incompatible_settings = annotations_enabled and validation_skipped
+
+        if incompatible_settings:
             warnings.warn(
                 "`skip_validation` cannot be used with `annotations` enabled. The instances"
                 " of `json`, `headers`, `cookies`, etc. read from function will be `None`.",
@@ -238,7 +243,9 @@ class SpecTree:
                 async_validate if self.backend.ASYNC else sync_validate  # type: ignore
             )
 
-            if self.config.annotations:
+            should_extract_from_annotations = self.config.annotations
+
+            if should_extract_from_annotations:
                 nonlocal query, json, form, headers, cookies
                 annotations = get_type_hints(func)
                 query = annotations.get("query", query)
