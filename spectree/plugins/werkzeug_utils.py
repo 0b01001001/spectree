@@ -245,7 +245,6 @@ class WerkzeugPlugin(BasePlugin):
         req_data = get_multidict_items(request.form)
         req_data.update(get_multidict_items(request.files) if request.files else {})
         return req_data
-    
 
     def register_route(self, app):
         app.add_url_rule(
@@ -257,16 +256,13 @@ class WerkzeugPlugin(BasePlugin):
         if self.is_blueprint(app):
 
             def gen_doc_page(ui):
-                def gen_doc_page(ui):
-                    spec_url = self._build_url_with_prefix(
-                        self.config.spec_url,
-                        self.blueprint_state.url_prefix
-                    )
-                    
-                    return self.config.page_templates[ui].format(
-                        spec_url=spec_url,
-                        spec_path=self.config.path,
-                        **self.config.swagger_oauth2_config(),
+                spec_url = self.config.spec_url
+                if self.blueprint_state.url_prefix is not None:
+                    spec_url = "/".join(
+                        (
+                            self.blueprint_state.url_prefix.rstrip("/"),
+                            self.config.spec_url.lstrip("/"),
+                        )
                     )
 
                 return self.config.page_templates[ui].format(

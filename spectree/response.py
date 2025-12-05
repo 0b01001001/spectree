@@ -9,7 +9,7 @@ from spectree._types import (
     NamingStrategy,
     OptionalModelType,
 )
-from spectree.utils import gen_list_model, get_model_key, parse_code
+from spectree.utils import gen_list_model, get_model_key, parse_http_status_code
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1
@@ -181,13 +181,13 @@ class Response:
         """
         responses: Dict[str, Any] = {}
         for code in self.codes:
-            responses[parse_code(code)] = {
+            responses[parse_http_status_code(code)] = {
                 "description": self.get_code_description(code)
             }
 
         for code, model in self.code_models.items():
             model_name = naming_strategy(model)
-            responses[parse_code(code)] = {
+            responses[parse_http_status_code(code)] = {
                 "description": self.get_code_description(code),
                 "content": {
                     "application/json": {
