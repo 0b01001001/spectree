@@ -13,6 +13,11 @@ from typing import (
     get_type_hints,
 )
 
+from spectree.validation_helpers import (
+    check_validation_compatibility,
+    get_effective_validation_status,
+)
+
 from spectree._types import (
     FunctionDecorator,
     ModelType,
@@ -182,8 +187,7 @@ class SpecTree:
         """
         # If the status code for validation errors is not overridden on the level of
         # the view function, use the globally set status code for validation errors.
-        if validation_error_status == 0:
-            validation_error_status = self.validation_error_status
+        validation_error_status = get_effective_validation_status(validation_error_status, self.validation_error_status)
 
         # Add explaining variables before the conditional (before line 159)
         annotations_enabled = self.config.annotations
