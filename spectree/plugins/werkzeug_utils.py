@@ -226,19 +226,6 @@ class WerkzeugPlugin(BasePlugin):
 
         return "".join(subs), parameters
 
-        def _build_url_with_prefix(self, base_url: str, prefix: Optional[str]) -> str:
-            """Build URL with optional prefix.
-            
-            Args:
-                base_url: The base URL path
-                prefix: Optional URL prefix (e.g., from blueprint)
-            
-            Returns:
-                Combined URL path
-            """
-            if prefix is None:
-                return base_url
-            return "/".join((prefix.rstrip("/"), base_url.lstrip("/")))
 
 
     def fill_form(self, request) -> dict:
@@ -255,16 +242,22 @@ class WerkzeugPlugin(BasePlugin):
 
         if self.is_blueprint(app):
 
-            def gen_doc_page(ui):
-                spec_url = self.config.spec_url
-                if self.blueprint_state.url_prefix is not None:
-                    spec_url = "/".join(
-                        (
-                            self.blueprint_state.url_prefix.rstrip("/"),
-                            self.config.spec_url.lstrip("/"),
-                        )
-                    )
+            # def gen_doc_page(ui):
+            #     spec_url = self.config.spec_url
+            #     if self.blueprint_state.url_prefix is not None:
+            #         spec_url = "/".join(
+            #             (
+            #                 self.blueprint_state.url_prefix.rstrip("/"),
+            #                 self.config.spec_url.lstrip("/"),
+            #             )
+            #         )
 
+            def gen_doc_page(ui):
+                spec_url = self.build_url_with_prefix(
+                    self.config.spec_url,
+                    self.blueprint_state.url_prefix
+                )
+                
                 return self.config.page_templates[ui].format(
                     spec_url=spec_url,
                     spec_path=self.config.path,
