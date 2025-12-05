@@ -10,7 +10,7 @@ from spectree.utils import (
     get_model_schema,
     has_model,
     json_compatible_deepcopy,
-    parse_code,
+    parse_http_status_code,
     parse_comments,
     parse_name,
     parse_params,
@@ -189,12 +189,12 @@ def test_parse_comments_with_different_callable_types(
     assert parse_comments(func) == (expected_summary, expected_description)
 
 
-def test_parse_code():
+def test_parse_http_status_code():
     with pytest.raises(TypeError):
-        assert parse_code(200) == 200
+        assert parse_http_status_code(200) == 200
 
-    assert parse_code("200") == ""
-    assert parse_code("HTTP_404") == "404"
+    assert parse_http_status_code("200") == ""
+    assert parse_http_status_code("HTTP_404") == "404"
 
 
 def test_parse_name():

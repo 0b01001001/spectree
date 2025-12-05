@@ -138,7 +138,7 @@ def has_model(func: Any) -> bool:
     return bool(hasattr(func, "resp") and func.resp.has_model())
 
 
-def parse_code(http_code: str) -> str:
+def parse_http_status_code(http_code: str) -> str:
     """
     get the code of this HTTP status
 

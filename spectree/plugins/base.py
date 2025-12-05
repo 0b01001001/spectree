@@ -129,6 +129,29 @@ class BasePlugin(Generic[BackendRoute]):
         if not operation_id:
             operation_id = f"{method.lower()}_{path.replace('/', '_')}"
         return operation_id
+    
+    def build_url_with_prefix(self, base_url: str, prefix: Optional[str] = None) -> str:
+        """Build URL path with optional prefix.
+        
+        Common operation across plugins when dealing with blueprints,
+        routers, or mounted applications.
+        
+        Args:
+            base_url: The base URL path (e.g., '/openapi.json')
+            prefix: Optional URL prefix (e.g., '/api/v1')
+        
+        Returns:
+            Combined URL path, properly formatted
+        
+        Examples:
+            >>> build_url_with_prefix('/spec.json', None)
+            '/spec.json'
+            >>> build_url_with_prefix('/spec.json', '/api')
+            '/api/spec.json'
+        """
+        if prefix is None:
+            return base_url
+        return "/".join((prefix.rstrip("/"), base_url.lstrip("/")))
 
 
 @dataclass(frozen=True)
