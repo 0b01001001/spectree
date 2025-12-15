@@ -154,6 +154,7 @@ class Configuration(BaseModel):
                 "license",
             },
             exclude_none=True,
+            mode="json",
         )
         if info.get("terms_of_service") is not None:
             info["termsOfService"] = info.pop("terms_of_service")

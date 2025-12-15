@@ -23,7 +23,7 @@ ONLINE_PAGE_TEMPLATES: Dict[str, str] = {
     </head>
     <body>
         <redoc spec-url='{spec_url}'></redoc>
-        <script type="module" src="https://cdn.redoc.ly/redoc/v2.5.1/bundles/redoc.standalone.js"> </script>
+        <script src="https://unpkg.com/redoc@v2.5.1/bundles/redoc.standalone.js"> </script>
     </body>
 </html>""",
     # https://swagger.io
