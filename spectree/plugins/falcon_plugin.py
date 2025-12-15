@@ -14,7 +14,7 @@ try:
 except ImportError:
     from io import BytesIO as CachedFile  # type: ignore[assignment]
 
-from falcon import MEDIA_JSON, http_status_to_code
+from falcon import MEDIA_HTML, MEDIA_JSON, http_status_to_code
 from falcon import Request as FalconRequest
 from falcon import Response as FalconResponse
 from falcon.asgi import Request as FalconASGIRequest
@@ -82,16 +82,17 @@ class OpenAPI:
         self.spec = spec
 
     def on_get(self, _: Any, resp: Any):
+        resp.content_type = MEDIA_JSON
         resp.media = self.spec
 
 
 class DocPage:
     def __init__(self, html: str, **kwargs: Any):
-        self.page = html.format(**kwargs)
+        self.page = html.format(**kwargs).encode("utf-8")
 
     def on_get(self, _: Any, resp: Any):
-        resp.content_type = "text/html"
-        resp.text = self.page
+        resp.content_type = MEDIA_HTML
+        resp.data = self.page
 
 
 class OpenAPIAsgi(OpenAPI):
