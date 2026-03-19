@@ -1,8 +1,13 @@
-# syntax=v1
+# This assumes the user already logged in and saved the credentials in the default `~/.codex` directory.
+# If not, you can login first with the command `codex login` on your host.
+#
+# More language & system package support can be found in:
+# - docs/reference: https://envd.tensorchord.ai/api/starlark/v1/install.html
 
 
 def build():
     base(dev=True)
-    install.uv(python_version="3.10")
     shell("fish")
-    runtime.init(["make install"])
+    install.uv(python_version="3.10")
+    install.codex()
+    runtime.mount("~/.codex", "~/.codex")
