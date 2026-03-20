@@ -109,6 +109,27 @@ def test_config_mutable_defaults_are_isolated():
     assert other.servers == []
 
 
+def test_config_validate_assignment():
+    config = Configuration()
+
+    config.mode = "strict"
+    assert config.mode.name == "strict"
+
+    config.contact = {"name": "John", "email": "hello@example.com"}
+    assert config.contact is not None
+    assert config.contact.email == "hello@example.com"
+
+    config.terms_of_service = "https://example.com/terms"
+    assert config.terms_of_service == "https://example.com/terms"
+
+    with pytest.raises(ConfigurationError):
+        config.terms_of_service = "invalid-url"
+    assert config.terms_of_service == "https://example.com/terms"
+
+    with pytest.raises(ConfigurationError):
+        config.security = {"auth_apiKey": [1]}
+
+
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
 def test_update_security_scheme(secure_item: Type[SecurityScheme]):
     config = Configuration(

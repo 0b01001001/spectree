@@ -364,9 +364,25 @@ class Configuration(ConfigModelBase):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        dataclass_field = next(
+            (
+                field_info
+                for field_info in fields(type(self))
+                if field_info.name == name
+            ),
+            None,
+        )
+        if dataclass_field is None:
+            super().__setattr__(name, value)
+            return
+
+        validated = ConfigValidator.validate_field(dataclass_field, value, name)
+        super().__setattr__(name, validated)
+
     def __init__(self, **kwargs: Any) -> None:
         validated = ConfigValidator.build_kwargs(
-            Configuration,
+            type(self),
             kwargs,
             normalize_keys=True,
         )
