@@ -4,7 +4,7 @@ from typing import Type
 import pytest
 from pydantic import ValidationError
 
-from spectree import SecurityScheme
+from spectree import SecurityScheme, models
 from spectree.config import Configuration, ConfigurationError
 
 from .common import SECURITY_SCHEMAS, WRONG_SECURITY_SCHEMAS_DATA
@@ -102,7 +102,7 @@ def test_config_mutable_defaults_are_isolated():
     config.scopes.append("read")
     config.additional_query_string_params["audience"] = "spectree"
     assert config.servers is not None
-    config.servers.append(None)  # type: ignore[arg-type]
+    config.servers.append(models.Server(url="https://github.com"))
 
     assert other.scopes == []
     assert other.additional_query_string_params == {}

@@ -1,5 +1,4 @@
 import warnings
-from copy import deepcopy
 from dataclasses import MISSING, dataclass, field, fields
 from enum import Enum
 from typing import (
@@ -129,12 +128,14 @@ class ConfigValidator:
         return cls.validate_security_entry(value, field_name)
 
     @staticmethod
-    def default_value(dataclass_field: Any) -> Any:
+    def default_value(dataclass_field: Any, model_type: type[ConfigModelType]) -> Any:
         if dataclass_field.default_factory is not MISSING:
             return dataclass_field.default_factory()
         if dataclass_field.default is not MISSING:
             return dataclass_field.default
-        raise ConfigurationError(f"{dataclass_field.name} is required")
+        raise ConfigurationError(
+            f"{model_type.__name__}.{dataclass_field.name} is required"
+        )
 
     @staticmethod
     def unwrap_optional(annotation: Any) -> tuple[Any, bool]:
@@ -207,10 +208,10 @@ class ConfigValidator:
             if dataclass_field.name in normalized:
                 raw_value = normalized[dataclass_field.name]
             else:
-                raw_value = cls.default_value(dataclass_field)
+                raw_value = cls.default_value(dataclass_field, model_type)
             kwargs[dataclass_field.name] = cls.validate_field(
                 dataclass_field,
-                deepcopy(raw_value),
+                raw_value,
                 dataclass_field.name,
             )
         return kwargs
@@ -365,14 +366,7 @@ class Configuration(ConfigModelBase):
     use_pkce_with_authorization_code_grant: bool = False
 
     def __setattr__(self, name: str, value: Any) -> None:
-        dataclass_field = next(
-            (
-                field_info
-                for field_info in fields(type(self))
-                if field_info.name == name
-            ),
-            None,
-        )
+        dataclass_field = type(self).__dataclass_fields__.get(name)
         if dataclass_field is None:
             super().__setattr__(name, value)
             return
