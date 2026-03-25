@@ -39,16 +39,41 @@ def test_config_contact():
         Configuration(contact={"name": "John", "url": "url"})
 
 
-def test_config_kwargs_are_normalized_to_lower_case():
+def test_config_kwargs_are_normalized_to_snake_case():
     config = Configuration(
         TITLE="Demo API",
         PATH="docs",
         TERMS_OF_SERVICE="https://example.com/terms",
+        termsOfService="https://example.com/camel-terms",
     )
 
     assert config.title == "Demo API"
     assert config.path == "docs"
-    assert str(config.terms_of_service) == "https://example.com/terms"
+    assert str(config.terms_of_service) == "https://example.com/camel-terms"
+
+
+def test_config_rejects_unknown_top_level_fields():
+    with pytest.raises(
+        ConfigurationError,
+        match=r"unknown configuration fields for Configuration: unexpected",
+    ):
+        Configuration(unexpected=True)
+
+
+def test_config_rejects_unknown_nested_fields():
+    with pytest.raises(
+        ConfigurationError,
+        match=r"unknown configuration fields for License: extra",
+    ):
+        Configuration(license={"name": "MIT", "extra": "value"})
+
+
+def test_config_rejects_unknown_fields_after_normalization():
+    with pytest.raises(
+        ConfigurationError,
+        match=r"unknown configuration fields for Configuration: unknown_field_name",
+    ):
+        Configuration(unknownFieldName=True)
 
 
 def test_openapi_info_serialization():
@@ -127,6 +152,12 @@ def test_config_validate_assignment():
 
     with pytest.raises(ConfigurationError):
         config.security = {"auth_apiKey": [1]}
+
+    with pytest.raises(
+        ConfigurationError,
+        match=r"unknown configuration fields for Configuration: unknown_field",
+    ):
+        config.unknown_field = True
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)

@@ -1,3 +1,4 @@
+import re
 import warnings
 from dataclasses import MISSING, dataclass, field, fields
 from enum import Enum
@@ -39,6 +40,12 @@ _NONE_TYPE = type(None)
 
 
 class ConfigValidator:
+    @staticmethod
+    def normalize_config_key(key: str) -> str:
+        key = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", key)
+        key = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", key)
+        return key.lower()
+
     @staticmethod
     def ensure_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
         if not isinstance(value, Mapping):
@@ -85,7 +92,10 @@ class ConfigValidator:
 
     @staticmethod
     def normalize_config_kwargs(values: Mapping[str, Any]) -> Dict[str, Any]:
-        return {key.lower(): value for key, value in values.items()}
+        return {
+            ConfigValidator.normalize_config_key(key): value
+            for key, value in values.items()
+        }
 
     @classmethod
     def validate_url(cls, value: Any, field_name: str) -> Optional[str]:
@@ -203,6 +213,16 @@ class ConfigValidator:
         normalized = (
             cls.normalize_config_kwargs(values) if normalize_keys else dict(values)
         )
+        allowed_fields = {
+            dataclass_field.name for dataclass_field in fields(model_type)
+        }
+        unknown_fields = sorted(set(normalized) - allowed_fields)
+        if unknown_fields:
+            unknown = ", ".join(unknown_fields)
+            raise ConfigurationError(
+                f"unknown configuration fields for {model_type.__name__}: {unknown}"
+            )
+
         kwargs: Dict[str, Any] = {}
         for dataclass_field in fields(model_type):
             if dataclass_field.name in normalized:
@@ -368,8 +388,9 @@ class Configuration(ConfigModelBase):
     def __setattr__(self, name: str, value: Any) -> None:
         dataclass_field = type(self).__dataclass_fields__.get(name)
         if dataclass_field is None:
-            super().__setattr__(name, value)
-            return
+            raise ConfigurationError(
+                f"unknown configuration fields for {type(self).__name__}: {name}"
+            )
 
         validated = ConfigValidator.validate_field(dataclass_field, value, name)
         super().__setattr__(name, validated)
