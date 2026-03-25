@@ -381,7 +381,7 @@ class Configuration(ConfigModelBase):
             normalize_keys=True,
         )
         for name, value in validated.items():
-            setattr(self, name, value)
+            super().__setattr__(name, value)
 
     @classmethod
     def model_validate(cls, values: Mapping[str, Any]) -> "Configuration":

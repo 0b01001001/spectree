@@ -1,5 +1,4 @@
 import string
-from typing import Type
 
 import pytest
 from pydantic import ValidationError
@@ -131,7 +130,7 @@ def test_config_validate_assignment():
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
-def test_update_security_scheme(secure_item: Type[SecurityScheme]):
+def test_update_security_scheme(secure_item: SecurityScheme):
     config = Configuration(
         security_schemes=[SecurityScheme(name=secure_item.name, data=secure_item.data)]
     )
