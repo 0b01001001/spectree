@@ -39,7 +39,7 @@ class DataClassValidator:
         return key.lower()
 
     @staticmethod
-    def dataclass_fields(model: Any) -> tuple[Field[Any], ...]:
+    def dataclass_fields(model: Any) -> tuple[Field, ...]:
         return fields(model)
 
     @classmethod

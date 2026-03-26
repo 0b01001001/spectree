@@ -1,3 +1,5 @@
+# syntax=v1
+#
 # This assumes the user already logged in and saved the credentials in the default `~/.codex` directory.
 # If not, you can login first with the command `codex login` on your host.
 #
