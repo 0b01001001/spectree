@@ -43,7 +43,6 @@ def test_config_kwargs_are_normalized_to_snake_case():
     config = Configuration(
         TITLE="Demo API",
         PATH="docs",
-        TERMS_OF_SERVICE="https://example.com/terms",
         termsOfService="https://example.com/camel-terms",
     )
 
@@ -52,10 +51,21 @@ def test_config_kwargs_are_normalized_to_snake_case():
     assert str(config.terms_of_service) == "https://example.com/camel-terms"
 
 
+def test_config_rejects_duplicate_normalized_keys():
+    with pytest.raises(
+        ConfigurationError,
+        match=r"duplicate field key for terms_of_service",
+    ):
+        Configuration(
+            TERMS_OF_SERVICE="https://example.com/terms",
+            termsOfService="https://example.com/camel-terms",
+        )
+
+
 def test_config_rejects_unknown_top_level_fields():
     with pytest.raises(
         ConfigurationError,
-        match=r"unknown configuration fields for Configuration: unexpected",
+        match=r"unknown fields for Configuration: unexpected",
     ):
         Configuration(unexpected=True)
 
@@ -63,7 +73,7 @@ def test_config_rejects_unknown_top_level_fields():
 def test_config_rejects_unknown_nested_fields():
     with pytest.raises(
         ConfigurationError,
-        match=r"unknown configuration fields for License: extra",
+        match=r"unknown fields for License: extra",
     ):
         Configuration(license={"name": "MIT", "extra": "value"})
 
@@ -71,7 +81,7 @@ def test_config_rejects_unknown_nested_fields():
 def test_config_rejects_unknown_fields_after_normalization():
     with pytest.raises(
         ConfigurationError,
-        match=r"unknown configuration fields for Configuration: unknown_field_name",
+        match=r"unknown fields for Configuration: unknown_field_name",
     ):
         Configuration(unknownFieldName=True)
 
@@ -155,7 +165,7 @@ def test_config_validate_assignment():
 
     with pytest.raises(
         ConfigurationError,
-        match=r"unknown configuration fields for Configuration: unknown_field",
+        match=r"unknown fields for Configuration: unknown_field",
     ):
         config.unknown_field = True
 
@@ -173,6 +183,46 @@ def test_update_security_scheme(secure_item: SecurityScheme):
 def test_update_security_schemes():
     config = Configuration(security_schemes=SECURITY_SCHEMAS)
     assert config.security_schemes == SECURITY_SCHEMAS
+
+
+def test_config_parses_servers_from_mappings():
+    config = Configuration(
+        servers=[
+            {"url": "https://example.com", "description": "primary"},
+            {"url": "https://backup.example.com"},
+        ]
+    )
+
+    assert config.servers == [
+        models.Server(url="https://example.com", description="primary"),
+        models.Server(url="https://backup.example.com"),
+    ]
+
+
+def test_config_parses_security_schemes_from_mappings():
+    config = Configuration(
+        security_schemes=[
+            {
+                "name": "auth_apiKey",
+                "data": {"type": "apiKey", "in": "query", "name": "auth-api-key"},
+            }
+        ]
+    )
+
+    assert config.security_schemes == [
+        SecurityScheme(
+            name="auth_apiKey",
+            data={"type": "apiKey", "in": "query", "name": "auth-api-key"},
+        )
+    ]
+
+
+def test_config_parses_security_from_union_shapes():
+    config = Configuration(security={"auth_apiKey": ["read"]})
+    assert config.security == {"auth_apiKey": ["read"]}
+
+    config = Configuration(security=[{"auth_apiKey": ["read"]}])
+    assert config.security == [{"auth_apiKey": ["read"]}]
 
 
 @pytest.mark.parametrize(("secure_item"), SECURITY_SCHEMAS)
