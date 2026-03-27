@@ -1,11 +1,25 @@
 import warnings
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Union,
+)
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, model_validator
-
+from spectree.dataclass_validator import (
+    DataClassValidationError,
+    DataClassValidator,
+)
 from spectree.models import SecurityScheme, Server
 from spectree.page import PAGE_TEMPLATES
+
+
+class ConfigurationError(DataClassValidationError):
+    """Configuration validation error."""
 
 
 class ModeEnum(str, Enum):
@@ -19,28 +33,40 @@ class ModeEnum(str, Enum):
     greedy = "greedy"
 
 
-class Contact(BaseModel):
+SecurityValue = Union[Dict[str, List[str]], List[Dict[str, List[str]]]]
+
+
+@dataclass
+class Contact(DataClassValidator):
     """contact information"""
+
+    error_type = ConfigurationError
 
     #: name of the contact
     name: str
     #: contact url
-    url: Optional[AnyUrl] = None
+    url: Optional[str] = field(default=None, metadata={"format": "url"})
     #: contact email address
     email: Optional[str] = None
 
 
-class License(BaseModel):
+@dataclass
+class License(DataClassValidator):
     """license information"""
+
+    error_type = ConfigurationError
 
     #: name of the license
     name: str
     #: license url
-    url: Optional[AnyUrl] = None
+    url: Optional[str] = field(default=None, metadata={"format": "url"})
 
 
-class Configuration(BaseModel):
+@dataclass(init=False)
+class Configuration(DataClassValidator):
     """Global configuration."""
+
+    error_type = ConfigurationError
 
     # OpenAPI configurations
     #: title of the service
@@ -50,7 +76,10 @@ class Configuration(BaseModel):
     #: service version
     version: str = "0.1.0"
     #: terms of service url
-    terms_of_service: Optional[AnyUrl] = None
+    terms_of_service: Optional[str] = field(
+        default=None,
+        metadata={"alias": "termsOfService", "format": "url"},
+    )
     #: author contact information
     contact: Optional[Contact] = None
     #: license information
@@ -70,15 +99,15 @@ class Configuration(BaseModel):
     #: to render the documentation page content. (Each page template should contain a
     #: `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
     #: the rendered documentation page
-    page_templates: Dict[str, str] = PAGE_TEMPLATES
+    page_templates: Dict[str, str] = field(default_factory=lambda: dict(PAGE_TEMPLATES))
     #: opt-in type annotation feature, see the README examples
     annotations: bool = True
     #: servers section of OAS :py:class:`spectree.models.Server`
-    servers: Optional[List[Server]] = []
+    servers: List[Server] = field(default_factory=list)
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`
     security_schemes: Optional[List[SecurityScheme]] = None
     #: OpenAPI `security` JSON at the global level
-    security: Union[Dict[str, List[str]], List[Dict[str, List[str]]]] = {}
+    security: SecurityValue = field(default_factory=dict)
     # Swagger OAuth2 configs
     #: OAuth2 client id
     client_id: str = ""
@@ -91,25 +120,38 @@ class Configuration(BaseModel):
     #: OAuth2 scope separator
     scope_separator: str = " "
     #: OAuth2 scopes
-    scopes: List[str] = []
+    scopes: List[str] = field(default_factory=list)
     #: OAuth2 additional query string params
-    additional_query_string_params: Dict[str, str] = {}
+    additional_query_string_params: Dict[str, str] = field(default_factory=dict)
     #: OAuth2 use basic authentication with access code grant
     use_basic_authentication_with_access_code_grant: bool = False
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
-    model_config = ConfigDict(validate_assignment=True)
+    def __setattr__(self, name: str, value: Any) -> None:
+        dataclass_field = type(self).__dataclass_fields__.get(name)
+        if dataclass_field is None:
+            raise ConfigurationError(
+                type(self).unknown_fields_error(type(self), [name])
+            )
 
-    @model_validator(mode="before")
-    def convert_to_lower_case(cls, values: Mapping[str, Any]) -> Dict[str, Any]:
-        return {k.lower(): v for k, v in values.items()}
+        validated = type(self).validate_field(dataclass_field, value, name)
+        super().__setattr__(name, validated)
+
+    def __init__(self, **kwargs: Any) -> None:
+        validated = type(self).build_kwargs(type(self), kwargs, normalize_keys=True)
+        for name, value in validated.items():
+            super().__setattr__(name, value)
+
+    @classmethod
+    def model_validate(cls, values: Mapping[str, Any]) -> "Configuration":
+        return cls(**dict(cls.ensure_mapping(values, "configuration")))
 
     @property
     def spec_url(self) -> str:
         return f"/{self.path}/{self.filename}"
 
-    def swagger_oauth2_config(self) -> Dict[str, str]:
+    def swagger_oauth2_config(self) -> Dict[str, Any]:
         """
         return the swagger UI OAuth2 configs
 
@@ -120,7 +162,7 @@ class Configuration(BaseModel):
                 "Do not use client_secret in production", UserWarning, stacklevel=1
             )
 
-        config = self.model_dump(
+        return self.to_dict(
             include={
                 "client_id",
                 "client_secret",
@@ -132,19 +174,19 @@ class Configuration(BaseModel):
                 "use_basic_authentication_with_access_code_grant",
                 "use_pkce_with_authorization_code_grant",
             }
-        )
-        config["use_basic_authentication_with_access_code_grant"] = (
-            "true"
-            if config["use_basic_authentication_with_access_code_grant"]
-            else "false"
-        )
-        config["use_pkce_with_authorization_code_grant"] = (
-            "true" if config["use_pkce_with_authorization_code_grant"] else "false"
-        )
-        return config
+        ) | {
+            "use_basic_authentication_with_access_code_grant": (
+                "true"
+                if self.use_basic_authentication_with_access_code_grant
+                else "false"
+            ),
+            "use_pkce_with_authorization_code_grant": (
+                "true" if self.use_pkce_with_authorization_code_grant else "false"
+            ),
+        }
 
-    def openapi_info(self) -> Dict[str, str]:
-        info = self.model_dump(
+    def openapi_info(self) -> Dict[str, Any]:
+        return self.to_dict(
             include={
                 "title",
                 "description",
@@ -154,8 +196,4 @@ class Configuration(BaseModel):
                 "license",
             },
             exclude_none=True,
-            mode="json",
         )
-        if info.get("terms_of_service") is not None:
-            info["termsOfService"] = info.pop("terms_of_service")
-        return info
