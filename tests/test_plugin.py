@@ -1,6 +1,6 @@
 import pytest
 
-from spectree.utils import get_model_key, get_model_schema
+from spectree.utils import get_model_key
 
 from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp
 from .test_plugin_falcon import api as falcon_api
@@ -23,8 +23,12 @@ from .test_plugin_starlette import api as starlette_api
     ],
 )
 def test_plugin_spec(api, snapshot_json):
+    model_adapter = api.model_adapter
     models = {
-        get_model_key(model=m): get_model_schema(model=m)
+        get_model_key(model=m): model_adapter.json_schema(
+            model=m,
+            ref_template=f"#/components/schemas/{get_model_key(model=m)}.{{model}}",
+        )
         for m in (Query, JSON, Resp, Cookies, Headers)
     }
     for name, schema in models.items():

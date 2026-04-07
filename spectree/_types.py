@@ -8,17 +8,12 @@ from typing import (
     Optional,
     Protocol,
     Sequence,
-    Type,
-    TypeVar,
     Union,
 )
 
-from spectree._pydantic import BaseModel
+from spectree.model_adapter import ModelClass
 
-BaseModelSubclassType = TypeVar("BaseModelSubclassType", bound=BaseModel)
-ModelType = Type[BaseModelSubclassType]
-OptionalModelType = Optional[ModelType]
-NamingStrategy = Callable[[ModelType], str]
+NamingStrategy = Callable[[ModelClass], str]
 NestedNamingStrategy = Callable[[str, str], str]
 
 

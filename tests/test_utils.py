@@ -3,11 +3,11 @@ import json
 import pytest
 from pydantic import BaseModel, computed_field
 
+from spectree.model_adapter import get_default_model_adapter
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
-    get_model_schema,
     has_model,
     json_compatible_deepcopy,
     parse_code,
@@ -21,6 +21,7 @@ from spectree.utils import (
 from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
 
 api = SpecTree()
+model_adapter = get_default_model_adapter()
 
 
 def undecorated_func():
@@ -290,7 +291,9 @@ def test_parse_params_with_route_param_keywords():
 
 
 def test_json_compatible_schema():
-    schema = get_model_schema(Numeric)
+    schema = model_adapter.json_schema(
+        Numeric, ref_template="#/components/schemas/{model}"
+    )
 
     with pytest.raises(ValueError):
         json.dumps(schema, allow_nan=False)
@@ -298,7 +301,9 @@ def test_json_compatible_schema():
     json_schema = json_compatible_deepcopy(schema)
     assert json.dumps(json_schema, allow_nan=False)
 
-    schema = get_model_schema(DefaultEnumValue)
+    schema = model_adapter.json_schema(
+        DefaultEnumValue, ref_template="#/components/schemas/{model}"
+    )
     json_schema = json_compatible_deepcopy(schema)
 
 
@@ -318,7 +323,11 @@ def test_get_model_schema_mode_parameter():
             return f"computed_{self.name}"
 
     # Test validation mode - computed fields excluded
-    validation_schema = get_model_schema(TestModel, mode="validation")
+    validation_schema = model_adapter.json_schema(
+        TestModel,
+        ref_template="#/components/schemas/{model}",
+        mode="validation",
+    )
     assert "name" in validation_schema["properties"]
     assert "value" in validation_schema["properties"]
     assert "computed_name" not in validation_schema["properties"], (
@@ -326,7 +335,11 @@ def test_get_model_schema_mode_parameter():
     )
 
     # Test serialization mode - computed fields included
-    serialization_schema = get_model_schema(TestModel, mode="serialization")
+    serialization_schema = model_adapter.json_schema(
+        TestModel,
+        ref_template="#/components/schemas/{model}",
+        mode="serialization",
+    )
     assert "name" in serialization_schema["properties"]
     assert "value" in serialization_schema["properties"]
     assert "computed_name" in serialization_schema["properties"], (

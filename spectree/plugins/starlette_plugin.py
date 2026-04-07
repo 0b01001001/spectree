@@ -4,18 +4,15 @@ from functools import partial
 from json import JSONDecodeError
 from typing import Any, Callable, Optional
 
-from pydantic import ValidationError
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from spectree._pydantic import (
-    SerializedPydanticResponse,
-    generate_root_model,
-    serialize_model_instance,
+from spectree.model_adapter import (
+    ModelClass,
+    get_default_model_adapter,
 )
-from spectree._types import ModelType
 from spectree.plugins.base import (
     BasePlugin,
     Context,
@@ -29,16 +26,19 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
-_PydanticResponseModel = generate_root_model(Any, name="_PydanticResponseModel")
+_DEFAULT_MODEL_ADAPTER = get_default_model_adapter()
+_PydanticResponseModel = _DEFAULT_MODEL_ADAPTER.make_root_model(
+    Any, name="_PydanticResponseModel"
+)
 
 
 def PydanticResponse(content):
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
-            return serialize_model_instance(
-                _PydanticResponseModel.model_validate(content)
-            ).data
+            return _DEFAULT_MODEL_ADAPTER.dump_json(
+                _DEFAULT_MODEL_ADAPTER.validate_obj(_PydanticResponseModel, content)
+            )
 
     return _PydanticResponse(content)
 
@@ -77,23 +77,33 @@ class StarlettePlugin(BasePlugin):
             form and has_data and any([x in content_type for x in self.FORM_MIMETYPE])
         )
         request.context = Context(
-            query.model_validate(get_multidict_items_starlette(request.query_params))
+            self.model_adapter.validate_obj(
+                query, get_multidict_items_starlette(request.query_params)
+            )
             if query
             else None,
-            json.model_validate(await request.json() or {}) if use_json else None,
-            form.model_validate(await request.form() or {}) if use_form else None,
-            headers.model_validate(request.headers) if headers else None,
-            cookies.model_validate(request.cookies) if cookies else None,
+            self.model_adapter.validate_obj(json, await request.json() or {})
+            if use_json
+            else None,
+            self.model_adapter.validate_obj(form, await request.form() or {})
+            if use_form
+            else None,
+            self.model_adapter.validate_obj(headers, request.headers)
+            if headers
+            else None,
+            self.model_adapter.validate_obj(cookies, request.cookies)
+            if cookies
+            else None,
         )
 
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelType],
-        json: Optional[ModelType],
-        form: Optional[ModelType],
-        headers: Optional[ModelType],
-        cookies: Optional[ModelType],
+        query: Optional[ModelClass],
+        json: Optional[ModelClass],
+        form: Optional[ModelClass],
+        headers: Optional[ModelClass],
+        cookies: Optional[ModelClass],
         resp: Optional[Response],
         before: Callable,
         after: Callable,
@@ -116,10 +126,11 @@ class StarlettePlugin(BasePlugin):
                 await self.request_validation(
                     request, query, json, form, headers, cookies
                 )
-            except ValidationError as err:
+            except self.model_adapter.validation_error as err:
                 req_validation_error = err
                 response = JSONResponse(
-                    err.errors(include_context=False), validation_error_status
+                    self.model_adapter.validation_error_errors(err),
+                    validation_error_status,
                 )
             except JSONDecodeError as err:
                 json_decode_error = err
@@ -161,22 +172,21 @@ class StarlettePlugin(BasePlugin):
         ):
             try:
                 response_validation_result = validate_response(
+                    model_adapter=self.model_adapter,
                     validation_model=resp.find_model(response.status_code),
                     response_payload=RawResponsePayload(payload=response.body),
                     force_serialize=force_resp_serialize,
                 )
-            except ValidationError as err:
+            except self.model_adapter.validation_error as err:
                 response = JSONResponse(
-                    err.errors(include_context=False),
+                    self.model_adapter.validation_error_errors(err),
                     500,
                 )
                 resp_validation_error = err
             else:
                 # replace the body of the response if it was serialized during validation
-                if isinstance(
-                    response_validation_result.payload, SerializedPydanticResponse
-                ):
-                    response.body = response_validation_result.payload.data
+                if isinstance(response_validation_result.payload, bytes):
+                    response.body = response_validation_result.payload
 
         after(request, response, resp_validation_error, instance)
 

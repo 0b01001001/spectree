@@ -14,22 +14,16 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
     get_type_hints,
 )
 
-from pydantic import BaseModel, ValidationError
-
-from spectree._pydantic import generate_root_model, is_pydantic_model
 from spectree._types import (
-    ModelType,
     MultiDict,
     MultiDictStarlette,
     NamingStrategy,
-    NestedNamingStrategy,
-    OptionalModelType,
 )
+from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -130,7 +124,8 @@ def parse_params(
 
 def has_model(func: Any) -> bool:
     """
-    return True if this function have ``pydantic.BaseModel``
+    return True if this function have
+    :py:class:`spectree.model_adapter.ModelClass`
     """
     if any(hasattr(func, x) for x in ("query", "json", "headers")):
         return True
@@ -162,7 +157,11 @@ def parse_name(func: Callable[..., Any]) -> str:
 
 
 def default_before_handler(
-    req: Any, resp: Any, req_validation_error: ValidationError, instance: Any
+    req: Any,
+    resp: Any,
+    req_validation_error: Exception | None,
+    instance: Any,
+    model_adapter: ModelAdapter | None = None,
 ):
     """
     default handler called before the endpoint function after the request validation
@@ -174,16 +173,20 @@ def default_before_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if req_validation_error:
+        adapter = model_adapter or get_default_model_adapter()
         logger.error(
             "422 Request Validation Error: %s - %s",
-            getattr(req_validation_error, "title", None)
-            or req_validation_error.model.__name__,
-            req_validation_error.errors(),
+            adapter.validation_error_model_name(req_validation_error),
+            adapter.validation_error_errors(req_validation_error),
         )
 
 
 def default_after_handler(
-    req: Any, resp: Any, resp_validation_error: ValidationError, instance: Any
+    req: Any,
+    resp: Any,
+    resp_validation_error: Exception | None,
+    instance: Any,
+    model_adapter: ModelAdapter | None = None,
 ):
     """
     default handler called after the response validation
@@ -195,11 +198,11 @@ def default_after_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if resp_validation_error:
+        adapter = model_adapter or get_default_model_adapter()
         logger.error(
             "500 Response Validation Error: %s - %s",
-            getattr(resp_validation_error, "title", None)
-            or resp_validation_error.model.__name__,
-            resp_validation_error.errors(),
+            adapter.validation_error_model_name(resp_validation_error),
+            adapter.validation_error_errors(resp_validation_error),
         )
 
 
@@ -214,13 +217,12 @@ def hash_module_path(module_path: str):
     return sha1(module_path.encode()).hexdigest()[:7]
 
 
-def get_model_key(model: ModelType) -> str:
+def get_model_key(model: ModelClass) -> str:
     """
     generate model name suffixed by short hashed path (instead of its path to
     avoid code-structure leaking)
 
-    :param model: `pydantic.BaseModel` query, json, headers or cookies from
-        request or response
+    :param model: query, json, headers or cookies from request or response
     """
 
     return f"{model.__name__}.{hash_module_path(module_path=model.__module__)}"
@@ -235,28 +237,6 @@ def get_nested_key(parent: str, child: str) -> str:
     """
 
     return f"{parent}.{child}"
-
-
-def get_model_schema(
-    model: ModelType,
-    naming_strategy: NamingStrategy = get_model_key,
-    nested_naming_strategy: NestedNamingStrategy = get_nested_key,
-    mode: str = "validation",
-):
-    """
-    return a dictionary representing the model as JSON Schema with a hashed
-    infix in ref to ensure name uniqueness
-
-    :param model: `pydantic.BaseModel` query, json, headers or cookies from
-        request or response
-    :param mode: schema generation mode - 'validation' for input models,
-        'serialization' for output models (Pydantic v2 only)
-    """
-    assert is_pydantic_model(model), f"{model} is not a pydantic model"
-
-    nested_key = nested_naming_strategy(naming_strategy(model), "{model}")
-    ref_template = f"#/components/schemas/{nested_key}"
-    return model.model_json_schema(ref_template=ref_template, mode=mode)
 
 
 def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
@@ -274,7 +254,7 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
 
 
 def get_multidict_items(
-    multidict: MultiDict, model: OptionalModelType = None
+    multidict: MultiDict, model: Optional[ModelClass] = None
 ) -> Dict[str, Union[None, str, List[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
@@ -291,7 +271,7 @@ def get_multidict_items(
 
 
 def get_multidict_items_starlette(
-    multidict: MultiDictStarlette, model: OptionalModelType = None
+    multidict: MultiDictStarlette, model: Optional[ModelClass] = None
 ):
     """
     return the items of a :class:`starlette.datastructures.ImmutableMultiDict`
@@ -307,7 +287,7 @@ def get_multidict_items_starlette(
     return res
 
 
-def is_list_item(key: str, model: OptionalModelType) -> bool:
+def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
         return False
@@ -315,16 +295,6 @@ def is_list_item(key: str, model: OptionalModelType) -> bool:
     if model_filed is None:
         return False
     return getattr(model_filed.annotation, "__origin__", None) is list
-
-
-def gen_list_model(model: Type[BaseModel]) -> Type[BaseModel]:
-    """
-    Generate the corresponding list[model] class for a given model class.
-
-    This only works for Pydantic V1. For V2, use `pydantic.RootModel` directly.
-    """
-    assert is_pydantic_model(model), f"{model} is not a pydantic model"
-    return generate_root_model(List[model], name=f"{model.__name__}List")  # type: ignore
 
 
 def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):

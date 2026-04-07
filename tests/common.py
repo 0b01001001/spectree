@@ -8,8 +8,10 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
-from spectree._pydantic import generate_root_model
+from spectree.model_adapter import get_default_model_adapter
 from spectree.utils import hash_module_path
+
+generate_root_model = get_default_model_adapter().make_root_model
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")

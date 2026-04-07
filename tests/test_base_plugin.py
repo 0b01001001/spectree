@@ -3,22 +3,20 @@ import uuid
 from contextlib import nullcontext as does_not_raise
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import pytest
 from pydantic import ValidationError
 
-from spectree._pydantic import SerializedPydanticResponse
-from spectree._types import OptionalModelType
+from spectree.model_adapter import ModelClass, get_default_model_adapter
 from spectree.plugins.base import (
     RawResponsePayload,
     ResponseValidationResult,
     validate_response,
 )
-from spectree.utils import gen_list_model
 from tests.common import JSON, ComplexResp, Resp, RootResp, StrDict
 
-RespList = gen_list_model(Resp)
+RespList = get_default_model_adapter().make_list_model(Resp)
 
 
 @dataclass(frozen=True)
@@ -149,7 +147,7 @@ class DummyResponse:
     ],
 )
 def test_validate_response(
-    validation_model: OptionalModelType,
+    validation_model: Optional[ModelClass],
     response_payload: Any,
     expected_result: Union[ResponseValidationResult, ValidationError],
 ):
@@ -160,13 +158,14 @@ def test_validate_response(
     )
     with runtime_expectation:
         result = validate_response(
+            model_adapter=get_default_model_adapter(),
             validation_model=validation_model,
             response_payload=response_payload,
         )
         assert isinstance(result, ResponseValidationResult)
         payload = (
-            ResponseValidationResult(json.loads(result.payload.data))
-            if isinstance(result.payload, SerializedPydanticResponse)
+            ResponseValidationResult(json.loads(result.payload))
+            if isinstance(result.payload, bytes)
             else result
         )
         assert payload == expected_result

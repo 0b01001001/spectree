@@ -14,9 +14,6 @@ from typing import (
 )
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel
-from pydantic import ValidationError as PydanticValidationError
-
 
 class DataClassValidationError(ValueError):
     """Dataclass validation error."""
@@ -138,12 +135,12 @@ class DataClassValidator:
     def validate_model_type(cls, model_type: type, value: Any, field_name: str) -> Any:
         if callable(getattr(model_type, "from_value", None)):
             return model_type.from_value(value, field_name)
-        if issubclass(model_type, BaseModel):
+        if callable(getattr(model_type, "model_validate", None)):
             if isinstance(value, model_type):
                 return value
             try:
                 return model_type.model_validate(value)
-            except PydanticValidationError as exc:
+            except Exception as exc:
                 raise cls.error_type(cls.invalid_model_error(field_name)) from exc
         raise TypeError("unsupported model type")
 
@@ -164,7 +161,7 @@ class DataClassValidator:
             return cls.validate_enum(annotation, value, field_name)
         if isinstance(annotation, type) and (
             callable(getattr(annotation, "from_value", None))
-            or issubclass(annotation, BaseModel)
+            or callable(getattr(annotation, "model_validate", None))
         ):
             return cls.validate_model_type(annotation, value, field_name)
         if origin is Union:

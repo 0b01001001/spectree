@@ -5,26 +5,21 @@ from typing import Any, List
 import pytest
 from pydantic import BaseModel
 
-from spectree._pydantic import (
-    generate_root_model,
-    is_base_model,
-    is_base_model_instance,
-    is_partial_base_model_instance,
-    is_root_model,
-    is_root_model_instance,
-    serialize_model_instance,
-)
+from spectree.model_adapter import ModelAdapter, get_default_model_adapter
+from spectree.model_adapter.pydantic import PydanticModelAdapter
 
-DummyRootModel = generate_root_model(List[int], name="DummyRootModel")
+ADAPTER = get_default_model_adapter()
 
-NestedRootModel = generate_root_model(DummyRootModel, name="NestedRootModel")
+DummyRootModel = ADAPTER.make_root_model(List[int], name="DummyRootModel")
+
+NestedRootModel = ADAPTER.make_root_model(DummyRootModel, name="NestedRootModel")
 
 
 class SimpleModel(BaseModel):
     user_id: int
 
 
-Users = generate_root_model(List[SimpleModel], name="Users")
+Users = ADAPTER.make_root_model(List[SimpleModel], name="Users")
 
 
 @dataclass
@@ -55,7 +50,7 @@ class RootModelLookalike:
     ],
 )
 def test_is_root_model(value: Any, expected: bool):
-    assert is_root_model(value) is expected
+    assert ADAPTER.is_root_model(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -81,7 +76,7 @@ def test_is_root_model(value: Any, expected: bool):
     ],
 )
 def test_is_root_model_instance(value, expected):
-    assert is_root_model_instance(value) is expected
+    assert ADAPTER.is_root_model_instance(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -107,7 +102,7 @@ def test_is_root_model_instance(value, expected):
     ],
 )
 def test_is_base_model(value, expected):
-    assert is_base_model(value) is expected
+    assert ADAPTER.is_model_type(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -133,7 +128,7 @@ def test_is_base_model(value, expected):
     ],
 )
 def test_is_base_model_instance(value, expected):
-    assert is_base_model_instance(value) is expected
+    assert ADAPTER.is_model_instance(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -150,7 +145,7 @@ def test_is_base_model_instance(value, expected):
     ],
 )
 def test_is_partial_base_model_instance(value, expected):
-    assert is_partial_base_model_instance(value) is expected, value
+    assert ADAPTER.is_partial_model_instance(value) is expected, value
 
 
 @pytest.mark.parametrize(
@@ -174,4 +169,16 @@ def test_is_partial_base_model_instance(value, expected):
     ],
 )
 def test_serialize_model_instance(value, expected):
-    assert json.loads(serialize_model_instance(value).data) == expected
+    assert json.loads(ADAPTER.dump_json(value)) == expected
+
+
+def test_default_model_adapter_matches_protocol():
+    adapter = ADAPTER
+
+    assert isinstance(adapter, PydanticModelAdapter)
+    assert hasattr(adapter, "validate_obj")
+    assert hasattr(adapter, "validate_json")
+    assert hasattr(adapter, "dump_json")
+
+    typed_adapter: ModelAdapter = adapter
+    assert typed_adapter.is_model_type(SimpleModel) is True
