@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 from spectree.model_adapter import ModelAdapter, get_default_model_adapter
-from spectree.model_adapter.pydantic import PydanticModelAdapter
+from spectree.model_adapter.pydantic_adapter import PydanticModelAdapter
 
 ADAPTER = get_default_model_adapter()
 

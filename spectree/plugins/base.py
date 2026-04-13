@@ -23,11 +23,11 @@ if TYPE_CHECKING:
 
 
 class Context(NamedTuple):
-    query: list
-    json: list
-    form: list
-    headers: dict
-    cookies: dict
+    query: Optional[list]
+    json: Optional[list]
+    form: Optional[list]
+    headers: Optional[dict]
+    cookies: Optional[dict]
 
 
 BackendRoute = TypeVar("BackendRoute")

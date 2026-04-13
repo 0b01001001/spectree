@@ -1,10 +1,9 @@
 from typing import Any, List, TypeVar
 
 from pydantic import BaseModel, RootModel, ValidationError
+from pydantic.json_schema import JsonSchemaMode
 
-from .protocol import ModelClass
-
-ModelT = TypeVar("ModelT", bound=BaseModel)
+PydanticModel = TypeVar("PydanticModel", bound=BaseModel)
 
 
 class PydanticModelAdapter:
@@ -37,10 +36,10 @@ class PydanticModelAdapter:
             return any(self.is_partial_model_instance(item) for item in value)
         return False
 
-    def validate_obj(self, model: type[ModelT], value: Any) -> ModelT:
+    def validate_obj(self, model: type[PydanticModel], value: Any) -> PydanticModel:
         return model.model_validate(value)
 
-    def validate_json(self, model: type[ModelT], value: bytes) -> ModelT:
+    def validate_json(self, model: type[PydanticModel], value: bytes) -> PydanticModel:
         return model.model_validate_json(value)
 
     def dump_json(self, value: Any) -> bytes:
@@ -54,18 +53,24 @@ class PydanticModelAdapter:
         root_type: Any,
         *,
         name: str = "GeneratedRootModel",
-    ) -> ModelClass:
-        return type(name, (RootModel[root_type],), {})
+        module: str | None = None,
+    ) -> type[RootModel]:
+        module_name = module or __name__
+        return type(name, (RootModel[root_type],), {"__module__": module_name})
 
-    def make_list_model(self, model: ModelClass) -> ModelClass:
-        return self.make_root_model(List[model], name=f"{model.__name__}List")  # type: ignore
+    def make_list_model(self, model: type[PydanticModel]) -> type[PydanticModel]:
+        return self.make_root_model(
+            List[model],  # type: ignore
+            name=f"{model.__name__}List",
+            module=model.__module__,
+        )
 
     def json_schema(
         self,
-        model: ModelClass,
+        model: type[PydanticModel],
         *,
         ref_template: str,
-        mode: str = "validation",
+        mode: JsonSchemaMode = "validation",
     ) -> dict[str, Any]:
         return model.model_json_schema(ref_template=ref_template, mode=mode)
 

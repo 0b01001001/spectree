@@ -23,7 +23,7 @@ from spectree._types import (
     MultiDictStarlette,
     NamingStrategy,
 )
-from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
+from spectree.model_adapter import ModelAdapter, ModelClass
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -161,7 +161,7 @@ def default_before_handler(
     resp: Any,
     req_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter | None = None,
+    model_adapter: ModelAdapter,
 ):
     """
     default handler called before the endpoint function after the request validation
@@ -173,11 +173,10 @@ def default_before_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if req_validation_error:
-        adapter = model_adapter or get_default_model_adapter()
         logger.error(
             "422 Request Validation Error: %s - %s",
-            adapter.validation_error_model_name(req_validation_error),
-            adapter.validation_error_errors(req_validation_error),
+            model_adapter.validation_error_model_name(req_validation_error),
+            model_adapter.validation_error_errors(req_validation_error),
         )
 
 
@@ -186,7 +185,7 @@ def default_after_handler(
     resp: Any,
     resp_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter | None = None,
+    model_adapter: ModelAdapter,
 ):
     """
     default handler called after the response validation
@@ -198,11 +197,10 @@ def default_after_handler(
     :param instance: class instance if the endpoint function is a class method
     """
     if resp_validation_error:
-        adapter = model_adapter or get_default_model_adapter()
         logger.error(
             "500 Response Validation Error: %s - %s",
-            adapter.validation_error_model_name(resp_validation_error),
-            adapter.validation_error_errors(resp_validation_error),
+            model_adapter.validation_error_model_name(resp_validation_error),
+            model_adapter.validation_error_errors(resp_validation_error),
         )
 
 
@@ -280,7 +278,7 @@ def get_multidict_items_starlette(
     for key in multidict:
         values = multidict.getlist(key)
         if (model is not None and is_list_item(key, model)) or len(values) > 1:
-            res[key] = multidict.getlist(key)
+            res[key] = values
         else:
             res[key] = multidict[key]
 

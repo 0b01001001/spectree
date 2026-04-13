@@ -11,7 +11,7 @@ from starlette.routing import compile_path
 
 from spectree.model_adapter import (
     ModelClass,
-    get_default_model_adapter,
+    get_pydantic_model_adapter,
 )
 from spectree.plugins.base import (
     BasePlugin,
@@ -26,13 +26,12 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
-_DEFAULT_MODEL_ADAPTER = get_default_model_adapter()
-_PydanticResponseModel = _DEFAULT_MODEL_ADAPTER.make_root_model(
-    Any, name="_PydanticResponseModel"
-)
-
-
 def PydanticResponse(content):
+    _DEFAULT_MODEL_ADAPTER = get_pydantic_model_adapter()
+    _PydanticResponseModel = _DEFAULT_MODEL_ADAPTER.make_root_model(
+        Any, name="_PydanticResponseModel"
+    )
+
     class _PydanticResponse(JSONResponse):
         def render(self, content) -> bytes:
             self._model_class = content.__class__
@@ -78,7 +77,7 @@ class StarlettePlugin(BasePlugin):
         )
         request.context = Context(
             self.model_adapter.validate_obj(
-                query, get_multidict_items_starlette(request.query_params)
+                query, get_multidict_items_starlette(request.query_params, query)
             )
             if query
             else None,

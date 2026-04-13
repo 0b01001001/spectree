@@ -140,7 +140,7 @@ class DataClassValidator:
                 return value
             try:
                 return model_type.model_validate(value)
-            except Exception as exc:
+            except (TypeError, ValueError) as exc:
                 raise cls.error_type(cls.invalid_model_error(field_name)) from exc
         raise TypeError("unsupported model type")
 

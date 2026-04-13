@@ -213,9 +213,8 @@ class Response:
                 "description": self.get_code_description(code)
             }
 
-        assert self.model_adapter is not None, (
-            "Response must be bound to a model adapter"
-        )
+        if self.model_adapter is None:
+            raise RuntimeError("Response must be bound to a model adapter")
 
         for code, model in self.code_models.items():
             model_name = naming_strategy(model)
