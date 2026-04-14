@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from spectree.spec import SpecTree
 
 
+# attributes' type only reflects the desired struct, not the real class
 class Context(NamedTuple):
     query: Optional[list]
     json: Optional[list]
@@ -47,7 +48,7 @@ class BasePlugin(Generic[BackendRoute]):
     def __init__(self, spectree: "SpecTree"):
         self.spectree = spectree
         self.config: Configuration = spectree.config
-        self.model_adapter: ModelAdapter = spectree.model_adapter
+        self.model_adapter: ModelAdapter[Any, Exception] = spectree.model_adapter
         self.logger = logging.getLogger(__name__)
 
     def register_route(self, app: Any):
@@ -140,7 +141,7 @@ class ResponseValidationResult:
 
 
 def validate_response(
-    model_adapter: ModelAdapter,
+    model_adapter: ModelAdapter[Any, Exception],
     validation_model: Optional[ModelClass],
     response_payload: Any,
     force_serialize: bool = False,

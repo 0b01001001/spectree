@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import pytest
 from pydantic import BaseModel, computed_field
@@ -9,6 +10,7 @@ from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
     has_model,
+    is_list_item,
     json_compatible_deepcopy,
     parse_code,
     parse_comments,
@@ -288,6 +290,20 @@ def test_parse_params_with_route_param_keywords():
             "explode": True,
         },
     ]
+
+
+def test_is_list_item():
+    class OptionalListQuery(BaseModel):
+        names: Optional[list[str]] = None
+        title: Optional[str] = None
+
+    assert is_list_item("names1", DemoQuery)
+    assert is_list_item("names2", DemoQuery)
+    assert is_list_item("names", OptionalListQuery)
+    assert not is_list_item("uid", DemoModel)
+    assert not is_list_item("title", OptionalListQuery)
+    assert not is_list_item("missing", DemoQuery)
+    assert not is_list_item("names", None)
 
 
 def test_json_compatible_schema():

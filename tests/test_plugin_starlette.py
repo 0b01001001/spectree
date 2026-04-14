@@ -261,6 +261,13 @@ def inner_register_func():
     app.routes.append(Route("/api/user/{name}/address/{address_id}", user_address))
 
 
+def test_pydantic_response_reuses_response_class():
+    first = PydanticResponse({"name": "user1"})
+    second = PydanticResponse({"name": "user2"})
+
+    assert type(first) is type(second)
+
+
 inner_register_func()
 api.register(app)
 

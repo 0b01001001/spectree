@@ -20,6 +20,7 @@ from spectree._types import (
 )
 from spectree.config import Configuration, ModeEnum
 from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
+from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag, ValidationError
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
@@ -73,7 +74,7 @@ class SpecTree:
         validation_error_model: Optional[ModelClass] = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
-        model_adapter: Optional[ModelAdapter] = None,
+        model_adapter: Optional[ModelAdapter[Any, Exception]] = None,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
@@ -290,7 +291,7 @@ class SpecTree:
 
         return decorate_validation
 
-    def _add_model(self, model: ModelClass, mode: str = "validation") -> str:
+    def _add_model(self, model: ModelClass, mode: SchemaMode = "validation") -> str:
         """
         unified model processing
 

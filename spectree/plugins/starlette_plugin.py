@@ -1,6 +1,6 @@
 import inspect
 from collections import namedtuple
-from functools import partial
+from functools import cache, partial
 from json import JSONDecodeError
 from typing import Any, Callable, Optional
 
@@ -26,19 +26,20 @@ METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
 
 
+@cache
+def _get_pydantic_response_model():
+    adapter = get_pydantic_model_adapter()
+    return adapter, adapter.make_root_model(Any, name="_PydanticResponseModel")
+
+
+class _PydanticResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        adapter, response_model = _get_pydantic_response_model()
+        self._model_class = content.__class__
+        return adapter.dump_json(adapter.validate_obj(response_model, content))
+
+
 def PydanticResponse(content):
-    _DEFAULT_MODEL_ADAPTER = get_pydantic_model_adapter()
-    _PydanticResponseModel = _DEFAULT_MODEL_ADAPTER.make_root_model(
-        Any, name="_PydanticResponseModel"
-    )
-
-    class _PydanticResponse(JSONResponse):
-        def render(self, content) -> bytes:
-            self._model_class = content.__class__
-            return _DEFAULT_MODEL_ADAPTER.dump_json(
-                _DEFAULT_MODEL_ADAPTER.validate_obj(_PydanticResponseModel, content)
-            )
-
     return _PydanticResponse(content)
 
 
@@ -128,7 +129,7 @@ class StarlettePlugin(BasePlugin):
             except self.model_adapter.validation_error as err:
                 req_validation_error = err
                 response = JSONResponse(
-                    self.model_adapter.validation_error_errors(err),
+                    self.model_adapter.validation_errors(err),
                     validation_error_status,
                 )
             except JSONDecodeError as err:
@@ -178,7 +179,7 @@ class StarlettePlugin(BasePlugin):
                 )
             except self.model_adapter.validation_error as err:
                 response = JSONResponse(
-                    self.model_adapter.validation_error_errors(err),
+                    self.model_adapter.validation_errors(err),
                     500,
                 )
                 resp_validation_error = err

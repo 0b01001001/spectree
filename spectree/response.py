@@ -55,7 +55,7 @@ class Response:
             Tuple[type[List[Any]], str],
         ],
     ) -> None:
-        self.model_adapter: Optional[ModelAdapter] = None
+        self.model_adapter: Optional[ModelAdapter[Any, Exception]] = None
         self.codes: List[str] = []
         self._raw_code_models: Dict[str, Any] = {}
         self._raw_list_item_types: Dict[str, ModelClass] = {}
@@ -94,12 +94,12 @@ class Response:
             if description:
                 self.code_descriptions[code] = description
 
-    def bind_model_adapter(self, model_adapter: ModelAdapter) -> None:
+    def bind_model_adapter(self, model_adapter: ModelAdapter[Any, Exception]) -> None:
         self.model_adapter = model_adapter
         self.code_models, self.code_list_item_types = self._build_models(model_adapter)
 
     def _build_models(
-        self, model_adapter: ModelAdapter
+        self, model_adapter: ModelAdapter[Any, Exception]
     ) -> tuple[Dict[str, ModelClass], Dict[str, ModelClass]]:
         code_models: Dict[str, ModelClass] = {}
         code_list_item_types: Dict[str, ModelClass] = {}
@@ -156,11 +156,11 @@ class Response:
         """
         :param code: ``r'\\d{3}'``
         """
-        model = self.code_models.get(f"HTTP_{code}")
+        code_name = f"HTTP_{code}"
+        model = self.code_models.get(code_name)
         if model is not None:
             return model
-        raw_model = self._raw_code_models.get(f"HTTP_{code}")
-        return raw_model if isinstance(raw_model, type) else None
+        return self._raw_code_models.get(code_name)
 
     def expect_list_result(self, code: int) -> bool:
         """Check whether a specific HTTP code expects a list result.

@@ -1,11 +1,12 @@
-import functools
 import inspect
 import logging
 import re
 from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
+from types import UnionType
 from typing import (
+    Annotated,
     Any,
     Callable,
     Dict,
@@ -15,6 +16,8 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    get_args,
+    get_origin,
     get_type_hints,
 )
 
@@ -28,7 +31,17 @@ from spectree.model_adapter import ModelAdapter, ModelClass
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
 
-cached_type_hints = functools.cache(get_type_hints)
+_cached_type_hints: dict[object, dict[str, Any]] = {}
+
+
+def cached_type_hints(value: object) -> dict[str, Any]:
+    try:
+        return _cached_type_hints[value]
+    except KeyError:
+        type_hints = get_type_hints(value)
+        _cached_type_hints[value] = type_hints
+        return type_hints
+
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +174,7 @@ def default_before_handler(
     resp: Any,
     req_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter,
+    model_adapter: ModelAdapter[Any, Exception],
 ):
     """
     default handler called before the endpoint function after the request validation
@@ -176,7 +189,7 @@ def default_before_handler(
         logger.error(
             "422 Request Validation Error: %s - %s",
             model_adapter.validation_error_model_name(req_validation_error),
-            model_adapter.validation_error_errors(req_validation_error),
+            model_adapter.validation_errors(req_validation_error),
         )
 
 
@@ -185,7 +198,7 @@ def default_after_handler(
     resp: Any,
     resp_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter,
+    model_adapter: ModelAdapter[Any, Exception],
 ):
     """
     default handler called after the response validation
@@ -200,7 +213,7 @@ def default_after_handler(
         logger.error(
             "500 Response Validation Error: %s - %s",
             model_adapter.validation_error_model_name(resp_validation_error),
-            model_adapter.validation_error_errors(resp_validation_error),
+            model_adapter.validation_errors(resp_validation_error),
         )
 
 
@@ -289,10 +302,25 @@ def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
         return False
-    model_filed = model.model_fields.get(key)
-    if model_filed is None:
+
+    annotation = cached_type_hints(model).get(key)
+    if annotation is None:
         return False
-    return getattr(model_filed.annotation, "__origin__", None) is list
+    return _annotation_is_list(annotation)
+
+
+def _annotation_is_list(annotation: Any) -> bool:
+    origin = get_origin(annotation)
+    if origin is list:
+        return True
+    if origin is Annotated:
+        return _annotation_is_list(get_args(annotation)[0])
+    if origin in (Union, UnionType):
+        return any(
+            arg is not type(None) and _annotation_is_list(arg)
+            for arg in get_args(annotation)
+        )
+    return False
 
 
 def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):

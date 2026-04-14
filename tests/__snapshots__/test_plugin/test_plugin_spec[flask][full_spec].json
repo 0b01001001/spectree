@@ -110,14 +110,14 @@
         "title": "JSON",
         "type": "object"
       },
-      "JSONList.a9993e3": {
+      "JSONList.7068f62": {
         "items": {
-          "$ref": "#/components/schemas/JSONList.a9993e3.JSON"
+          "$ref": "#/components/schemas/JSONList.7068f62.JSON"
         },
         "title": "JSONList",
         "type": "array"
       },
-      "JSONList.a9993e3.JSON": {
+      "JSONList.7068f62.JSON": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -135,14 +135,14 @@
         "title": "JSON",
         "type": "object"
       },
-      "ListJSON.a9993e3": {
+      "ListJSON.918e046": {
         "items": {
-          "$ref": "#/components/schemas/ListJSON.a9993e3.JSON"
+          "$ref": "#/components/schemas/ListJSON.918e046.JSON"
         },
         "title": "ListJSON",
         "type": "array"
       },
-      "ListJSON.a9993e3.JSON": {
+      "ListJSON.918e046.JSON": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -276,10 +276,10 @@
         "title": "RespFromAttrs",
         "type": "object"
       },
-      "RootResp.a9993e3": {
+      "RootResp.918e046": {
         "anyOf": [
           {
-            "$ref": "#/components/schemas/RootResp.a9993e3.JSON"
+            "$ref": "#/components/schemas/RootResp.918e046.JSON"
           },
           {
             "items": {
@@ -290,7 +290,7 @@
         ],
         "title": "RootResp"
       },
-      "RootResp.a9993e3.JSON": {
+      "RootResp.918e046.JSON": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -308,7 +308,7 @@
         "title": "JSON",
         "type": "object"
       },
-      "StrDict.a9993e3": {
+      "StrDict.918e046": {
         "additionalProperties": {
           "type": "string"
         },
@@ -472,7 +472,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListJSON.a9993e3"
+                "$ref": "#/components/schemas/ListJSON.918e046"
               }
             }
           },
@@ -492,7 +492,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StrDict.a9993e3"
+                "$ref": "#/components/schemas/StrDict.918e046"
               }
             }
           },
@@ -510,7 +510,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StrDict.a9993e3"
+                "$ref": "#/components/schemas/StrDict.918e046"
               }
             }
           },
@@ -555,7 +555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JSONList.a9993e3"
+                  "$ref": "#/components/schemas/JSONList.7068f62"
                 }
               }
             },
@@ -737,7 +737,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RootResp.a9993e3"
+                  "$ref": "#/components/schemas/RootResp.918e046"
                 }
               }
             },
@@ -778,7 +778,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StrDict.a9993e3"
+                  "$ref": "#/components/schemas/StrDict.918e046"
                 }
               }
             },
@@ -1171,7 +1171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StrDict.a9993e3"
+                  "$ref": "#/components/schemas/StrDict.918e046"
                 }
               }
             },

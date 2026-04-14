@@ -87,7 +87,7 @@ class QuartPlugin(WerkzeugPlugin):
                     force_serialize=force_resp_serialize,
                 )
             except self.model_adapter.validation_error as err:
-                errors = self.model_adapter.validation_error_errors(err)
+                errors = self.model_adapter.validation_errors(err)
                 response = await make_response(errors, 500)
                 resp_validation_error = err
             else:
@@ -136,7 +136,7 @@ class QuartPlugin(WerkzeugPlugin):
                 )
             except self.model_adapter.validation_error as err:
                 req_validation_error = err
-                errors = self.model_adapter.validation_error_errors(err)
+                errors = self.model_adapter.validation_errors(err)
                 response = await make_response(jsonify(errors), validation_error_status)
 
         before(request, response, req_validation_error, None)

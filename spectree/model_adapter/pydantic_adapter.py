@@ -1,12 +1,11 @@
-from typing import Any, List, TypeVar
+from typing import Any, List
 
 from pydantic import BaseModel, RootModel, ValidationError
-from pydantic.json_schema import JsonSchemaMode
 
-PydanticModel = TypeVar("PydanticModel", bound=BaseModel)
+from .protocol import ModelAdapter, SchemaMode
 
 
-class PydanticModelAdapter:
+class PydanticModelAdapter(ModelAdapter[BaseModel, ValidationError]):
     validation_error = ValidationError
 
     def __init__(self) -> None:
@@ -36,10 +35,10 @@ class PydanticModelAdapter:
             return any(self.is_partial_model_instance(item) for item in value)
         return False
 
-    def validate_obj(self, model: type[PydanticModel], value: Any) -> PydanticModel:
+    def validate_obj(self, model: type[BaseModel], value: Any) -> BaseModel:
         return model.model_validate(value)
 
-    def validate_json(self, model: type[PydanticModel], value: bytes) -> PydanticModel:
+    def validate_json(self, model: type[BaseModel], value: bytes) -> BaseModel:
         return model.model_validate_json(value)
 
     def dump_json(self, value: Any) -> bytes:
@@ -54,11 +53,11 @@ class PydanticModelAdapter:
         *,
         name: str = "GeneratedRootModel",
         module: str | None = None,
-    ) -> type[RootModel]:
+    ) -> type[BaseModel]:
         module_name = module or __name__
         return type(name, (RootModel[root_type],), {"__module__": module_name})
 
-    def make_list_model(self, model: type[PydanticModel]) -> type[PydanticModel]:
+    def make_list_model(self, model: type[BaseModel]) -> type[BaseModel]:
         return self.make_root_model(
             List[model],  # type: ignore
             name=f"{model.__name__}List",
@@ -67,19 +66,17 @@ class PydanticModelAdapter:
 
     def json_schema(
         self,
-        model: type[PydanticModel],
+        model: type[BaseModel],
         *,
         ref_template: str,
-        mode: JsonSchemaMode = "validation",
+        mode: SchemaMode = "validation",
     ) -> dict[str, Any]:
         return model.model_json_schema(ref_template=ref_template, mode=mode)
 
-    def validation_error_errors(self, err: Exception) -> Any:
-        assert isinstance(err, ValidationError)
+    def validation_errors(self, err: ValidationError) -> Any:
         return err.errors(include_context=False)
 
-    def validation_error_model_name(self, err: Exception) -> str:
-        assert isinstance(err, ValidationError)
+    def validation_error_model_name(self, err: ValidationError) -> str:
         return getattr(err, "title", None) or err.model.__name__
 
     def is_root_model(self, value: Any) -> bool:

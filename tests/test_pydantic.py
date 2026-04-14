@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, List
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from spectree.model_adapter import ModelAdapter, get_default_model_adapter
 from spectree.model_adapter.pydantic_adapter import PydanticModelAdapter
@@ -180,5 +180,5 @@ def test_default_model_adapter_matches_protocol():
     assert hasattr(adapter, "validate_json")
     assert hasattr(adapter, "dump_json")
 
-    typed_adapter: ModelAdapter = adapter
+    typed_adapter: ModelAdapter[BaseModel, ValidationError] = adapter
     assert typed_adapter.is_model_type(SimpleModel) is True

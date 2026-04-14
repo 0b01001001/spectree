@@ -1,11 +1,13 @@
-from typing import Any, Protocol, TypeAlias, TypeVar
+from typing import Any, Literal, Protocol, TypeAlias, TypeVar
 
 ModelClass: TypeAlias = type[Any]
 ModelT = TypeVar("ModelT")
+ValidationErrorT = TypeVar("ValidationErrorT", bound=Exception)
+SchemaMode: TypeAlias = Literal["validation", "serialization"]
 
 
-class ModelAdapter(Protocol):
-    validation_error: type[Exception]
+class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
+    validation_error: type[ValidationErrorT]
 
     def is_model_type(self, value: Any) -> bool: ...
 
@@ -33,12 +35,12 @@ class ModelAdapter(Protocol):
         model: ModelClass,
         *,
         ref_template: str,
-        mode: str = "validation",
+        mode: SchemaMode = "validation",
     ) -> dict[str, Any]: ...
 
-    def validation_error_errors(self, err: Exception) -> Any: ...
+    def validation_errors(self, err: ValidationErrorT) -> Any: ...
 
-    def validation_error_model_name(self, err: Exception) -> str: ...
+    def validation_error_model_name(self, err: ValidationErrorT) -> str: ...
 
     def is_root_model(self, value: Any) -> bool: ...
 

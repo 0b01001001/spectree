@@ -279,7 +279,7 @@ class FalconPlugin(BasePlugin):
                 except self.model_adapter.validation_error as err:
                     resp_validation_error = err
                     resp.status = HTTP_500
-                    resp.media = self.model_adapter.validation_error_errors(err)
+                    resp.media = self.model_adapter.validation_errors(err)
                 else:
                     if isinstance(response_validation_result.payload, bytes):
                         resp.data = response_validation_result.payload
@@ -319,7 +319,7 @@ class FalconPlugin(BasePlugin):
             except self.model_adapter.validation_error as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
-                _resp.media = self.model_adapter.validation_error_errors(err)
+                _resp.media = self.model_adapter.validation_errors(err)
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
@@ -417,7 +417,7 @@ class FalconAsgiPlugin(FalconPlugin):
             except self.model_adapter.validation_error as err:
                 req_validation_error = err
                 _resp.status = f"{validation_error_status} Validation Error"
-                _resp.media = self.model_adapter.validation_error_errors(err)
+                _resp.media = self.model_adapter.validation_errors(err)
 
         before(_req, _resp, req_validation_error, _self)
         if req_validation_error:
