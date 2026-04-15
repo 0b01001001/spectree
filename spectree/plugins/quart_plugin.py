@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 
+from spectree._types import HookHandler
 from spectree.model_adapter import ModelClass
 from spectree.plugins.base import Context, validate_response
 from spectree.plugins.werkzeug_utils import WerkzeugPlugin, flask_response_unpack
@@ -120,8 +121,8 @@ class QuartPlugin(WerkzeugPlugin):
         headers: Optional[ModelClass],
         cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
@@ -139,7 +140,7 @@ class QuartPlugin(WerkzeugPlugin):
                 errors = self.model_adapter.validation_errors(err)
                 response = await make_response(jsonify(errors), validation_error_status)
 
-        before(request, response, req_validation_error, None)
+        before(request, response, req_validation_error, None, self.model_adapter)
         if req_validation_error:
             assert response  # make mypy happy
             abort(response)  # type: ignore
@@ -164,6 +165,6 @@ class QuartPlugin(WerkzeugPlugin):
             skip_validation,
             force_resp_serialize,
         )
-        after(request, response, resp_validation_error, None)
+        after(request, response, resp_validation_error, None, self.model_adapter)
 
         return response

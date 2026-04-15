@@ -1,6 +1,6 @@
 import warnings
 from collections import defaultdict
-from functools import partial, wraps
+from functools import wraps
 from importlib import import_module
 from typing import (
     Any,
@@ -15,6 +15,7 @@ from typing import (
 
 from spectree._types import (
     FunctionDecorator,
+    HookHandler,
     NamingStrategy,
     NestedNamingStrategy,
 )
@@ -50,11 +51,11 @@ class SpecTree:
     :param app: backend framework application instance (can be registered later)
     :param before: a callback function of the form
         :meth:`spectree.utils.default_before_handler`
-        ``func(req, resp, req_validation_error, instance)``
+        ``func(req, resp, req_validation_error, instance, model_adapter)``
         that will be called after the request validation before the endpoint function
     :param after: a callback function of the form
         :meth:`spectree.utils.default_after_handler`
-        ``func(req, resp, resp_validation_error, instance)``
+        ``func(req, resp, resp_validation_error, instance, model_adapter)``
         that will be called after the response validation
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
@@ -68,8 +69,8 @@ class SpecTree:
         backend_name: str = "base",
         backend: Optional[Type[BasePlugin]] = None,
         app: Any = None,
-        before: Callable = default_before_handler,
-        after: Callable = default_after_handler,
+        before: HookHandler = default_before_handler,
+        after: HookHandler = default_after_handler,
         validation_error_status: int = 422,
         validation_error_model: Optional[ModelClass] = None,
         naming_strategy: NamingStrategy = get_model_key,
@@ -82,16 +83,8 @@ class SpecTree:
         self.validation_error_status = validation_error_status
         self.validation_error_model = validation_error_model or ValidationError
         self.model_adapter = model_adapter or get_default_model_adapter()
-        self.before = (
-            partial(default_before_handler, model_adapter=self.model_adapter)
-            if before is default_before_handler
-            else before
-        )
-        self.after = (
-            partial(default_after_handler, model_adapter=self.model_adapter)
-            if after is default_after_handler
-            else after
-        )
+        self.before = before
+        self.after = after
         self.config: Configuration = Configuration.model_validate(kwargs)
         self.backend_name = backend_name
         if backend:
@@ -151,8 +144,8 @@ class SpecTree:
         tags: Sequence = (),
         security: Any = None,
         deprecated: bool = False,
-        before: Optional[Callable] = None,
-        after: Optional[Callable] = None,
+        before: Optional[HookHandler] = None,
+        after: Optional[HookHandler] = None,
         validation_error_status: int = 0,
         path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,

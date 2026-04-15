@@ -11,10 +11,14 @@ from typing import (
     Union,
 )
 
-from spectree.model_adapter import ModelClass
+from spectree.model_adapter import ModelAdapter, ModelClass
 
 NamingStrategy = Callable[[ModelClass], str]
 NestedNamingStrategy = Callable[[str, str], str]
+HookHandler = Callable[
+    [Any, Any, Exception | None, Any, ModelAdapter[Any, Exception]],
+    Any,
+]
 
 
 class MultiDict(Protocol):

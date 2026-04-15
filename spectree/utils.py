@@ -176,6 +176,7 @@ def default_before_handler(
         if the validation error is not None
     :param req_validation_error: request validation error
     :param instance: class instance if the endpoint function is a class method
+    :param model_adapter: model adapter used by the current SpecTree instance
     """
     if req_validation_error:
         logger.error(
@@ -200,6 +201,7 @@ def default_after_handler(
         or response validation error
     :param resp_validation_error: response validation error
     :param instance: class instance if the endpoint function is a class method
+    :param model_adapter: model adapter used by the current SpecTree instance
     """
     if resp_validation_error:
         logger.error(

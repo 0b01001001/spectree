@@ -35,16 +35,16 @@ from .common import (
 )
 
 
-def before_handler(req, resp, err, instance):
+def before_handler(req, resp, err, instance, model_adapter):
     if err:
         resp.headers["X-Error"] = "Validation Error"
 
 
-def after_handler(req, resp, err, instance):
+def after_handler(req, resp, err, instance, model_adapter):
     resp.headers["X-Validation"] = "Pass"
 
 
-def method_handler(req, resp, err, instance):
+def method_handler(req, resp, err, instance, model_adapter):
     resp.headers["X-Name"] = instance.name
 
 

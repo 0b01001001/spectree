@@ -22,6 +22,7 @@ from falcon.asgi.reader import BufferedReader as ASGIBufferedReader
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 from falcon.util.reader import DEFAULT_CHUNK_SIZE, BufferedReader
 
+from spectree._types import HookHandler
 from spectree.model_adapter import ModelClass
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
@@ -301,8 +302,8 @@ class FalconPlugin(BasePlugin):
         headers: Optional[ModelClass],
         cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
@@ -321,7 +322,7 @@ class FalconPlugin(BasePlugin):
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = self.model_adapter.validation_errors(err)
 
-        before(_req, _resp, req_validation_error, _self)
+        before(_req, _resp, req_validation_error, _self, self.model_adapter)
         if req_validation_error:
             return None
 
@@ -336,7 +337,7 @@ class FalconPlugin(BasePlugin):
         resp_validation_error = self.validate_response(
             _resp, resp, skip_validation, force_resp_serialize
         )
-        after(_req, _resp, resp_validation_error, _self)
+        after(_req, _resp, resp_validation_error, _self, self.model_adapter)
         # `falcon` doesn't use this return value. However, some users may have
         # their own processing logics that depend on this return value.
         return result
@@ -397,8 +398,8 @@ class FalconAsgiPlugin(FalconPlugin):
         headers: Optional[ModelClass],
         cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
@@ -419,7 +420,7 @@ class FalconAsgiPlugin(FalconPlugin):
                 _resp.status = f"{validation_error_status} Validation Error"
                 _resp.media = self.model_adapter.validation_errors(err)
 
-        before(_req, _resp, req_validation_error, _self)
+        before(_req, _resp, req_validation_error, _self, self.model_adapter)
         if req_validation_error:
             return None
 
@@ -438,5 +439,5 @@ class FalconAsgiPlugin(FalconPlugin):
         resp_validation_error = self.validate_response(
             _resp, resp, skip_validation, force_resp_serialize
         )
-        after(_req, _resp, resp_validation_error, _self)
+        after(_req, _resp, resp_validation_error, _self, self.model_adapter)
         return result

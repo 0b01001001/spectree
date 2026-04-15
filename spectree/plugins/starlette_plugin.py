@@ -9,6 +9,7 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
+from spectree._types import HookHandler
 from spectree.model_adapter import (
     ModelClass,
     get_pydantic_model_adapter,
@@ -105,8 +106,8 @@ class StarlettePlugin(BasePlugin):
         headers: Optional[ModelClass],
         cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
@@ -143,7 +144,7 @@ class StarlettePlugin(BasePlugin):
                     {"error_msg": str(err)}, validation_error_status
                 )
 
-        before(request, response, req_validation_error, instance)
+        before(request, response, req_validation_error, instance, self.model_adapter)
         if req_validation_error or json_decode_error:
             return response
 
@@ -188,7 +189,7 @@ class StarlettePlugin(BasePlugin):
                 if isinstance(response_validation_result.payload, bytes):
                     response.body = response_validation_result.payload
 
-        after(request, response, resp_validation_error, instance)
+        after(request, response, resp_validation_error, instance, self.model_adapter)
 
         return response
 

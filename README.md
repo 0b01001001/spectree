@@ -116,6 +116,21 @@ Starts from v1.3.0, this will skip all the validations. As an result, you won't 
 @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
 ```
 
+> What is the callback signature for `before` and `after` hooks?
+
+Both hooks now receive the active model adapter as their last argument:
+
+```py
+def before(req, resp, req_validation_error, instance, model_adapter):
+    ...
+
+
+def after(req, resp, resp_validation_error, instance, model_adapter):
+    ...
+```
+
+This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook.
+
 > How can I use the validation without the OpenAPI document?
 
 The OpenAPI endpoints are added by `spectree.register(app)`. If you don't want to add the OpenAPI endpoints, you don't need to register it to the application.

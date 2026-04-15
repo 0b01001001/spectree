@@ -28,12 +28,12 @@ from tests.common import (
 )
 
 
-def before_handler(req, resp, err, instance):
+def before_handler(req, resp, err, instance, model_adapter):
     if err:
         resp.set_header("X-Error", "Validation Error")
 
 
-def after_handler(req, resp, err, instance):
+def after_handler(req, resp, err, instance, model_adapter):
     if hasattr(instance, "name"):
         resp.set_header("X-Name", instance.name)
 

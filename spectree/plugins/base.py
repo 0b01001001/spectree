@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from spectree._types import JsonType
+from spectree._types import HookHandler, JsonType
 from spectree.config import Configuration
 from spectree.model_adapter import ModelAdapter, ModelClass
 from spectree.response import Response
@@ -68,8 +68,8 @@ class BasePlugin(Generic[BackendRoute]):
         headers: Optional[ModelClass],
         cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
