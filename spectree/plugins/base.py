@@ -22,13 +22,12 @@ if TYPE_CHECKING:
     from spectree.spec import SpecTree
 
 
-# attributes' type only reflects the desired struct, not the real class
 class Context(NamedTuple):
-    query: Optional[list]
-    json: Optional[list]
-    form: Optional[list]
-    headers: Optional[dict]
-    cookies: Optional[dict]
+    query: Optional[Any]
+    json: Optional[Any]
+    form: Optional[Any]
+    headers: Optional[Any]
+    cookies: Optional[Any]
 
 
 BackendRoute = TypeVar("BackendRoute")
