@@ -21,6 +21,7 @@ response
 models
 utils
 plugins
+adapter
 ```
 
 ```{toctree}

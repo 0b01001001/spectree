@@ -7,6 +7,15 @@ SchemaMode: TypeAlias = Literal["validation", "serialization"]
 
 
 class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
+    """The protocol of model adapter.
+
+    - check the model type
+    - validate the model
+    - dump model instance to a JSON
+    - generate the JSON schema
+    - check the validation errors
+    """
+
     validation_error: type[ValidationErrorT]
 
     def is_model_type(self, value: Any) -> bool: ...

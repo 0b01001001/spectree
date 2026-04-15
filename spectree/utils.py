@@ -1,3 +1,4 @@
+import functools
 import inspect
 import logging
 import re
@@ -31,16 +32,7 @@ from spectree.model_adapter import ModelAdapter, ModelClass
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
 
-_cached_type_hints: dict[object, dict[str, Any]] = {}
-
-
-def cached_type_hints(value: object) -> dict[str, Any]:
-    try:
-        return _cached_type_hints[value]
-    except KeyError:
-        type_hints = get_type_hints(value)
-        _cached_type_hints[value] = type_hints
-        return type_hints
+cached_type_hints = functools.cache(get_type_hints)
 
 
 logger = logging.getLogger(__name__)
@@ -303,7 +295,7 @@ def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
     if model is None:
         return False
 
-    annotation = cached_type_hints(model).get(key)
+    annotation = cached_type_hints(model).get(key)  # type: ignore
     if annotation is None:
         return False
     return _annotation_is_list(annotation)

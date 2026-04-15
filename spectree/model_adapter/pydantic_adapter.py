@@ -6,6 +6,8 @@ from .protocol import ModelAdapter, SchemaMode
 
 
 class PydanticModelAdapter(ModelAdapter[BaseModel, ValidationError]):
+    """`pydantic` model adapter."""
+
     validation_error = ValidationError
 
     def __init__(self) -> None:

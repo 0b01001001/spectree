@@ -36,7 +36,10 @@ if sys.version_info < (3, 13):
 
 class Response:
     """
-    response object
+    SpecTree response object. The instance can only be used after calling the
+    :py:meth:`.bind_model_adapter` method. This method is called
+    automatically when it's passed to
+    :py:meth:`SpecTree.validate<spectree.spec.SpecTree.validate>` method.
 
     :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP_200'
     :param code_models: dict of <HTTP status code>: <model class> or None or
@@ -95,6 +98,7 @@ class Response:
                 self.code_descriptions[code] = description
 
     def bind_model_adapter(self, model_adapter: ModelAdapter[Any, Exception]) -> None:
+        """Bind a :py:class:`~spectree.model_adapter.ModelAdapter`"""
         self.model_adapter = model_adapter
         self.code_models = self._build_models(model_adapter)
 
