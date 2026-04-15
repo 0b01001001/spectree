@@ -32,16 +32,16 @@ from .quart_imports import *  # NOQA
 pytestmark = pytest.mark.anyio
 
 
-def before_handler(req, resp, err, _):
+def before_handler(req, resp, err, _, model_adapter):
     if err:
         resp.headers["X-Error"] = "Validation Error"
 
 
-def after_handler(req, resp, err, _):
+def after_handler(req, resp, err, _, model_adapter):
     resp.headers["X-Validation"] = "Pass"
 
 
-def api_after_handler(req, resp, err, _):
+def api_after_handler(req, resp, err, _, model_adapter):
     resp.headers["X-API"] = "OK"
 
 

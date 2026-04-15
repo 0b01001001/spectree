@@ -2,15 +2,10 @@ import inspect
 from typing import Any, Callable, Optional
 
 import quart
-from pydantic import ValidationError
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 
-from spectree._pydantic import (
-    SerializedPydanticResponse,
-    is_partial_base_model_instance,
-    serialize_model_instance,
-)
-from spectree._types import ModelType
+from spectree._types import HookHandler
+from spectree.model_adapter import ModelClass
 from spectree.plugins.base import Context, validate_response
 from spectree.plugins.werkzeug_utils import WerkzeugPlugin, flask_response_unpack
 from spectree.response import Response
@@ -50,13 +45,17 @@ class QuartPlugin(WerkzeugPlugin):
         )
 
         request.context = Context(
-            query.model_validate(req_query) if query else None,
-            json.model_validate(await request.get_json(silent=True) or {})
+            self.model_adapter.validate_obj(query, req_query) if query else None,
+            self.model_adapter.validate_obj(
+                json, await request.get_json(silent=True) or {}
+            )
             if use_json
             else None,
-            form.model_validate(self.fill_form(request)) if use_form else None,
-            headers.model_validate(req_headers) if headers else None,
-            cookies.model_validate(req_cookies) if cookies else None,
+            self.model_adapter.validate_obj(form, self.fill_form(request))
+            if use_form
+            else None,
+            self.model_adapter.validate_obj(headers, req_headers) if headers else None,
+            self.model_adapter.validate_obj(cookies, req_cookies) if cookies else None,
         )
 
     async def validate_response(
@@ -83,32 +82,30 @@ class QuartPlugin(WerkzeugPlugin):
         if not skip_validation and resp_model:
             try:
                 response_validation_result = validate_response(
+                    model_adapter=self.model_adapter,
                     validation_model=resp_model.find_model(status),
                     response_payload=payload,
                     force_serialize=force_resp_serialize,
                 )
-            except ValidationError as err:
-                errors = err.errors(include_context=False)
+            except self.model_adapter.validation_error as err:
+                errors = self.model_adapter.validation_errors(err)
                 response = await make_response(errors, 500)
                 resp_validation_error = err
             else:
                 response = await make_response(
                     self.get_current_app().response_class(
-                        response_validation_result.payload.data,
+                        response_validation_result.payload,
                         mimetype="application/json",
                     )
-                    if isinstance(
-                        response_validation_result.payload,
-                        SerializedPydanticResponse,
-                    )
+                    if isinstance(response_validation_result.payload, bytes)
                     else response_validation_result.payload,
                     status,
                     additional_headers,
                 )
         else:
-            if is_partial_base_model_instance(payload):
+            if self.model_adapter.is_partial_model_instance(payload):
                 payload = self.get_current_app().response_class(
-                    serialize_model_instance(payload).data,
+                    self.model_adapter.dump_json(payload),
                     mimetype="application/json",
                 )
             response = await make_response(payload, status, additional_headers)
@@ -118,14 +115,14 @@ class QuartPlugin(WerkzeugPlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelType],
-        json: Optional[ModelType],
-        form: Optional[ModelType],
-        headers: Optional[ModelType],
-        cookies: Optional[ModelType],
+        query: Optional[ModelClass],
+        json: Optional[ModelClass],
+        form: Optional[ModelClass],
+        headers: Optional[ModelClass],
+        cookies: Optional[ModelClass],
         resp: Optional[Response],
-        before: Callable,
-        after: Callable,
+        before: HookHandler,
+        after: HookHandler,
         validation_error_status: int,
         skip_validation: bool,
         force_resp_serialize: bool,
@@ -138,12 +135,12 @@ class QuartPlugin(WerkzeugPlugin):
                 await self.request_validation(
                     request, query, json, form, headers, cookies
                 )
-            except ValidationError as err:
+            except self.model_adapter.validation_error as err:
                 req_validation_error = err
-                errors = err.errors(include_context=False)
+                errors = self.model_adapter.validation_errors(err)
                 response = await make_response(jsonify(errors), validation_error_status)
 
-        before(request, response, req_validation_error, None)
+        before(request, response, req_validation_error, None, self.model_adapter)
         if req_validation_error:
             assert response  # make mypy happy
             abort(response)  # type: ignore
@@ -168,6 +165,6 @@ class QuartPlugin(WerkzeugPlugin):
             skip_validation,
             force_resp_serialize,
         )
-        after(request, response, resp_validation_error, None)
+        after(request, response, resp_validation_error, None, self.model_adapter)
 
         return response

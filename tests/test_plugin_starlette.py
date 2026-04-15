@@ -35,16 +35,16 @@ from .common import (
 )
 
 
-def before_handler(req, resp, err, instance):
+def before_handler(req, resp, err, instance, model_adapter):
     if err:
         resp.headers["X-Error"] = "Validation Error"
 
 
-def after_handler(req, resp, err, instance):
+def after_handler(req, resp, err, instance, model_adapter):
     resp.headers["X-Validation"] = "Pass"
 
 
-def method_handler(req, resp, err, instance):
+def method_handler(req, resp, err, instance, model_adapter):
     resp.headers["X-Name"] = instance.name
 
 
@@ -259,6 +259,13 @@ def inner_register_func():
         return None
 
     app.routes.append(Route("/api/user/{name}/address/{address_id}", user_address))
+
+
+def test_pydantic_response_reuses_response_class():
+    first = PydanticResponse({"name": "user1"})
+    second = PydanticResponse({"name": "user2"})
+
+    assert type(first) is type(second)
 
 
 inner_register_func()

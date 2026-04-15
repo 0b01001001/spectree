@@ -15,7 +15,7 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
 
 * Less boilerplate code, only annotations, no need for YAML :sparkles:
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc), [Scalar UI](https://github.com/scalar/scalar) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
-* Validate query, JSON data, response data with [pydantic](https://github.com/samuelcolvin/pydantic/) (both v1 & v2) :wink:
+* Validate query, JSON data, and response data with supported model backends :wink:
 * Current support:
   * Flask [demo](#flask)
   * Quart [demo](#quart)
@@ -49,8 +49,8 @@ Check the [examples](examples) folder.
 
 ### Step by Step
 
-1. Define your data structure used in (query, json, headers, cookies, resp) with `pydantic.BaseModel`
-2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`
+1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`
+2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`. `SpecTree` uses `pydantic` as the default `model_adapter`.
 3. `api.validate` decorate the route with (the default value is given in parentheses):
    * `query`
    * `json`
@@ -81,7 +81,7 @@ Just add docs to the endpoint function. The 1st line is the summary, and the res
 
 > How to add a description to parameters?
 
-Check the [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/) document about description in `Field`.
+Check your model backend's field metadata and schema documentation for how to attach descriptions.
 
 > Any config I can change?
 
@@ -115,6 +115,21 @@ Starts from v1.3.0, this will skip all the validations. As an result, you won't 
 ```py
 @api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
 ```
+
+> What is the callback signature for `before` and `after` hooks?
+
+Both hooks now receive the active model adapter as their last argument:
+
+```py
+def before(req, resp, req_validation_error, instance, model_adapter):
+    ...
+
+
+def after(req, resp, resp_validation_error, instance, model_adapter):
+    ...
+```
+
+This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook.
 
 > How can I use the validation without the OpenAPI document?
 
@@ -288,7 +303,7 @@ You can change the `validation_error_status` in SpecTree (global) or a specific 
 
 > How can I return my model directly?
 
-Yes, returning an instance of `BaseModel` will assume the model is valid and bypass spectree's validation and automatically call `.model_dump()` on the model.
+Yes, returning an instance produced by your configured model backend will assume the model is valid and bypass Spectree's validation. Spectree will serialize that instance through the active model adapter.
 
 For starlette you should return a `PydanticResponse`:
 ```py

@@ -3,11 +3,13 @@ from typing import List, get_type_hints
 import pytest
 from pydantic import BaseModel
 
+from spectree.model_adapter import get_default_model_adapter
 from spectree.models import ValidationError
 from spectree.response import DEFAULT_CODE_DESC, Response
-from spectree.utils import gen_list_model
 
 from .common import JSON, DemoModel, get_model_path_key
+
+MODEL_ADAPTER = get_default_model_adapter()
 
 
 class NormalClass:
@@ -18,15 +20,22 @@ def test_init_response():
     for args, kwargs in [
         ([200], {}),
         (["HTTP_110"], {}),
-        ([], {"HTTP_200": NormalClass}),
-        ([], {"HTTP_200": (NormalClass, "custom code description")}),
         ([], {"HTTP_200": (DemoModel, 1)}),
         ([], {"HTTP_200": (DemoModel,)}),
     ]:
         with pytest.raises(AssertionError):
             Response(*args, **kwargs)
 
+    resp = Response(HTTP_200=NormalClass)
+    with pytest.raises(AssertionError, match="invalid response model"):
+        resp.bind_model_adapter(MODEL_ADAPTER)
+
+    resp = Response(HTTP_200=(NormalClass, "custom code description"))
+    with pytest.raises(AssertionError, match="invalid response model"):
+        resp.bind_model_adapter(MODEL_ADAPTER)
+
     resp = Response("HTTP_200", HTTP_201=DemoModel)
+    resp.bind_model_adapter(MODEL_ADAPTER)
     assert resp.has_model()
     assert resp.find_model(201) == DemoModel
     assert resp.code_descriptions.get("HTTP_200") is None
@@ -40,7 +49,8 @@ def test_init_response():
         HTTP_402=(None, "custom code description"),
         HTTP_403=(DemoModel, "custom code description"),
     )
-    expect_400_model = gen_list_model(JSON)
+    resp.bind_model_adapter(MODEL_ADAPTER)
+    expect_400_model = MODEL_ADAPTER.make_list_model(JSON)
     assert resp.has_model()
     assert resp.find_model(200) is None
     assert type(resp.find_model(400)) is type(expect_400_model) and get_type_hints(
@@ -60,10 +70,41 @@ def test_init_response():
 
 def test_response_add_model():
     resp = Response()
+    resp.bind_model_adapter(MODEL_ADAPTER)
 
     resp.add_model(201, DemoModel)
 
     assert resp.find_model(201) == DemoModel
+
+
+def test_response_find_model_requires_bound_adapter():
+    resp = Response(HTTP_200=DemoModel)
+
+    assert resp.find_model(200) is None
+
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    assert resp.find_model(200) is DemoModel
+
+
+def test_response_add_model_builds_only_new_model(monkeypatch):
+    resp = Response(HTTP_200=List[JSON])
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    calls = []
+    original_make_list_model = MODEL_ADAPTER.make_list_model
+
+    def tracked_make_list_model(model):
+        calls.append(model)
+        return original_make_list_model(model)
+
+    monkeypatch.setattr(MODEL_ADAPTER, "make_list_model", tracked_make_list_model)
+
+    resp.add_model(201, List[DemoModel])
+
+    assert calls == [DemoModel]
+    assert resp.find_model(200) is not None
+    assert resp.find_model(201) is not None
 
 
 @pytest.mark.parametrize(
@@ -75,11 +116,22 @@ def test_response_add_model():
 )
 def test_response_add_model_when_model_already_exists(replace, expected_model):
     resp = Response()
+    resp.bind_model_adapter(MODEL_ADAPTER)
 
     resp.add_model(201, DemoModel)
     resp.add_model(201, JSON, replace=replace)
 
     assert resp.find_model(201) is expected_model
+
+
+def test_response_add_model_when_model_already_exists_before_bind():
+    resp = Response()
+
+    resp.add_model(201, DemoModel)
+    resp.add_model(201, JSON, replace=False)
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    assert resp.find_model(201) is DemoModel
 
 
 def test_response_spec():
@@ -89,6 +141,7 @@ def test_response_spec():
         HTTP_401=(DemoModel, "custom code description"),
         HTTP_402=(None, "custom code description"),
     )
+    resp.bind_model_adapter(MODEL_ADAPTER)
     resp.add_model(422, ValidationError)
     spec = resp.generate_spec()
     assert spec["200"]["description"] == DEFAULT_CODE_DESC["HTTP_200"]
@@ -109,10 +162,9 @@ def test_response_spec():
 
 def test_list_model():
     resp = Response(HTTP_200=List[JSON])
+    resp.bind_model_adapter(MODEL_ADAPTER)
     model = resp.find_model(200)
-    expect_model = gen_list_model(JSON)
-    assert resp.expect_list_result(200)
-    assert not resp.expect_list_result(500)
+    expect_model = MODEL_ADAPTER.make_list_model(JSON)
     assert get_type_hints(model) == get_type_hints(expect_model)
     assert type(model) is type(expect_model)
     assert issubclass(model, BaseModel)

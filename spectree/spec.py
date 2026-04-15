@@ -15,11 +15,13 @@ from typing import (
 
 from spectree._types import (
     FunctionDecorator,
-    ModelType,
+    HookHandler,
     NamingStrategy,
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
+from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
+from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag, ValidationError
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
@@ -27,7 +29,6 @@ from spectree.utils import (
     default_after_handler,
     default_before_handler,
     get_model_key,
-    get_model_schema,
     get_nested_key,
     get_security,
     json_compatible_deepcopy,
@@ -50,11 +51,11 @@ class SpecTree:
     :param app: backend framework application instance (can be registered later)
     :param before: a callback function of the form
         :meth:`spectree.utils.default_before_handler`
-        ``func(req, resp, req_validation_error, instance)``
+        ``func(req, resp, req_validation_error, instance, model_adapter)``
         that will be called after the request validation before the endpoint function
     :param after: a callback function of the form
         :meth:`spectree.utils.default_after_handler`
-        ``func(req, resp, resp_validation_error, instance)``
+        ``func(req, resp, resp_validation_error, instance, model_adapter)``
         that will be called after the response validation
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
@@ -68,20 +69,22 @@ class SpecTree:
         backend_name: str = "base",
         backend: Optional[Type[BasePlugin]] = None,
         app: Any = None,
-        before: Callable = default_before_handler,
-        after: Callable = default_after_handler,
+        before: HookHandler = default_before_handler,
+        after: HookHandler = default_after_handler,
         validation_error_status: int = 422,
-        validation_error_model: Optional[ModelType] = None,
+        validation_error_model: Optional[ModelClass] = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
+        model_adapter: Optional[ModelAdapter[Any, Exception]] = None,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
         self.nested_naming_strategy = nested_naming_strategy
-        self.before = before
-        self.after = after
         self.validation_error_status = validation_error_status
         self.validation_error_model = validation_error_model or ValidationError
+        self.model_adapter = model_adapter or get_default_model_adapter()
+        self.before = before
+        self.after = after
         self.config: Configuration = Configuration.model_validate(kwargs)
         self.backend_name = backend_name
         if backend:
@@ -132,17 +135,17 @@ class SpecTree:
 
     def validate(  # noqa: PLR0913  [too-many-arguments]
         self,
-        query: Optional[ModelType] = None,
-        json: Optional[ModelType] = None,
-        form: Optional[ModelType] = None,
-        headers: Optional[ModelType] = None,
-        cookies: Optional[ModelType] = None,
+        query: Optional[ModelClass] = None,
+        json: Optional[ModelClass] = None,
+        form: Optional[ModelClass] = None,
+        headers: Optional[ModelClass] = None,
+        cookies: Optional[ModelClass] = None,
         resp: Optional[Response] = None,
         tags: Sequence = (),
         security: Any = None,
         deprecated: bool = False,
-        before: Optional[Callable] = None,
-        after: Optional[Callable] = None,
+        before: Optional[HookHandler] = None,
+        after: Optional[HookHandler] = None,
         validation_error_status: int = 0,
         path_parameter_descriptions: Optional[Mapping[str, str]] = None,
         skip_validation: bool = False,
@@ -155,11 +158,11 @@ class SpecTree:
         - add tags to this API route
         - add security to this API route
 
-        :param query: `pydantic.BaseModel`, query in uri like `?name=value`
-        :param json: `pydantic.BaseModel`, JSON format request body
-        :param form: `pydantic.BaseModel`, form-data request body
-        :param headers: `pydantic.BaseModel`, if you have specific headers
-        :param cookies: `pydantic.BaseModel`, if you have cookies for this route
+        :param query: model class for query params in the URI, like `?name=value`
+        :param json: model class for a JSON request body
+        :param form: model class for a form-data request body
+        :param headers: model class for validating request headers
+        :param cookies: model class for validating request cookies
         :param resp: `spectree.Response`
         :param tags: a tuple of strings or :class:`spectree.models.Tag`
         :param security: dict with security config for current route and method
@@ -258,6 +261,7 @@ class SpecTree:
                     setattr(validation, name, model_key)
 
             if resp:
+                resp.bind_model_adapter(self.model_adapter)
                 # Make sure that the endpoint specific status code and data model for
                 # validation errors shows up in the response spec.
                 resp.add_model(
@@ -280,20 +284,21 @@ class SpecTree:
 
         return decorate_validation
 
-    def _add_model(self, model: ModelType, mode: str = "validation") -> str:
+    def _add_model(self, model: ModelClass, mode: SchemaMode = "validation") -> str:
         """
         unified model processing
 
-        :param model: pydantic model to add to the schema
-        :param mode: schema generation mode - 'validation' for input models,
-            'serialization' for output models (Pydantic v2 only)
+        :param model: model class to add to the schema
+        :param mode: schema generation mode - 'validation' for input models
+            and 'serialization' for output models
         """
         model_key = self.naming_strategy(model)
+        nested_key = self.nested_naming_strategy(model_key, "{model}")
+        ref_template = f"#/components/schemas/{nested_key}"
         self.models[model_key] = json_compatible_deepcopy(
-            get_model_schema(
+            self.model_adapter.json_schema(
                 model=model,
-                naming_strategy=self.naming_strategy,
-                nested_naming_strategy=self.nested_naming_strategy,
+                ref_template=ref_template,
                 mode=mode,
             )
         )
