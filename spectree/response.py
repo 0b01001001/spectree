@@ -1,6 +1,6 @@
 import sys
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeAlias, Union
 
 from spectree._types import NamingStrategy
 from spectree.model_adapter import ModelAdapter, ModelClass
@@ -12,6 +12,16 @@ from spectree.utils import get_model_key, parse_code
 DEFAULT_CODE_DESC: Dict[str, str] = dict(
     (f"HTTP_{status.value}", f"{status.phrase}") for status in HTTPStatus
 )
+
+# Python's typing cannot precisely express runtime type expressions such as
+# `List[User]` or `list[User]` here without relying on non-portable internals.
+ResponseModelSpec: TypeAlias = object
+ResponseModelConfig: TypeAlias = Union[
+    None,
+    ResponseModelSpec,
+    Tuple[Optional[ResponseModelSpec], str],
+]
+
 # additional status codes and fixes
 if sys.version_info < (3, 13):
     # https://docs.python.org/3/library/http.html
@@ -48,17 +58,11 @@ class Response:
     def __init__(
         self,
         *codes: str,
-        **code_models: Union[
-            Optional[ModelClass],
-            Tuple[Optional[ModelClass], str],
-            type[List[Any]],
-            Tuple[type[List[Any]], str],
-        ],
+        **code_models: ResponseModelConfig,
     ) -> None:
         self.model_adapter: Optional[ModelAdapter[Any, Exception]] = None
         self.codes: List[str] = []
         self._raw_code_models: Dict[str, Any] = {}
-        self._raw_list_item_types: Dict[str, ModelClass] = {}
 
         for code in codes:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
@@ -66,7 +70,6 @@ class Response:
 
         self.code_models: Dict[str, ModelClass] = {}
         self.code_descriptions: Dict[str, Optional[str]] = {}
-        self.code_list_item_types: Dict[str, ModelClass] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             description: Optional[str] = None
@@ -81,9 +84,6 @@ class Response:
                 model = model_and_description
 
             if model:
-                origin_type = getattr(model, "__origin__", None)
-                if origin_type is list or origin_type is List:
-                    self._raw_list_item_types[code] = model.__args__[0]  # type: ignore
                 self._raw_code_models[code] = model
                 assert description is None or isinstance(description, str), (
                     "invalid HTTP status code description"
@@ -96,30 +96,34 @@ class Response:
 
     def bind_model_adapter(self, model_adapter: ModelAdapter[Any, Exception]) -> None:
         self.model_adapter = model_adapter
-        self.code_models, self.code_list_item_types = self._build_models(model_adapter)
+        self.code_models = self._build_models(model_adapter)
+
+    def _build_model(
+        self, raw_model: Any, model_adapter: ModelAdapter[Any, Exception]
+    ) -> ModelClass:
+        model = raw_model
+        origin_type = getattr(model, "__origin__", None)
+        if origin_type is list or origin_type is List:
+            model = model_adapter.make_list_model(model.__args__[0])  # type: ignore
+        assert model_adapter.is_model_type(model), f"invalid response model: {model}"
+        return model
 
     def _build_models(
         self, model_adapter: ModelAdapter[Any, Exception]
-    ) -> tuple[Dict[str, ModelClass], Dict[str, ModelClass]]:
+    ) -> Dict[str, ModelClass]:
         code_models: Dict[str, ModelClass] = {}
-        code_list_item_types: Dict[str, ModelClass] = {}
         for code, raw_model in self._raw_code_models.items():
-            model = raw_model
-            origin_type = getattr(model, "__origin__", None)
-            if origin_type is list or origin_type is List:
-                list_item_type = model.__args__[0]  # type: ignore
-                model = model_adapter.make_list_model(list_item_type)
-                code_list_item_types[code] = list_item_type
-            assert model_adapter.is_model_type(model), (
-                f"invalid response model: {model}"
-            )
-            code_models[code] = model
-        return code_models, code_list_item_types
+            code_models[code] = self._build_model(raw_model, model_adapter)
+        return code_models
+
+    def _has_configured_model(self, code: int) -> bool:
+        code_name = f"HTTP_{code}"
+        return code_name in self.code_models or code_name in self._raw_code_models
 
     def add_model(
         self,
         code: int,
-        model: ModelClass,
+        model: ResponseModelSpec,
         replace: bool = True,
         description: Optional[str] = None,
     ) -> None:
@@ -132,17 +136,12 @@ class Response:
             will be retained.
         :param description: The description string for the code.
         """
-        if not replace and self.find_model(code):
+        if not replace and self._has_configured_model(code):
             return
         code_name: str = f"HTTP_{code}"
-        origin_type = getattr(model, "__origin__", None)
-        if origin_type is list or origin_type is List:
-            self._raw_list_item_types[code_name] = model.__args__[0]  # type: ignore
         self._raw_code_models[code_name] = model
         if self.model_adapter is not None:
-            self.code_models, self.code_list_item_types = self._build_models(
-                self.model_adapter
-            )
+            self.code_models[code_name] = self._build_model(model, self.model_adapter)
         if description:
             self.code_descriptions[code_name] = description
 
@@ -156,33 +155,7 @@ class Response:
         """
         :param code: ``r'\\d{3}'``
         """
-        code_name = f"HTTP_{code}"
-        model = self.code_models.get(code_name)
-        if model is not None:
-            return model
-        return self._raw_code_models.get(code_name)
-
-    def expect_list_result(self, code: int) -> bool:
-        """Check whether a specific HTTP code expects a list result.
-
-        :param code: Status code (example: 200)
-        """
-        code_name = f"HTTP_{code}"
-        return (
-            code_name in self.code_list_item_types
-            or code_name in self._raw_list_item_types
-        )
-
-    def get_expected_list_item_type(self, code: int) -> ModelClass:
-        """Get the expected list result item type.
-
-        :param code: Status code (example: 200)
-        """
-        code_name = f"HTTP_{code}"
-        return (
-            self.code_list_item_types.get(code_name)
-            or self._raw_list_item_types[code_name]
-        )
+        return self.code_models.get(f"HTTP_{code}")
 
     def get_code_description(self, code: str) -> str:
         """Get the description of the given status code.

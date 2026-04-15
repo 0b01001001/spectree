@@ -77,6 +77,36 @@ def test_response_add_model():
     assert resp.find_model(201) == DemoModel
 
 
+def test_response_find_model_requires_bound_adapter():
+    resp = Response(HTTP_200=DemoModel)
+
+    assert resp.find_model(200) is None
+
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    assert resp.find_model(200) is DemoModel
+
+
+def test_response_add_model_builds_only_new_model(monkeypatch):
+    resp = Response(HTTP_200=List[JSON])
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    calls = []
+    original_make_list_model = MODEL_ADAPTER.make_list_model
+
+    def tracked_make_list_model(model):
+        calls.append(model)
+        return original_make_list_model(model)
+
+    monkeypatch.setattr(MODEL_ADAPTER, "make_list_model", tracked_make_list_model)
+
+    resp.add_model(201, List[DemoModel])
+
+    assert calls == [DemoModel]
+    assert resp.find_model(200) is not None
+    assert resp.find_model(201) is not None
+
+
 @pytest.mark.parametrize(
     "replace, expected_model",
     [
@@ -92,6 +122,16 @@ def test_response_add_model_when_model_already_exists(replace, expected_model):
     resp.add_model(201, JSON, replace=replace)
 
     assert resp.find_model(201) is expected_model
+
+
+def test_response_add_model_when_model_already_exists_before_bind():
+    resp = Response()
+
+    resp.add_model(201, DemoModel)
+    resp.add_model(201, JSON, replace=False)
+    resp.bind_model_adapter(MODEL_ADAPTER)
+
+    assert resp.find_model(201) is DemoModel
 
 
 def test_response_spec():
@@ -125,8 +165,6 @@ def test_list_model():
     resp.bind_model_adapter(MODEL_ADAPTER)
     model = resp.find_model(200)
     expect_model = MODEL_ADAPTER.make_list_model(JSON)
-    assert resp.expect_list_result(200)
-    assert not resp.expect_list_result(500)
     assert get_type_hints(model) == get_type_hints(expect_model)
     assert type(model) is type(expect_model)
     assert issubclass(model, BaseModel)

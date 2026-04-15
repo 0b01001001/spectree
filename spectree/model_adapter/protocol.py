@@ -26,6 +26,7 @@ class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
         root_type: Any,
         *,
         name: str = "GeneratedRootModel",
+        module: str | None = None,
     ) -> ModelClass: ...
 
     def make_list_model(self, model: ModelClass) -> ModelClass: ...
