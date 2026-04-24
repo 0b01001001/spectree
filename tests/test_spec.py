@@ -6,7 +6,7 @@ from starlette.applications import Starlette
 
 from spectree import Response
 from spectree.config import Configuration
-from spectree.models import Server, ValidationError
+from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 
@@ -189,7 +189,7 @@ def test_model_for_validation_errors_specified():
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is ValidationError
+    assert foo.resp.find_model(422) is api.model_adapter.validation_error
     assert bar.resp.find_model(422) is CustomValidationError
 
 

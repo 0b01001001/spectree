@@ -10,8 +10,6 @@ from typing import (
     Annotated,
     Any,
     Callable,
-    Dict,
-    List,
     Mapping,
     Optional,
     Sequence,
@@ -23,11 +21,12 @@ from typing import (
 )
 
 from spectree._types import (
+    ModelAdapterType,
     MultiDict,
     MultiDictStarlette,
     NamingStrategy,
 )
-from spectree.model_adapter import ModelAdapter, ModelClass
+from spectree.model_adapter import ModelClass
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -72,7 +71,7 @@ def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[st
     return summary, description
 
 
-def parse_request(func: Any) -> Dict[str, Any]:
+def parse_request(func: Any) -> dict[str, Any]:
     """
     get json spec
     """
@@ -95,9 +94,9 @@ def parse_request(func: Any) -> Dict[str, Any]:
 
 def parse_params(
     func: Callable[..., Any],
-    params: List[Mapping[str, Any]],
+    params: list[Mapping[str, Any]],
     models: Mapping[str, Any],
-) -> List[Mapping[str, Any]]:
+) -> list[Mapping[str, Any]]:
     """
     get spec for (query, headers, cookies)
     """
@@ -166,7 +165,7 @@ def default_before_handler(
     resp: Any,
     req_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter[Any, Exception],
+    model_adapter: ModelAdapterType,
 ):
     """
     default handler called before the endpoint function after the request validation
@@ -180,8 +179,7 @@ def default_before_handler(
     """
     if req_validation_error:
         logger.error(
-            "422 Request Validation Error: %s - %s",
-            model_adapter.validation_error_model_name(req_validation_error),
+            "422 Request Validation Error: %s",
             model_adapter.validation_errors(req_validation_error),
         )
 
@@ -191,7 +189,7 @@ def default_after_handler(
     resp: Any,
     resp_validation_error: Exception | None,
     instance: Any,
-    model_adapter: ModelAdapter[Any, Exception],
+    model_adapter: ModelAdapterType,
 ):
     """
     default handler called after the response validation
@@ -205,8 +203,7 @@ def default_after_handler(
     """
     if resp_validation_error:
         logger.error(
-            "500 Response Validation Error: %s - %s",
-            model_adapter.validation_error_model_name(resp_validation_error),
+            "500 Response Validation Error: %s",
             model_adapter.validation_errors(resp_validation_error),
         )
 
@@ -244,7 +241,7 @@ def get_nested_key(parent: str, child: str) -> str:
     return f"{parent}.{child}"
 
 
-def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
+def get_security(security: Union[None, Mapping, Sequence[Any]]) -> list[Any]:
     """
     return the correct format of security
     """
@@ -260,11 +257,11 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> List[Any]:
 
 def get_multidict_items(
     multidict: MultiDict, model: Optional[ModelClass] = None
-) -> Dict[str, Union[None, str, List[str]]]:
+) -> dict[str, Union[None, str, list[str]]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """
-    res: Dict[str, Union[None, str, List[str]]] = {}
+    res: dict[str, Union[None, str, list[str]]] = {}
     for key in multidict:
         values = multidict.getlist(key)
         if (model is not None and is_list_item(key, model)) or len(values) > 1:

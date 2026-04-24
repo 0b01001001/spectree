@@ -5,10 +5,10 @@ from typing import Any, List
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from spectree.model_adapter import ModelAdapter, get_default_model_adapter
+from spectree.model_adapter import ModelAdapter, get_pydantic_model_adapter
 from spectree.model_adapter.pydantic_adapter import PydanticModelAdapter
 
-ADAPTER = get_default_model_adapter()
+ADAPTER = get_pydantic_model_adapter()
 
 DummyRootModel = ADAPTER.make_root_model(List[int], name="DummyRootModel")
 

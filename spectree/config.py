@@ -1,25 +1,11 @@
 import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import (
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import Any, Optional, Union
 
-from spectree.dataclass_validator import (
-    DataClassValidationError,
-    DataClassValidator,
-)
+from spectree.dataclass_model import AdapterBackedDataclass
 from spectree.models import SecurityScheme, Server
 from spectree.page import PAGE_TEMPLATES
-
-
-class ConfigurationError(DataClassValidationError):
-    """Configuration validation error."""
 
 
 class ModeEnum(str, Enum):
@@ -33,14 +19,12 @@ class ModeEnum(str, Enum):
     greedy = "greedy"
 
 
-SecurityValue = Union[Dict[str, List[str]], List[Dict[str, List[str]]]]
+SecurityValue = Union[dict[str, list[str]], list[dict[str, list[str]]]]
 
 
 @dataclass
-class Contact(DataClassValidator):
+class Contact(AdapterBackedDataclass):
     """contact information"""
-
-    error_type = ConfigurationError
 
     #: name of the contact
     name: str
@@ -51,10 +35,8 @@ class Contact(DataClassValidator):
 
 
 @dataclass
-class License(DataClassValidator):
+class License(AdapterBackedDataclass):
     """license information"""
-
-    error_type = ConfigurationError
 
     #: name of the license
     name: str
@@ -62,11 +44,9 @@ class License(DataClassValidator):
     url: Optional[str] = field(default=None, metadata={"format": "url"})
 
 
-@dataclass(init=False)
-class Configuration(DataClassValidator):
+@dataclass
+class Configuration(AdapterBackedDataclass):
     """Global configuration."""
-
-    error_type = ConfigurationError
 
     # OpenAPI configurations
     #: title of the service
@@ -76,10 +56,7 @@ class Configuration(DataClassValidator):
     #: service version
     version: str = "0.1.0"
     #: terms of service url
-    terms_of_service: Optional[str] = field(
-        default=None,
-        metadata={"alias": "termsOfService", "format": "url"},
-    )
+    terms_of_service: Optional[str] = field(default=None, metadata={"format": "url"})
     #: author contact information
     contact: Optional[Contact] = None
     #: license information
@@ -99,13 +76,13 @@ class Configuration(DataClassValidator):
     #: to render the documentation page content. (Each page template should contain a
     #: `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
     #: the rendered documentation page
-    page_templates: Dict[str, str] = field(default_factory=lambda: dict(PAGE_TEMPLATES))
+    page_templates: dict[str, str] = field(default_factory=lambda: dict(PAGE_TEMPLATES))
     #: opt-in type annotation feature, see the README examples
     annotations: bool = True
     #: servers section of OAS :py:class:`spectree.models.Server`
-    servers: List[Server] = field(default_factory=list)
+    servers: list[Server] = field(default_factory=list)
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`
-    security_schemes: Optional[List[SecurityScheme]] = None
+    security_schemes: Optional[list[SecurityScheme]] = None
     #: OpenAPI `security` JSON at the global level
     security: SecurityValue = field(default_factory=dict)
     # Swagger OAuth2 configs
@@ -120,38 +97,19 @@ class Configuration(DataClassValidator):
     #: OAuth2 scope separator
     scope_separator: str = " "
     #: OAuth2 scopes
-    scopes: List[str] = field(default_factory=list)
+    scopes: list[str] = field(default_factory=list)
     #: OAuth2 additional query string params
-    additional_query_string_params: Dict[str, str] = field(default_factory=dict)
+    additional_query_string_params: dict[str, str] = field(default_factory=dict)
     #: OAuth2 use basic authentication with access code grant
     use_basic_authentication_with_access_code_grant: bool = False
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        dataclass_field = type(self).__dataclass_fields__.get(name)
-        if dataclass_field is None:
-            raise ConfigurationError(
-                type(self).unknown_fields_error(type(self), [name])
-            )
-
-        validated = type(self).validate_field(dataclass_field, value, name)
-        super().__setattr__(name, validated)
-
-    def __init__(self, **kwargs: Any) -> None:
-        validated = type(self).build_kwargs(type(self), kwargs, normalize_keys=True)
-        for name, value in validated.items():
-            super().__setattr__(name, value)
-
-    @classmethod
-    def model_validate(cls, values: Mapping[str, Any]) -> "Configuration":
-        return cls(**dict(cls.ensure_mapping(values, "configuration")))
-
     @property
     def spec_url(self) -> str:
         return f"/{self.path}/{self.filename}"
 
-    def swagger_oauth2_config(self) -> Dict[str, Any]:
+    def swagger_oauth2_config(self) -> dict[str, Any]:
         """
         return the swagger UI OAuth2 configs
 
@@ -163,7 +121,7 @@ class Configuration(DataClassValidator):
             )
 
         return self.to_dict(
-            include={
+            include=(
                 "client_id",
                 "client_secret",
                 "realm",
@@ -173,7 +131,7 @@ class Configuration(DataClassValidator):
                 "additional_query_string_params",
                 "use_basic_authentication_with_access_code_grant",
                 "use_pkce_with_authorization_code_grant",
-            }
+            )
         ) | {
             "use_basic_authentication_with_access_code_grant": (
                 "true"
@@ -185,15 +143,17 @@ class Configuration(DataClassValidator):
             ),
         }
 
-    def openapi_info(self) -> Dict[str, Any]:
-        return self.to_dict(
-            include={
+    def openapi_info(self) -> dict[str, Any]:
+        info = self.to_dict(
+            include=(
                 "title",
                 "description",
                 "version",
                 "terms_of_service",
                 "contact",
                 "license",
-            },
+            ),
             exclude_none=True,
         )
+        info["termsOfService"] = info.pop("terms_of_service")
+        return info

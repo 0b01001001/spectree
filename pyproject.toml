@@ -20,11 +20,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = [
-    "pydantic>=2.11,<3",
-]
+dependencies = []
 
 [project.optional-dependencies]
+pydantic = ["pydantic>=2.11,<3"]
+msgspec = ["msgspec>=0.21,<1"]
 offline = ["offapi>=0.1.1"]
 falcon = ["falcon>=3"]
 starlette = ["starlette[full]>=0.16"]

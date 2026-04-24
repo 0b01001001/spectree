@@ -1,20 +1,20 @@
 import sys
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeAlias, Union
+from typing import Any, Iterable, Optional, Tuple, TypeAlias, Union
 
-from spectree._types import NamingStrategy
-from spectree.model_adapter import ModelAdapter, ModelClass
+from spectree._types import ModelAdapterType, NamingStrategy
+from spectree.model_adapter import ModelClass
 from spectree.utils import get_model_key, parse_code
 
 # according to https://tools.ietf.org/html/rfc2616#section-10
 # https://tools.ietf.org/html/rfc7231#section-6.1
 # https://developer.mozilla.org/sv-SE/docs/Web/HTTP/Status
-DEFAULT_CODE_DESC: Dict[str, str] = dict(
+DEFAULT_CODE_DESC: dict[str, str] = dict(
     (f"HTTP_{status.value}", f"{status.phrase}") for status in HTTPStatus
 )
 
 # Python's typing cannot precisely express runtime type expressions such as
-# `List[User]` or `list[User]` here without relying on non-portable internals.
+# `list[User]` here without relying on non-portable internals.
 ResponseModelSpec: TypeAlias = object
 ResponseModelConfig: TypeAlias = Union[
     None,
@@ -63,16 +63,16 @@ class Response:
         *codes: str,
         **code_models: ResponseModelConfig,
     ) -> None:
-        self.model_adapter: Optional[ModelAdapter[Any, Exception]] = None
-        self.codes: List[str] = []
-        self._raw_code_models: Dict[str, Any] = {}
+        self.model_adapter: Optional[ModelAdapterType] = None
+        self.codes: list[str] = []
+        self._raw_code_models: dict[str, Any] = {}
 
         for code in codes:
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             self.codes.append(code)
 
-        self.code_models: Dict[str, ModelClass] = {}
-        self.code_descriptions: Dict[str, Optional[str]] = {}
+        self.code_models: dict[str, ModelClass] = {}
+        self.code_descriptions: dict[str, Optional[str]] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
             description: Optional[str] = None
@@ -97,25 +97,23 @@ class Response:
             if description:
                 self.code_descriptions[code] = description
 
-    def bind_model_adapter(self, model_adapter: ModelAdapter[Any, Exception]) -> None:
+    def bind_model_adapter(self, model_adapter: ModelAdapterType) -> None:
         """Bind a :py:class:`~spectree.model_adapter.ModelAdapter`"""
         self.model_adapter = model_adapter
         self.code_models = self._build_models(model_adapter)
 
     def _build_model(
-        self, raw_model: Any, model_adapter: ModelAdapter[Any, Exception]
+        self, raw_model: Any, model_adapter: ModelAdapterType
     ) -> ModelClass:
         model = raw_model
         origin_type = getattr(model, "__origin__", None)
-        if origin_type is list or origin_type is List:
+        if origin_type is list:
             model = model_adapter.make_list_model(model.__args__[0])  # type: ignore
         assert model_adapter.is_model_type(model), f"invalid response model: {model}"
         return model
 
-    def _build_models(
-        self, model_adapter: ModelAdapter[Any, Exception]
-    ) -> Dict[str, ModelClass]:
-        code_models: Dict[str, ModelClass] = {}
+    def _build_models(self, model_adapter: ModelAdapterType) -> dict[str, ModelClass]:
+        code_models: dict[str, ModelClass] = {}
         for code, raw_model in self._raw_code_models.items():
             code_models[code] = self._build_model(raw_model, model_adapter)
         return code_models
@@ -178,13 +176,13 @@ class Response:
 
     def generate_spec(
         self, naming_strategy: NamingStrategy = get_model_key
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         generate the spec for responses
 
         :returns: JSON
         """
-        responses: Dict[str, Any] = {}
+        responses: dict[str, Any] = {}
         for code in self.codes:
             responses[parse_code(code)] = {
                 "description": self.get_code_description(code)

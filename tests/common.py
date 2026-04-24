@@ -3,15 +3,17 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, IntEnum
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from spectree import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
-from spectree.model_adapter import get_default_model_adapter
+from spectree import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
+from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.utils import hash_module_path
 
-generate_root_model = get_default_model_adapter().make_root_model
+ADAPTER = get_pydantic_model_adapter()
+generate_root_model = ADAPTER.make_root_model
+BaseFile = ADAPTER.basefile
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
@@ -30,7 +32,7 @@ class Query(BaseModel):
 
 
 class QueryList(BaseModel):
-    ids: List[int]
+    ids: list[int]
 
 
 class FormFileUpload(BaseModel):
@@ -53,9 +55,9 @@ class OptionalJSON(BaseModel):
     limit: Optional[int] = None
 
 
-ListJSON = generate_root_model(List[JSON], name="ListJSON")
+ListJSON = generate_root_model(list[JSON], name="ListJSON")
 
-StrDict = generate_root_model(Dict[str, str], name="StrDict")
+StrDict = generate_root_model(dict[str, str], name="StrDict")
 
 
 class OptionalAliasResp(BaseModel):
@@ -66,23 +68,23 @@ class OptionalAliasResp(BaseModel):
 
 class Resp(BaseModel):
     name: str
-    score: List[int]
+    score: list[int]
 
 
 class RespFromAttrs(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
-    score: List[int]
+    score: list[int]
 
 
 @dataclass
 class RespObject:
     name: str
-    score: List[int]
+    score: list[int]
     comment: str
 
 
-RootResp = generate_root_model(Union[JSON, List[int]], name="RootResp")
+RootResp = generate_root_model(Union[JSON, list[int]], name="RootResp")
 
 
 class ComplexResp(BaseModel):
@@ -117,8 +119,8 @@ class DemoModel(BaseModel):
 
 
 class DemoQuery(BaseModel):
-    names1: List[str] = Field(...)
-    names2: List[str] = Field(
+    names1: list[str] = Field(...)
+    names2: list[str] = Field(
         ..., json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy")
     )  # type: ignore
 
@@ -161,22 +163,30 @@ SECURITY_SCHEMAS = [
     SecurityScheme(
         name="auth_apiKey",
         data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "Authorization", "in": "header"}
+            {"type": "apiKey", "name": "Authorization", "in": "header"},
+            model_adapter=ADAPTER,
         ),
     ),
     SecurityScheme(
         name="auth_apiKey_backup",
         data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "Authorization", "in": "header"}
+            {"type": "apiKey", "name": "Authorization", "in": "header"},
+            model_adapter=ADAPTER,
         ),
     ),
     SecurityScheme(
         name="auth_BasicAuth",
-        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "basic"}),
+        data=SecuritySchemeData.model_validate(
+            {"type": "http", "scheme": "basic"},
+            model_adapter=ADAPTER,
+        ),
     ),
     SecurityScheme(
         name="auth_BearerAuth",
-        data=SecuritySchemeData.model_validate({"type": "http", "scheme": "bearer"}),
+        data=SecuritySchemeData.model_validate(
+            {"type": "http", "scheme": "bearer"},
+            model_adapter=ADAPTER,
+        ),
     ),
     SecurityScheme(
         name="auth_openID",
@@ -184,7 +194,8 @@ SECURITY_SCHEMAS = [
             {
                 "type": "openIdConnect",
                 "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
-            }
+            },
+            model_adapter=ADAPTER,
         ),
     ),
     SecurityScheme(
@@ -203,7 +214,8 @@ SECURITY_SCHEMAS = [
                         },
                     },
                 },
-            }
+            },
+            model_adapter=ADAPTER,
         ),
     ),
 ]
@@ -278,7 +290,7 @@ def get_root_resp_data(pre_serialize: bool, return_what: str):
 @dataclass(frozen=True)
 class UserXmlData:
     name: str
-    score: List[int]
+    score: list[int]
 
     @staticmethod
     def parse_xml(data: str) -> "UserXmlData":

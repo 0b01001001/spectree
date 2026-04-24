@@ -1,62 +1,46 @@
 import re
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional, Sequence, Set
+from typing import Any, Dict, Mapping, Optional, Set
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    RootModel,
-    field_validator,
-    model_validator,
-)
-from pydantic_core import core_schema
+from spectree.dataclass_model import AdapterBackedDataclass
+from spectree.errors import SpecTreeValidationError
 
 # OpenAPI names validation regexp
 OpenAPI_NAME_RE = re.compile(r"^[A-Za-z0-9-._]+")
 
-_EMPTY_SET: set[None] = set()
+_EMPTY_FIELDS: set[str] = set()
 
 
-class ExternalDocs(BaseModel):
+@dataclass
+class ExternalDocs(AdapterBackedDataclass):
+    url: str = field(metadata={"format": "url"})
     description: str = ""
-    url: str
 
 
-class Tag(BaseModel):
-    """OpenAPI tag object"""
+@dataclass
+class Tag(AdapterBackedDataclass):
+    """OpenAPI tag object."""
 
     name: str
     description: str = ""
     externalDocs: Optional[ExternalDocs] = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-class ValidationErrorElement(BaseModel):
+@dataclass
+class ValidationErrorElement(AdapterBackedDataclass):
     """Model of a validation error response element."""
 
-    loc: Sequence[str] = Field(
-        ...,
-        title="Missing field name",
+    loc: list[str] = field(metadata={"title": "Missing field name"})
+    msg: str = field(metadata={"title": "Error message"})
+    type: str = field(metadata={"title": "Error type"})
+    ctx: Optional[Dict[str, Any]] = field(
+        default=None,
+        metadata={"title": "Error context"},
     )
-    msg: str = Field(
-        ...,
-        title="Error message",
-    )
-    type: str = Field(
-        ...,
-        title="Error type",
-    )
-    ctx: Optional[Dict[str, Any]] = Field(
-        None,
-        title="Error context",
-    )
-
-
-class ValidationError(RootModel[Sequence[ValidationErrorElement]]):
-    """Model of a validation error response."""
 
 
 class SecureType(str, Enum):
@@ -72,131 +56,135 @@ class InType(str, Enum):
     COOKIE = "cookie"
 
 
-type_req_fields: Dict[SecureType, Set[str]] = {
+SECURE_TYPE_REQUIRED_FIELDS: Dict[SecureType, Set[str]] = {
     SecureType.HTTP: {"scheme"},
-    SecureType.API_KEY: {"name", "in"},
+    SecureType.API_KEY: {"name", "field_in"},
     SecureType.OAUTH_TWO: {"flows"},
     SecureType.OPEN_ID_CONNECT: {"openIdConnectUrl"},
 }
 
 
-class SecuritySchemeData(BaseModel):
+@dataclass
+class SecuritySchemeData(AdapterBackedDataclass):
     """
     Security scheme data
     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#securitySchemeObject
     """
 
-    type: SecureType = Field(..., description="Secure scheme type")
-    description: Optional[str] = Field(
-        None,
-        description="A short description for security scheme.",
+    type: SecureType = field(
+        metadata={"description": "Secure scheme type"},
     )
-    name: Optional[str] = Field(
-        None,
-        description="The name of the header, query or cookie parameter to be used.",
+    description: Optional[str] = field(
+        default=None,
+        metadata={"description": "A short description for security scheme."},
     )
-    field_in: Optional[InType] = Field(
-        None, alias="in", description="The location of the API key."
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "description": "The name of the header, query or cookie parameter to be used."
+        },
     )
-    scheme: Optional[str] = Field(
-        None, description="The name of the HTTP Authorization scheme."
+    field_in: Optional[InType] = field(
+        default=None,
+        metadata={"description": "The location of the API key.", "rename": "in"},
     )
-    bearerFormat: Optional[str] = Field(
-        None,
-        description=(
-            "A hint to the client to identify how the bearer token is formatted."
-        ),
+    scheme: Optional[str] = field(
+        default=None,
+        metadata={"description": "The name of the HTTP Authorization scheme."},
     )
-    flows: Optional[dict] = Field(
-        None,
-        description=(
-            "Containing configuration information for the flow types supported."
-        ),
-    )
-    openIdConnectUrl: Optional[str] = Field(
-        None, description="OpenId Connect URL to discover OAuth2 configuration values."
-    )
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_type_required_fields(cls, values: dict):
-        exist_fields = {key for key in values if values[key]}
-        if not values.get("type"):
-            raise ValueError("Type field is required")
-
-        if not type_req_fields.get(values["type"], _EMPTY_SET).issubset(exist_fields):
-            raise ValueError(
-                f"For `{values['type']}` type "
-                f"`{', '.join(type_req_fields[values['type']])}` field(s) is required. "
-                f"But only found `{', '.join(exist_fields)}`."
+    bearerFormat: Optional[str] = field(
+        default=None,
+        metadata={
+            "description": (
+                "A hint to the client to identify how the bearer token is formatted."
             )
-        return values
-
-    model_config = ConfigDict(
-        validate_assignment=True,
-        validate_by_alias=True,
-        validate_by_name=True,
+        },
+    )
+    flows: Optional[Dict[str, Any]] = field(
+        default=None,
+        metadata={
+            "description": "Containing configuration information for the flow types supported."
+        },
+    )
+    openIdConnectUrl: Optional[str] = field(
+        default=None,
+        metadata={
+            "description": "OpenId Connect URL to discover OAuth2 configuration values."
+        },
     )
 
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if self.type is None:
+            raise SpecTreeValidationError("Type field is required")
 
-class SecurityScheme(BaseModel):
+        exist_fields = {
+            field_name
+            for field_name in (
+                "name",
+                "field_in",
+                "scheme",
+                "flows",
+                "openIdConnectUrl",
+            )
+            if getattr(self, field_name)
+        }
+        required_fields = SECURE_TYPE_REQUIRED_FIELDS.get(self.type, _EMPTY_FIELDS)
+        if not required_fields.issubset(exist_fields):
+            raise SpecTreeValidationError(
+                f"`{self.type.value}` type requires "
+                f"`{', '.join(required_fields)}` field(s)"
+                f"But only found `{', '.join(sorted(exist_fields))}`."
+            )
+
+
+@dataclass
+class SecurityScheme(AdapterBackedDataclass):
     """
     Named security scheme
     """
 
-    name: str = Field(
-        ...,
-        description="Custom security scheme name. Can only contain - [A-Za-z0-9-._]",
+    name: str = field(
+        metadata={
+            "description": "Custom security scheme name. Can only contain - [A-Za-z0-9-._]"
+        }
     )
-    data: SecuritySchemeData = Field(..., description="Security scheme data")
+    data: SecuritySchemeData = field(metadata={"description": "Security scheme data"})
 
-    @field_validator("name")
-    def check_name(cls, value: str):
-        if not OpenAPI_NAME_RE.fullmatch(value):
-            raise ValueError("Name does not match OpenAPI rules")
-        return value
+    @classmethod
+    def __pre_init__(cls, kwargs: dict[str, Any]) -> dict[str, Any]:
+        kwargs = super().__pre_init__(kwargs)
+        if isinstance(kwargs.get("data"), Mapping):
+            kwargs["data"] = SecuritySchemeData.__pre_init__(kwargs["data"])
+        return kwargs
 
-    model_config = ConfigDict(validate_assignment=True)
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if not OpenAPI_NAME_RE.fullmatch(self.name):
+            raise SpecTreeValidationError("Name does not match OpenAPI naming rules")
 
 
-class Server(BaseModel):
+@dataclass
+class Server(AdapterBackedDataclass):
     """
     Servers section of OAS
     """
 
-    url: str = Field(
-        ...,
-        description="""URL or path of API server
-
-        (may be parametrized with using \"variables\" section - for more information,
-        see: https://swagger.io/docs/specification/api-host-and-base-path/ )""",
+    url: str = field(
+        metadata={
+            "description": (
+                "URL or path of API server\n\n"
+                '(may be parametrized with using "variables" section - for more '
+                "information, see: "
+                "https://swagger.io/docs/specification/api-host-and-base-path/ )"
+            )
+        }
     )
-    description: Optional[str] = Field(
-        None,
-        description="Custom server description for server URL",
+    description: Optional[str] = field(
+        default=None,
+        metadata={"description": "Custom server description for server URL"},
     )
-    variables: Optional[dict] = Field(
-        None,
-        description="Variables for customizing server URL",
+    variables: Optional[Dict[str, Any]] = field(
+        default=None,
+        metadata={"description": "Variables for customizing server URL"},
     )
-
-    model_config = ConfigDict(validate_assignment=True)
-
-
-class BaseFile:
-    """
-    An uploaded file, will be assigned as the corresponding web framework's
-    file object.
-    """
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _core_schema: Dict[str, Any], _handler):
-        return {"format": "binary", "type": "string"}
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source_type, _handler):
-        return core_schema.with_info_plain_validator_function(cls.validate)
-
-    @classmethod
-    def validate(cls, value: Any, *_args, **_kwargs):
-        return value

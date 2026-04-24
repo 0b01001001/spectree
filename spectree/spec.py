@@ -16,13 +16,14 @@ from typing import (
 from spectree._types import (
     FunctionDecorator,
     HookHandler,
+    ModelAdapterType,
     NamingStrategy,
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
-from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
+from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
-from spectree.models import Tag, ValidationError
+from spectree.models import Tag
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
 from spectree.utils import (
@@ -60,6 +61,11 @@ class SpecTree:
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
         if needed.
+    :param validation_error_model: The default validation error type to be shown
+        in the generated OpenAPI frontend. Make sure it's derived from the model
+        adapter (including the ValidationError).
+    :param model_adapter: adpater for validation and OpenAPI JSON schema generation.
+        Choose from the `spectree.model_adapter`. If not set, will use `pydantic`.
     :param kwargs: init :class:`spectree.config.Configuration`, they can also be
         configured through the environment variables with prefix `spectree_`
     """
@@ -75,17 +81,20 @@ class SpecTree:
         validation_error_model: Optional[ModelClass] = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
-        model_adapter: Optional[ModelAdapter[Any, Exception]] = None,
+        model_adapter: Optional[ModelAdapterType] = None,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
         self.nested_naming_strategy = nested_naming_strategy
         self.validation_error_status = validation_error_status
-        self.validation_error_model = validation_error_model or ValidationError
-        self.model_adapter = model_adapter or get_default_model_adapter()
+        self.model_adapter = model_adapter or get_pydantic_model_adapter()
+        self.validation_error_model = validation_error_model
         self.before = before
         self.after = after
-        self.config: Configuration = Configuration.model_validate(kwargs)
+        self.config: Configuration = Configuration.model_validate(
+            kwargs,
+            model_adapter=self.model_adapter,
+        )
         self.backend_name = backend_name
         if backend:
             self.backend = backend(self)
@@ -265,7 +274,9 @@ class SpecTree:
                 # Make sure that the endpoint specific status code and data model for
                 # validation errors shows up in the response spec.
                 resp.add_model(
-                    validation_error_status, self.validation_error_model, replace=False
+                    validation_error_status,
+                    self.validation_error_model or self.model_adapter.validation_error,
+                    replace=False,
                 )
                 for model in resp.models:
                     self._add_model(model=model, mode="serialization")
@@ -328,7 +339,7 @@ class SpecTree:
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
-                            tag.model_dump(exclude_none=True)
+                            tag.to_dict(exclude_none=True)
                             if isinstance(tag, Tag)
                             else {"name": tag}
                         )
@@ -368,12 +379,12 @@ class SpecTree:
 
         if self.config.servers:
             spec["servers"] = [
-                server.model_dump(exclude_none=True) for server in self.config.servers
+                server.to_dict(exclude_none=True) for server in self.config.servers
             ]
 
         if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
-                scheme.name: scheme.data.model_dump(exclude_none=True, by_alias=True)
+                scheme.name: scheme.data.to_dict(exclude_none=True)
                 for scheme in self.config.security_schemes
             }
 
