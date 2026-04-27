@@ -1,11 +1,10 @@
 import logging
 
-from .models import BaseFile, ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
+from .models import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from .response import Response
 from .spec import SpecTree
 
 __all__ = [
-    "BaseFile",
     "ExternalDocs",
     "Response",
     "SecurityScheme",

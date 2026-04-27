@@ -1,5 +1,5 @@
 import re
-from typing import Any, Iterator, List, Mapping, Optional, Tuple, Union
+from typing import Any, Iterator, Mapping, Optional, Tuple, Union
 
 from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
@@ -59,10 +59,10 @@ def werkzeug_parse_rule(
 
 def flask_response_unpack(
     resp: Any,
-) -> Tuple[Any, int, Union[List[Tuple[str, str]], Headers]]:
+) -> Tuple[Any, int, Union[list[Tuple[str, str]], Headers]]:
     """Parse Flask response object into a tuple of (payload, status_code, headers)."""
     status = 200
-    headers: List[Tuple[str, str]] = []
+    headers: list[Tuple[str, str]] = []
     payload = None
     if not isinstance(resp, tuple):
         return resp, status, headers

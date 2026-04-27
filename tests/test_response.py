@@ -1,15 +1,14 @@
 from typing import List, get_type_hints
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
-from spectree.model_adapter import get_default_model_adapter
-from spectree.models import ValidationError
+from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 
 from .common import JSON, DemoModel, get_model_path_key
 
-MODEL_ADAPTER = get_default_model_adapter()
+MODEL_ADAPTER = get_pydantic_model_adapter()
 
 
 class NormalClass:

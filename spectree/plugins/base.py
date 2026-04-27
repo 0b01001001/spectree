@@ -12,9 +12,9 @@ from typing import (
     Union,
 )
 
-from spectree._types import HookHandler, JsonType
+from spectree._types import HookHandler, JsonType, ModelAdapterType
 from spectree.config import Configuration
-from spectree.model_adapter import ModelAdapter, ModelClass
+from spectree.model_adapter import ModelClass
 from spectree.response import Response
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class BasePlugin(Generic[BackendRoute]):
     def __init__(self, spectree: "SpecTree"):
         self.spectree = spectree
         self.config: Configuration = spectree.config
-        self.model_adapter: ModelAdapter[Any, Exception] = spectree.model_adapter
+        self.model_adapter: ModelAdapterType = spectree.model_adapter
         self.logger = logging.getLogger(__name__)
 
     def register_route(self, app: Any):
@@ -140,7 +140,7 @@ class ResponseValidationResult:
 
 
 def validate_response(
-    model_adapter: ModelAdapter[Any, Exception],
+    model_adapter: ModelAdapterType,
     validation_model: Optional[ModelClass],
     response_payload: Any,
     force_serialize: bool = False,
@@ -162,7 +162,7 @@ def validate_response(
     skip_validation = False
     if isinstance(response_payload, RawResponsePayload):
         final_response_payload = response_payload.payload
-    elif isinstance(response_payload, validation_model):
+    elif model_adapter.is_model_instance(response_payload, validation_model):
         skip_validation = True
         final_response_payload = model_adapter.dump_json(response_payload)
     else:

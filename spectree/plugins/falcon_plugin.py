@@ -3,7 +3,7 @@ import inspect
 import re
 from collections.abc import AsyncIterator
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional
 
 try:
     # some platforms may ban `tempfile`, e.g. Google App Engine
@@ -100,7 +100,7 @@ class DocPageAsgi(DocPage):
         super().on_get(req, resp)
 
 
-DOC_CLASS: List[str] = [
+DOC_CLASS: list[str] = [
     x.__name__ for x in (DocPage, OpenAPI, DocPageAsgi, OpenAPIAsgi)
 ]
 
@@ -159,7 +159,7 @@ class FalconPlugin(BasePlugin):
 
         return routes
 
-    def parse_func(self, route: Any) -> Dict[str, Any]:
+    def parse_func(self, route: Any) -> dict[str, Any]:
         return route.method_map.items()
 
     def parse_path(self, route, path_parameter_descriptions):

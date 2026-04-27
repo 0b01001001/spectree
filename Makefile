@@ -9,9 +9,11 @@ install:
 
 import_test:
 	for module in flask quart falcon starlette; do \
-		uv sync --extra $$module; \
+		uv sync --extra pydantic --extra $$module; \
 		bash -c "uv run tests/import_module/test_$${module}_plugin.py" || exit 1; \
 	done
+	uv sync --extra msgspec --extra falcon
+	bash -c "uv run tests/import_module/test_msgspec_plugin.py"
 
 test: import_test
 	uv sync --all-extras --group dev

@@ -3,10 +3,11 @@ from typing import Any, Literal, Protocol, TypeAlias, TypeVar
 ModelClass: TypeAlias = type[Any]
 ModelT = TypeVar("ModelT")
 ValidationErrorT = TypeVar("ValidationErrorT", bound=Exception)
+BaseFileT = TypeVar("BaseFileT")
 SchemaMode: TypeAlias = Literal["validation", "serialization"]
 
 
-class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
+class ModelAdapter(Protocol[ModelT, ValidationErrorT, BaseFileT]):
     """The protocol of model adapter.
 
     - check the model type
@@ -17,10 +18,15 @@ class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
     """
 
     validation_error: type[ValidationErrorT]
+    basefile: BaseFileT
 
-    def is_model_type(self, value: Any) -> bool: ...
+    def is_model_type(self, value: Any) -> bool:
+        """Check if the value can be used to generate a schema."""
+        ...
 
-    def is_model_instance(self, value: Any) -> bool: ...
+    def is_model_instance(self, value: Any, model) -> bool:
+        """Check if the value is the instance of the model under this adapter."""
+        ...
 
     def is_partial_model_instance(self, value: Any) -> bool: ...
 
@@ -49,9 +55,3 @@ class ModelAdapter(Protocol[ModelT, ValidationErrorT]):
     ) -> dict[str, Any]: ...
 
     def validation_errors(self, err: ValidationErrorT) -> Any: ...
-
-    def validation_error_model_name(self, err: ValidationErrorT) -> str: ...
-
-    def is_root_model(self, value: Any) -> bool: ...
-
-    def is_root_model_instance(self, value: Any) -> bool: ...

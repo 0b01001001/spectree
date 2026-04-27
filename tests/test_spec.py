@@ -6,7 +6,7 @@ from starlette.applications import Starlette
 
 from spectree import Response
 from spectree.config import Configuration
-from spectree.models import Server, ValidationError
+from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 
@@ -66,8 +66,8 @@ def test_spec_servers_empty(name, app):
 
 @pytest.mark.parametrize("name, app", backend_app())
 def test_spec_servers_only(name, app):
-    server1_url = "http://foo/bar"
-    server2_url = "/foo/bar/"
+    server1_url = "http://example.com/bar"
+    server2_url = "https://example.com/foo/bar"
     spec = _get_spec(
         name, app, servers=[Server(url=server1_url), Server(url=server2_url)]
     )
@@ -189,7 +189,7 @@ def test_model_for_validation_errors_specified():
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is ValidationError
+    assert foo.resp.find_model(422) is api.model_adapter.validation_error
     assert bar.resp.find_model(422) is CustomValidationError
 
 

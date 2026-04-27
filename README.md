@@ -27,7 +27,7 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
 Install with pip:
 
 ```bash
-pip install spectree
+pip install "spectree[pydantic]"
 ```
 
 If you want to install with offline OpenAPI web pages support:
@@ -35,7 +35,13 @@ If you want to install with offline OpenAPI web pages support:
 > Offline mode doesn't support SwaggerUI OAuth2 redirection.
 
 ```bash
-pip install spectree[offline]
+pip install "spectree[pydantic,offline]"
+```
+
+If you want to use `msgspec` instead of `pydantic`:
+
+```bash
+pip install "spectree[msgspec]"
 ```
 
 ### Examples
@@ -45,12 +51,13 @@ Check the [examples](examples) folder.
 * [flask example](examples/flask_demo.py)
 * [quart example](examples/quart_demo.py)
 * [falcon example with logging when validation failed](examples/falcon_demo.py)
+* [falcon example with msgspec models](examples/falcon_msgspec_demo.py)
 * [starlette example](examples/starlette_demo.py)
 
 ### Step by Step
 
 1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`
-2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`. `SpecTree` uses `pydantic` as the default `model_adapter`.
+2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default, or you can pass another adapter explicitly with `model_adapter=...`.
 3. `api.validate` decorate the route with (the default value is given in parentheses):
    * `query`
    * `json`
@@ -91,6 +98,17 @@ You can update the config when init the spectree like:
 
 ```py
 SpecTree('flask', title='Demo API', version='v1.0', path='doc')
+```
+
+> How do I choose between `pydantic` and `msgspec`?
+
+Install the extra for the backend you want to use, then pass the adapter when creating `SpecTree`:
+
+```py
+from spectree.model_adapter import get_msgspec_model_adapter
+
+SpecTree("falcon", model_adapter=get_msgspec_model_adapter())
+SpecTree("flask")  # uses pydantic by default
 ```
 
 > What is `Response` and how to use it?
