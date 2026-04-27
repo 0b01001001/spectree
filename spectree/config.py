@@ -1,7 +1,7 @@
 import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, ClassVar, Mapping, Optional, Union
 
 from spectree.dataclass_model import AdapterBackedDataclass
 from spectree.models import SecurityScheme, Server
@@ -105,6 +105,10 @@ class Configuration(AdapterBackedDataclass):
     #: OAuth2 use PKCE with authorization code grant
     use_pkce_with_authorization_code_grant: bool = False
 
+    __cls_renames__: ClassVar[Mapping[str, str]] = {
+        "terms_of_service": "termsOfService",
+    }
+
     @property
     def spec_url(self) -> str:
         return f"/{self.path}/{self.filename}"
@@ -155,5 +159,4 @@ class Configuration(AdapterBackedDataclass):
             ),
             exclude_none=True,
         )
-        info["termsOfService"] = info.pop("terms_of_service")
         return info

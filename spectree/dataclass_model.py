@@ -1,6 +1,6 @@
 import dataclasses
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, TypeVar
 from urllib.parse import urlsplit
 
@@ -26,31 +26,38 @@ def validate_url(value: Any, field_name: str):
         raise SpecTreeValidationError(f"{field_name} must be a valid absolute URL")
 
 
+def dict_exclude_none_value(items: Iterable[tuple[str, object]]):
+    return {k: v for k, v in items if v is not None}
+
+
 @dataclasses.dataclass
 class AdapterBackedDataclass:
+    """
+    Limitation: cannot parse nested `AdapterBackedDataclass` when `__pre_init__`
+    is required for the inner class.
+    """
+
     @classmethod
     def __pre_init__(cls, kwargs: Any) -> Any:
         if not isinstance(kwargs, Mapping):
             return kwargs
         normalized = {}
-        fields = {field.name: field for field in dataclasses.fields(cls)}
-
         rename_rev = {
             val: key for key, val in getattr(cls, "__cls_renames__", {}).items()
         }
 
         for key, value in kwargs.items():
-            norm = normalize_key(key) if key not in rename_rev else rename_rev[key]
+            norm = rename_rev[key] if key in rename_rev else normalize_key(key)
             if norm in normalized:
                 raise SpecTreeDuplicateField(cls.__name__, norm)
-            field = fields[norm]
-            if "format" in field.metadata and field.metadata["format"] == "url":
-                validate_url(value, norm)
             normalized[norm] = value
         return normalized
 
     def __post_init__(self):
-        pass
+        fields = {field.name: field for field in dataclasses.fields(self)}
+        for name, field in fields.items():
+            if "format" in field.metadata and field.metadata["format"] == "url":
+                validate_url(getattr(self, name), name)
 
     @classmethod
     def model_validate(
@@ -74,15 +81,17 @@ class AdapterBackedDataclass:
     ) -> dict[str, Any]:
         """Dump the instance to a python dict.
 
-        The `include` and `exclude_none` only affects the outermost instance.
+        The `include` only affects the outermost instance.
+
+        `exclude_none` only affects
         """
-        data = dataclasses.asdict(self)
+        data = dataclasses.asdict(
+            self, dict_factory=dict_exclude_none_value if exclude_none else dict
+        )
         final = {}
         renames = getattr(self, "__cls_renames__", {})
         for key, value in data.items():
             if key not in include:
-                continue
-            if exclude_none and value is None:
                 continue
             if key in renames:
                 final[renames[key]] = value
