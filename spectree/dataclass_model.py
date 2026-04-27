@@ -35,21 +35,18 @@ class AdapterBackedDataclass:
         normalized = {}
         fields = {field.name: field for field in dataclasses.fields(cls)}
 
-        renames = []
-        for field in fields.values():
-            if target := getattr(field.metadata, "rename", None):
-                renames.append((field.name, target))
-        for source, target in renames:
-            fields[target] = fields.pop(source)
+        rename_rev = {
+            val: key for key, val in getattr(cls, "__cls_renames__", {}).items()
+        }
 
         for key, value in kwargs.items():
-            norm = normalize_key(key)
+            norm = normalize_key(key) if key not in rename_rev else rename_rev[key]
             if norm in normalized:
                 raise SpecTreeDuplicateField(cls.__name__, norm)
             field = fields[norm]
-            if getattr(field.metadata, "format", "") == "url":
+            if "format" in field.metadata and field.metadata["format"] == "url":
                 validate_url(value, norm)
-            normalized[normalize_key(key)] = value
+            normalized[norm] = value
         return normalized
 
     def __post_init__(self):
@@ -81,10 +78,14 @@ class AdapterBackedDataclass:
         """
         data = dataclasses.asdict(self)
         final = {}
+        renames = getattr(self, "__cls_renames__", {})
         for key, value in data.items():
             if key not in include:
                 continue
             if exclude_none and value is None:
                 continue
-            final[key] = value
+            if key in renames:
+                final[renames[key]] = value
+            else:
+                final[key] = value
         return final

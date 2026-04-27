@@ -1,7 +1,8 @@
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional, Set
+from typing import Any, ClassVar, Dict, Optional, Set
 
 from spectree.dataclass_model import AdapterBackedDataclass
 from spectree.errors import SpecTreeValidationError
@@ -60,7 +61,7 @@ SECURE_TYPE_REQUIRED_FIELDS: Dict[SecureType, Set[str]] = {
     SecureType.HTTP: {"scheme"},
     SecureType.API_KEY: {"name", "field_in"},
     SecureType.OAUTH_TWO: {"flows"},
-    SecureType.OPEN_ID_CONNECT: {"openIdConnectUrl"},
+    SecureType.OPEN_ID_CONNECT: {"open_id_connect_url"},
 }
 
 
@@ -86,18 +87,18 @@ class SecuritySchemeData(AdapterBackedDataclass):
     )
     field_in: Optional[InType] = field(
         default=None,
-        metadata={"description": "The location of the API key.", "rename": "in"},
+        metadata={"description": "The location of the API key."},
     )
     scheme: Optional[str] = field(
         default=None,
         metadata={"description": "The name of the HTTP Authorization scheme."},
     )
-    bearerFormat: Optional[str] = field(
+    bearer_format: Optional[str] = field(
         default=None,
         metadata={
             "description": (
                 "A hint to the client to identify how the bearer token is formatted."
-            )
+            ),
         },
     )
     flows: Optional[Dict[str, Any]] = field(
@@ -106,17 +107,23 @@ class SecuritySchemeData(AdapterBackedDataclass):
             "description": "Containing configuration information for the flow types supported."
         },
     )
-    openIdConnectUrl: Optional[str] = field(
+    open_id_connect_url: Optional[str] = field(
         default=None,
         metadata={
-            "description": "OpenId Connect URL to discover OAuth2 configuration values."
+            "description": "OpenId Connect URL to discover OAuth2 configuration values.",
         },
     )
+
+    __cls_renames__: ClassVar[Mapping[str, str]] = {
+        "field_in": "in",
+        "bearer_format": "bearerFormat",
+        "open_id_connect_url": "openIdConnectUrl",
+    }
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if self.type is None:
-            raise SpecTreeValidationError("Type field is required")
+            raise SpecTreeValidationError("`type` field is required")
 
         exist_fields = {
             field_name
@@ -125,7 +132,7 @@ class SecuritySchemeData(AdapterBackedDataclass):
                 "field_in",
                 "scheme",
                 "flows",
-                "openIdConnectUrl",
+                "open_id_connect_url",
             )
             if getattr(self, field_name)
         }
@@ -133,8 +140,8 @@ class SecuritySchemeData(AdapterBackedDataclass):
         if not required_fields.issubset(exist_fields):
             raise SpecTreeValidationError(
                 f"`{self.type.value}` type requires "
-                f"`{', '.join(required_fields)}` field(s)"
-                f"But only found `{', '.join(sorted(exist_fields))}`."
+                f"`{', '.join(required_fields)}` field(s), "
+                f"but only found `{', '.join(sorted(exist_fields))}`."
             )
 
 
