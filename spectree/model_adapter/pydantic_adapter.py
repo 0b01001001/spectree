@@ -5,8 +5,7 @@ from typing import Any, Sequence
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 from pydantic_core import core_schema
 
-from spectree._types import ModelAdapterType
-from spectree.model_adapter.protocol import SchemaMode
+from spectree.model_adapter.protocol import ModelAdapter, SchemaMode
 from spectree.models import ValidationErrorElement
 
 
@@ -33,7 +32,7 @@ class BaseFile:
         return value
 
 
-class PydanticModelAdapter(ModelAdapterType):
+class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
     """`pydantic` model adapter."""
 
     validation_error = ValidationError

@@ -9,11 +9,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from spectree import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree.model_adapter import get_pydantic_model_adapter
+from spectree.model_adapter.pydantic_adapter import BaseFile
 from spectree.utils import hash_module_path
 
 ADAPTER = get_pydantic_model_adapter()
 generate_root_model = ADAPTER.make_root_model
-BaseFile = ADAPTER.basefile
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")

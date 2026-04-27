@@ -3,8 +3,7 @@ from typing import Annotated, Any, TypeAlias
 
 import msgspec
 
-from spectree._types import ModelAdapterType
-from spectree.model_adapter.protocol import SchemaMode
+from spectree.model_adapter.protocol import ModelAdapter, SchemaMode
 from spectree.models import ValidationErrorElement
 
 _ERROR_PATH_RE = re.compile(r" - at `(?P<path>.+)`$")
@@ -43,11 +42,11 @@ def _parse_error_location(message: str) -> list[str]:
     return [part for part in path.split(".") if part]
 
 
-class MsgspecModelAdapter(ModelAdapterType):
+class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFile]]):
     """`msgspec` model adapter."""
 
     validation_error = msgspec.ValidationError
-    basefile: BaseFile
+    basefile: type[BaseFile]
 
     def __init__(self) -> None:
         self.encoder = msgspec.json.Encoder()
