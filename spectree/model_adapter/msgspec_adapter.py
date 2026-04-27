@@ -1,12 +1,17 @@
 import re
-from typing import Any
+from typing import Annotated, Any, TypeAlias
 
 import msgspec
 
 from spectree._types import ModelAdapterType
 from spectree.model_adapter.protocol import SchemaMode
+from spectree.models import ValidationErrorElement
 
 _ERROR_PATH_RE = re.compile(r" - at `(?P<path>.+)`$")
+
+MsgspecValidationError: TypeAlias = Annotated[
+    list[ValidationErrorElement], msgspec.Meta(title="ValidationError")
+]
 
 
 class BaseFile:
@@ -48,16 +53,17 @@ class MsgspecModelAdapter(ModelAdapterType):
         self.encoder = msgspec.json.Encoder()
 
     def is_model_type(self, value: type) -> bool:
-        """All kinds of type are treated the same."""
+        """All kinds of types are treated the same."""
         return True
 
-    def is_model_instance(self, value: Any) -> bool:
-        return isinstance(value, msgspec.Struct)
+    def is_model_instance(self, value: Any, model) -> bool:
+        """All kinds of types are treated the same."""
+        return True
 
     def is_partial_model_instance(self, value: Any) -> bool:
         if not value:
             return False
-        if self.is_model_instance(value):
+        if isinstance(value, msgspec.Struct):
             return True
         if isinstance(value, dict):
             return any(
@@ -90,10 +96,12 @@ class MsgspecModelAdapter(ModelAdapterType):
 
         See: https://github.com/jcrist/msgspec/issues/484
         """
-        return root_type
+        T = Annotated[root_type, msgspec.Meta(title=name)]  # type: ignore
+        return T  # type: ignore
 
-    def make_list_model(self, model: type[Any]) -> type[msgspec.Struct]:
-        return self.make_root_model(list[model])
+    def make_list_model(self, model: type) -> type:
+        list_model = self.make_root_model(list[model], name=f"{model.__name__}List")  # type: ignore
+        return list_model
 
     def json_schema(
         self,
@@ -107,6 +115,8 @@ class MsgspecModelAdapter(ModelAdapterType):
 
         See https://github.com/jcrist/msgspec/issues/686
         """
+        if model is msgspec.ValidationError:
+            model = MsgspecValidationError  # type: ignore
         return msgspec.json.schema(
             model,
             schema_hook=_schema_hook,
@@ -123,14 +133,3 @@ class MsgspecModelAdapter(ModelAdapterType):
                 "type": "validation_error",
             }
         ]
-
-    # def is_root_model(self, value: Any) -> bool:
-    #     resolved_value = (
-    #         self._resolve_model(value) if value is DefaultValidationError else value
-    #     )
-    #     return self.is_model_type(resolved_value) and hasattr(
-    #         resolved_value, "__spectree_root_type__"
-    #     )
-
-    # def is_root_model_instance(self, value: Any) -> bool:
-    #     return self.is_root_model(type(value))

@@ -66,8 +66,8 @@ def test_spec_servers_empty(name, app):
 
 @pytest.mark.parametrize("name, app", backend_app())
 def test_spec_servers_only(name, app):
-    server1_url = "http://foo/bar"
-    server2_url = "/foo/bar/"
+    server1_url = "http://example.com/bar"
+    server2_url = "https://example.com/foo/bar"
     spec = _get_spec(
         name, app, servers=[Server(url=server1_url), Server(url=server2_url)]
     )

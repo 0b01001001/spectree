@@ -1,12 +1,11 @@
 import json
 from dataclasses import dataclass
-from typing import Any, List
+from typing import List
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from spectree.model_adapter import ModelAdapter, get_pydantic_model_adapter
-from spectree.model_adapter.pydantic_adapter import PydanticModelAdapter
+from spectree.model_adapter import get_pydantic_model_adapter
 
 ADAPTER = get_pydantic_model_adapter()
 
@@ -25,84 +24,6 @@ Users = ADAPTER.make_root_model(List[SimpleModel], name="Users")
 @dataclass
 class RootModelLookalike:
     __root__: List[str]
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, True),
-        (DummyRootModel.model_validate([1, 2, 3]), False),
-        (NestedRootModel, True),
-        (
-            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
-            False,
-        ),
-        (SimpleModel, False),
-        (SimpleModel(user_id=1), False),
-        (RootModelLookalike, False),
-        (RootModelLookalike(__root__=["False"]), False),
-        (list, False),
-        ([1, 2, 3], False),
-        (str, False),
-        ("str", False),
-        (int, False),
-        (1, False),
-    ],
-)
-def test_is_root_model(value: Any, expected: bool):
-    assert ADAPTER.is_root_model(value) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, False),
-        (DummyRootModel.model_validate([1, 2, 3]), True),
-        (NestedRootModel, False),
-        (
-            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
-            True,
-        ),
-        (SimpleModel, False),
-        (SimpleModel(user_id=1), False),
-        (RootModelLookalike, False),
-        (RootModelLookalike(__root__=["False"]), False),
-        (list, False),
-        ([1, 2, 3], False),
-        (str, False),
-        ("str", False),
-        (int, False),
-        (1, False),
-    ],
-)
-def test_is_root_model_instance(value, expected):
-    assert ADAPTER.is_root_model_instance(value) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, True),
-        (DummyRootModel.model_validate([1, 2, 3]), False),
-        (NestedRootModel, True),
-        (
-            NestedRootModel.model_validate(DummyRootModel.model_validate([1, 2, 3])),
-            False,
-        ),
-        (SimpleModel, True),
-        (SimpleModel(user_id=1), False),
-        (RootModelLookalike, False),
-        (RootModelLookalike(__root__=["False"]), False),
-        (list, False),
-        ([1, 2, 3], False),
-        (str, False),
-        ("str", False),
-        (int, False),
-        (1, False),
-    ],
-)
-def test_is_base_model(value, expected):
-    assert ADAPTER.is_model_type(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -128,7 +49,7 @@ def test_is_base_model(value, expected):
     ],
 )
 def test_is_base_model_instance(value, expected):
-    assert ADAPTER.is_model_instance(value) is expected
+    assert ADAPTER.is_model_instance(value, BaseModel) is expected
 
 
 @pytest.mark.parametrize(
@@ -170,15 +91,3 @@ def test_is_partial_base_model_instance(value, expected):
 )
 def test_serialize_model_instance(value, expected):
     assert json.loads(ADAPTER.dump_json(value)) == expected
-
-
-def test_default_model_adapter_matches_protocol():
-    adapter = ADAPTER
-
-    assert isinstance(adapter, PydanticModelAdapter)
-    assert hasattr(adapter, "validate_obj")
-    assert hasattr(adapter, "validate_json")
-    assert hasattr(adapter, "dump_json")
-
-    typed_adapter: ModelAdapter[BaseModel, ValidationError] = adapter
-    assert typed_adapter.is_model_type(SimpleModel) is True

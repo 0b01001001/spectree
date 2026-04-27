@@ -81,9 +81,8 @@ class AdapterBackedDataclass:
     ) -> dict[str, Any]:
         """Dump the instance to a python dict.
 
-        The `include` only affects the outermost instance.
-
-        `exclude_none` only affects
+        The `include` only affects the outermost instance. If not set, all the
+        fields will be returned (unless filtered by other conditions).
         """
         data = dataclasses.asdict(
             self, dict_factory=dict_exclude_none_value if exclude_none else dict
@@ -91,7 +90,7 @@ class AdapterBackedDataclass:
         final = {}
         renames = getattr(self, "__cls_renames__", {})
         for key, value in data.items():
-            if key not in include:
+            if include and key not in include:
                 continue
             if key in renames:
                 final[renames[key]] = value

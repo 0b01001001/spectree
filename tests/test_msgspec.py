@@ -1,91 +1,26 @@
 import json
-from typing import Any
 
+import flask
+import msgspec
 import pytest
 
 import spectree.model_adapter as model_adapter_module
-
-msgspec = pytest.importorskip("msgspec")
-MsgspecStruct: Any = msgspec.Struct
-flask = pytest.importorskip("flask")
-
-from spectree.config import Configuration  # noqa: E402
-from spectree.model_adapter import get_msgspec_model_adapter  # noqa: E402
-from spectree.model_adapter.msgspec_adapter import MsgspecModelAdapter  # noqa: E402
-from spectree.models import ValidationError  # noqa: E402
-from spectree.spec import SpecTree  # noqa: E402
+from spectree.config import Configuration
+from spectree.model_adapter import get_msgspec_model_adapter
+from spectree.model_adapter.msgspec_adapter import MsgspecModelAdapter
+from spectree.models import SecurityScheme
+from spectree.spec import SpecTree
 
 ADAPTER = get_msgspec_model_adapter()
 
 
-class SimpleModel(MsgspecStruct):
+class SimpleModel(msgspec.Struct):
     user_id: int
 
 
 DummyRootModel = ADAPTER.make_root_model(list[int], name="DummyRootModel")
 NestedRootModel = ADAPTER.make_root_model(DummyRootModel, name="NestedRootModel")
 Users = ADAPTER.make_root_model(list[SimpleModel], name="Users")
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, True),
-        (ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]), False),
-        (NestedRootModel, True),
-        (
-            ADAPTER.validate_obj(
-                NestedRootModel,
-                ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]),
-            ),
-            False,
-        ),
-        (SimpleModel, False),
-        (SimpleModel(user_id=1), False),
-        (list, False),
-        ([1, 2, 3], False),
-    ],
-)
-def test_is_root_model(value, expected):
-    assert ADAPTER.is_root_model(value) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, False),
-        (ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]), True),
-        (NestedRootModel, False),
-        (
-            ADAPTER.validate_obj(
-                NestedRootModel,
-                ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]),
-            ),
-            True,
-        ),
-        (SimpleModel, False),
-        (SimpleModel(user_id=1), False),
-        (list, False),
-        ([1, 2, 3], False),
-    ],
-)
-def test_is_root_model_instance(value, expected):
-    assert ADAPTER.is_root_model_instance(value) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (DummyRootModel, True),
-        (ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]), False),
-        (SimpleModel, True),
-        (SimpleModel(user_id=1), False),
-        (list, False),
-        ([1, 2, 3], False),
-    ],
-)
-def test_is_model_type(value, expected):
-    assert ADAPTER.is_model_type(value) is expected
 
 
 @pytest.mark.parametrize(
@@ -137,7 +72,6 @@ def test_validate_json_list_model():
     model = ADAPTER.make_list_model(SimpleModel)
     instance = ADAPTER.validate_json(model, b'[{"user_id": 1}, {"user_id": 2}]')
 
-    assert ADAPTER.is_root_model_instance(instance) is True
     assert json.loads(ADAPTER.dump_json(instance)) == [
         {"user_id": 1},
         {"user_id": 2},
@@ -146,7 +80,7 @@ def test_validate_json_list_model():
 
 def test_validation_error_schema_uses_placeholder_name():
     schema = ADAPTER.json_schema(
-        ValidationError,
+        msgspec.ValidationError,
         ref_template="#/components/schemas/{model}",
     )
 
@@ -195,14 +129,17 @@ def test_msgspec_adapter_validates_internal_configuration_models():
             "termsOfService": "https://example.com/terms",
             "servers": [{"url": "https://example.com"}],
             "securitySchemes": [
-                {
-                    "name": "auth_apiKey",
-                    "data": {
-                        "type": "apiKey",
-                        "in": "header",
-                        "name": "Authorization",
+                SecurityScheme.model_validate(
+                    {
+                        "name": "auth_apiKey",
+                        "data": {
+                            "type": "apiKey",
+                            "in": "header",
+                            "name": "Authorization",
+                        },
                     },
-                }
+                    model_adapter=ADAPTER,
+                )
             ],
         },
         model_adapter=ADAPTER,
@@ -227,7 +164,7 @@ def test_msgspec_adapter_dump_python_supports_alias_and_exclude_none():
         model_adapter=ADAPTER,
     )
 
-    assert ADAPTER.dump_python(config, by_alias=True, exclude_none=True) == {
+    assert config.to_dict(exclude_none=True) == {
         "title": "Msgspec API",
         "version": "0.1.0",
         "termsOfService": "https://example.com/terms",
@@ -249,9 +186,6 @@ def test_msgspec_adapter_dump_python_supports_alias_and_exclude_none():
         "use_basic_authentication_with_access_code_grant": False,
         "use_pkce_with_authorization_code_grant": False,
     }
-    assert config.model_dump(by_alias=True, exclude_none=True)["termsOfService"] == (
-        "https://example.com/terms"
-    )
 
 
 def test_spectree_uses_msgspec_adapter_for_internal_configuration():

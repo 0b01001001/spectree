@@ -1,11 +1,17 @@
 from collections.abc import Mapping
-from typing import Any
+from dataclasses import is_dataclass
+from typing import Any, Sequence
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 from pydantic_core import core_schema
 
 from spectree._types import ModelAdapterType
 from spectree.model_adapter.protocol import SchemaMode
+from spectree.models import ValidationErrorElement
+
+
+class ValidationErrorType(RootModel[Sequence[ValidationErrorElement]]):
+    """Model of a validation error response."""
 
 
 class BaseFile:
@@ -44,15 +50,19 @@ class PydanticModelAdapter(ModelAdapterType):
         return adapter
 
     def is_model_type(self, value: type) -> bool:
-        return value is ValidationError or issubclass(value, BaseModel)
+        return (
+            value is ValidationError
+            or issubclass(value, BaseModel)
+            or is_dataclass(value)
+        )
 
-    def is_model_instance(self, value: Any) -> bool:
-        return isinstance(value, BaseModel)
+    def is_model_instance(self, value: Any, model) -> bool:
+        return isinstance(value, model)
 
     def is_partial_model_instance(self, value: Any) -> bool:
         if not value:
             return False
-        if self.is_model_instance(value):
+        if isinstance(value, BaseModel):
             return True
         if isinstance(value, dict):
             return any(
@@ -76,7 +86,7 @@ class PydanticModelAdapter(ModelAdapterType):
 
     def dump_json(self, value: Any) -> bytes:
         instance = value
-        if not self.is_model_instance(instance):
+        if not isinstance(value, BaseModel):
             instance = self.validate_obj(type(instance), instance)
         if isinstance(instance, BaseModel):
             return instance.model_dump_json().encode("utf-8")
@@ -108,18 +118,13 @@ class PydanticModelAdapter(ModelAdapterType):
     ) -> dict[str, Any]:
         if issubclass(model, BaseModel):
             return model.model_json_schema(ref_template=ref_template, mode=mode)
+        elif model is ValidationError:
+            return ValidationErrorType.model_json_schema(
+                ref_template=ref_template, mode=mode
+            )
         return self._type_adapter(model).json_schema(
             ref_template=ref_template, mode=mode
         )
 
     def validation_errors(self, err: ValidationError) -> Any:
         return err.errors(include_context=False)
-
-    # def is_root_model(self, value: Any) -> bool:
-    #     return self.is_model_type(value) and any(
-    #         f"{base.__module__}.{base.__name__}" == "pydantic.root_model.RootModel"
-    #         for base in value.mro()
-    #     )
-
-    # def is_root_model_instance(self, value: Any) -> bool:
-    #     return self.is_root_model(type(value))

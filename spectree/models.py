@@ -184,7 +184,8 @@ class Server(AdapterBackedDataclass):
                 '(may be parametrized with using "variables" section - for more '
                 "information, see: "
                 "https://swagger.io/docs/specification/api-host-and-base-path/ )"
-            )
+            ),
+            "format": "url",
         }
     )
     description: Optional[str] = field(

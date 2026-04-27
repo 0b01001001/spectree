@@ -162,7 +162,7 @@ def validate_response(
     skip_validation = False
     if isinstance(response_payload, RawResponsePayload):
         final_response_payload = response_payload.payload
-    elif isinstance(response_payload, validation_model):
+    elif model_adapter.is_model_instance(response_payload, validation_model):
         skip_validation = True
         final_response_payload = model_adapter.dump_json(response_payload)
     else:

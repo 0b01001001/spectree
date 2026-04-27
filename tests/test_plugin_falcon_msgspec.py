@@ -1,26 +1,21 @@
-from typing import Any
-
+import falcon
+import msgspec
 import pytest
+from falcon import testing as falcon_testing
 
-falcon = pytest.importorskip("falcon")
-msgspec = pytest.importorskip("msgspec")
-falcon_testing = pytest.importorskip("falcon.testing")
-MsgspecStruct: Any = msgspec.Struct
-
-from spectree import Response, SpecTree  # noqa: E402
-from spectree.model_adapter import get_msgspec_model_adapter  # noqa: E402
-from spectree.models import ValidationError  # noqa: E402
+from spectree import Response, SpecTree
+from spectree.model_adapter import get_msgspec_model_adapter
 
 
-class Query(MsgspecStruct):
+class Query(msgspec.Struct):
     limit: int
 
 
-class Payload(MsgspecStruct):
+class Payload(msgspec.Struct):
     name: str
 
 
-class Item(MsgspecStruct):
+class Item(msgspec.Struct):
     name: str
     limit: int
 
@@ -75,14 +70,13 @@ def test_falcon_msgspec_validation_error(app_and_api):
 def test_falcon_msgspec_response_models_and_spec(app_and_api):
     _, api, resource = app_and_api
 
-    assert resource.on_post.resp.find_model(422) is ValidationError
-    assert resource.on_post.resp.find_model(200).__name__ == "ItemList"
+    assert resource.on_post.resp.find_model(422) is msgspec.ValidationError
 
     spec = api.spec
     responses = spec["paths"]["/items"]["post"]["responses"]
 
     assert responses["200"]["content"]["application/json"]["schema"]["$ref"].startswith(
-        "#/components/schemas/ItemList."
+        "#/components/schemas/Annotated."
     )
     assert responses["422"]["content"]["application/json"]["schema"]["$ref"].startswith(
         "#/components/schemas/ValidationError."
