@@ -237,3 +237,52 @@ def test_operation_id_override(override_operation_id, expected_operation_id):
     with app.app_context():
         operation_id = api.spec["paths"]["/foo"]["get"]["operationId"]
         assert operation_id == expected_operation_id
+
+
+def test_custom_model_naming_strategies_are_used_in_refs_and_components():
+    class Child(BaseModel):
+        value: int
+
+    class Payload(BaseModel):
+        child: Child
+
+    class Result(BaseModel):
+        child: Child
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: model.__name__.lower(),
+        nested_naming_strategy=lambda _parent, child: child.lower(),
+    )
+    app = Flask(__name__)
+
+    @app.route("/items", methods=["POST"])
+    @api.validate(json=Payload, resp=Response(HTTP_200=Result))
+    def create_item():
+        pass
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    operation = spec["paths"]["/items"]["post"]
+    schemas = spec["components"]["schemas"]
+
+    assert operation["requestBody"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/payload"
+    }
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/result"
+    }
+    assert schemas["payload"]["properties"]["child"] == {
+        "$ref": "#/components/schemas/child"
+    }
+    assert schemas["result"]["properties"]["child"] == {
+        "$ref": "#/components/schemas/child"
+    }
+    assert schemas["validationerror"]["items"] == {
+        "$ref": "#/components/schemas/validationerrorelement"
+    }
+    assert "Child" not in schemas
+    assert "child" in schemas

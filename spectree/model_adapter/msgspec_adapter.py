@@ -13,21 +13,9 @@ MsgspecValidationError: TypeAlias = Annotated[
 ]
 
 
-class BaseFile:
-    pass
-
-
-def _dec_hook(typ: type, obj: Any):
-    """DO NOT edit the basefile obj, leave it to the downstream."""
-    if typ is BaseFile:
-        return obj
-    raise NotImplementedError(f"unsupported type {typ}")
-
-
-def _schema_hook(typ: type[Any]) -> dict[str, Any]:
-    if typ is BaseFile:
-        return {"format": "binary", "type": "string"}
-    raise NotImplementedError
+BaseFile = Annotated[
+    Any, msgspec.Meta(extra_json_schema={"format": "binary", "type": "string"})
+]
 
 
 def _parse_error_location(message: str) -> list[str]:
@@ -56,8 +44,7 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFi
         return True
 
     def is_model_instance(self, value: Any, model) -> bool:
-        """All kinds of types are treated the same."""
-        return True
+        return isinstance(value, msgspec.Struct)
 
     def is_partial_model_instance(self, value: Any) -> bool:
         if not value:
@@ -75,7 +62,7 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFi
         return False
 
     def validate_obj(self, model: type[Any], value: Any) -> Any:
-        return msgspec.convert(value, type=model, strict=False, dec_hook=_dec_hook)
+        return msgspec.convert(value, type=model, strict=False)
 
     def validate_json(self, model: type[Any], value: bytes) -> Any:
         return msgspec.json.decode(value, type=model, strict=False)
@@ -116,11 +103,27 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFi
         """
         if model is msgspec.ValidationError:
             model = MsgspecValidationError  # type: ignore
-        return msgspec.json.schema(
-            model,
-            schema_hook=_schema_hook,
-            ref_template=ref_template.replace("{model}", "{name}"),
+        ref_template = ref_template.replace("{model}", "{name}")
+        schemas, components = msgspec.json.schema_components(
+            (model,),
+            ref_template=ref_template,
         )
+        schema = schemas[0]
+
+        # msgspec returns structs as a root $ref plus a component. SpecTree stores
+        # the root model under its own naming_strategy key, so keep only true nested
+        # components in $defs and return the root schema directly.
+        ref = schema.get("$ref")
+        if isinstance(ref, str):
+            for key in tuple(components):
+                if ref == ref_template.format(name=key):
+                    schema = components.pop(key)
+                    break
+
+        if components:
+            schema["$defs"] = components
+
+        return schema
 
     def validation_errors(self, err: msgspec.ValidationError):
         """Expect a `list[ValidationErrorElement]`"""

@@ -74,9 +74,7 @@ def ping(headers: Headers):
 
 
 @app.route("/api/file_upload", methods=["POST"])
-@api.validate(
-    form=FormFileUpload,
-)
+@api.validate(form=FormFileUpload)
 def file_upload():
     upload = request.context.form.file
     assert upload

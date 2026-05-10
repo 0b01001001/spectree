@@ -201,3 +201,28 @@ def test_spectree_uses_msgspec_adapter_for_internal_configuration():
     with api.app.app_context():
         assert api.spec["info"]["termsOfService"] == "https://example.com/terms"
         assert api.spec["servers"] == [{"url": "https://example.com"}]
+
+
+def test_spectree_registers_msgspec_root_schema_as_model_component():
+    api = SpecTree("flask", model_adapter=ADAPTER)
+    app = flask.Flask(__name__)
+
+    @app.route("/users", methods=["POST"])
+    @api.validate(json=SimpleModel)
+    def create_user():
+        pass
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    model_key = api.naming_strategy(SimpleModel)
+    nested_model_key = api.nested_naming_strategy(model_key, "SimpleModel")
+    schemas = spec["components"]["schemas"]
+
+    assert spec["paths"]["/users"]["post"]["requestBody"]["content"][
+        "application/json"
+    ]["schema"] == {"$ref": f"#/components/schemas/{model_key}"}
+    assert schemas[model_key]["properties"]["user_id"] == {"type": "integer"}
+    assert nested_model_key not in schemas

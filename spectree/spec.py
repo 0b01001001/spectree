@@ -64,6 +64,14 @@ class SpecTree:
     :param validation_error_model: The default validation error type to be shown
         in the generated OpenAPI frontend. Make sure it's derived from the model
         adapter (including the ValidationError).
+    :param naming_strategy: A callable that receives a model class and returns
+        the top-level component schema name used in the OpenAPI document.
+        For example, ``lambda model: model.__name__.lower()``.
+    :param nested_naming_strategy: A callable that receives ``(parent, child)``
+        schema names and returns the component schema name for nested models
+        lifted from ``$defs``. The default includes the parent name to avoid
+        collisions. To share nested models by child name, use
+        ``lambda _parent, child: child``.
     :param model_adapter: adpater for validation and OpenAPI JSON schema generation.
         Choose from the `spectree.model_adapter`. If not set, will use `pydantic`.
     :param kwargs: init :class:`spectree.config.Configuration`, they can also be
@@ -304,15 +312,36 @@ class SpecTree:
             and 'serialization' for output models
         """
         model_key = self.naming_strategy(model)
-        nested_key = self.nested_naming_strategy(model_key, "{model}")
-        ref_template = f"#/components/schemas/{nested_key}"
-        self.models[model_key] = json_compatible_deepcopy(
+        schema = json_compatible_deepcopy(
             self.model_adapter.json_schema(
                 model=model,
-                ref_template=ref_template,
+                ref_template="#/components/schemas/{model}",
                 mode=mode,
             )
         )
+
+        definitions = schema.get("$defs")
+        if isinstance(definitions, dict):
+            # The adapter emits refs with its own $defs keys. Rewrite them to the
+            # final component names before _get_model_definitions lifts $defs.
+            replacements = {
+                f"#/components/schemas/{key}": (
+                    f"#/components/schemas/{self.nested_naming_strategy(model_key, key)}"
+                )
+                for key in definitions
+            }
+            schema_values: list[Any] = [schema]
+            while schema_values:
+                value = schema_values.pop()
+                if isinstance(value, dict):
+                    ref = value.get("$ref")
+                    if isinstance(ref, str) and ref in replacements:
+                        value["$ref"] = replacements[ref]
+                    schema_values.extend(value.values())
+                elif isinstance(value, list):
+                    schema_values.extend(value)
+
+        self.models[model_key] = schema
         return model_key
 
     def _generate_spec(self) -> Dict[str, Any]:
