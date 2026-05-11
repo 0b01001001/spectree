@@ -58,4 +58,7 @@ lint:
 	@uv run -- ruff check ${SOURCE_FILES}
 	@uv run -- mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
+changelog:
+	@git-cliff --config cliff.toml --repository . --output CHANGELOG.md
+
 .PHONY: test doc
