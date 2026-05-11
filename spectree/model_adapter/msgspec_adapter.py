@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Any, TypeAlias
+from typing import Annotated, Any, TypeAlias, get_args, get_origin
 
 import msgspec
 
@@ -30,11 +30,11 @@ def _parse_error_location(message: str) -> list[str]:
     return [part for part in path.split(".") if part]
 
 
-class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFile]]):
+class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
     """`msgspec` model adapter."""
 
     validation_error = msgspec.ValidationError
-    basefile: type[BaseFile]
+    basefile = BaseFile
 
     def __init__(self) -> None:
         self.encoder = msgspec.json.Encoder()
@@ -44,7 +44,22 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, type[BaseFi
         return True
 
     def is_model_instance(self, value: Any, model) -> bool:
-        return isinstance(value, msgspec.Struct)
+        # msgspec accepts generic aliases like list[Item] and Annotated[...] as
+        # validation models, but they cannot be passed to isinstance() directly.
+        while (origin := get_origin(model)) is Annotated:
+            model = get_args(model)[0]
+        if origin is list:
+            item_model = get_args(model)[0]
+            return (
+                isinstance(value, list)
+                and isinstance(item_model, type)
+                and all(isinstance(item, item_model) for item in value)
+            )
+        return (
+            isinstance(model, type)
+            and issubclass(model, msgspec.Struct)
+            and isinstance(value, model)
+        )
 
     def is_partial_model_instance(self, value: Any) -> bool:
         if not value:

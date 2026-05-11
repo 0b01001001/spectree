@@ -5,6 +5,7 @@ from falcon import testing as falcon_testing
 
 from spectree import Response, SpecTree
 from spectree.model_adapter import get_msgspec_model_adapter
+from spectree.utils import get_model_key
 
 pytestmark = pytest.mark.msgspec
 
@@ -77,9 +78,11 @@ def test_falcon_msgspec_response_models_and_spec(app_and_api):
     spec = api.spec
     responses = spec["paths"]["/items"]["post"]["responses"]
 
-    assert responses["200"]["content"]["application/json"]["schema"]["$ref"].startswith(
-        "#/components/schemas/Annotated."
+    response_model = resource.on_post.resp.find_model(200)
+    assert responses["200"]["content"]["application/json"]["schema"]["$ref"] == (
+        f"#/components/schemas/{get_model_key(response_model)}"
     )
+    assert get_model_key(response_model).startswith("ItemList.")
     assert responses["422"]["content"]["application/json"]["schema"]["$ref"].startswith(
         "#/components/schemas/ValidationError."
     )

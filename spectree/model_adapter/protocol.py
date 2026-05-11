@@ -25,7 +25,10 @@ class ModelAdapter(Protocol[ModelT, ValidationErrorT, BaseFileT]):
         ...
 
     def is_model_instance(self, value: Any, model) -> bool:
-        """Check if the value is the instance of the model under this adapter."""
+        """Check if the value is the instance of the model under this adapter.
+
+        If it's already an instance, we could skip the validation.
+        """
         ...
 
     def is_partial_model_instance(self, value: Any) -> bool: ...

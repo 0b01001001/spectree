@@ -171,5 +171,5 @@ def test_update_security_scheme_wrong_type(secure_item: SecurityScheme):
 
 @pytest.mark.parametrize(("secure_item"), WRONG_SECURITY_SCHEMAS_DATA)
 def test_update_security_scheme_wrong_data(secure_item: dict):
-    with pytest.raises((SpecTreeValidationError, KeyError)):
+    with pytest.raises(SpecTreeValidationError):
         validate_security_scheme(**secure_item)

@@ -227,7 +227,26 @@ def get_model_key(model: ModelClass) -> str:
     :param model: query, json, headers or cookies from request or response
     """
 
-    return f"{model.__name__}.{hash_module_path(module_path=model.__module__)}"
+    def get_name(value: Any) -> str:
+        origin = get_origin(value)
+        if origin is Annotated:
+            args = get_args(value)
+            # Nested Annotated aliases are flattened by typing; the outermost
+            # metadata appears last and should define the public schema name.
+            for metadata in reversed(args[1:]):
+                title = getattr(metadata, "title", None)
+                if title:
+                    return str(title)
+            return get_name(args[0])
+        if origin is list:
+            args = get_args(value)
+            item_name = get_name(args[0]) if args else "Any"
+            return f"{item_name}List"
+        return value.__name__
+
+    model_name = get_name(model)
+    module_path = model.__module__ if get_origin(model) is None else repr(model)
+    return f"{model_name}.{hash_module_path(module_path=module_path)}"
 
 
 def get_nested_key(parent: str, child: str) -> str:

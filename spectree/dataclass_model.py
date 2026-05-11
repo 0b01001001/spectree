@@ -70,7 +70,7 @@ class AdapterBackedDataclass:
         try:
             instance = model_adapter.validate_obj(cls, value)
         except model_adapter.validation_error as exc:
-            raise SpecTreeValidationError from exc
+            raise SpecTreeValidationError(str(exc)) from exc
         return instance
 
     def to_dict(

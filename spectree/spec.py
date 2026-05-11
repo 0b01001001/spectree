@@ -72,7 +72,7 @@ class SpecTree:
         lifted from ``$defs``. The default includes the parent name to avoid
         collisions. To share nested models by child name, use
         ``lambda _parent, child: child``.
-    :param model_adapter: adpater for validation and OpenAPI JSON schema generation.
+    :param model_adapter: adapter for validation and OpenAPI JSON schema generation.
         Choose from the `spectree.model_adapter`. If not set, will use `pydantic`.
     :param kwargs: init :class:`spectree.config.Configuration`, they can also be
         configured through the environment variables with prefix `spectree_`

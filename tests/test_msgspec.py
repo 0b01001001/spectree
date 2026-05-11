@@ -5,11 +5,13 @@ import msgspec
 import pytest
 
 import spectree.model_adapter as model_adapter_module
+from spectree import Response
 from spectree.config import Configuration
 from spectree.model_adapter import get_msgspec_model_adapter
 from spectree.model_adapter.msgspec_adapter import MsgspecModelAdapter
 from spectree.models import SecurityScheme
 from spectree.spec import SpecTree
+from spectree.utils import get_model_key
 
 pytestmark = pytest.mark.msgspec
 
@@ -23,6 +25,22 @@ class SimpleModel(msgspec.Struct):
 DummyRootModel = ADAPTER.make_root_model(list[int], name="DummyRootModel")
 NestedRootModel = ADAPTER.make_root_model(DummyRootModel, name="NestedRootModel")
 Users = ADAPTER.make_root_model(list[SimpleModel], name="Users")
+
+
+@pytest.mark.parametrize(
+    "value, model, expected",
+    [
+        (SimpleModel(user_id=1), SimpleModel, True),
+        ({"user_id": 1}, SimpleModel, False),
+        ([SimpleModel(user_id=1)], list[SimpleModel], True),
+        ([{"user_id": 1}], list[SimpleModel], False),
+        ([SimpleModel(user_id=1)], Users, True),
+        ([{"user_id": 1}], Users, False),
+        ([1, 2, 3], NestedRootModel, True),
+    ],
+)
+def test_is_model_instance(value, model, expected):
+    assert ADAPTER.is_model_instance(value, model) is expected
 
 
 @pytest.mark.parametrize(
@@ -228,3 +246,44 @@ def test_spectree_registers_msgspec_root_schema_as_model_component():
     ]["schema"] == {"$ref": f"#/components/schemas/{model_key}"}
     assert schemas[model_key]["properties"]["user_id"] == {"type": "integer"}
     assert nested_model_key not in schemas
+
+
+def test_get_model_key_supports_msgspec_generic_models():
+    list_model_key = get_model_key(list[SimpleModel])
+    root_model_key = get_model_key(Users)
+    nested_root_model_key = get_model_key(NestedRootModel)
+
+    assert list_model_key.startswith("SimpleModelList.")
+    assert root_model_key.startswith("Users.")
+    assert nested_root_model_key.startswith("NestedRootModel.")
+    assert list_model_key != get_model_key(list[int])
+
+
+def test_msgspec_generic_schema_with_stable_model_key():
+    api = SpecTree("flask", model_adapter=ADAPTER)
+    app = flask.Flask(__name__)
+
+    @app.route("/users", methods=["POST"])
+    @api.validate(json=list[SimpleModel], resp=Response(HTTP_200=Users))
+    def create_users():
+        pass
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    list_model_key = api.naming_strategy(list[SimpleModel])
+    root_model_key = api.naming_strategy(Users)
+    schemas = spec["components"]["schemas"]
+
+    assert list_model_key.startswith("SimpleModelList.")
+    assert root_model_key.startswith("Users.")
+    assert spec["paths"]["/users"]["post"]["requestBody"]["content"][
+        "application/json"
+    ]["schema"] == {"$ref": f"#/components/schemas/{list_model_key}"}
+    assert spec["paths"]["/users"]["post"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"] == {"$ref": f"#/components/schemas/{root_model_key}"}
+    assert schemas[list_model_key]["type"] == "array"
+    assert schemas[root_model_key]["title"] == "Users"

@@ -48,14 +48,13 @@ class Response:
 
     examples:
 
-        >>> from typing import List
         >>> from spectree.response import Response
         >>> response = Response("HTTP_200")
         >>> response = Response(HTTP_200=None)
         >>> response = Response(HTTP_200=MyModel)
         >>> response = Response(HTTP_200=(MyModel, "status code description"))
-        >>> response = Response(HTTP_200=List[MyModel])
-        >>> response = Response(HTTP_200=(List[MyModel], "status code description"))
+        >>> response = Response(HTTP_200=list[MyModel])
+        >>> response = Response(HTTP_200=(list[MyModel], "status code description"))
     """
 
     def __init__(

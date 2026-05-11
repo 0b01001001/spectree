@@ -348,7 +348,7 @@ class Profile(BaseModel):
     age: int = Field(..., gt=0, lt=150, description="user age(Human)")
 
     model_config = ConfigDict(
-        schema_extra = {
+        json_schema_extra = {
             # provide an example
             "example": {
                 "name": "very_important_user",
@@ -397,7 +397,7 @@ class Profile(BaseModel):
     age: int = Field(..., gt=0, lt=150, description="user age")
 
     model_config = ConfigDict(
-        schema_extra = {
+        json_schema_extra = {
             # provide an example
             "example": {
                 "name": "very_important_user",
