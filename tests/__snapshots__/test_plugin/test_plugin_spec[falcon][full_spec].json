@@ -311,15 +311,15 @@
         "title": "StrDict",
         "type": "object"
       },
-      "ValidationError.6a07bef": {
+      "ValidationError.ad30e22": {
         "description": "Model of a validation error response.",
         "items": {
-          "$ref": "#/components/schemas/ValidationError.6a07bef.ValidationErrorElement"
+          "$ref": "#/components/schemas/ValidationError.ad30e22.ValidationErrorElement"
         },
-        "title": "ValidationError",
+        "title": "ValidationErrorType",
         "type": "array"
       },
-      "ValidationError.6a07bef.ValidationErrorElement": {
+      "ValidationError.ad30e22.ValidationErrorElement": {
         "description": "Model of a validation error response element.",
         "properties": {
           "ctx": {
@@ -397,7 +397,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -428,7 +428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -457,7 +457,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -508,7 +508,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -552,7 +552,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -601,7 +601,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -642,7 +642,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -673,7 +673,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -714,7 +714,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -785,7 +785,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -867,7 +867,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -938,7 +938,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -982,7 +982,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -1053,7 +1053,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -1097,7 +1097,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -1138,7 +1138,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },
@@ -1209,7 +1209,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError.6a07bef"
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
                 }
               }
             },

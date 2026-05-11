@@ -28,7 +28,7 @@ class Data(BaseModel):
     vip: bool
 
     model_config = ConfigDict(
-        schema_extra={
+        json_schema_extra={
             "example": {
                 "uid": "very_important_user",
                 "limit": 10,

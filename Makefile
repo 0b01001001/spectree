@@ -9,13 +9,25 @@ install:
 
 import_test:
 	for module in flask quart falcon starlette; do \
-		uv sync --extra $$module; \
+		uv sync --extra pydantic --extra $$module; \
+		bash -c "uv run tests/import_module/test_$${module}_plugin.py" || exit 1; \
+	done
+	uv sync --extra msgspec --extra falcon
+	bash -c "uv run tests/import_module/test_msgspec_plugin.py"
+
+import_test_without_msgspec:
+	for module in flask quart falcon starlette; do \
+		uv sync --extra pydantic --extra $$module; \
 		bash -c "uv run tests/import_module/test_$${module}_plugin.py" || exit 1; \
 	done
 
 test: import_test
 	uv sync --all-extras --group dev
 	uv run -- pytest tests -vv -rs --disable-warnings
+
+test_without_msgspec: import_test_without_msgspec
+	uv sync --extra pydantic --extra flask --extra quart --extra falcon --extra starlette --extra offline --group dev
+	uv run -- pytest tests -vv -rs --disable-warnings -m "not msgspec"
 
 update_snapshot:
 	@uv run -- pytest --snapshot-update

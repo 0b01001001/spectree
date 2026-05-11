@@ -6,7 +6,7 @@ from starlette.applications import Starlette
 
 from spectree import Response
 from spectree.config import Configuration
-from spectree.models import Server, ValidationError
+from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 
@@ -66,8 +66,8 @@ def test_spec_servers_empty(name, app):
 
 @pytest.mark.parametrize("name, app", backend_app())
 def test_spec_servers_only(name, app):
-    server1_url = "http://foo/bar"
-    server2_url = "/foo/bar/"
+    server1_url = "http://example.com/bar"
+    server2_url = "https://example.com/foo/bar"
     spec = _get_spec(
         name, app, servers=[Server(url=server1_url), Server(url=server2_url)]
     )
@@ -189,7 +189,7 @@ def test_model_for_validation_errors_specified():
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is ValidationError
+    assert foo.resp.find_model(422) is api.model_adapter.validation_error
     assert bar.resp.find_model(422) is CustomValidationError
 
 
@@ -237,3 +237,52 @@ def test_operation_id_override(override_operation_id, expected_operation_id):
     with app.app_context():
         operation_id = api.spec["paths"]["/foo"]["get"]["operationId"]
         assert operation_id == expected_operation_id
+
+
+def test_custom_model_naming_strategies_are_used_in_refs_and_components():
+    class Child(BaseModel):
+        value: int
+
+    class Payload(BaseModel):
+        child: Child
+
+    class Result(BaseModel):
+        child: Child
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: model.__name__.lower(),
+        nested_naming_strategy=lambda _parent, child: child.lower(),
+    )
+    app = Flask(__name__)
+
+    @app.route("/items", methods=["POST"])
+    @api.validate(json=Payload, resp=Response(HTTP_200=Result))
+    def create_item():
+        pass
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    operation = spec["paths"]["/items"]["post"]
+    schemas = spec["components"]["schemas"]
+
+    assert operation["requestBody"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/payload"
+    }
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/result"
+    }
+    assert schemas["payload"]["properties"]["child"] == {
+        "$ref": "#/components/schemas/child"
+    }
+    assert schemas["result"]["properties"]["child"] == {
+        "$ref": "#/components/schemas/child"
+    }
+    assert schemas["validationerror"]["items"] == {
+        "$ref": "#/components/schemas/validationerrorelement"
+    }
+    assert "Child" not in schemas
+    assert "child" in schemas

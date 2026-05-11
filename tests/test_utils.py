@@ -4,8 +4,7 @@ from typing import Optional
 import pytest
 from pydantic import BaseModel, computed_field
 
-from spectree.model_adapter import get_default_model_adapter
-from spectree.models import ValidationError
+from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
@@ -23,7 +22,7 @@ from spectree.utils import (
 from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
 
 api = SpecTree()
-model_adapter = get_default_model_adapter()
+model_adapter = get_pydantic_model_adapter()
 
 
 def undecorated_func():
@@ -219,7 +218,7 @@ def test_parse_resp():
 
     assert resp_spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     model_path_key = get_model_path_key(
-        f"{ValidationError.__module__}.{ValidationError.__name__}"
+        f"{model_adapter.validation_error.__module__}.{model_adapter.validation_error.__name__}"
     )
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]

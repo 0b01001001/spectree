@@ -16,13 +16,14 @@ from typing import (
 from spectree._types import (
     FunctionDecorator,
     HookHandler,
+    ModelAdapterType,
     NamingStrategy,
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
-from spectree.model_adapter import ModelAdapter, ModelClass, get_default_model_adapter
+from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
-from spectree.models import Tag, ValidationError
+from spectree.models import Tag
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
 from spectree.utils import (
@@ -60,6 +61,19 @@ class SpecTree:
     :param validation_error_status: The default response status code to use in the
         event of a validation error. This value can be overridden for specific endpoints
         if needed.
+    :param validation_error_model: The default validation error type to be shown
+        in the generated OpenAPI frontend. Make sure it's derived from the model
+        adapter (including the ValidationError).
+    :param naming_strategy: A callable that receives a model class and returns
+        the top-level component schema name used in the OpenAPI document.
+        For example, ``lambda model: model.__name__.lower()``.
+    :param nested_naming_strategy: A callable that receives ``(parent, child)``
+        schema names and returns the component schema name for nested models
+        lifted from ``$defs``. The default includes the parent name to avoid
+        collisions. To share nested models by child name, use
+        ``lambda _parent, child: child``.
+    :param model_adapter: adapter for validation and OpenAPI JSON schema generation.
+        Choose from the `spectree.model_adapter`. If not set, will use `pydantic`.
     :param kwargs: init :class:`spectree.config.Configuration`, they can also be
         configured through the environment variables with prefix `spectree_`
     """
@@ -75,17 +89,20 @@ class SpecTree:
         validation_error_model: Optional[ModelClass] = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
-        model_adapter: Optional[ModelAdapter[Any, Exception]] = None,
+        model_adapter: Optional[ModelAdapterType] = None,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
         self.nested_naming_strategy = nested_naming_strategy
         self.validation_error_status = validation_error_status
-        self.validation_error_model = validation_error_model or ValidationError
-        self.model_adapter = model_adapter or get_default_model_adapter()
+        self.model_adapter = model_adapter or get_pydantic_model_adapter()
+        self.validation_error_model = validation_error_model
         self.before = before
         self.after = after
-        self.config: Configuration = Configuration.model_validate(kwargs)
+        self.config: Configuration = Configuration.model_validate(
+            kwargs,
+            model_adapter=self.model_adapter,
+        )
         self.backend_name = backend_name
         if backend:
             self.backend = backend(self)
@@ -265,7 +282,9 @@ class SpecTree:
                 # Make sure that the endpoint specific status code and data model for
                 # validation errors shows up in the response spec.
                 resp.add_model(
-                    validation_error_status, self.validation_error_model, replace=False
+                    validation_error_status,
+                    self.validation_error_model or self.model_adapter.validation_error,
+                    replace=False,
                 )
                 for model in resp.models:
                     self._add_model(model=model, mode="serialization")
@@ -293,15 +312,36 @@ class SpecTree:
             and 'serialization' for output models
         """
         model_key = self.naming_strategy(model)
-        nested_key = self.nested_naming_strategy(model_key, "{model}")
-        ref_template = f"#/components/schemas/{nested_key}"
-        self.models[model_key] = json_compatible_deepcopy(
+        schema = json_compatible_deepcopy(
             self.model_adapter.json_schema(
                 model=model,
-                ref_template=ref_template,
+                ref_template="#/components/schemas/{model}",
                 mode=mode,
             )
         )
+
+        definitions = schema.get("$defs")
+        if isinstance(definitions, dict):
+            # The adapter emits refs with its own $defs keys. Rewrite them to the
+            # final component names before _get_model_definitions lifts $defs.
+            replacements = {
+                f"#/components/schemas/{key}": (
+                    f"#/components/schemas/{self.nested_naming_strategy(model_key, key)}"
+                )
+                for key in definitions
+            }
+            schema_values: list[Any] = [schema]
+            while schema_values:
+                value = schema_values.pop()
+                if isinstance(value, dict):
+                    ref = value.get("$ref")
+                    if isinstance(ref, str) and ref in replacements:
+                        value["$ref"] = replacements[ref]
+                    schema_values.extend(value.values())
+                elif isinstance(value, list):
+                    schema_values.extend(value)
+
+        self.models[model_key] = schema
         return model_key
 
     def _generate_spec(self) -> Dict[str, Any]:
@@ -328,7 +368,7 @@ class SpecTree:
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
-                            tag.model_dump(exclude_none=True)
+                            tag.to_dict(exclude_none=True)
                             if isinstance(tag, Tag)
                             else {"name": tag}
                         )
@@ -368,12 +408,12 @@ class SpecTree:
 
         if self.config.servers:
             spec["servers"] = [
-                server.model_dump(exclude_none=True) for server in self.config.servers
+                server.to_dict(exclude_none=True) for server in self.config.servers
             ]
 
         if self.config.security_schemes:
             spec["components"]["securitySchemes"] = {
-                scheme.name: scheme.data.model_dump(exclude_none=True, by_alias=True)
+                scheme.name: scheme.data.to_dict(exclude_none=True)
                 for scheme in self.config.security_schemes
             }
 

@@ -46,6 +46,11 @@ jobs:
           ignore-nothing-to-cache: true
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: make install
       - name: Test
+        if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         run: make test
+      - name: Test without msgspec
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
+        run: make test_without_msgspec

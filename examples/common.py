@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from spectree import BaseFile
+from spectree.model_adapter.pydantic_adapter import BaseFile
 
 
 class File(BaseModel):

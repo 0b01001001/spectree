@@ -8,7 +8,7 @@ from typing import Any, Optional, Union
 import pytest
 from pydantic import ValidationError
 
-from spectree.model_adapter import ModelClass, get_default_model_adapter
+from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.plugins.base import (
     RawResponsePayload,
     ResponseValidationResult,
@@ -16,7 +16,7 @@ from spectree.plugins.base import (
 )
 from tests.common import JSON, ComplexResp, Resp, RootResp, StrDict
 
-RespList = get_default_model_adapter().make_list_model(Resp)
+RespList = get_pydantic_model_adapter().make_list_model(Resp)
 
 
 @dataclass(frozen=True)
@@ -158,7 +158,7 @@ def test_validate_response(
     )
     with runtime_expectation:
         result = validate_response(
-            model_adapter=get_default_model_adapter(),
+            model_adapter=get_pydantic_model_adapter(),
             validation_model=validation_model,
             response_payload=response_payload,
         )

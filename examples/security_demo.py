@@ -1,7 +1,14 @@
 from flask import Flask
 from pydantic import BaseModel
 
-from spectree import SecurityScheme, SecuritySchemeData, SpecTree
+from spectree import (
+    SecurityScheme,
+    SecuritySchemeData,
+    SpecTree,
+    get_pydantic_model_adapter,
+)
+
+model_adapter = get_pydantic_model_adapter()
 
 
 class Req(BaseModel):
@@ -12,13 +19,15 @@ security_schemes = [
     SecurityScheme(
         name="PartnerID",
         data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "partner-id", "in": "header"}
+            {"type": "apiKey", "name": "partner-id", "in": "header"},
+            model_adapter=model_adapter,
         ),
     ),
     SecurityScheme(
         name="PartnerToken",
         data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "partner-access-token", "in": "header"}
+            {"type": "apiKey", "name": "partner-access-token", "in": "header"},
+            model_adapter=model_adapter,
         ),
     ),
     SecurityScheme(
@@ -27,7 +36,8 @@ security_schemes = [
             {
                 "type": "http",
                 "scheme": "bearer",
-            }
+            },
+            model_adapter=model_adapter,
         ),
     ),
     SecurityScheme(
@@ -46,7 +56,8 @@ security_schemes = [
                         },
                     },
                 },
-            }
+            },
+            model_adapter=model_adapter,
         ),
     ),
 ]
