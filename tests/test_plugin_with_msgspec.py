@@ -11,6 +11,8 @@ from spectree import SpecTree
 from spectree.model_adapter import get_msgspec_model_adapter
 from spectree.model_adapter.msgspec_adapter import BaseFile
 
+pytestmark = pytest.mark.msgspec
+
 model_adapter = get_msgspec_model_adapter()
 spec = SpecTree("flask", model_adapter=model_adapter)
 app = Flask(__name__)

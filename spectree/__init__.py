@@ -1,8 +1,9 @@
 import logging
 
-from .models import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
-from .response import Response
-from .spec import SpecTree
+from spectree.model_adapter import get_msgspec_model_adapter, get_pydantic_model_adapter
+from spectree.models import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
+from spectree.response import Response
+from spectree.spec import SpecTree
 
 __all__ = [
     "ExternalDocs",
@@ -11,6 +12,8 @@ __all__ = [
     "SecuritySchemeData",
     "SpecTree",
     "Tag",
+    "get_msgspec_model_adapter",
+    "get_pydantic_model_adapter",
 ]
 
 # setup library logging

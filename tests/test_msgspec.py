@@ -11,6 +11,8 @@ from spectree.model_adapter.msgspec_adapter import MsgspecModelAdapter
 from spectree.models import SecurityScheme
 from spectree.spec import SpecTree
 
+pytestmark = pytest.mark.msgspec
+
 ADAPTER = get_msgspec_model_adapter()
 
 

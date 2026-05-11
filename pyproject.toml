@@ -66,6 +66,11 @@ init_forbid_extra = true
 warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
+[tool.pytest.ini_options]
+markers = [
+    "msgspec: tests that require msgspec, which is not available on PyPy",
+]
+
 [dependency-groups]
 dev = [
     "anyio>=4.10.0",

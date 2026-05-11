@@ -6,6 +6,8 @@ from falcon import testing as falcon_testing
 from spectree import Response, SpecTree
 from spectree.model_adapter import get_msgspec_model_adapter
 
+pytestmark = pytest.mark.msgspec
+
 
 class Query(msgspec.Struct):
     limit: int
