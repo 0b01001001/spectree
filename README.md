@@ -16,6 +16,9 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
 * Less boilerplate code, only annotations, no need for YAML :sparkles:
 * Generate API document with [Redoc UI](https://github.com/Redocly/redoc), [Scalar UI](https://github.com/scalar/scalar) or [Swagger UI](https://github.com/swagger-api/swagger-ui) :yum:
 * Validate query, JSON data, and response data with supported model backends :wink:
+  * [pydantic](https://github.com/jcrist/msgspec)
+  * [msgspec](https://github.com/jcrist/msgspec)
+  * others if you implement the [model adapter protocol](https://github.com/0b01001001/spectree/blob/main/spectree/model_adapter/protocol.py)
 * Current support:
   * Flask [demo](#flask)
   * Quart [demo](#quart)
