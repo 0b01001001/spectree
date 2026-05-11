@@ -1,6 +1,13 @@
 # git-cliff ~ configuration file
 # https://git-cliff.org/docs/configuration
 
+[remote]
+offline = true
+
+[remote.github]
+owner = "0b01001001"
+repo = "spectree"
+
 [changelog]
 # A Tera template to be rendered as the changelog's header.
 # See https://keats.github.io/tera/docs/#introduction
