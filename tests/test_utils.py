@@ -320,6 +320,7 @@ def test_json_compatible_schema():
         DefaultEnumValue, ref_template="#/components/schemas/{model}"
     )
     json_schema = json_compatible_deepcopy(schema)
+    assert json.dumps(json_schema)
 
 
 def test_get_model_schema_mode_parameter():
