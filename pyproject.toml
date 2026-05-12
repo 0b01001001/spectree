@@ -37,8 +37,14 @@ documentation = "https://0b01001001.github.io/spectree/"
 repository = "https://github.com/0b01001001/spectree"
 changelog = "https://github.com/0b01001001/spectree/releases"
 
-[tool.uv]
-package = true
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "."
+includes = ["spectree"]
+source-includes = ["README.md", "CHANGELOG.md", "LICENSE"]
 
 [tool.ruff]
 target-version = "py310"
