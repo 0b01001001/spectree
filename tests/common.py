@@ -128,8 +128,8 @@ class DemoQuery(BaseModel):
 class CustomError(BaseModel):
     foo: str
 
-    # @field_validator("foo")
     @field_validator("foo")
+    @classmethod
     def value_must_be_foo(cls, value):
         if value != "foo":
             # this is not JSON serializable if included in the error context
