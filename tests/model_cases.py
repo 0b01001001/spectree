@@ -4,6 +4,7 @@ import importlib
 import importlib.util
 import json
 from dataclasses import dataclass
+from types import GenericAlias
 from typing import Any
 
 import pytest
@@ -45,6 +46,17 @@ class ModelCase:
         return json.loads(self.adapter.dump_json(value))
 
 
+def _make_simple_model(base: Any) -> Any:
+    return type(
+        "SimpleModel",
+        (base,),
+        {
+            "__annotations__": {"user_id": int},
+            "__module__": __name__,
+        },
+    )
+
+
 def build_model_case(name: str) -> ModelCase:
     if name == "pydantic":
         return _build_pydantic_case()
@@ -59,9 +71,7 @@ def _build_pydantic_case() -> ModelCase:
 
     pydantic = importlib.import_module("pydantic")
     adapter = get_pydantic_model_adapter()
-
-    class SimpleModel(pydantic.BaseModel):
-        user_id: int
+    SimpleModel = _make_simple_model(pydantic.BaseModel)
 
     dummy_root_model = adapter.make_root_model(
         list[int],
@@ -74,7 +84,7 @@ def _build_pydantic_case() -> ModelCase:
         module=__name__,
     )
     users_model = adapter.make_root_model(
-        list[SimpleModel],
+        GenericAlias(list, (SimpleModel,)),
         name="Users",
         module=__name__,
     )
@@ -95,9 +105,7 @@ def _build_msgspec_case() -> ModelCase:
 
     msgspec = importlib.import_module("msgspec")
     adapter = get_msgspec_model_adapter()
-
-    class SimpleModel(msgspec.Struct):
-        user_id: int
+    SimpleModel = _make_simple_model(msgspec.Struct)
 
     dummy_root_model = adapter.make_root_model(
         list[int],
@@ -110,7 +118,7 @@ def _build_msgspec_case() -> ModelCase:
         module=__name__,
     )
     users_model = adapter.make_root_model(
-        list[SimpleModel],
+        GenericAlias(list, (SimpleModel,)),
         name="Users",
         module=__name__,
     )

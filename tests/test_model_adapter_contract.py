@@ -87,24 +87,18 @@ def test_dump_json(model_case):
     simple_model = model_case.simple_model
 
     assert model_case.dump_python(simple_model(user_id=1)) == {"user_id": 1}
-    assert (
-        model_case.dump_python(
-            model_case.validate_obj(model_case.dummy_root_model, [1, 2, 3])
+    assert model_case.dump_python(
+        model_case.validate_obj(model_case.dummy_root_model, [1, 2, 3])
+    ) == [1, 2, 3]
+    assert model_case.dump_python(
+        model_case.validate_obj(
+            model_case.users_model,
+            [
+                {"user_id": 1},
+                {"user_id": 2},
+            ],
         )
-        == [1, 2, 3]
-    )
-    assert (
-        model_case.dump_python(
-            model_case.validate_obj(
-                model_case.users_model,
-                [
-                    {"user_id": 1},
-                    {"user_id": 2},
-                ],
-            )
-        )
-        == [{"user_id": 1}, {"user_id": 2}]
-    )
+    ) == [{"user_id": 1}, {"user_id": 2}]
 
 
 def test_validate_json_list_model(model_case):
