@@ -4,6 +4,8 @@ from pathlib import Path
 import pytest
 from syrupy.extensions.json import JSONSnapshotExtension
 
+from tests.model_cases import MODEL_CASE_PARAMS, build_model_case
+
 _MSGSPEC_TEST_FILES = {
     "test_msgspec.py",
     "test_plugin_falcon_msgspec.py",
@@ -22,6 +24,11 @@ def pytest_ignore_collect(collection_path, config):
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture(params=MODEL_CASE_PARAMS)
+def model_case(request):
+    return build_model_case(request.param)
 
 
 @pytest.fixture
