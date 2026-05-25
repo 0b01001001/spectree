@@ -45,6 +45,9 @@ class ModelCase:
     def dump_python(self, value: Any) -> Any:
         return json.loads(self.adapter.dump_json(value))
 
+    def list_of(self, model: Any) -> Any:
+        return GenericAlias(list, (model,))
+
 
 def _make_simple_model(base: Any) -> Any:
     return type(

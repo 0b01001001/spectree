@@ -1,148 +1,168 @@
-from typing import List, get_type_hints
-
 import pytest
-from pydantic import BaseModel, ValidationError
 
-from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
-
-from .common import JSON, DemoModel, get_model_path_key
-
-MODEL_ADAPTER = get_pydantic_model_adapter()
+from spectree.utils import get_model_key
 
 
 class NormalClass:
     pass
 
 
-def test_init_response():
+def test_response_rejects_invalid_configuration():
     for args, kwargs in [
         ([200], {}),
         (["HTTP_110"], {}),
-        ([], {"HTTP_200": (DemoModel, 1)}),
-        ([], {"HTTP_200": (DemoModel,)}),
+        ([], {"HTTP_200": (NormalClass, 1)}),
+        ([], {"HTTP_200": (NormalClass,)}),
     ]:
         with pytest.raises(AssertionError):
             Response(*args, **kwargs)
 
+
+def test_response_rejects_invalid_model(model_case):
+    adapter = model_case.adapter
+    if adapter.is_model_type(NormalClass):
+        pytest.skip(f"{model_case.name} adapter accepts arbitrary model specs")
+
     resp = Response(HTTP_200=NormalClass)
     with pytest.raises(AssertionError, match="invalid response model"):
-        resp.bind_model_adapter(MODEL_ADAPTER)
+        resp.bind_model_adapter(adapter)
 
     resp = Response(HTTP_200=(NormalClass, "custom code description"))
     with pytest.raises(AssertionError, match="invalid response model"):
-        resp.bind_model_adapter(MODEL_ADAPTER)
+        resp.bind_model_adapter(adapter)
 
-    resp = Response("HTTP_200", HTTP_201=DemoModel)
-    resp.bind_model_adapter(MODEL_ADAPTER)
+
+def test_init_response(model_case):
+    adapter = model_case.adapter
+    simple_model = model_case.simple_model
+
+    resp = Response("HTTP_200", HTTP_201=simple_model)
+    resp.bind_model_adapter(adapter)
+
     assert resp.has_model()
-    assert resp.find_model(201) == DemoModel
+    assert resp.find_model(201) is simple_model
     assert resp.code_descriptions.get("HTTP_200") is None
     assert resp.code_descriptions.get("HTTP_201") is None
-    assert DemoModel in resp.models
+    assert simple_model in resp.models
 
+    list_model = model_case.list_of(simple_model)
     resp = Response(
         HTTP_200=None,
-        HTTP_400=List[JSON],
-        HTTP_401=DemoModel,
+        HTTP_400=list_model,
+        HTTP_401=simple_model,
         HTTP_402=(None, "custom code description"),
-        HTTP_403=(DemoModel, "custom code description"),
+        HTTP_403=(simple_model, "custom code description"),
     )
-    resp.bind_model_adapter(MODEL_ADAPTER)
-    expect_400_model = MODEL_ADAPTER.make_list_model(JSON)
+    resp.bind_model_adapter(adapter)
+
     assert resp.has_model()
     assert resp.find_model(200) is None
-    assert type(resp.find_model(400)) is type(expect_400_model) and get_type_hints(
-        resp.find_model(400)
-    ) == get_type_hints(expect_400_model)
-    assert resp.find_model(401) == DemoModel
+    expect_400_model = adapter.make_list_model(simple_model)
+    assert resp.find_model(400) is not list_model
+    assert get_model_key(resp.find_model(400)) == get_model_key(expect_400_model)
+    assert resp.find_model(401) is simple_model
     assert resp.find_model(402) is None
-    assert resp.find_model(403) == DemoModel
+    assert resp.find_model(403) is simple_model
     assert resp.code_descriptions.get("HTTP_200") is None
     assert resp.code_descriptions.get("HTTP_401") is None
     assert resp.code_descriptions.get("HTTP_402") == "custom code description"
     assert resp.code_descriptions.get("HTTP_403") == "custom code description"
-    assert DemoModel in resp.models
+    assert simple_model in resp.models
 
     assert not Response().has_model()
 
 
-def test_response_add_model():
+def test_response_add_model(model_case):
     resp = Response()
-    resp.bind_model_adapter(MODEL_ADAPTER)
+    resp.bind_model_adapter(model_case.adapter)
 
-    resp.add_model(201, DemoModel)
+    resp.add_model(201, model_case.simple_model)
 
-    assert resp.find_model(201) == DemoModel
+    assert resp.find_model(201) is model_case.simple_model
 
 
-def test_response_find_model_requires_bound_adapter():
-    resp = Response(HTTP_200=DemoModel)
+def test_response_find_model_requires_bound_adapter(model_case):
+    resp = Response(HTTP_200=model_case.simple_model)
 
     assert resp.find_model(200) is None
 
-    resp.bind_model_adapter(MODEL_ADAPTER)
+    resp.bind_model_adapter(model_case.adapter)
 
-    assert resp.find_model(200) is DemoModel
+    assert resp.find_model(200) is model_case.simple_model
 
 
-def test_response_add_model_builds_only_new_model(monkeypatch):
-    resp = Response(HTTP_200=List[JSON])
-    resp.bind_model_adapter(MODEL_ADAPTER)
+def test_response_add_model_builds_only_new_model(monkeypatch, model_case):
+    adapter = model_case.adapter
+    simple_model = model_case.simple_model
+    list_model = model_case.list_of(simple_model)
+
+    resp = Response(HTTP_200=list_model)
+    resp.bind_model_adapter(adapter)
 
     calls = []
-    original_make_list_model = MODEL_ADAPTER.make_list_model
+    original_make_list_model = adapter.make_list_model
 
     def tracked_make_list_model(model):
         calls.append(model)
         return original_make_list_model(model)
 
-    monkeypatch.setattr(MODEL_ADAPTER, "make_list_model", tracked_make_list_model)
+    monkeypatch.setattr(adapter, "make_list_model", tracked_make_list_model)
 
-    resp.add_model(201, List[DemoModel])
+    resp.add_model(201, list_model)
 
-    assert calls == [DemoModel]
+    assert calls == [simple_model]
     assert resp.find_model(200) is not None
     assert resp.find_model(201) is not None
 
 
 @pytest.mark.parametrize(
-    "replace, expected_model",
+    "replace, expected_model_name",
     [
-        pytest.param(True, JSON, id="replace-existing-model"),
-        pytest.param(False, DemoModel, id="keep-existing-model"),
+        pytest.param(True, "users_model", id="replace-existing-model"),
+        pytest.param(False, "simple_model", id="keep-existing-model"),
     ],
 )
-def test_response_add_model_when_model_already_exists(replace, expected_model):
+def test_response_add_model_when_model_already_exists(
+    model_case,
+    replace,
+    expected_model_name,
+):
     resp = Response()
-    resp.bind_model_adapter(MODEL_ADAPTER)
+    resp.bind_model_adapter(model_case.adapter)
 
-    resp.add_model(201, DemoModel)
-    resp.add_model(201, JSON, replace=replace)
+    resp.add_model(201, model_case.simple_model)
+    resp.add_model(201, model_case.users_model, replace=replace)
 
-    assert resp.find_model(201) is expected_model
+    assert resp.find_model(201) is getattr(model_case, expected_model_name)
 
 
-def test_response_add_model_when_model_already_exists_before_bind():
+def test_response_add_model_when_model_already_exists_before_bind(model_case):
     resp = Response()
 
-    resp.add_model(201, DemoModel)
-    resp.add_model(201, JSON, replace=False)
-    resp.bind_model_adapter(MODEL_ADAPTER)
+    resp.add_model(201, model_case.simple_model)
+    resp.add_model(201, model_case.users_model, replace=False)
+    resp.bind_model_adapter(model_case.adapter)
 
-    assert resp.find_model(201) is DemoModel
+    assert resp.find_model(201) is model_case.simple_model
 
 
-def test_response_spec():
+def test_response_spec(model_case):
+    adapter = model_case.adapter
+    simple_model = model_case.simple_model
+    validation_error = adapter.validation_error
+
     resp = Response(
         "HTTP_200",
-        HTTP_201=DemoModel,
-        HTTP_401=(DemoModel, "custom code description"),
+        HTTP_201=simple_model,
+        HTTP_401=(simple_model, "custom code description"),
         HTTP_402=(None, "custom code description"),
     )
-    resp.bind_model_adapter(MODEL_ADAPTER)
-    resp.add_model(422, ValidationError)
+    resp.bind_model_adapter(adapter)
+    resp.add_model(422, validation_error)
+
     spec = resp.generate_spec()
+
     assert spec["200"]["description"] == DEFAULT_CODE_DESC["HTTP_200"]
     assert spec["201"]["description"] == DEFAULT_CODE_DESC["HTTP_201"]
     assert spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
@@ -150,32 +170,27 @@ def test_response_spec():
     assert spec["402"]["description"] == "custom code description"
     assert spec["201"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
-    ] == get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
+    ] == get_model_key(simple_model)
     assert spec["422"]["content"]["application/json"]["schema"]["$ref"].split("/")[
         -1
-    ] == get_model_path_key(f"{ValidationError.__module__}.{ValidationError.__name__}")
+    ] == get_model_key(validation_error)
 
     assert spec.get(200) is None
     assert spec.get(404) is None
 
 
-def test_list_model():
-    resp = Response(HTTP_200=List[JSON])
-    resp.bind_model_adapter(MODEL_ADAPTER)
+def test_list_model(model_case):
+    simple_model = model_case.simple_model
+    list_model = model_case.list_of(simple_model)
+
+    resp = Response(HTTP_200=list_model)
+    resp.bind_model_adapter(model_case.adapter)
     model = resp.find_model(200)
-    expect_model = MODEL_ADAPTER.make_list_model(JSON)
-    assert get_type_hints(model) == get_type_hints(expect_model)
-    assert type(model) is type(expect_model)
-    assert issubclass(model, BaseModel)
+
     data = [
-        {"name": "a", "limit": 1},
-        {"name": "b", "limit": 2},
+        {"user_id": 1},
+        {"user_id": 2},
     ]
-    instance = model.model_validate(data)
-    items = instance.model_dump()
-    if isinstance(items, dict):
-        items = items["__root__"]
-    for i, item in enumerate(items):
-        obj = JSON.model_validate(item)
-        assert obj.name == data[i]["name"]
-        assert obj.limit == data[i]["limit"]
+    instance = model_case.validate_obj(model, data)
+
+    assert model_case.dump_python(instance) == data
