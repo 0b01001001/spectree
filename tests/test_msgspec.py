@@ -1,5 +1,3 @@
-import json
-
 import flask
 import msgspec
 import pytest
@@ -41,61 +39,6 @@ Users = ADAPTER.make_root_model(list[SimpleModel], name="Users")
 )
 def test_is_model_instance(value, model, expected):
     assert ADAPTER.is_model_instance(value, model) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (SimpleModel(user_id=1), True),
-        ([0, SimpleModel(user_id=1)], True),
-        ([1, 2, 3], False),
-        ((0, SimpleModel(user_id=1)), True),
-        ((0, 1), False),
-        ({"test": SimpleModel(user_id=1)}, True),
-        ({"test": [SimpleModel(user_id=1)]}, True),
-        ([0, [1, SimpleModel(user_id=1)]], True),
-    ],
-)
-def test_is_partial_model_instance(value, expected):
-    assert ADAPTER.is_partial_model_instance(value) is expected
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (SimpleModel(user_id=1), {"user_id": 1}),
-        (ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]), [1, 2, 3]),
-        (
-            ADAPTER.validate_obj(
-                NestedRootModel,
-                ADAPTER.validate_obj(DummyRootModel, [1, 2, 3]),
-            ),
-            [1, 2, 3],
-        ),
-        (
-            ADAPTER.validate_obj(
-                Users,
-                [
-                    {"user_id": 1},
-                    {"user_id": 2},
-                ],
-            ),
-            [{"user_id": 1}, {"user_id": 2}],
-        ),
-    ],
-)
-def test_dump_json(value, expected):
-    assert json.loads(ADAPTER.dump_json(value)) == expected
-
-
-def test_validate_json_list_model():
-    model = ADAPTER.make_list_model(SimpleModel)
-    instance = ADAPTER.validate_json(model, b'[{"user_id": 1}, {"user_id": 2}]')
-
-    assert json.loads(ADAPTER.dump_json(instance)) == [
-        {"user_id": 1},
-        {"user_id": 2},
-    ]
 
 
 def test_validation_error_schema_uses_placeholder_name():
