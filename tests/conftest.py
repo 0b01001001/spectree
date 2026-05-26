@@ -8,7 +8,6 @@ from tests.model_cases import MODEL_CASE_PARAMS, build_model_case
 
 _MSGSPEC_TEST_FILES = {
     "test_msgspec.py",
-    "test_plugin_falcon_msgspec.py",
     "test_plugin_with_msgspec.py",
     "test_msgspec_plugin.py",
 }
