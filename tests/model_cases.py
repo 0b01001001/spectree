@@ -5,7 +5,7 @@ import importlib.util
 import json
 from dataclasses import dataclass
 from types import GenericAlias
-from typing import Any
+from typing import Any, Mapping
 
 import pytest
 
@@ -30,6 +30,7 @@ class RootModelLookalike:
 class ModelCase:
     name: str
     adapter: ModelAdapterType
+    model_base: Any
     simple_model: Any
     dummy_root_model: Any
     nested_root_model: Any
@@ -45,16 +46,19 @@ class ModelCase:
     def dump_python(self, value: Any) -> Any:
         return json.loads(self.adapter.dump_json(value))
 
+    def make_model(self, name: str, fields: Mapping[str, Any]) -> Any:
+        return _make_model(name, self.model_base, fields)
+
     def list_of(self, model: Any) -> Any:
         return GenericAlias(list, (model,))
 
 
-def _make_simple_model(base: Any) -> Any:
+def _make_model(name: str, base: Any, fields: Mapping[str, Any]) -> Any:
     return type(
-        "SimpleModel",
+        name,
         (base,),
         {
-            "__annotations__": {"user_id": int},
+            "__annotations__": dict(fields),
             "__module__": __name__,
         },
     )
@@ -74,7 +78,8 @@ def _build_pydantic_case() -> ModelCase:
 
     pydantic = importlib.import_module("pydantic")
     adapter = get_pydantic_model_adapter()
-    SimpleModel = _make_simple_model(pydantic.BaseModel)
+    model_base = pydantic.BaseModel
+    SimpleModel = _make_model("SimpleModel", model_base, {"user_id": int})
 
     dummy_root_model = adapter.make_root_model(
         list[int],
@@ -95,6 +100,7 @@ def _build_pydantic_case() -> ModelCase:
     return ModelCase(
         name="pydantic",
         adapter=adapter,
+        model_base=model_base,
         simple_model=SimpleModel,
         dummy_root_model=dummy_root_model,
         nested_root_model=nested_root_model,
@@ -108,7 +114,8 @@ def _build_msgspec_case() -> ModelCase:
 
     msgspec = importlib.import_module("msgspec")
     adapter = get_msgspec_model_adapter()
-    SimpleModel = _make_simple_model(msgspec.Struct)
+    model_base = msgspec.Struct
+    SimpleModel = _make_model("SimpleModel", model_base, {"user_id": int})
 
     dummy_root_model = adapter.make_root_model(
         list[int],
@@ -129,6 +136,7 @@ def _build_msgspec_case() -> ModelCase:
     return ModelCase(
         name="msgspec",
         adapter=adapter,
+        model_base=model_base,
         simple_model=SimpleModel,
         dummy_root_model=dummy_root_model,
         nested_root_model=nested_root_model,
