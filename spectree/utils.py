@@ -308,6 +308,37 @@ def get_multidict_items_starlette(
     return res
 
 
+def get_parameter_type_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
+    """Resolve the parameter type hints of ``func``.
+
+    :meth:`SpecTree.validate` only reads the annotations of the request
+    parameters (``query``, ``json``, ``form``, ``headers``, ``cookies``); the
+    return annotation is never used. :func:`typing.get_type_hints` however
+    evaluates *every* annotation on the function, including the return type.
+
+    A return annotation that references a name only imported under
+    ``typing.TYPE_CHECKING`` (e.g. Flask's ``ResponseReturnValue``) therefore
+    makes ``get_type_hints`` raise ``NameError`` even though spectree never
+    needs that annotation. See https://github.com/0b01001001/spectree/issues/312
+    and the underlying CPython limitation https://bugs.python.org/issue43463.
+
+    To stay robust, temporarily drop the return annotation before resolving so
+    an unresolvable return type cannot break the parameter annotations we do
+    need. The function's ``__globals__`` are left untouched so forward
+    references in the parameter annotations still resolve correctly.
+    """
+    annotations = getattr(func, "__annotations__", None)
+    if not annotations or "return" not in annotations:
+        return get_type_hints(func)
+
+    return_annotation = annotations["return"]
+    del annotations["return"]
+    try:
+        return get_type_hints(func)
+    finally:
+        annotations["return"] = return_annotation
+
+
 def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
