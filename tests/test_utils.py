@@ -2,14 +2,17 @@ import json
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
+from typing import Optional, get_type_hints
 
 import pytest
+from pydantic import BaseModel
 
 from spectree.metadata import FunctionDecorator
 from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
+    get_parameter_type_hints,
     has_model,
     is_list_item,
     json_compatible_deepcopy,
@@ -20,12 +23,16 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
-from tests.common import get_model_path_key
 from tests.common_dataclass import (
     DemoModel as DemoModelDef,
     DemoQuery as DemoQueryDef,
     OptionalListQuery,
 )
+from tests.common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
+from tests.type_checking_annotation_case import view_func as type_checking_view_func
+
+api = SpecTree()
+model_adapter = get_pydantic_model_adapter()
 
 
 def undecorated_func():
@@ -389,6 +396,33 @@ def test_parse_params_with_route_param_keywords():
     )
     assert repeated_params == params
 
+def test_get_parameter_type_hints():
+    def func(query: DemoQuery, json: DemoModel) -> int:
+        return 0
+
+    hints = get_parameter_type_hints(func)
+    assert hints["query"] is DemoQuery
+    assert hints["json"] is DemoModel
+    assert "return" not in hints
+
+
+def test_get_parameter_type_hints_unresolvable_return_annotation():
+    # The return annotation references a `TYPE_CHECKING`-only name, so plain
+    # `get_type_hints` raises `NameError` even though spectree never reads it.
+    # Regression test for https://github.com/0b01001001/spectree/issues/312.
+    with pytest.raises(NameError):
+        get_type_hints(type_checking_view_func)
+
+    hints = get_parameter_type_hints(type_checking_view_func)
+    assert hints == {"json": DemoModel}
+    # The original (unresolvable) return annotation must be left intact.
+    assert "return" in type_checking_view_func.__annotations__
+
+
+def test_is_list_item():
+    class OptionalListQuery(BaseModel):
+        names: Optional[list[str]] = None
+        title: Optional[str] = None
 
 def test_is_list_item(utils_models):
     assert is_list_item("names1", utils_models.demo_query)

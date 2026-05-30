@@ -1,12 +1,20 @@
 import warnings
 import weakref
 from collections import defaultdict
-from collections.abc import Callable, Mapping, Sequence
 from functools import wraps
 from importlib import import_module
 from typing import (
     Any,
-    get_type_hints,
+    Callable,
+    Mapping,
+    Sequence,
+)
+
+from spectree.metadata import (
+    FunctionDecorator,
+    is_validated_function,
+    iter_wrapped_functions,
+    register_validated_function,
 )
 
 from spectree._types import (
@@ -16,12 +24,6 @@ from spectree._types import (
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
-from spectree.metadata import (
-    FunctionDecorator,
-    is_validated_function,
-    iter_wrapped_functions,
-    register_validated_function,
-)
 from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag
@@ -32,6 +34,7 @@ from spectree.utils import (
     default_before_handler,
     get_model_key,
     get_nested_key,
+    get_parameter_type_hints,
     get_security,
     json_compatible_deepcopy,
     parse_comments,
@@ -271,7 +274,7 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                annotations = get_type_hints(func, include_extras=True)
+                annotations = get_parameter_type_hints(func, include_extras=True)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)
