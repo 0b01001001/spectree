@@ -36,19 +36,11 @@ class Item:
     limit: int
 
 
-def _annotate_handler(handler, query_model, payload_model):
-    handler.__annotations__ = {
-        "query": query_model,
-        "json": payload_model,
-    }
-    return handler
-
-
 @pytest.fixture
 def flask_adapter_app(model_case):
-    query_model = model_case.convert_dataclass(Query)
-    payload_model = model_case.convert_dataclass(Payload)
-    item_model = model_case.convert_dataclass(Item)
+    query_model = model_case.get_model(Query)
+    payload_model = model_case.get_model(Payload)
+    item_model = model_case.get_model(Item)
     raw_list_model = model_case.list_of(item_model)
 
     spec = SpecTree(
@@ -59,23 +51,17 @@ def flask_adapter_app(model_case):
     app = Flask(__name__)
     app.config["TESTING"] = True
 
-    def create_item(query, json):
+    def create_item(query: query_model, json: payload_model):
         return [{"name": json.name, "limit": query.limit}]
 
-    create_item = _annotate_handler(create_item, query_model, payload_model)
     create_item = spec.validate(resp=Response(HTTP_200=raw_list_model))(create_item)
     app.add_url_rule("/items", view_func=create_item, methods=["POST"])
 
     blueprint = Blueprint("adapter_blueprint", __name__)
 
-    def create_blueprint_item(query, json):
+    def create_blueprint_item(query: query_model, json: payload_model):
         return [{"name": json.name, "limit": query.limit}]
 
-    create_blueprint_item = _annotate_handler(
-        create_blueprint_item,
-        query_model,
-        payload_model,
-    )
     create_blueprint_item = spec.validate(resp=Response(HTTP_200=raw_list_model))(
         create_blueprint_item
     )
@@ -87,10 +73,9 @@ def flask_adapter_app(model_case):
     app.register_blueprint(blueprint, url_prefix="/bp")
 
     class ItemsView(MethodView):
-        def post(self, query, json):
+        def post(self, query: query_model, json: payload_model):
             return [{"name": json.name, "limit": query.limit}]
 
-    ItemsView.post = _annotate_handler(ItemsView.post, query_model, payload_model)
     ItemsView.post = spec.validate(resp=Response(HTTP_200=raw_list_model))(
         ItemsView.post
     )

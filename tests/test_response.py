@@ -2,6 +2,7 @@ import pytest
 
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import get_model_key
+from tests.model_cases import SimpleModel
 
 
 class NormalClass:
@@ -35,7 +36,7 @@ def test_response_rejects_invalid_model(model_case):
 
 def test_init_response(model_case):
     adapter = model_case.adapter
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
 
     resp = Response("HTTP_200", HTTP_201=simple_model)
     resp.bind_model_adapter(adapter)
@@ -77,24 +78,26 @@ def test_response_add_model(model_case):
     resp = Response()
     resp.bind_model_adapter(model_case.adapter)
 
-    resp.add_model(201, model_case.simple_model)
+    simple_model = model_case.get_model(SimpleModel)
+    resp.add_model(201, simple_model)
 
-    assert resp.find_model(201) is model_case.simple_model
+    assert resp.find_model(201) is simple_model
 
 
 def test_response_find_model_requires_bound_adapter(model_case):
-    resp = Response(HTTP_200=model_case.simple_model)
+    simple_model = model_case.get_model(SimpleModel)
+    resp = Response(HTTP_200=simple_model)
 
     assert resp.find_model(200) is None
 
     resp.bind_model_adapter(model_case.adapter)
 
-    assert resp.find_model(200) is model_case.simple_model
+    assert resp.find_model(200) is simple_model
 
 
 def test_response_add_model_builds_only_new_model(monkeypatch, model_case):
     adapter = model_case.adapter
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
     list_model = model_case.list_of(simple_model)
 
     resp = Response(HTTP_200=list_model)
@@ -120,7 +123,7 @@ def test_response_add_model_builds_only_new_model(monkeypatch, model_case):
     "replace, expected_model_name",
     [
         pytest.param(True, "users_model", id="replace-existing-model"),
-        pytest.param(False, "simple_model", id="keep-existing-model"),
+        pytest.param(False, "simple", id="keep-existing-model"),
     ],
 )
 def test_response_add_model_when_model_already_exists(
@@ -130,26 +133,34 @@ def test_response_add_model_when_model_already_exists(
 ):
     resp = Response()
     resp.bind_model_adapter(model_case.adapter)
+    simple_model = model_case.get_model(SimpleModel)
+    users_model = model_case.get_model(list[SimpleModel], name="Users")
 
-    resp.add_model(201, model_case.simple_model)
-    resp.add_model(201, model_case.users_model, replace=replace)
+    resp.add_model(201, simple_model)
+    resp.add_model(201, users_model, replace=replace)
 
-    assert resp.find_model(201) is getattr(model_case, expected_model_name)
+    expected_models = {
+        "users_model": users_model,
+        "simple": simple_model,
+    }
+    assert resp.find_model(201) is expected_models[expected_model_name]
 
 
 def test_response_add_model_when_model_already_exists_before_bind(model_case):
     resp = Response()
+    simple_model = model_case.get_model(SimpleModel)
+    users_model = model_case.get_model(list[SimpleModel], name="Users")
 
-    resp.add_model(201, model_case.simple_model)
-    resp.add_model(201, model_case.users_model, replace=False)
+    resp.add_model(201, simple_model)
+    resp.add_model(201, users_model, replace=False)
     resp.bind_model_adapter(model_case.adapter)
 
-    assert resp.find_model(201) is model_case.simple_model
+    assert resp.find_model(201) is simple_model
 
 
 def test_response_spec(model_case):
     adapter = model_case.adapter
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
     validation_error = adapter.validation_error
 
     resp = Response(
@@ -180,7 +191,7 @@ def test_response_spec(model_case):
 
 
 def test_list_model(model_case):
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
     list_model = model_case.list_of(simple_model)
 
     resp = Response(HTTP_200=list_model)
