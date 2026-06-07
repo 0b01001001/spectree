@@ -95,11 +95,12 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
         self,
         root_type: Any,
         *,
-        name: str = "GeneratedRootModel",
+        name: str | None = None,
         module: str | None = None,
     ) -> type[BaseModel]:
+        model_name = name or "GeneratedRootModel"
         module_name = module or __name__
-        return type(name, (RootModel[root_type],), {"__module__": module_name})
+        return type(model_name, (RootModel[root_type],), {"__module__": module_name})
 
     def make_list_model(self, model: type[Any]) -> type[BaseModel]:
         return self.make_root_model(

@@ -19,11 +19,27 @@ class FalconAdapterApp:
     raw_list_model: Any
 
 
+@dataclass
+class Query:
+    limit: int
+
+
+@dataclass
+class Payload:
+    name: str
+
+
+@dataclass
+class Item:
+    name: str
+    limit: int
+
+
 @pytest.fixture
 def falcon_adapter_app(model_case):
-    query_model = model_case.make_model("Query", {"limit": int})
-    payload_model = model_case.make_model("Payload", {"name": str})
-    item_model = model_case.make_model("Item", {"name": str, "limit": int})
+    query_model = model_case.get_model(Query)
+    payload_model = model_case.get_model(Payload)
+    item_model = model_case.get_model(Item)
     raw_list_model = model_case.list_of(item_model)
 
     spec = SpecTree(
@@ -33,7 +49,7 @@ def falcon_adapter_app(model_case):
     )
 
     class Items:
-        def on_post(self, req, resp, query, json):
+        def on_post(self, req, resp, query: query_model, json: payload_model):
             resp.media = [
                 {
                     "name": json.name,
@@ -41,10 +57,6 @@ def falcon_adapter_app(model_case):
                 }
             ]
 
-    Items.on_post.__annotations__ = {
-        "query": query_model,
-        "json": payload_model,
-    }
     Items.on_post = spec.validate(resp=Response(HTTP_200=raw_list_model))(Items.on_post)
 
     app = falcon.App()

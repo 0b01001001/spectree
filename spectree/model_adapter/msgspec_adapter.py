@@ -89,7 +89,7 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         self,
         root_type: type[Any],
         *,
-        name: str = "GeneratedRootModel",
+        name: str | None = None,
         module: str | None = None,
     ) -> type[msgspec.Struct]:
         """
@@ -97,7 +97,8 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
 
         See: https://github.com/jcrist/msgspec/issues/484
         """
-        T = Annotated[root_type, msgspec.Meta(title=name)]  # type: ignore
+        model_name = name or "GeneratedRootModel"
+        T = Annotated[root_type, msgspec.Meta(title=model_name)]  # type: ignore
         return T  # type: ignore
 
     def make_list_model(self, model: type) -> type:

@@ -3,9 +3,19 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import json
-from dataclasses import dataclass
+from dataclasses import MISSING, dataclass, fields, is_dataclass
+from functools import lru_cache
 from types import GenericAlias
-from typing import Any, Mapping
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 import pytest
 
@@ -20,6 +30,16 @@ MODEL_CASE_PARAMS = [
     pytest.param("msgspec", marks=pytest.mark.msgspec, id="msgspec"),
 ]
 
+DATACLASS_CONVERTER_CACHE_SIZE = 128
+MODEL_DEFINITION_CACHE_SIZE = 128
+DataclassConverter = Callable[[type[Any]], Any]
+ModelResolver = Callable[[Any | None, str | None], Any | None]
+
+
+@dataclass
+class SimpleModel:
+    user_id: int
+
 
 @dataclass
 class RootModelLookalike:
@@ -30,12 +50,16 @@ class RootModelLookalike:
 class ModelCase:
     name: str
     adapter: ModelAdapterType
-    model_base: Any
-    simple_model: Any
-    dummy_root_model: Any
-    nested_root_model: Any
-    users_model: Any
+    _get_model: ModelResolver
     root_model_lookalike: type[RootModelLookalike] = RootModelLookalike
+
+    def get_model(
+        self,
+        model_def: Any | None,
+        *,
+        name: str | None = None,
+    ) -> Any | None:
+        return self._get_model(model_def, name)
 
     def validate_obj(self, model: Any, value: Any) -> Any:
         return self.adapter.validate_obj(model, value)
@@ -46,22 +70,118 @@ class ModelCase:
     def dump_python(self, value: Any) -> Any:
         return json.loads(self.adapter.dump_json(value))
 
-    def make_model(self, name: str, fields: Mapping[str, Any]) -> Any:
-        return _make_model(name, self.model_base, fields)
-
     def list_of(self, model: Any) -> Any:
         return GenericAlias(list, (model,))
 
 
-def _make_model(name: str, base: Any, fields: Mapping[str, Any]) -> Any:
-    return type(
-        name,
-        (base,),
-        {
-            "__annotations__": dict(fields),
-            "__module__": __name__,
-        },
-    )
+def _dataclass_field_types(model_def: type[Any]) -> list[tuple[Any, Any]]:
+    if not is_dataclass(model_def):
+        raise TypeError(f"{model_def!r} is not a dataclass")
+
+    type_hints = get_type_hints(model_def, include_extras=True)
+    return [
+        (model_field, type_hints.get(model_field.name, model_field.type))
+        for model_field in fields(model_def)
+    ]
+
+
+def _build_model_resolver(
+    adapter: ModelAdapterType,
+    convert_dataclass: DataclassConverter,
+) -> ModelResolver:
+    def convert_type_def(type_def: Any) -> Any:
+        if is_dataclass(type_def):
+            return convert_dataclass(cast(type[Any], type_def))
+
+        origin = get_origin(type_def)
+        if origin is None:
+            return type_def
+
+        args = tuple(convert_type_def(arg) for arg in get_args(type_def))
+        if origin is Union:
+            return Union[args]
+        if origin is Annotated:
+            return Annotated[args]
+        return GenericAlias(origin, args)
+
+    @lru_cache(maxsize=MODEL_DEFINITION_CACHE_SIZE)
+    def get_model(
+        model_def: Any | None,
+        name: str | None,
+    ) -> Any | None:
+        if model_def is None:
+            return None
+
+        converted_def = convert_type_def(model_def)
+        if is_dataclass(model_def):
+            return converted_def
+
+        origin = get_origin(model_def)
+        if origin is list and name is None:
+            item_model = get_args(converted_def)[0]
+            return adapter.make_list_model(item_model)
+
+        return adapter.make_root_model(converted_def, name=name, module=__name__)
+
+    return cast(ModelResolver, get_model)
+
+
+def _build_pydantic_dataclass_converter() -> DataclassConverter:
+    pydantic = importlib.import_module("pydantic")
+    base_model = pydantic.BaseModel
+    create_model = pydantic.create_model
+    field = pydantic.Field
+
+    @lru_cache(maxsize=DATACLASS_CONVERTER_CACHE_SIZE)
+    def convert(model_def: type[Any]) -> Any:
+        field_definitions = {}
+        for model_field, type_hint in _dataclass_field_types(model_def):
+            if model_field.default_factory is not MISSING:
+                default = field(default_factory=model_field.default_factory)
+            elif model_field.default is not MISSING:
+                default = model_field.default
+            else:
+                default = ...
+            field_definitions[model_field.name] = (type_hint, default)
+
+        model = create_model(
+            model_def.__name__,
+            __base__=base_model,
+            __module__=model_def.__module__,
+            **field_definitions,
+        )
+        return model
+
+    return cast(DataclassConverter, convert)
+
+
+def _build_msgspec_dataclass_converter() -> DataclassConverter:
+    msgspec = importlib.import_module("msgspec")
+    defstruct = msgspec.defstruct
+    field = msgspec.field
+
+    @lru_cache(maxsize=DATACLASS_CONVERTER_CACHE_SIZE)
+    def convert(model_def: type[Any]) -> Any:
+        field_definitions: list[Any] = []
+        for model_field, type_hint in _dataclass_field_types(model_def):
+            if model_field.default_factory is not MISSING:
+                default = field(default_factory=model_field.default_factory)
+                field_definitions.append((model_field.name, type_hint, default))
+            elif model_field.default is not MISSING:
+                field_definitions.append(
+                    (model_field.name, type_hint, model_field.default)
+                )
+            else:
+                field_definitions.append((model_field.name, type_hint))
+
+        model = defstruct(
+            model_def.__name__,
+            field_definitions,
+            module=model_def.__module__,
+        )
+        return model
+
+    return cast(DataclassConverter, convert)
 
 
 def build_model_case(name: str) -> ModelCase:
@@ -76,35 +196,13 @@ def _build_pydantic_case() -> ModelCase:
     if importlib.util.find_spec("pydantic") is None:
         pytest.skip("pydantic is not installed")
 
-    pydantic = importlib.import_module("pydantic")
     adapter = get_pydantic_model_adapter()
-    model_base = pydantic.BaseModel
-    SimpleModel = _make_model("SimpleModel", model_base, {"user_id": int})
-
-    dummy_root_model = adapter.make_root_model(
-        list[int],
-        name="DummyRootModel",
-        module=__name__,
-    )
-    nested_root_model = adapter.make_root_model(
-        dummy_root_model,
-        name="NestedRootModel",
-        module=__name__,
-    )
-    users_model = adapter.make_root_model(
-        GenericAlias(list, (SimpleModel,)),
-        name="Users",
-        module=__name__,
-    )
+    convert_dataclass = _build_pydantic_dataclass_converter()
 
     return ModelCase(
         name="pydantic",
         adapter=adapter,
-        model_base=model_base,
-        simple_model=SimpleModel,
-        dummy_root_model=dummy_root_model,
-        nested_root_model=nested_root_model,
-        users_model=users_model,
+        _get_model=_build_model_resolver(adapter, convert_dataclass),
     )
 
 
@@ -112,33 +210,11 @@ def _build_msgspec_case() -> ModelCase:
     if importlib.util.find_spec("msgspec") is None:
         pytest.skip("msgspec is not installed")
 
-    msgspec = importlib.import_module("msgspec")
     adapter = get_msgspec_model_adapter()
-    model_base = msgspec.Struct
-    SimpleModel = _make_model("SimpleModel", model_base, {"user_id": int})
-
-    dummy_root_model = adapter.make_root_model(
-        list[int],
-        name="DummyRootModel",
-        module=__name__,
-    )
-    nested_root_model = adapter.make_root_model(
-        dummy_root_model,
-        name="NestedRootModel",
-        module=__name__,
-    )
-    users_model = adapter.make_root_model(
-        GenericAlias(list, (SimpleModel,)),
-        name="Users",
-        module=__name__,
-    )
+    convert_dataclass = _build_msgspec_dataclass_converter()
 
     return ModelCase(
         name="msgspec",
         adapter=adapter,
-        model_base=model_base,
-        simple_model=SimpleModel,
-        dummy_root_model=dummy_root_model,
-        nested_root_model=nested_root_model,
-        users_model=users_model,
+        _get_model=_build_model_resolver(adapter, convert_dataclass),
     )

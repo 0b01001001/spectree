@@ -1,8 +1,10 @@
 import pytest
 
+from tests.model_cases import SimpleModel
+
 
 def _partial_model_instance_value(model_case, kind):
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
     values = {
         "model": simple_model(user_id=1),
         "list-with-model": [0, simple_model(user_id=1)],
@@ -19,7 +21,7 @@ def _partial_model_instance_value(model_case, kind):
 
 def test_validate_obj_and_is_model_instance(model_case):
     adapter = model_case.adapter
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
 
     instance = model_case.validate_obj(simple_model, {"user_id": "1"})
 
@@ -31,21 +33,26 @@ def test_validate_obj_and_is_model_instance(model_case):
 
 def test_root_model_instances(model_case):
     adapter = model_case.adapter
+    dummy_root_model = model_case.get_model(list[int], name="DummyRootModel")
+    nested_root_model = model_case.get_model(
+        dummy_root_model,
+        name="NestedRootModel",
+    )
 
     root_instance = model_case.validate_obj(
-        model_case.dummy_root_model,
+        dummy_root_model,
         [1, 2, 3],
     )
     nested_root_instance = model_case.validate_obj(
-        model_case.nested_root_model,
+        nested_root_model,
         root_instance,
     )
 
-    assert adapter.is_model_instance(root_instance, model_case.dummy_root_model) is True
+    assert adapter.is_model_instance(root_instance, dummy_root_model) is True
     assert (
         adapter.is_model_instance(
             nested_root_instance,
-            model_case.nested_root_model,
+            nested_root_model,
         )
         is True
     )
@@ -84,15 +91,18 @@ def test_is_partial_model_instance(model_case, kind, expected):
 
 
 def test_dump_json(model_case):
-    simple_model = model_case.simple_model
+    simple_model = model_case.get_model(SimpleModel)
 
     assert model_case.dump_python(simple_model(user_id=1)) == {"user_id": 1}
     assert model_case.dump_python(
-        model_case.validate_obj(model_case.dummy_root_model, [1, 2, 3])
+        model_case.validate_obj(
+            model_case.get_model(list[int], name="DummyRootModel"),
+            [1, 2, 3],
+        )
     ) == [1, 2, 3]
     assert model_case.dump_python(
         model_case.validate_obj(
-            model_case.users_model,
+            model_case.get_model(list[SimpleModel], name="Users"),
             [
                 {"user_id": 1},
                 {"user_id": 2},
@@ -102,7 +112,7 @@ def test_dump_json(model_case):
 
 
 def test_validate_json_list_model(model_case):
-    list_model = model_case.adapter.make_list_model(model_case.simple_model)
+    list_model = model_case.adapter.make_list_model(model_case.get_model(SimpleModel))
     instance = model_case.validate_json(list_model, b'[{"user_id": 1}, {"user_id": 2}]')
 
     assert model_case.dump_python(instance) == [
@@ -113,7 +123,7 @@ def test_validate_json_list_model(model_case):
 
 def test_json_schema(model_case):
     schema = model_case.adapter.json_schema(
-        model_case.simple_model,
+        model_case.get_model(SimpleModel),
         ref_template="#/components/schemas/{model}",
     )
 
@@ -123,7 +133,7 @@ def test_json_schema(model_case):
 
 def test_validation_errors(model_case):
     with pytest.raises(model_case.adapter.validation_error) as exc_info:
-        model_case.validate_obj(model_case.simple_model, {"user_id": "bad"})
+        model_case.validate_obj(model_case.get_model(SimpleModel), {"user_id": "bad"})
 
     errors = model_case.adapter.validation_errors(exc_info.value)
 
