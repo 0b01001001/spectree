@@ -43,7 +43,7 @@ class ModelAdapter(Protocol[ModelT, ValidationErrorT, BaseFileT]):
         self,
         root_type: Any,
         *,
-        name: str = "GeneratedRootModel",
+        name: str | None = None,
         module: str | None = None,
     ) -> ModelClass: ...
 

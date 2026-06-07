@@ -121,8 +121,6 @@ def _build_model_resolver(
             item_model = get_args(converted_def)[0]
             return adapter.make_list_model(item_model)
 
-        if name is None:
-            return adapter.make_root_model(converted_def, module=__name__)
         return adapter.make_root_model(converted_def, name=name, module=__name__)
 
     return cast(ModelResolver, get_model)
