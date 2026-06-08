@@ -316,6 +316,17 @@ def test_get_parameter_type_hints_unresolvable_return_annotation():
     assert "return" in type_checking_view_func.__annotations__
 
 
+def test_get_parameter_type_hints_unresolvable_parameter_annotation():
+    # If a *parameter* annotation references an unresolvable name, the error
+    # must propagate — spectree genuinely needs those types, unlike the return
+    # annotation which is never read.
+    def func(json: "CompletelyNonExistentType") -> int:  # noqa: F821
+        raise NotImplementedError
+
+    with pytest.raises(NameError):
+        get_parameter_type_hints(func)
+
+
 def test_is_list_item():
     class OptionalListQuery(BaseModel):
         names: Optional[list[str]] = None

@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
-from types import UnionType
+from types import FunctionType, UnionType
 from typing import (
     Annotated,
     Any,
@@ -327,16 +327,25 @@ def get_parameter_type_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     need. The function's ``__globals__`` are left untouched so forward
     references in the parameter annotations still resolve correctly.
     """
-    annotations = getattr(func, "__annotations__", None)
-    if not annotations or "return" not in annotations:
+    annotations = getattr(func, "__annotations__", {})
+    if "return" not in annotations:
         return get_type_hints(func)
 
-    return_annotation = annotations["return"]
-    del annotations["return"]
-    try:
-        return get_type_hints(func)
-    finally:
-        annotations["return"] = return_annotation
+    # Build a thread-safe proxy that shares __globals__ with the original but
+    # carries only the parameter annotations (no 'return').  Mutating
+    # func.__annotations__ in place is not thread-safe, so we create a new
+    # FunctionType object instead.  If a *parameter* annotation is
+    # unresolvable, the NameError propagates — spectree genuinely needs those
+    # types.
+    proxy = FunctionType(
+        func.__code__,
+        func.__globals__,
+        func.__name__,
+        func.__defaults__,
+        func.__closure__,
+    )
+    proxy.__annotations__ = {k: v for k, v in annotations.items() if k != "return"}
+    return get_type_hints(proxy)
 
 
 def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
