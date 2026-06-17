@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
-from types import UnionType
+from types import FunctionType, UnionType
 from typing import (
     Annotated,
     Any,
@@ -306,6 +306,46 @@ def get_multidict_items_starlette(
             res[key] = multidict[key]
 
     return res
+
+
+def get_parameter_type_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
+    """Resolve the parameter type hints of ``func``.
+
+    :meth:`SpecTree.validate` only reads the annotations of the request
+    parameters (``query``, ``json``, ``form``, ``headers``, ``cookies``); the
+    return annotation is never used. :func:`typing.get_type_hints` however
+    evaluates *every* annotation on the function, including the return type.
+
+    A return annotation that references a name only imported under
+    ``typing.TYPE_CHECKING`` (e.g. Flask's ``ResponseReturnValue``) therefore
+    makes ``get_type_hints`` raise ``NameError`` even though spectree never
+    needs that annotation. See https://github.com/0b01001001/spectree/issues/312
+    and the underlying CPython limitation https://bugs.python.org/issue43463.
+
+    To stay robust, temporarily drop the return annotation before resolving so
+    an unresolvable return type cannot break the parameter annotations we do
+    need. The function's ``__globals__`` are left untouched so forward
+    references in the parameter annotations still resolve correctly.
+    """
+    annotations = getattr(func, "__annotations__", {})
+    if "return" not in annotations:
+        return get_type_hints(func)
+
+    # Build a thread-safe proxy that shares __globals__ with the original but
+    # carries only the parameter annotations (no 'return').  Mutating
+    # func.__annotations__ in place is not thread-safe, so we create a new
+    # FunctionType object instead.  If a *parameter* annotation is
+    # unresolvable, the NameError propagates — spectree genuinely needs those
+    # types.
+    proxy = FunctionType(
+        func.__code__,
+        func.__globals__,
+        func.__name__,
+        func.__defaults__,
+        func.__closure__,
+    )
+    proxy.__annotations__ = {k: v for k, v in annotations.items() if k != "return"}
+    return get_type_hints(proxy)
 
 
 def is_list_item(key: str, model: Optional[ModelClass]) -> bool:

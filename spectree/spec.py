@@ -10,7 +10,6 @@ from typing import (
     Optional,
     Sequence,
     Type,
-    get_type_hints,
 )
 
 from spectree._types import (
@@ -31,6 +30,7 @@ from spectree.utils import (
     default_before_handler,
     get_model_key,
     get_nested_key,
+    get_parameter_type_hints,
     get_security,
     json_compatible_deepcopy,
     parse_comments,
@@ -260,7 +260,7 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                annotations = get_type_hints(func)
+                annotations = get_parameter_type_hints(func)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)
