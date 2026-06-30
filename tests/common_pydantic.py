@@ -4,9 +4,8 @@ from typing import Any, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from spectree.model_adapter.pydantic_adapter import BaseFile
-
-from .common_dataclass import Payload
-from .model_cases import build_model_case
+from tests.common_dataclass import Payload
+from tests.model_cases import build_model_case
 
 pydantic_case = build_model_case("pydantic")
 

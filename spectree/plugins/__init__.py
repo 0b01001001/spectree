@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from .base import BasePlugin
+from spectree.plugins.base import BasePlugin
 
 Plugin = namedtuple("Plugin", ("name", "package", "class_name"))
 

@@ -18,9 +18,8 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
-
-from .common import get_model_path_key
-from .common_pydantic import DefaultEnumValue, DemoModel, DemoQuery, Numeric
+from tests.common import get_model_path_key
+from tests.common_pydantic import DefaultEnumValue, DemoModel, DemoQuery, Numeric
 
 pytestmark = pytest.mark.pydantic
 

@@ -13,22 +13,21 @@ from starlette.testclient import TestClient
 
 from spectree import Response, SpecTree
 from spectree.plugins.starlette_plugin import PydanticResponse
-
-from .common import (
+from tests.common import (
     UserXmlData,
     api_tag,
 )
-from .common import (
+from tests.common import (
     instance_name_after_handler as method_handler,
 )
-from .common import (
+from tests.common import (
     validation_error_handler as before_handler,
 )
-from .common import (
+from tests.common import (
     validation_pass_handler as after_handler,
 )
-from .common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
-from .common_pydantic import (
+from tests.common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
+from tests.common_pydantic import (
     CustomError,
     FormFileUpload,
     Headers,
@@ -39,7 +38,7 @@ from .common_pydantic import (
     StrDict,
     get_root_resp_data,
 )
-from .model_cases import build_model_case
+from tests.model_cases import build_model_case
 
 pytestmark = pytest.mark.pydantic
 pydantic_case = build_model_case("pydantic")

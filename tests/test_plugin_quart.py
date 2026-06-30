@@ -5,21 +5,20 @@ import pytest
 from quart import Quart, jsonify, request
 
 from spectree import Response, SpecTree
-
-from .common import (
+from tests.common import (
     SECURITY_SCHEMAS,
     UserXmlData,
     api_after_handler,
     api_tag,
 )
-from .common import (
+from tests.common import (
     validation_error_handler as before_handler,
 )
-from .common import (
+from tests.common import (
     validation_pass_handler as after_handler,
 )
-from .common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
-from .common_pydantic import (
+from tests.common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
+from tests.common_pydantic import (
     CustomError,
     Headers,
     ListPayload,
@@ -28,10 +27,10 @@ from .common_pydantic import (
     StrDict,
     get_root_resp_data,
 )
-from .model_cases import build_model_case
+from tests.model_cases import build_model_case
 
 # import tests to execute
-from .quart_imports import *  # NOQA
+from tests.quart_imports import *  # NOQA
 
 # need to be set here for async tests in `quart_imports`
 pytestmark = [pytest.mark.anyio, pytest.mark.pydantic]

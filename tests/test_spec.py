@@ -10,8 +10,7 @@ from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
-
-from .common import get_paths
+from tests.common import get_paths
 
 
 def backend_app():

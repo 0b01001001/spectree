@@ -1,18 +1,20 @@
 import pytest
 
 from spectree.utils import get_model_key
-
-from .common import SECURITY_SCHEMAS
-from .common_dataclass import Cookies, Payload, Query, Resp
-from .common_pydantic import Headers
-from .model_cases import build_model_case
-from .test_plugin_falcon_model_adapters import FALCON_BACKEND, build_falcon_adapter_app
-from .test_plugin_flask import api as flask_api
-from .test_plugin_flask import api_global_secure as flask_api_global_secure
-from .test_plugin_flask import api_secure as flask_api_secure
-from .test_plugin_flask_blueprint import api as flask_bp_api
-from .test_plugin_flask_view import api as flask_view_api
-from .test_plugin_starlette import api as starlette_api
+from tests.common import SECURITY_SCHEMAS
+from tests.common_dataclass import Cookies, Payload, Query, Resp
+from tests.common_pydantic import Headers
+from tests.model_cases import build_model_case
+from tests.test_plugin_falcon_model_adapters import (
+    FALCON_BACKEND,
+    build_falcon_adapter_app,
+)
+from tests.test_plugin_flask import api as flask_api
+from tests.test_plugin_flask import api_global_secure as flask_api_global_secure
+from tests.test_plugin_flask import api_secure as flask_api_secure
+from tests.test_plugin_flask_blueprint import api as flask_bp_api
+from tests.test_plugin_flask_view import api as flask_view_api
+from tests.test_plugin_starlette import api as starlette_api
 
 pytestmark = pytest.mark.pydantic
 

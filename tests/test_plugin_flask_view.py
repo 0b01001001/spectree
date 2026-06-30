@@ -6,19 +6,18 @@ from flask import Flask, jsonify, make_response, request
 from flask.views import MethodView
 
 from spectree import Response, SpecTree
-
-from .common import (
+from tests.common import (
     UserXmlData,
     api_after_handler,
     api_tag,
 )
-from .common import (
+from tests.common import (
     validation_error_handler as before_handler,
 )
-from .common import (
+from tests.common import (
     validation_pass_handler as after_handler,
 )
-from .common_dataclass import (
+from tests.common_dataclass import (
     Cookies,
     Form,
     Order,
@@ -28,7 +27,7 @@ from .common_dataclass import (
     Resp,
     RespObject,
 )
-from .common_pydantic import (
+from tests.common_pydantic import (
     CustomError,
     FormFileUpload,
     Headers,
@@ -41,8 +40,8 @@ from .common_pydantic import (
 )
 
 # import tests to execute
-from .flask_imports import *  # NOQA
-from .model_cases import build_model_case
+from tests.flask_imports import *  # NOQA
+from tests.model_cases import build_model_case
 
 pytestmark = pytest.mark.pydantic
 pydantic_case = build_model_case("pydantic")
