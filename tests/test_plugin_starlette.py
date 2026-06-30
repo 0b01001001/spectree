@@ -1,6 +1,6 @@
+# mypy: disable-error-code=valid-type
 import io
 from random import randint
-from typing import List
 
 import pytest
 from starlette.applications import Starlette
@@ -15,37 +15,34 @@ from spectree import Response, SpecTree
 from spectree.plugins.starlette_plugin import PydanticResponse
 
 from .common import (
-    JSON,
-    Cookies,
+    UserXmlData,
+    api_tag,
+)
+from .common import (
+    instance_name_after_handler as method_handler,
+)
+from .common import (
+    validation_error_handler as before_handler,
+)
+from .common import (
+    validation_pass_handler as after_handler,
+)
+from .common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
+from .common_pydantic import (
     CustomError,
     FormFileUpload,
     Headers,
-    ListJSON,
+    ListPayload,
     OptionalAliasResp,
-    Order,
-    Query,
-    Resp,
     RespFromAttrs,
-    RespObject,
     RootResp,
     StrDict,
-    UserXmlData,
-    api_tag,
     get_root_resp_data,
 )
+from .model_cases import build_model_case
 
-
-def before_handler(req, resp, err, instance, model_adapter):
-    if err:
-        resp.headers["X-Error"] = "Validation Error"
-
-
-def after_handler(req, resp, err, instance, model_adapter):
-    resp.headers["X-Validation"] = "Pass"
-
-
-def method_handler(req, resp, err, instance, model_adapter):
-    resp.headers["X-Name"] = instance.name
+pytestmark = pytest.mark.pydantic
+pydantic_case = build_model_case("pydantic")
 
 
 api = SpecTree(
@@ -81,13 +78,17 @@ async def file_upload(request):
 
 
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
 )
-async def user_score(request, json: JSON, query: Query):
+async def user_score(
+    request,
+    json: pydantic_case.get_model(Payload),
+    query: pydantic_case.get_model(Query),
+):
     score = [randint(0, request.context.json.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
@@ -96,10 +97,15 @@ async def user_score(request, json: JSON, query: Query):
 
 
 @api.validate(
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
 )
-async def user_score_annotated(request, query: Query, json: JSON, cookies: Cookies):
+async def user_score_annotated(
+    request,
+    query: pydantic_case.get_model(Query),
+    json: pydantic_case.get_model(Payload),
+    cookies: pydantic_case.get_model(Cookies),
+):
     score = [randint(0, json.limit) for _ in range(5)]
     score.sort(reverse=request.context.query.order == Order.desc)
     assert cookies.pub == "abcdefg"
@@ -108,10 +114,10 @@ async def user_score_annotated(request, query: Query, json: JSON, cookies: Cooki
 
 
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     skip_validation=True,
 )
@@ -131,10 +137,10 @@ async def user_score_skip(request):
 
 
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
 )
 async def user_score_model(request):
@@ -142,7 +148,9 @@ async def user_score_model(request):
     score.sort(reverse=request.context.query.order == Order.desc)
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return PydanticResponse(Resp(name=request.context.json.name, score=score))
+    return PydanticResponse(
+        pydantic_case.get_model(Resp)(name=request.context.json.name, score=score)
+    )
 
 
 @api.validate(resp=Response(HTTP_200=None))
@@ -151,14 +159,21 @@ async def no_response(request, json: StrDict):  # type: ignore
 
 
 @api.validate()
-async def list_json(request, json: ListJSON):  # type: ignore
+async def list_json(request, json: ListPayload):  # type: ignore
     return JSONResponse({})
 
 
-@api.validate(resp=Response(HTTP_200=List[JSON]))
+@api.validate(
+    resp=Response(
+        HTTP_200=pydantic_case.list_of(pydantic_case.get_model(Payload)),
+    )
+)
 async def return_list(request):
     pre_serialize = bool(int(request.query_params.get("pre_serialize", 0)))
-    data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+    data = [
+        pydantic_case.get_model(Payload)(name="user1", limit=1),
+        pydantic_case.get_model(Payload)(name="user2", limit=2),
+    ]
     return PydanticResponse(
         [entry.model_dump() if pre_serialize else entry for entry in data]
     )
@@ -249,7 +264,7 @@ app = Starlette(
 
 def inner_register_func():
     @api.validate(
-        query=Query,
+        query=pydantic_case.get_model(Query),
         path_parameter_descriptions={
             "name": "The name that uniquely identifies the user.",
             "non-existent-param": "description",
@@ -291,6 +306,7 @@ def test_starlette_validate(client):
     assert resp.headers.get("X-Validation") is None
 
     for fragment in ("user", "user_annotated"):
+        client.cookies = {}
         resp = client.post(f"/api/{fragment}/starlette")
         assert resp.status_code == 422
         assert resp.headers.get("X-Error") == "Validation Error"
@@ -465,12 +481,12 @@ def test_starlette_return_list_request(client, pre_serialize: bool):
 
 
 @pytest.mark.parametrize(
-    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "List"]
+    "return_what", ["RootResp_Payload", "RootResp_List", "Payload", "List"]
 )
 def test_starlette_return_root_request_sync(client, return_what: str):
     resp = client.get(f"/api/return_root?pre_serialize=0&return_what={return_what}")
     assert resp.status_code == 200
-    if return_what in ("RootResp_JSON", "JSON"):
+    if return_what in ("RootResp_Payload", "Payload"):
         assert resp.json() == {"name": "user1", "limit": 1}
     elif return_what in ("RootResp_List", "List"):
         assert resp.json() == [1, 2, 3, 4]

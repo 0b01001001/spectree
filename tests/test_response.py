@@ -2,7 +2,8 @@ import pytest
 
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.utils import get_model_key
-from tests.model_cases import SimpleModel
+from tests.common_dataclass import SimpleModel
+from tests.model_cases import PYDANTIC_MODEL_CASE_PARAMS
 
 
 class NormalClass:
@@ -20,10 +21,9 @@ def test_response_rejects_invalid_configuration():
             Response(*args, **kwargs)
 
 
+@pytest.mark.parametrize("model_case", PYDANTIC_MODEL_CASE_PARAMS, indirect=True)
 def test_response_rejects_invalid_model(model_case):
     adapter = model_case.adapter
-    if adapter.is_model_type(NormalClass):
-        pytest.skip(f"{model_case.name} adapter accepts arbitrary model specs")
 
     resp = Response(HTTP_200=NormalClass)
     with pytest.raises(AssertionError, match="invalid response model"):

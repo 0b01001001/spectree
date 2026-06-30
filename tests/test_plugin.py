@@ -2,14 +2,29 @@ import pytest
 
 from spectree.utils import get_model_key
 
-from .common import JSON, SECURITY_SCHEMAS, Cookies, Headers, Query, Resp
-from .test_plugin_falcon import api as falcon_api
+from .common import SECURITY_SCHEMAS
+from .common_dataclass import Cookies, Payload, Query, Resp
+from .common_pydantic import Headers
+from .model_cases import build_model_case
+from .test_plugin_falcon_model_adapters import FALCON_BACKEND, build_falcon_adapter_app
 from .test_plugin_flask import api as flask_api
 from .test_plugin_flask import api_global_secure as flask_api_global_secure
 from .test_plugin_flask import api_secure as flask_api_secure
 from .test_plugin_flask_blueprint import api as flask_bp_api
 from .test_plugin_flask_view import api as flask_view_api
 from .test_plugin_starlette import api as starlette_api
+
+pytestmark = pytest.mark.pydantic
+
+pydantic_case = build_model_case("pydantic")
+PYDANTIC_SCHEMA_MODELS = (
+    pydantic_case.get_model(Query),
+    pydantic_case.get_model(Payload),
+    pydantic_case.get_model(Resp),
+    pydantic_case.get_model(Cookies),
+    Headers,
+)
+falcon_api = build_falcon_adapter_app(FALCON_BACKEND, pydantic_case).spec
 
 
 @pytest.mark.parametrize(
@@ -29,7 +44,7 @@ def test_plugin_spec(api, snapshot_json):
             model=m,
             ref_template=f"#/components/schemas/{get_model_key(model=m)}.{{model}}",
         )
-        for m in (Query, JSON, Resp, Cookies, Headers)
+        for m in PYDANTIC_SCHEMA_MODELS
     }
     for name, schema in models.items():
         schema.pop("definitions", None)

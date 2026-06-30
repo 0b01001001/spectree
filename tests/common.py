@@ -1,151 +1,29 @@
-import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum, IntEnum
-from typing import Any, Optional, Union, cast
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from typing import cast
 
 from spectree import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
 from spectree.model_adapter import get_pydantic_model_adapter
-from spectree.model_adapter.pydantic_adapter import BaseFile
 from spectree.utils import hash_module_path
 
+__all__ = [
+    "SECURITY_SCHEMAS",
+    "WRONG_SECURITY_SCHEMAS_DATA",
+    "UserXmlData",
+    "api_after_handler",
+    "api_tag",
+    "get_model_path_key",
+    "get_paths",
+    "instance_name_after_handler",
+    "validation_error_handler",
+    "validation_pass_handler",
+]
+
 ADAPTER = get_pydantic_model_adapter()
-generate_root_model = ADAPTER.make_root_model
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
 )
-
-
-class Order(IntEnum):
-    """Order enum"""
-
-    asce = 0
-    desc = 1
-
-
-class Query(BaseModel):
-    order: Order
-
-
-class QueryList(BaseModel):
-    ids: list[int]
-
-
-class FormFileUpload(BaseModel):
-    file: Optional[BaseFile] = None
-    other: str
-
-
-class Form(BaseModel):
-    name: str
-    limit: str
-
-
-class JSON(BaseModel):
-    name: str
-    limit: int
-
-
-class OptionalJSON(BaseModel):
-    name: Optional[str] = None
-    limit: Optional[int] = None
-
-
-ListJSON = generate_root_model(list[JSON], name="ListJSON")
-
-StrDict = generate_root_model(dict[str, str], name="StrDict")
-
-
-class OptionalAliasResp(BaseModel):
-    alias_schema: str = Field(alias="schema")
-    name: Optional[str] = None
-    limit: Optional[int] = None
-
-
-class Resp(BaseModel):
-    name: str
-    score: list[int]
-
-
-class RespFromAttrs(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    name: str
-    score: list[int]
-
-
-@dataclass
-class RespObject:
-    name: str
-    score: list[int]
-    comment: str
-
-
-RootResp = generate_root_model(Union[JSON, list[int]], name="RootResp")
-
-
-class ComplexResp(BaseModel):
-    date: datetime
-    uuid: uuid.UUID
-
-
-class Language(str, Enum):
-    """Language enum"""
-
-    en = "en-US"
-    zh = "zh-CN"
-
-
-class Headers(BaseModel):
-    lang: Language
-
-    @model_validator(mode="before")
-    @classmethod
-    def lower_keys(cls, data: Any):
-        return {key.lower(): value for key, value in data.items()}
-
-
-class Cookies(BaseModel):
-    pub: str
-
-
-class DemoModel(BaseModel):
-    uid: int
-    limit: int
-    name: str = Field(..., description="user name")
-
-
-class DemoQuery(BaseModel):
-    names1: list[str] = Field(...)
-    names2: list[str] = Field(
-        ..., json_schema_extra=dict(style="matrix", explode=True, non_keyword="dummy")
-    )  # type: ignore
-
-
-class CustomError(BaseModel):
-    foo: str
-
-    @field_validator("foo")
-    @classmethod
-    def value_must_be_foo(cls, value):
-        if value != "foo":
-            # this is not JSON serializable if included in the error context
-            raise ValueError("value must be foo")
-        return value
-
-
-class Numeric(BaseModel):
-    normal: float = 0.0
-    large: float = Field(default=float("inf"))
-    small: float = Field(default=float("-inf"))
-    unknown: float = Field(default=float("nan"))
-
-
-class DefaultEnumValue(BaseModel):
-    langs: frozenset[Language] = frozenset((Language.en,))
 
 
 def get_paths(spec):
@@ -156,6 +34,31 @@ def get_paths(spec):
 
     paths.sort()
     return paths
+
+
+def _set_response_header(resp, name: str, value: str) -> None:
+    if hasattr(resp, "set_header"):
+        resp.set_header(name, value)
+    else:
+        resp.headers[name] = value
+
+
+def validation_error_handler(req, resp, err, instance, model_adapter):
+    if err:
+        _set_response_header(resp, "X-Error", "Validation Error")
+
+
+def validation_pass_handler(req, resp, err, instance, model_adapter):
+    _set_response_header(resp, "X-Validation", "Pass")
+
+
+def api_after_handler(req, resp, err, instance, model_adapter):
+    _set_response_header(resp, "X-API", "OK")
+
+
+def instance_name_after_handler(req, resp, err, instance, model_adapter):
+    if hasattr(instance, "name"):
+        _set_response_header(resp, "X-Name", instance.name)
 
 
 # data from example - https://swagger.io/docs/specification/authentication/
@@ -255,36 +158,6 @@ def get_model_path_key(model_path: str) -> str:
         return model_name
 
     return f"{model_name}.{hash_module_path(module_path=model_path)}"
-
-
-def get_root_resp_data(pre_serialize: bool, return_what: str):
-    assert return_what in (
-        "RootResp_JSON",
-        "RootResp_List",
-        "JSON",
-        "List",
-        "ModelList",
-    )
-    data: Any
-    if return_what == "RootResp_JSON":
-        data = RootResp.model_validate(JSON(name="user1", limit=1))
-    elif return_what == "RootResp_List":
-        data = RootResp.model_validate([1, 2, 3, 4])
-    elif return_what == "JSON":
-        data = JSON(name="user1", limit=1)
-    elif return_what == "List":
-        data = [1, 2, 3, 4]
-        pre_serialize = False
-    elif return_what == "ModelList":
-        data = [JSON(name="user1", limit=1)]
-        pre_serialize = False
-    else:
-        raise AssertionError()
-    if pre_serialize:
-        data = data.model_dump()
-        if "__root__" in data:
-            data = data["__root__"]
-    return data
 
 
 @dataclass(frozen=True)

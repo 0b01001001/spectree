@@ -1,5 +1,5 @@
+# mypy: disable-error-code=valid-type
 from random import randint
-from typing import List
 
 import pytest
 from flask import Flask, jsonify, make_response, request
@@ -8,42 +8,44 @@ from flask.views import MethodView
 from spectree import Response, SpecTree
 
 from .common import (
-    JSON,
+    UserXmlData,
+    api_after_handler,
+    api_tag,
+)
+from .common import (
+    validation_error_handler as before_handler,
+)
+from .common import (
+    validation_pass_handler as after_handler,
+)
+from .common_dataclass import (
     Cookies,
-    CustomError,
     Form,
-    FormFileUpload,
-    Headers,
-    ListJSON,
-    OptionalAliasResp,
     Order,
+    Payload,
     Query,
     QueryList,
     Resp,
-    RespFromAttrs,
     RespObject,
+)
+from .common_pydantic import (
+    CustomError,
+    FormFileUpload,
+    Headers,
+    ListPayload,
+    OptionalAliasResp,
+    RespFromAttrs,
     RootResp,
     StrDict,
-    UserXmlData,
-    api_tag,
     get_root_resp_data,
 )
 
 # import tests to execute
 from .flask_imports import *  # NOQA
+from .model_cases import build_model_case
 
-
-def before_handler(req, resp, err, _, model_adapter):
-    if err:
-        resp.headers["X-Error"] = "Validation Error"
-
-
-def after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-Validation"] = "Pass"
-
-
-def api_after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-API"] = "OK"
+pytestmark = pytest.mark.pydantic
+pydantic_case = build_model_case("pydantic")
 
 
 api = SpecTree("flask", before=before_handler, after=after_handler, annotations=True)
@@ -74,11 +76,11 @@ class FileUploadView(MethodView):
 
 class User(MethodView):
     @api.validate(
-        query=Query,
-        json=JSON,
-        form=Form,
-        cookies=Cookies,
-        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        query=pydantic_case.get_model(Query),
+        json=pydantic_case.get_model(Payload),
+        form=pydantic_case.get_model(Form),
+        cookies=pydantic_case.get_model(Cookies),
+        resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
@@ -93,11 +95,18 @@ class User(MethodView):
 
 class UserAnnotated(MethodView):
     @api.validate(
-        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
-    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+    def post(
+        self,
+        name,
+        query: pydantic_case.get_model(Query),
+        json: pydantic_case.get_model(Payload),
+        form: pydantic_case.get_model(Form),
+        cookies: pydantic_case.get_model(Cookies),
+    ):
         data_src = json or form
         score = [randint(0, int(data_src.limit)) for _ in range(5)]
         score.sort(reverse=query.order == Order.desc)
@@ -108,10 +117,10 @@ class UserAnnotated(MethodView):
 
 class UserSkip(MethodView):
     @api.validate(
-        query=Query,
-        json=JSON,
-        cookies=Cookies,
-        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        query=pydantic_case.get_model(Query),
+        json=pydantic_case.get_model(Payload),
+        cookies=pydantic_case.get_model(Cookies),
+        resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
         tags=[api_tag, "test"],
         after=api_after_handler,
         skip_validation=True,
@@ -134,25 +143,35 @@ class UserSkip(MethodView):
 
 class UserModel(MethodView):
     @api.validate(
-        query=Query,
-        json=JSON,
-        cookies=Cookies,
-        resp=Response(HTTP_200=Resp, HTTP_401=None),
+        query=pydantic_case.get_model(Query),
+        json=pydantic_case.get_model(Payload),
+        cookies=pydantic_case.get_model(Cookies),
+        resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
         tags=[api_tag, "test"],
         after=api_after_handler,
     )
-    def post(self, name, query: Query, json: JSON, form: Form, cookies: Cookies):
+    def post(
+        self,
+        name,
+        query: pydantic_case.get_model(Query),
+        json: pydantic_case.get_model(Payload),
+        form: pydantic_case.get_model(Form),
+        cookies: pydantic_case.get_model(Cookies),
+    ):
         data_src = json or form
         score = [randint(0, int(data_src.limit)) for _ in range(5)]
         score.sort(reverse=(query.order == Order.desc))
         assert cookies.pub == "abcdefg"
         assert request.cookies["pub"] == "abcdefg"
-        return Resp(name=data_src.name, score=score)
+        return pydantic_case.validate_obj(
+            pydantic_case.get_model(Resp),
+            {"name": data_src.name, "score": score},
+        )
 
 
 class UserAddress(MethodView):
     @api.validate(
-        query=Query,
+        query=pydantic_case.get_model(Query),
         path_parameter_descriptions={
             "name": "The name that uniquely identifies the user.",
             "non-existent-param": "description",
@@ -172,7 +191,7 @@ class NoResponseView(MethodView):
     @api.validate(
         json=StrDict,  # resp is missing completely
     )
-    def post(self, json: JSON):
+    def post(self, json: StrDict):
         return {}
 
 
@@ -189,13 +208,13 @@ class SetCookiesView(MethodView):
 
 
 class ListJsonView(MethodView):
-    @api.validate(json=ListJSON)
+    @api.validate(json=ListPayload)
     def post(self):
         return {}
 
 
 class QueryWithList(MethodView):
-    @api.validate(query=QueryList)
+    @api.validate(query=pydantic_case.get_model(QueryList))
     def get(self):
         assert request.context.query.ids == [1, 2, 3]
         return {}
@@ -203,25 +222,32 @@ class QueryWithList(MethodView):
 
 class ReturnListView(MethodView):
     @api.validate(
-        resp=Response(HTTP_200=List[JSON]),
+        resp=Response(
+            HTTP_200=pydantic_case.list_of(pydantic_case.get_model(Payload)),
+        ),
     )
     def get(self):
         pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
-        data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+        data = [
+            pydantic_case.get_model(Payload)(name="user1", limit=1),
+            pydantic_case.get_model(Payload)(name="user2", limit=2),
+        ]
         return [entry.model_dump() if pre_serialize else entry for entry in data]
 
 
 class ReturnMakeResponseView(MethodView):
     @api.validate(
-        json=JSON,
+        json=pydantic_case.get_model(Payload),
         headers=Headers,
-        resp=Response(HTTP_201=Resp),
+        resp=Response(HTTP_201=pydantic_case.get_model(Resp)),
     )
     def post(self):
         model_data = request.context.json
         headers = request.context.headers
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).model_dump(),
+            pydantic_case.get_model(Resp)(
+                name=model_data.name, score=[model_data.limit]
+            ).model_dump(),
             201,
             headers,
         )
@@ -235,15 +261,17 @@ class ReturnMakeResponseView(MethodView):
         return response
 
     @api.validate(
-        query=JSON,
+        query=pydantic_case.get_model(Payload),
         headers=Headers,
-        resp=Response(HTTP_201=Resp),
+        resp=Response(HTTP_201=pydantic_case.get_model(Resp)),
     )
     def get(self):
         model_data = request.context.query
         headers = request.context.headers
         response = make_response(
-            Resp(name=model_data.name, score=[model_data.limit]).model_dump(),
+            pydantic_case.get_model(Resp)(
+                name=model_data.name, score=[model_data.limit]
+            ).model_dump(),
             201,
             headers,
         )

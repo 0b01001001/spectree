@@ -1,6 +1,6 @@
 import pytest
 
-from tests.model_cases import SimpleModel
+from tests.common_dataclass import SimpleModel
 
 
 def _partial_model_instance_value(model_case, kind):

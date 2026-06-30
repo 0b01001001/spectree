@@ -74,6 +74,7 @@ warn_untyped_fields = true
 
 [tool.pytest.ini_options]
 markers = [
+    "pydantic: tests that rely on pydantic-specific models or behavior",
     "msgspec: tests that require msgspec, which is not available on PyPy",
 ]
 

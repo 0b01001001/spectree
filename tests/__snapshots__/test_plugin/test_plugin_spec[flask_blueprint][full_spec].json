@@ -1,7 +1,7 @@
 {
   "components": {
     "schemas": {
-      "Cookies.7068f62": {
+      "Cookies.ba74342": {
         "properties": {
           "pub": {
             "title": "Pub",
@@ -14,7 +14,7 @@
         "title": "Cookies",
         "type": "object"
       },
-      "CustomError.7068f62": {
+      "CustomError.c46f088": {
         "properties": {
           "foo": {
             "title": "Foo",
@@ -27,7 +27,7 @@
         "title": "CustomError",
         "type": "object"
       },
-      "Form.7068f62": {
+      "Form.ba74342": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -45,7 +45,7 @@
         "title": "Form",
         "type": "object"
       },
-      "FormFileUpload.7068f62": {
+      "FormFileUpload.c46f088": {
         "properties": {
           "file": {
             "anyOf": [
@@ -71,10 +71,10 @@
         "title": "FormFileUpload",
         "type": "object"
       },
-      "Headers.7068f62": {
+      "Headers.c46f088": {
         "properties": {
           "lang": {
-            "$ref": "#/components/schemas/Headers.7068f62.Language"
+            "$ref": "#/components/schemas/Headers.c46f088.Language"
           }
         },
         "required": [
@@ -83,7 +83,7 @@
         "title": "Headers",
         "type": "object"
       },
-      "Headers.7068f62.Language": {
+      "Headers.c46f088.Language": {
         "description": "Language enum",
         "enum": [
           "en-US",
@@ -92,32 +92,14 @@
         "title": "Language",
         "type": "string"
       },
-      "JSON.7068f62": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "limit"
-        ],
-        "title": "JSON",
-        "type": "object"
-      },
-      "JSONList.7068f62": {
+      "ListPayload.a60c7aa": {
         "items": {
-          "$ref": "#/components/schemas/JSONList.7068f62.JSON"
+          "$ref": "#/components/schemas/ListPayload.a60c7aa.Payload"
         },
-        "title": "JSONList",
+        "title": "ListPayload",
         "type": "array"
       },
-      "JSONList.7068f62.JSON": {
+      "ListPayload.a60c7aa.Payload": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -132,35 +114,10 @@
           "name",
           "limit"
         ],
-        "title": "JSON",
+        "title": "Payload",
         "type": "object"
       },
-      "ListJSON.918e046": {
-        "items": {
-          "$ref": "#/components/schemas/ListJSON.918e046.JSON"
-        },
-        "title": "ListJSON",
-        "type": "array"
-      },
-      "ListJSON.918e046.JSON": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "limit"
-        ],
-        "title": "JSON",
-        "type": "object"
-      },
-      "OptionalAliasResp.7068f62": {
+      "OptionalAliasResp.c46f088": {
         "properties": {
           "limit": {
             "anyOf": [
@@ -197,19 +154,60 @@
         "title": "OptionalAliasResp",
         "type": "object"
       },
-      "Query.7068f62": {
+      "Payload.ba74342": {
         "properties": {
-          "order": {
-            "$ref": "#/components/schemas/Query.7068f62.Order"
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
           }
         },
         "required": [
-          "order"
+          "name",
+          "limit"
         ],
+        "title": "Payload",
+        "type": "object"
+      },
+      "PayloadList.ba74342": {
+        "items": {
+          "$ref": "#/components/schemas/PayloadList.ba74342.Payload"
+        },
+        "title": "PayloadList",
+        "type": "array"
+      },
+      "PayloadList.ba74342.Payload": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "limit"
+        ],
+        "title": "Payload",
+        "type": "object"
+      },
+      "Query.ba74342": {
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/Query.ba74342.Order",
+            "default": 0
+          }
+        },
         "title": "Query",
         "type": "object"
       },
-      "Query.7068f62.Order": {
+      "Query.ba74342.Order": {
         "description": "Order enum",
         "enum": [
           0,
@@ -218,7 +216,7 @@
         "title": "Order",
         "type": "integer"
       },
-      "QueryList.7068f62": {
+      "QueryList.ba74342": {
         "properties": {
           "ids": {
             "items": {
@@ -234,7 +232,7 @@
         "title": "QueryList",
         "type": "object"
       },
-      "Resp.7068f62": {
+      "Resp.ba74342": {
         "properties": {
           "name": {
             "title": "Name",
@@ -255,7 +253,7 @@
         "title": "Resp",
         "type": "object"
       },
-      "RespFromAttrs.7068f62": {
+      "RespFromAttrs.c46f088": {
         "properties": {
           "name": {
             "title": "Name",
@@ -276,10 +274,10 @@
         "title": "RespFromAttrs",
         "type": "object"
       },
-      "RootResp.918e046": {
+      "RootResp.a60c7aa": {
         "anyOf": [
           {
-            "$ref": "#/components/schemas/RootResp.918e046.JSON"
+            "$ref": "#/components/schemas/RootResp.a60c7aa.Payload"
           },
           {
             "items": {
@@ -290,7 +288,7 @@
         ],
         "title": "RootResp"
       },
-      "RootResp.918e046.JSON": {
+      "RootResp.a60c7aa.Payload": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -305,10 +303,10 @@
           "name",
           "limit"
         ],
-        "title": "JSON",
+        "title": "Payload",
         "type": "object"
       },
-      "StrDict.918e046": {
+      "StrDict.a60c7aa": {
         "additionalProperties": {
           "type": "string"
         },
@@ -380,7 +378,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CustomError.7068f62"
+                "$ref": "#/components/schemas/CustomError.c46f088"
               }
             }
           },
@@ -391,7 +389,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CustomError.7068f62"
+                  "$ref": "#/components/schemas/CustomError.c46f088"
                 }
               }
             },
@@ -421,7 +419,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/FormFileUpload.7068f62"
+                "$ref": "#/components/schemas/FormFileUpload.c46f088"
               }
             }
           },
@@ -442,7 +440,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RespFromAttrs.7068f62"
+                  "$ref": "#/components/schemas/RespFromAttrs.c46f088"
                 }
               }
             },
@@ -472,7 +470,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListJSON.918e046"
+                "$ref": "#/components/schemas/ListPayload.a60c7aa"
               }
             }
           },
@@ -492,7 +490,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StrDict.918e046"
+                "$ref": "#/components/schemas/StrDict.a60c7aa"
               }
             }
           },
@@ -510,7 +508,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StrDict.918e046"
+                "$ref": "#/components/schemas/StrDict.a60c7aa"
               }
             }
           },
@@ -555,7 +553,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JSONList.7068f62"
+                  "$ref": "#/components/schemas/PayloadList.ba74342"
                 }
               }
             },
@@ -607,7 +605,7 @@
             "name": "lang",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/Headers.7068f62.Language"
+              "$ref": "#/components/schemas/Headers.c46f088.Language"
             }
           }
         ],
@@ -616,7 +614,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -646,7 +644,7 @@
             "name": "lang",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/Headers.7068f62.Language"
+              "$ref": "#/components/schemas/Headers.c46f088.Language"
             }
           }
         ],
@@ -654,7 +652,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
+                "$ref": "#/components/schemas/Payload.ba74342"
               }
             }
           },
@@ -665,7 +663,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -706,7 +704,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OptionalAliasResp.7068f62"
+                  "$ref": "#/components/schemas/OptionalAliasResp.c46f088"
                 }
               }
             },
@@ -737,7 +735,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RootResp.918e046"
+                  "$ref": "#/components/schemas/RootResp.a60c7aa"
                 }
               }
             },
@@ -778,7 +776,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StrDict.918e046"
+                  "$ref": "#/components/schemas/StrDict.a60c7aa"
                 }
               }
             },
@@ -817,9 +815,10 @@
             "description": "",
             "in": "query",
             "name": "order",
-            "required": true,
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Query.7068f62.Order"
+              "$ref": "#/components/schemas/Query.ba74342.Order",
+              "default": 0
             }
           },
           {
@@ -837,12 +836,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
+                "$ref": "#/components/schemas/Payload.ba74342"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Form.7068f62"
+                "$ref": "#/components/schemas/Form.ba74342"
               }
             }
           },
@@ -853,7 +852,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -907,9 +906,10 @@
             "description": "",
             "in": "query",
             "name": "order",
-            "required": true,
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Query.7068f62.Order"
+              "$ref": "#/components/schemas/Query.ba74342.Order",
+              "default": 0
             }
           }
         ],
@@ -936,9 +936,10 @@
             "description": "",
             "in": "query",
             "name": "order",
-            "required": true,
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Query.7068f62.Order"
+              "$ref": "#/components/schemas/Query.ba74342.Order",
+              "default": 0
             }
           },
           {
@@ -956,12 +957,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
+                "$ref": "#/components/schemas/Payload.ba74342"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Form.7068f62"
+                "$ref": "#/components/schemas/Form.ba74342"
               }
             }
           },
@@ -972,7 +973,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -1017,9 +1018,10 @@
             "description": "",
             "in": "query",
             "name": "order",
-            "required": true,
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Query.7068f62.Order"
+              "$ref": "#/components/schemas/Query.ba74342.Order",
+              "default": 0
             }
           },
           {
@@ -1037,7 +1039,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
+                "$ref": "#/components/schemas/Payload.ba74342"
               }
             }
           },
@@ -1048,7 +1050,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -1093,9 +1095,10 @@
             "description": "",
             "in": "query",
             "name": "order",
-            "required": true,
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Query.7068f62.Order"
+              "$ref": "#/components/schemas/Query.ba74342.Order",
+              "default": 0
             }
           },
           {
@@ -1113,7 +1116,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JSON.7068f62"
+                "$ref": "#/components/schemas/Payload.ba74342"
               }
             }
           },
@@ -1124,7 +1127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.7068f62"
+                  "$ref": "#/components/schemas/Resp.ba74342"
                 }
               }
             },
@@ -1162,7 +1165,7 @@
             "name": "lang",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/Headers.7068f62.Language"
+              "$ref": "#/components/schemas/Headers.c46f088.Language"
             }
           }
         ],
@@ -1171,7 +1174,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StrDict.918e046"
+                  "$ref": "#/components/schemas/StrDict.a60c7aa"
                 }
               }
             },

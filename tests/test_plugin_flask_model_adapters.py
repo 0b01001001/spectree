@@ -9,6 +9,7 @@ from flask.views import MethodView
 
 from spectree import Response, SpecTree
 from spectree.utils import get_model_key
+from tests.common_dataclass import Item, LimitQuery, NamePayload
 
 
 @dataclass(frozen=True)
@@ -16,33 +17,10 @@ class FlaskAdapterApp:
     client: FlaskClient
     spec: SpecTree
     route_handlers: tuple[Any, ...]
-    item_model: Any
-    raw_list_model: Any
-
-
-@dataclass
-class Query:
-    limit: int
-
-
-@dataclass
-class Payload:
-    name: str
-
-
-@dataclass
-class Item:
-    name: str
-    limit: int
 
 
 @pytest.fixture
 def flask_adapter_app(model_case):
-    query_model = model_case.get_model(Query)
-    payload_model = model_case.get_model(Payload)
-    item_model = model_case.get_model(Item)
-    raw_list_model = model_case.list_of(item_model)
-
     spec = SpecTree(
         "flask",
         annotations=True,
@@ -51,20 +29,28 @@ def flask_adapter_app(model_case):
     app = Flask(__name__)
     app.config["TESTING"] = True
 
-    def create_item(query: query_model, json: payload_model):
+    def create_item(
+        query: model_case.get_model(LimitQuery),
+        json: model_case.get_model(NamePayload),
+    ):
         return [{"name": json.name, "limit": query.limit}]
 
-    create_item = spec.validate(resp=Response(HTTP_200=raw_list_model))(create_item)
+    create_item = spec.validate(
+        resp=Response(HTTP_200=model_case.list_of(model_case.get_model(Item)))
+    )(create_item)
     app.add_url_rule("/items", view_func=create_item, methods=["POST"])
 
     blueprint = Blueprint("adapter_blueprint", __name__)
 
-    def create_blueprint_item(query: query_model, json: payload_model):
+    def create_blueprint_item(
+        query: model_case.get_model(LimitQuery),
+        json: model_case.get_model(NamePayload),
+    ):
         return [{"name": json.name, "limit": query.limit}]
 
-    create_blueprint_item = spec.validate(resp=Response(HTTP_200=raw_list_model))(
-        create_blueprint_item
-    )
+    create_blueprint_item = spec.validate(
+        resp=Response(HTTP_200=model_case.list_of(model_case.get_model(Item)))
+    )(create_blueprint_item)
     blueprint.add_url_rule(
         "/items",
         view_func=create_blueprint_item,
@@ -73,12 +59,16 @@ def flask_adapter_app(model_case):
     app.register_blueprint(blueprint, url_prefix="/bp")
 
     class ItemsView(MethodView):
-        def post(self, query: query_model, json: payload_model):
+        def post(
+            self,
+            query: model_case.get_model(LimitQuery),
+            json: model_case.get_model(NamePayload),
+        ):
             return [{"name": json.name, "limit": query.limit}]
 
-    ItemsView.post = spec.validate(resp=Response(HTTP_200=raw_list_model))(
-        ItemsView.post
-    )
+    ItemsView.post = spec.validate(
+        resp=Response(HTTP_200=model_case.list_of(model_case.get_model(Item)))
+    )(ItemsView.post)
     app.add_url_rule(
         "/view-items",
         view_func=ItemsView.as_view("items_view"),
@@ -94,8 +84,6 @@ def flask_adapter_app(model_case):
             client=client,
             spec=spec,
             route_handlers=(create_item, create_blueprint_item, ItemsView.post),
-            item_model=item_model,
-            raw_list_model=raw_list_model,
         )
 
 
@@ -125,10 +113,8 @@ def test_flask_model_adapter_validation_error(flask_adapter_app, path):
     assert errors[0]["type"]
 
 
-def test_flask_model_adapter_response_models_and_spec(flask_adapter_app):
-    expected_list_model = flask_adapter_app.spec.model_adapter.make_list_model(
-        flask_adapter_app.item_model
-    )
+def test_flask_model_adapter_response_models_and_spec(model_case, flask_adapter_app):
+    expected_list_model = model_case.get_model(list[Item])
 
     for handler in flask_adapter_app.route_handlers:
         assert (
@@ -137,7 +123,6 @@ def test_flask_model_adapter_response_models_and_spec(flask_adapter_app):
         )
 
         response_model = handler.resp.find_model(HTTPStatus.OK)
-        assert response_model is not flask_adapter_app.raw_list_model
         assert get_model_key(response_model) == get_model_key(expected_list_model)
 
     spec = flask_adapter_app.spec.spec

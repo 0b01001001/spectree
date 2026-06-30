@@ -9,6 +9,7 @@ from spectree.config import Configuration
 from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
+from spectree.utils import get_model_key
 
 from .common import get_paths
 
@@ -217,6 +218,26 @@ def test_global_model_for_validation_errors_specified():
 
     assert foo.resp.find_model(422) is GlobalValidationError
     assert bar.resp.find_model(422) is RouteValidationError
+
+
+def test_annotations_preserve_named_root_model_metadata(model_case):
+    api = SpecTree("flask", annotations=True, model_adapter=model_case.adapter)
+    app = Flask(__name__)
+
+    @app.route("/annotated", methods=["POST"])
+    @api.validate(resp=Response(HTTP_200=None))
+    def annotated(json: model_case.get_model(dict[str, str], name="NamedDict")):
+        return {}
+
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+
+    named_model = model_case.get_model(dict[str, str], name="NamedDict")
+    schema = spec["paths"]["/annotated"]["post"]["requestBody"]["content"][
+        "application/json"
+    ]["schema"]
+    assert schema["$ref"] == f"#/components/schemas/{get_model_key(named_model)}"
 
 
 @pytest.mark.parametrize(
