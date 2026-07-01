@@ -1,48 +1,36 @@
+# mypy: disable-error-code=valid-type
 from random import randint
-from typing import List
 
 import pytest
 from quart import Quart, jsonify, request
 
 from spectree import Response, SpecTree
-
-from .common import (
-    JSON,
+from tests.common import (
     SECURITY_SCHEMAS,
-    Cookies,
+    UserXmlData,
+    api_after_handler,
+    api_tag,
+    validation_error_handler as before_handler,
+    validation_pass_handler as after_handler,
+)
+from tests.common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
+from tests.common_pydantic import (
     CustomError,
     Headers,
-    ListJSON,
-    Order,
-    Query,
-    Resp,
+    ListPayload,
     RespFromAttrs,
-    RespObject,
     RootResp,
     StrDict,
-    UserXmlData,
-    api_tag,
     get_root_resp_data,
 )
+from tests.model_cases import build_model_case
 
 # import tests to execute
-from .quart_imports import *  # NOQA
+from tests.quart_imports import *  # NOQA
 
 # need to be set here for async tests in `quart_imports`
-pytestmark = pytest.mark.anyio
-
-
-def before_handler(req, resp, err, _, model_adapter):
-    if err:
-        resp.headers["X-Error"] = "Validation Error"
-
-
-def after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-Validation"] = "Pass"
-
-
-def api_after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-API"] = "OK"
+pytestmark = [pytest.mark.anyio, pytest.mark.pydantic]
+pydantic_case = build_model_case("pydantic")
 
 
 api = SpecTree("quart", before=before_handler, after=after_handler, annotations=True)
@@ -71,10 +59,10 @@ async def ping():
 
 @app.route("/api/user/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
@@ -88,11 +76,16 @@ async def user_score(name):
 
 @app.route("/api/user_annotated/<name>", methods=["POST"])
 @api.validate(
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
-async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies):
+async def user_score_annotated(
+    name,
+    query: pydantic_case.get_model(Query),
+    json: pydantic_case.get_model(Payload),
+    cookies: pydantic_case.get_model(Cookies),
+):
     score = [randint(0, json.limit) for _ in range(5)]
     score.sort(reverse=(query.order == Order.desc))
     assert cookies.pub == "abcdefg"
@@ -102,10 +95,10 @@ async def user_score_annotated(name, query: Query, json: JSON, cookies: Cookies)
 
 @app.route("/api/user_skip/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
     skip_validation=True,
@@ -128,10 +121,10 @@ async def user_score_skip_validation(name):
 
 @app.route("/api/user_model/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
@@ -140,12 +133,14 @@ async def user_score_model(name):
     score.sort(reverse=(request.context.query.order == Order.desc))
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return Resp(name=request.context.json.name, score=score), 200
+    return pydantic_case.get_model(Resp)(
+        name=request.context.json.name, score=score
+    ), 200
 
 
 @app.route("/api/user/<name>/address/<address_id>", methods=["GET"])
 @api.validate(
-    query=Query,
+    query=pydantic_case.get_model(Query),
     path_parameter_descriptions={
         "name": "The name that uniquely identifies the user.",
         "non-existent-param": "description",
@@ -157,7 +152,7 @@ async def user_address(name, address_id):
 
 @app.route("/api/no_response", methods=["GET", "POST"])
 @api.validate(
-    json=JSON,
+    json=pydantic_case.get_model(Payload),
 )
 async def no_response():
     return {}
@@ -165,17 +160,24 @@ async def no_response():
 
 @app.route("/api/list_json", methods=["POST"])
 @api.validate(
-    json=ListJSON,
+    json=ListPayload,
 )
 async def list_json():
     return {}
 
 
 @app.route("/api/return_list")
-@api.validate(resp=Response(HTTP_200=List[JSON]))
+@api.validate(
+    resp=Response(
+        HTTP_200=pydantic_case.list_of(pydantic_case.get_model(Payload)),
+    )
+)
 def return_list():
     pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
-    data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+    data = [
+        pydantic_case.get_model(Payload)(name="user1", limit=1),
+        pydantic_case.get_model(Payload)(name="user2", limit=2),
+    ]
     return [entry.model_dump() if pre_serialize else entry for entry in data]
 
 

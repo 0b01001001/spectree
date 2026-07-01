@@ -14,9 +14,13 @@ try:
 except ImportError:
     from io import BytesIO as CachedFile  # type: ignore[assignment]
 
-from falcon import MEDIA_HTML, MEDIA_JSON, http_status_to_code
-from falcon import Request as FalconRequest
-from falcon import Response as FalconResponse
+from falcon import (
+    MEDIA_HTML,
+    MEDIA_JSON,
+    Request as FalconRequest,
+    Response as FalconResponse,
+    http_status_to_code,
+)
 from falcon.asgi import Request as FalconASGIRequest
 from falcon.asgi.reader import BufferedReader as ASGIBufferedReader
 from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN

@@ -4,7 +4,8 @@ import re
 
 import pytest
 
-from tests.common import JSON, UserXmlData
+from tests.common import UserXmlData
+from tests.common_dataclass import Payload
 
 
 @pytest.mark.parametrize("response_format", ["json", "xml"])
@@ -196,14 +197,14 @@ def test_flask_return_list_request(client, pre_serialize: bool):
     ]
 
 
-def test_flask_make_response_post(client):
-    payload = JSON(
+def test_flask_make_response_post(client, model_case):
+    payload = model_case.get_model(Payload)(
         limit=random.randint(1, 10),
         name="user make_response name",
     )
     resp = client.post(
         "/api/return_make_response",
-        json=payload.model_dump(),
+        json=model_case.dump_python(payload),
         headers={"lang": "en-US"},
     )
     assert resp.status_code == 201
@@ -216,14 +217,14 @@ def test_flask_make_response_post(client):
     assert cookie_result.group(1) == payload.name
 
 
-def test_flask_make_response_get(client):
-    payload = JSON(
+def test_flask_make_response_get(client, model_case):
+    payload = model_case.get_model(Payload)(
         limit=random.randint(1, 10),
         name="user make_response name",
     )
     resp = client.get(
         "/api/return_make_response",
-        query_string=payload.model_dump(),
+        query_string=model_case.dump_python(payload),
         headers={"lang": "en-US"},
     )
     assert resp.status_code == 201, resp
@@ -238,26 +239,26 @@ def test_flask_make_response_get(client):
 
 @pytest.mark.parametrize("pre_serialize", [False, True])
 @pytest.mark.parametrize(
-    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "List"]
+    "return_what", ["RootResp_Payload", "RootResp_List", "Payload", "List"]
 )
 def test_flask_return_root_request(client, pre_serialize: bool, return_what: str):
     resp = client.get(
         f"/api/return_root?pre_serialize={int(pre_serialize)}&return_what={return_what}"
     )
     assert resp.status_code == 200
-    if return_what in ("RootResp_JSON", "JSON"):
+    if return_what in ("RootResp_Payload", "Payload"):
         assert resp.json == {"name": "user1", "limit": 1}
     elif return_what in ("RootResp_List", "List"):
         assert resp.json == [1, 2, 3, 4]
 
 
 @pytest.mark.parametrize(
-    "return_what", ["RootResp_JSON", "RootResp_List", "JSON", "ModelList"]
+    "return_what", ["RootResp_Payload", "RootResp_List", "Payload", "ModelList"]
 )
 def test_flask_return_model_request(client, return_what: str):
     resp = client.get(f"/api/return_model?return_what={return_what}")
     assert resp.status_code == 200
-    if return_what in ("RootResp_JSON", "JSON"):
+    if return_what in ("RootResp_Payload", "Payload"):
         assert resp.json == {"name": "user1", "limit": 1}
     elif return_what in ("RootResp_List"):
         assert resp.json == [1, 2, 3, 4]

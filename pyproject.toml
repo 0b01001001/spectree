@@ -55,6 +55,10 @@ ignore = ["E501", "PLR2004", "RUF012", "B009"]
 [tool.ruff.lint.pylint]
 max-args = 12
 max-branches = 15
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
@@ -65,6 +69,9 @@ warn_unused_ignores = false
 warn_redundant_casts = true
 no_implicit_reexport = true
 disable_error_code = ["attr-defined"]
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = ["valid-type"]
 
 [tool.pydantic-mypy]
 init_typed = true
@@ -74,6 +81,7 @@ warn_untyped_fields = true
 
 [tool.pytest.ini_options]
 markers = [
+    "pydantic: tests that rely on pydantic-specific models or behavior",
     "msgspec: tests that require msgspec, which is not available on PyPy",
 ]
 

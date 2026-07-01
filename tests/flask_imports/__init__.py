@@ -1,4 +1,4 @@
-from .dry_plugin_flask import (
+from tests.flask_imports.dry_plugin_flask import (
     test_flask_custom_error,
     test_flask_doc,
     test_flask_forced_serializer,

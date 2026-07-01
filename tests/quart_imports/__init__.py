@@ -1,4 +1,4 @@
-from .dry_plugin_quart import (
+from tests.quart_imports.dry_plugin_quart import (
     test_quart_custom_error,
     test_quart_doc,
     test_quart_forced_serializer,

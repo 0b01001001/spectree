@@ -25,9 +25,15 @@ from spectree.model_adapter import (
     get_pydantic_model_adapter,
 )
 
-MODEL_CASE_PARAMS = [
+PYDANTIC_MODEL_CASE_PARAMS = [
     pytest.param("pydantic", id="pydantic"),
+]
+MSGSPEC_MODEL_CASE_PARAMS = [
     pytest.param("msgspec", marks=pytest.mark.msgspec, id="msgspec"),
+]
+MODEL_CASE_PARAMS = [
+    *PYDANTIC_MODEL_CASE_PARAMS,
+    *MSGSPEC_MODEL_CASE_PARAMS,
 ]
 
 DATACLASS_CONVERTER_CACHE_SIZE = 128

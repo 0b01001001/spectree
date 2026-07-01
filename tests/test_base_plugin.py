@@ -11,30 +11,13 @@ from spectree.plugins.base import (
     ResponseValidationResult,
     validate_response,
 )
+from tests.common_dataclass import ComplexResp, Payload, Resp
 
 
 @dataclass(frozen=True)
 class DummyResponse:
     payload: bytes
     content_type: str
-
-
-@dataclass
-class Resp:
-    name: str
-    score: list[int]
-
-
-@dataclass
-class JSON:
-    name: str
-    limit: int
-
-
-@dataclass
-class ComplexResp:
-    date: datetime
-    uuid: uuid.UUID
 
 
 @pytest.mark.parametrize(
@@ -51,20 +34,20 @@ class ComplexResp:
             Resp(name="user1", score=[1, 2]),
             {"name": "user1", "score": [1, 2]},
         ),
-        (Union[JSON, list[int]], [1, 2, 3], [1, 2, 3]),
-        (Union[JSON, list[int]], RawResponsePayload([1, 2, 3]), [1, 2, 3]),
+        (Union[Payload, list[int]], [1, 2, 3], [1, 2, 3]),
+        (Union[Payload, list[int]], RawResponsePayload([1, 2, 3]), [1, 2, 3]),
         (
             dict[str, str],
             {"key1": "value1", "key2": "value2"},
             {"key1": "value1", "key2": "value2"},
         ),
         (
-            Union[JSON, list[int]],
+            Union[Payload, list[int]],
             {"name": "user2", "limit": 1},
             {"name": "user2", "limit": 1},
         ),
         (
-            Union[JSON, list[int]],
+            Union[Payload, list[int]],
             RawResponsePayload({"name": "user2", "limit": 1}),
             {"name": "user2", "limit": 1},
         ),
@@ -157,7 +140,7 @@ def test_validate_response(
     [
         (Resp, {}),
         (Resp, {"name": "user1"}),
-        (Union[JSON, list[int]], {}),
+        (Union[Payload, list[int]], {}),
     ],
 )
 def test_validate_response_rejects_invalid_payload(

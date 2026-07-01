@@ -260,7 +260,7 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                annotations = get_type_hints(func)
+                annotations = get_type_hints(func, include_extras=True)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)

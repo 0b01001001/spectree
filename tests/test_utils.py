@@ -18,8 +18,10 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
+from tests.common import get_model_path_key
+from tests.common_pydantic import DefaultEnumValue, DemoModel, DemoQuery, Numeric
 
-from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
+pytestmark = pytest.mark.pydantic
 
 api = SpecTree()
 model_adapter = get_pydantic_model_adapter()
@@ -261,9 +263,9 @@ def test_parse_params():
 
 def test_parse_params_with_route_param_keywords():
     models = {
-        get_model_path_key("tests.common.DemoQuery"): DemoQuery.model_json_schema(
-            ref_template="#/components/schemas/{model}"
-        )
+        get_model_path_key(
+            "tests.common_pydantic.DemoQuery"
+        ): DemoQuery.model_json_schema(ref_template="#/components/schemas/{model}")
     }
     params = parse_params(demo_func_with_query, [], models)
     assert params == [

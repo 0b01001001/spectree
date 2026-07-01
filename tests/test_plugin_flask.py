@@ -1,49 +1,45 @@
 from random import randint
-from typing import List
 
 import pytest
 from flask import Flask, jsonify, make_response, request
 
 from spectree import Response, SpecTree
-
-from .common import (
-    JSON,
+from tests.common import (
     SECURITY_SCHEMAS,
+    UserXmlData,
+    api_after_handler,
+    api_tag,
+    validation_error_handler as before_handler,
+    validation_pass_handler as after_handler,
+)
+from tests.common_dataclass import (
     Cookies,
-    CustomError,
     Form,
-    FormFileUpload,
-    Headers,
-    ListJSON,
-    OptionalAliasResp,
     Order,
+    Payload,
     Query,
     QueryList,
     Resp,
-    RespFromAttrs,
     RespObject,
+)
+from tests.common_pydantic import (
+    CustomError,
+    FormFileUpload,
+    Headers,
+    ListPayload,
+    OptionalAliasResp,
+    RespFromAttrs,
     RootResp,
     StrDict,
-    UserXmlData,
-    api_tag,
     get_root_resp_data,
 )
 
 # import tests to execute
-from .flask_imports import *  # NOQA
+from tests.flask_imports import *  # NOQA
+from tests.model_cases import build_model_case
 
-
-def before_handler(req, resp, err, _, model_adapter):
-    if err:
-        resp.headers["X-Error"] = "Validation Error"
-
-
-def after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-Validation"] = "Pass"
-
-
-def api_after_handler(req, resp, err, _, model_adapter):
-    resp.headers["X-API"] = "OK"
+pytestmark = pytest.mark.pydantic
+pydantic_case = build_model_case("pydantic")
 
 
 api = SpecTree("flask", before=before_handler, after=after_handler, annotations=True)
@@ -86,11 +82,11 @@ def file_upload():
 
 @app.route("/api/user/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    form=Form,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    form=pydantic_case.get_model(Form),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
@@ -105,11 +101,17 @@ def user_score(name):
 
 @app.route("/api/user_annotated/<name>", methods=["POST"])
 @api.validate(
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
-def user_score_annotated(name, query: Query, json: JSON, form: Form, cookies: Cookies):
+def user_score_annotated(
+    name,
+    query: pydantic_case.get_model(Query),
+    json: pydantic_case.get_model(Payload),
+    form: pydantic_case.get_model(Form),
+    cookies: pydantic_case.get_model(Cookies),
+):
     data_src = json or form
     score = [randint(0, int(data_src.limit)) for _ in range(5)]
     score.sort(reverse=(query.order == Order.desc))
@@ -120,10 +122,10 @@ def user_score_annotated(name, query: Query, json: JSON, form: Form, cookies: Co
 
 @app.route("/api/user_skip/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
     skip_validation=True,
@@ -146,10 +148,10 @@ def user_score_skip_validation(name):
 
 @app.route("/api/user_model/<name>", methods=["POST"])
 @api.validate(
-    query=Query,
-    json=JSON,
-    cookies=Cookies,
-    resp=Response(HTTP_200=Resp, HTTP_401=None),
+    query=pydantic_case.get_model(Query),
+    json=pydantic_case.get_model(Payload),
+    cookies=pydantic_case.get_model(Cookies),
+    resp=Response(HTTP_200=pydantic_case.get_model(Resp), HTTP_401=None),
     tags=[api_tag, "test"],
     after=api_after_handler,
 )
@@ -158,12 +160,14 @@ def user_score_model(name):
     score.sort(reverse=(request.context.query.order == Order.desc))
     assert request.context.cookies.pub == "abcdefg"
     assert request.cookies["pub"] == "abcdefg"
-    return Resp(name=request.context.json.name, score=score), 200
+    return pydantic_case.get_model(Resp)(
+        name=request.context.json.name, score=score
+    ), 200
 
 
 @app.route("/api/user/<name>/address/<address_id>", methods=["GET"])
 @api.validate(
-    query=Query,
+    query=pydantic_case.get_model(Query),
     path_parameter_descriptions={
         "name": "The name that uniquely identifies the user.",
         "non-existent-param": "description",
@@ -182,7 +186,7 @@ def no_response():
 
 
 @app.route("/api/list_json", methods=["POST"])
-@api.validate(json=ListJSON)
+@api.validate(json=ListPayload)
 def json_list():
     return {}
 
@@ -198,27 +202,42 @@ def set_cookies():
 
 
 @app.route("/api/query_list", methods=["GET"])
-@api.validate(query=QueryList)
+@api.validate(query=pydantic_case.get_model(QueryList))
 def query_list():
     assert request.context.query.ids == [1, 2, 3]
     return {}
 
 
 @app.route("/api/return_list", methods=["GET"])
-@api.validate(resp=Response(HTTP_200=List[JSON]))
+@api.validate(
+    resp=Response(
+        HTTP_200=pydantic_case.list_of(pydantic_case.get_model(Payload)),
+    )
+)
 def return_list():
     pre_serialize = bool(int(request.args.get("pre_serialize", default=0)))
-    data = [JSON(name="user1", limit=1), JSON(name="user2", limit=2)]
+    data = [
+        pydantic_case.get_model(Payload)(name="user1", limit=1),
+        pydantic_case.get_model(Payload)(name="user2", limit=2),
+    ]
     return [entry.model_dump() if pre_serialize else entry for entry in data]
 
 
 @app.route("/api/return_make_response", methods=["POST"])
-@api.validate(json=JSON, headers=Headers, resp=Response(HTTP_201=Resp))
+@api.validate(
+    json=pydantic_case.get_model(Payload),
+    headers=Headers,
+    resp=Response(HTTP_201=pydantic_case.get_model(Resp)),
+)
 def return_make_response_post():
     model_data = request.context.json
     headers = request.context.headers
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).model_dump(), 201, headers
+        pydantic_case.get_model(Resp)(
+            name=model_data.name, score=[model_data.limit]
+        ).model_dump(),
+        201,
+        headers,
     )
     response.set_cookie(
         key="test_cookie",
@@ -231,12 +250,20 @@ def return_make_response_post():
 
 
 @app.route("/api/return_make_response", methods=["GET"])
-@api.validate(query=JSON, headers=Headers, resp=Response(HTTP_201=Resp))
+@api.validate(
+    query=pydantic_case.get_model(Payload),
+    headers=Headers,
+    resp=Response(HTTP_201=pydantic_case.get_model(Resp)),
+)
 def return_make_response_get():
     model_data = request.context.query
     headers = request.context.headers
     response = make_response(
-        Resp(name=model_data.name, score=[model_data.limit]).model_dump(), 201, headers
+        pydantic_case.get_model(Resp)(
+            name=model_data.name, score=[model_data.limit]
+        ).model_dump(),
+        201,
+        headers,
     )
     response.set_cookie(
         key="test_cookie",
