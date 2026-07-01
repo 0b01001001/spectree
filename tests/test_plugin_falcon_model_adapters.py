@@ -1,4 +1,3 @@
-# mypy: disable-error-code=valid-type
 import importlib
 from dataclasses import dataclass
 from enum import Enum

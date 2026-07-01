@@ -1,4 +1,3 @@
-# mypy: disable-error-code=valid-type
 from random import randint
 
 import flask

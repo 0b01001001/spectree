@@ -67,6 +67,9 @@ warn_unused_ignores = false
 warn_redundant_casts = true
 no_implicit_reexport = true
 disable_error_code = ["attr-defined"]
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = ["valid-type"]
 
 [tool.pydantic-mypy]
 init_typed = true

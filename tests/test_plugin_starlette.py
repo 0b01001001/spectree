@@ -1,4 +1,3 @@
-# mypy: disable-error-code=valid-type
 import io
 from random import randint
 
@@ -305,7 +304,7 @@ def test_starlette_validate(client):
     assert resp.headers.get("X-Validation") is None
 
     for fragment in ("user", "user_annotated"):
-        client.cookies = {}
+        client.cookies.clear()
         resp = client.post(f"/api/{fragment}/starlette")
         assert resp.status_code == 422
         assert resp.headers.get("X-Error") == "Validation Error"
