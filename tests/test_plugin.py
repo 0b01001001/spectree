@@ -9,9 +9,11 @@ from tests.test_plugin_falcon_model_adapters import (
     FALCON_BACKEND,
     build_falcon_adapter_app,
 )
-from tests.test_plugin_flask import api as flask_api
-from tests.test_plugin_flask import api_global_secure as flask_api_global_secure
-from tests.test_plugin_flask import api_secure as flask_api_secure
+from tests.test_plugin_flask import (
+    api as flask_api,
+    api_global_secure as flask_api_global_secure,
+    api_secure as flask_api_secure,
+)
 from tests.test_plugin_flask_blueprint import api as flask_bp_api
 from tests.test_plugin_flask_view import api as flask_view_api
 from tests.test_plugin_starlette import api as starlette_api

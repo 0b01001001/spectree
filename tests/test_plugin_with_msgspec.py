@@ -6,8 +6,7 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from spectree import Response as SpecResponse
-from spectree import SpecTree
+from spectree import Response as SpecResponse, SpecTree
 from spectree.model_adapter import get_msgspec_model_adapter
 from spectree.model_adapter.msgspec_adapter import BaseFile
 

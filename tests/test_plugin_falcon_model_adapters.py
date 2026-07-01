@@ -15,11 +15,7 @@ from spectree.utils import get_model_key
 from tests.common import (
     UserXmlData,
     api_tag,
-)
-from tests.common import (
     instance_name_after_handler as after_handler,
-)
-from tests.common import (
     validation_error_handler as before_handler,
 )
 from tests.common_dataclass import (

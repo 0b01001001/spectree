@@ -57,6 +57,8 @@ max-args = 12
 max-branches = 15
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]

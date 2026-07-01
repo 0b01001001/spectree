@@ -4,8 +4,7 @@ from random import randint
 import pytest
 from starlette.applications import Starlette
 from starlette.endpoints import HTTPEndpoint
-from starlette.responses import JSONResponse
-from starlette.responses import Response as StarletteResponse
+from starlette.responses import JSONResponse, Response as StarletteResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.testclient import TestClient
@@ -15,14 +14,8 @@ from spectree.plugins.starlette_plugin import PydanticResponse
 from tests.common import (
     UserXmlData,
     api_tag,
-)
-from tests.common import (
     instance_name_after_handler as method_handler,
-)
-from tests.common import (
     validation_error_handler as before_handler,
-)
-from tests.common import (
     validation_pass_handler as after_handler,
 )
 from tests.common_dataclass import Cookies, Order, Payload, Query, Resp, RespObject
