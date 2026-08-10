@@ -9,9 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add adapter-agnostic model contract tests (#487)
+- Add adapter test to response (#488)
+
+### Changed
+
+- Bump idna from 3.11 to 3.15 (#486)
+- Test model adapter with basic falcon (#489)
+- Test model adapter on config (#490)
+- Bump the all-pips group with 5 updates (#494)
+- Bump starlette from 1.0.0 to 1.0.1 (#495)
+- Use dataclass as the source for adapter (#491)
+- Bump starlette from 1.0.1 to 1.3.1 (#497)
+- Bump python-multipart from 0.0.27 to 0.0.31 (#496)
+- Merge all the falcon related test (#498)
+- Bump actions/checkout from 6 to 7 in the all-actions group (#499)
+- Bump the all-pips group with 8 updates (#500)
+- Pin github ci action commits (#505)
+
+### Fixed
+
+- Apply the model adapter to all the tests (#504)
+
+## [3.0.0a0] - 2026-05-12
+
+### Added
+
 - Support msgspec as another model adapter (#479)
-- Add changelog, prepare v3
-- Add changelog cmd to makefile
+- Add changelog, prepare v3 (#482)
 
 ### Changed
 
@@ -22,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump actions/upload-pages-artifact from 4 to 5 in the all-actions group (#478)
 - Bump the all-pips group across 1 directory with 5 updates (#480)
 - Bump python-multipart from 0.0.26 to 0.0.27 (#481)
+- Bump urllib3 from 2.6.3 to 2.7.0 (#483)
+- Use pdm-backend as the build backend (#484)
+
+### Fixed
+
+- Fix some code scan issues (#485)
 
 ## [2.0.1] - 2025-12-15
 
@@ -89,7 +120,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Use the SPDX license expression in pyproject (#443)
 - Falcon json get_media should not throw error if json is annotated (#447)
 
 ## [1.5.4] - 2025-08-30
@@ -101,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Use pylock file to guarantee pydantic v1&v2 env (#439)
+- Use the SPDX license expression in pyproject (#443)
 
 ## [1.5.3] - 2025-08-27
 
@@ -1315,7 +1346,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix base interface, fix flask register function
 - Fix lambda closure bug
 
-[unreleased]: https://github.com/0b01001001/spectree/compare/v2.0.1..HEAD
+[unreleased]: https://github.com/0b01001001/spectree/compare/v3.0.0a0..HEAD
+[3.0.0a0]: https://github.com/0b01001001/spectree/compare/v2.0.1..v3.0.0a0
 [2.0.1]: https://github.com/0b01001001/spectree/compare/v2.0.0..v2.0.1
 [2.0.0]: https://github.com/0b01001001/spectree/compare/v2.0.0a1..v2.0.0
 [2.0.0a1]: https://github.com/0b01001001/spectree/compare/v2.0.0a0..v2.0.0a1

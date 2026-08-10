@@ -45,10 +45,10 @@ class MultiDictStarlette(Protocol):
 class FunctionDecorator(Protocol):
     resp: Any
     tags: Sequence[Any]
-    security: Union[None, dict, list[Any]]
+    security: Union[dict, list[Any], None]
     deprecated: bool
     path_parameter_descriptions: Optional[Mapping[str, str]]
     _decorator: Any
 
 
-JsonType = Union[None, int, str, bool, list["JsonType"], dict[str, "JsonType"]]
+JsonType = Union[int, str, bool, list["JsonType"], dict[str, "JsonType"], None]

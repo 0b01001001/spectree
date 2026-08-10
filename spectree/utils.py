@@ -260,7 +260,7 @@ def get_nested_key(parent: str, child: str) -> str:
     return f"{parent}.{child}"
 
 
-def get_security(security: Union[None, Mapping, Sequence[Any]]) -> list[Any]:
+def get_security(security: Union[Mapping, Sequence[Any], None]) -> list[Any]:
     """
     return the correct format of security
     """
@@ -276,11 +276,11 @@ def get_security(security: Union[None, Mapping, Sequence[Any]]) -> list[Any]:
 
 def get_multidict_items(
     multidict: MultiDict, model: Optional[ModelClass] = None
-) -> dict[str, Union[None, str, list[str]]]:
+) -> dict[str, Union[str, list[str], None]]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """
-    res: dict[str, Union[None, str, list[str]]] = {}
+    res: dict[str, Union[str, list[str], None]] = {}
     for key in multidict:
         values = multidict.getlist(key)
         if (model is not None and is_list_item(key, model)) or len(values) > 1:

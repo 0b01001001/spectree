@@ -17,9 +17,9 @@ DEFAULT_CODE_DESC: dict[str, str] = dict(
 # `list[User]` here without relying on non-portable internals.
 ResponseModelSpec: TypeAlias = object
 ResponseModelConfig: TypeAlias = Union[
-    None,
     ResponseModelSpec,
     Tuple[Optional[ResponseModelSpec], str],
+    None,
 ]
 
 # additional status codes and fixes

@@ -150,7 +150,7 @@ class SpecTree:
             decorator = getattr(func, "_decorator", None)
             return bool(decorator and decorator != self)
 
-    def validate(  # noqa: PLR0913  [too-many-arguments]
+    def validate(  # noqa: PLR0913, PLR0917  [too-many-arguments]
         self,
         query: Optional[ModelClass] = None,
         json: Optional[ModelClass] = None,
