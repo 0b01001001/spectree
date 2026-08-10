@@ -20,7 +20,7 @@ test: import_test
 	uv run -- pytest tests -vv -rs --disable-warnings
 
 test_common:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev --no-extra msgspec --no-extra pydantic
 	uv run -- pytest tests -vv -rs --disable-warnings -m "not pydantic and not msgspec"
 
 test_pydantic:
