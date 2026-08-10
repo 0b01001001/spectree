@@ -1,6 +1,9 @@
 import flask
-import msgspec
 import pytest
+
+pytest.importorskip("msgspec")
+
+import msgspec
 
 import spectree.model_adapter as model_adapter_module
 from spectree import Response

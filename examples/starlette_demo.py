@@ -41,7 +41,7 @@ async def predict(request, query: Query, json: Data):
     print(request.path_params)
     print(query, json)
     return JSONResponse({"label": 5, "score": 0.5})
-    # return PydanticResponse(Resp(label=5, score=0.5))
+    # return SpecTreeStarletteResponse(Resp(label=5, score=0.5))
 
 
 @spec.validate(resp=Response(HTTP_200=FileResp), tags=["file-upload"])

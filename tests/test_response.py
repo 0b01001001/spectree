@@ -21,6 +21,7 @@ def test_response_rejects_invalid_configuration():
             Response(*args, **kwargs)
 
 
+@pytest.mark.pydantic
 @pytest.mark.parametrize("model_case", PYDANTIC_MODEL_CASE_PARAMS, indirect=True)
 def test_response_rejects_invalid_model(model_case):
     adapter = model_case.adapter

@@ -3,23 +3,20 @@ from dataclasses import dataclass
 from typing import cast
 
 from spectree import ExternalDocs, SecurityScheme, SecuritySchemeData, Tag
-from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.utils import hash_module_path
 
 __all__ = [
-    "SECURITY_SCHEMAS",
     "WRONG_SECURITY_SCHEMAS_DATA",
     "UserXmlData",
     "api_after_handler",
     "api_tag",
+    "build_security_schemes",
     "get_model_path_key",
     "get_paths",
     "instance_name_after_handler",
     "validation_error_handler",
     "validation_pass_handler",
 ]
-
-ADAPTER = get_pydantic_model_adapter()
 
 api_tag = Tag(
     name="API", description="🐱", externalDocs=ExternalDocs(url="https://pypi.org")
@@ -62,66 +59,70 @@ def instance_name_after_handler(req, resp, err, instance, model_adapter):
 
 
 # data from example - https://swagger.io/docs/specification/authentication/
-SECURITY_SCHEMAS = [
-    SecurityScheme(
-        name="auth_apiKey",
-        data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "Authorization", "in": "header"},
-            model_adapter=ADAPTER,
+def build_security_schemes(model_case):
+    model_adapter = model_case.adapter
+    return [
+        SecurityScheme(
+            name="auth_apiKey",
+            data=SecuritySchemeData.model_validate(
+                {"type": "apiKey", "name": "Authorization", "in": "header"},
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-    SecurityScheme(
-        name="auth_apiKey_backup",
-        data=SecuritySchemeData.model_validate(
-            {"type": "apiKey", "name": "Authorization", "in": "header"},
-            model_adapter=ADAPTER,
+        SecurityScheme(
+            name="auth_apiKey_backup",
+            data=SecuritySchemeData.model_validate(
+                {"type": "apiKey", "name": "Authorization", "in": "header"},
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-    SecurityScheme(
-        name="auth_BasicAuth",
-        data=SecuritySchemeData.model_validate(
-            {"type": "http", "scheme": "basic"},
-            model_adapter=ADAPTER,
+        SecurityScheme(
+            name="auth_BasicAuth",
+            data=SecuritySchemeData.model_validate(
+                {"type": "http", "scheme": "basic"},
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-    SecurityScheme(
-        name="auth_BearerAuth",
-        data=SecuritySchemeData.model_validate(
-            {"type": "http", "scheme": "bearer"},
-            model_adapter=ADAPTER,
+        SecurityScheme(
+            name="auth_BearerAuth",
+            data=SecuritySchemeData.model_validate(
+                {"type": "http", "scheme": "bearer"},
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-    SecurityScheme(
-        name="auth_openID",
-        data=SecuritySchemeData.model_validate(
-            {
-                "type": "openIdConnect",
-                "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
-            },
-            model_adapter=ADAPTER,
+        SecurityScheme(
+            name="auth_openID",
+            data=SecuritySchemeData.model_validate(
+                {
+                    "type": "openIdConnect",
+                    "openIdConnectUrl": "https://example.com/.well-known/openid-cfg",
+                },
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-    SecurityScheme(
-        name="auth_oauth2",
-        data=SecuritySchemeData.model_validate(
-            {
-                "type": "oauth2",
-                "flows": {
-                    "authorizationCode": {
-                        "authorizationUrl": "https://example.com/oauth/authorize",
-                        "tokenUrl": "https://example.com/oauth/token",
-                        "scopes": {
-                            "read": "Grants read access",
-                            "write": "Grants write access",
-                            "admin": "Grants access to admin operations",
+        SecurityScheme(
+            name="auth_oauth2",
+            data=SecuritySchemeData.model_validate(
+                {
+                    "type": "oauth2",
+                    "flows": {
+                        "authorizationCode": {
+                            "authorizationUrl": "https://example.com/oauth/authorize",
+                            "tokenUrl": "https://example.com/oauth/token",
+                            "scopes": {
+                                "read": "Grants read access",
+                                "write": "Grants write access",
+                                "admin": "Grants access to admin operations",
+                            },
                         },
                     },
                 },
-            },
-            model_adapter=ADAPTER,
+                model_adapter=model_adapter,
+            ),
         ),
-    ),
-]
+    ]
+
+
 WRONG_SECURITY_SCHEMAS_DATA = [
     {
         "name": "auth_apiKey_name",

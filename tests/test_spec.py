@@ -1,7 +1,8 @@
+from dataclasses import dataclass
+
 import pytest
 from falcon import App as FalconApp
 from flask import Flask
-from pydantic import BaseModel
 from starlette.applications import Starlette
 
 from spectree import Response
@@ -11,18 +12,25 @@ from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
 from tests.common import get_paths
+from tests.common_dataclass import Child
 
 
 def backend_app():
     return [
-        ("flask", Flask(__name__)),
-        ("falcon", FalconApp()),
-        ("starlette", Starlette()),
+        ("flask", lambda: Flask(__name__)),
+        ("falcon", FalconApp),
+        ("starlette", Starlette),
     ]
 
 
-def _get_spec(name, app, **kwargs):
-    api = SpecTree(name, app=app, title=f"{name}", **kwargs)
+def _get_spec(name, app, model_case, **kwargs):
+    api = SpecTree(
+        name,
+        app=app,
+        title=f"{name}",
+        model_adapter=model_case.adapter,
+        **kwargs,
+    )
     if name == "flask":
         with app.app_context():
             spec = api.spec
@@ -32,44 +40,51 @@ def _get_spec(name, app, **kwargs):
     return spec
 
 
-def test_spectree_init():
-    spec = SpecTree(path="docs")
+def test_spectree_init(model_case):
+    spec = SpecTree(path="docs", model_adapter=model_case.adapter)
     conf = Configuration()
 
     assert spec.config.title == conf.title
     assert spec.config.path == "docs"
 
     with pytest.raises(NotImplementedError):
-        SpecTree(app=conf)
+        SpecTree(app=conf, model_adapter=model_case.adapter)
 
 
-@pytest.mark.parametrize("name, app", backend_app())
-def test_register(name, app):
-    api = SpecTree(name)
+@pytest.mark.parametrize("name, app_factory", backend_app())
+def test_register(name, app_factory, model_case):
+    app = app_factory()
+    api = SpecTree(name, model_adapter=model_case.adapter)
     api.register(app)
 
 
-@pytest.mark.parametrize("name, app", backend_app())
-def test_spec_generate(name, app):
-    spec = _get_spec(name, app)
+@pytest.mark.parametrize("name, app_factory", backend_app())
+def test_spec_generate(name, app_factory, model_case):
+    app = app_factory()
+    spec = _get_spec(name, app, model_case)
 
     assert spec["info"]["title"] == name
     assert spec["paths"] == {}
 
 
-@pytest.mark.parametrize("name, app", backend_app())
-def test_spec_servers_empty(name, app):
-    spec = _get_spec(name, app)
+@pytest.mark.parametrize("name, app_factory", backend_app())
+def test_spec_servers_empty(name, app_factory, model_case):
+    app = app_factory()
+    spec = _get_spec(name, app, model_case)
 
     assert "servers" not in spec
 
 
-@pytest.mark.parametrize("name, app", backend_app())
-def test_spec_servers_only(name, app):
+@pytest.mark.parametrize("name, app_factory", backend_app())
+def test_spec_servers_only(name, app_factory, model_case):
+    app = app_factory()
     server1_url = "http://example.com/bar"
     server2_url = "https://example.com/foo/bar"
     spec = _get_spec(
-        name, app, servers=[Server(url=server1_url), Server(url=server2_url)]
+        name,
+        app,
+        model_case,
+        servers=[Server(url=server1_url), Server(url=server2_url)],
     )
 
     assert spec["servers"] == [
@@ -78,13 +93,15 @@ def test_spec_servers_only(name, app):
     ]
 
 
-@pytest.mark.parametrize("name, app", backend_app())
-def test_spec_servers_full(name, app):
+@pytest.mark.parametrize("name, app_factory", backend_app())
+def test_spec_servers_full(name, app_factory, model_case):
+    app = app_factory()
     server1 = {"url": "http://foo/bar", "description": "Foo Bar"}
     server2 = {"url": "http://bar/foo/{lang}", "variables": {"lang": "en"}}
     spec = _get_spec(
         name,
         app,
+        model_case,
         servers=[
             Server(**server1),
             Server(**server2),
@@ -107,13 +124,22 @@ def test_spec_servers_full(name, app):
     assert spec["servers"] == expected
 
 
-api = SpecTree("flask")
-api_strict = SpecTree("flask", mode="strict")
-api_greedy = SpecTree("flask", mode="greedy")
-api_customize_backend = SpecTree(backend=FlaskPlugin)
-
-
-def create_app():
+def create_app(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    api_strict = SpecTree(
+        "flask",
+        mode="strict",
+        model_adapter=model_case.adapter,
+    )
+    api_greedy = SpecTree(
+        "flask",
+        mode="greedy",
+        model_adapter=model_case.adapter,
+    )
+    api_customize_backend = SpecTree(
+        backend=FlaskPlugin,
+        model_adapter=model_case.adapter,
+    )
     app = Flask(__name__)
 
     @app.route("/foo")
@@ -134,33 +160,33 @@ def create_app():
     def lone_post():
         pass
 
-    return app
+    return app, api, api_strict, api_greedy, api_customize_backend
 
 
-def test_spec_bypass_mode():
-    app = create_app()
+def test_spec_bypass_mode(model_case):
+    app, api, api_strict, api_greedy, api_customize_backend = create_app(model_case)
     api.register(app)
     with app.app_context():
         assert get_paths(api.spec) == ["/foo", "/lone"]
 
-    app = create_app()
+    app, api, api_strict, api_greedy, api_customize_backend = create_app(model_case)
     api_customize_backend.register(app)
     with app.app_context():
         assert get_paths(api.spec) == ["/foo", "/lone"]
 
-    app = create_app()
+    app, api, api_strict, api_greedy, api_customize_backend = create_app(model_case)
     api_greedy.register(app)
     with app.app_context():
         assert get_paths(api_greedy.spec) == ["/bar", "/foo", "/lone"]
 
-    app = create_app()
+    app, api, api_strict, api_greedy, api_customize_backend = create_app(model_case)
     api_strict.register(app)
     with app.app_context():
         assert get_paths(api_strict.spec) == ["/bar"]
 
 
-def test_two_endpoints_with_the_same_path():
-    app = create_app()
+def test_two_endpoints_with_the_same_path(model_case):
+    app, api, _, _, _ = create_app(model_case)
     api.register(app)
     with app.app_context():
         spec = api.spec
@@ -170,12 +196,14 @@ def test_two_endpoints_with_the_same_path():
     assert http_methods == ["get", "post"]
 
 
-def test_model_for_validation_errors_specified():
-    api = SpecTree("flask")
-    app = Flask(__name__)
+def test_model_for_validation_errors_specified(model_case):
+    @dataclass
+    class CustomValidationError:
+        user_id: int
 
-    class CustomValidationError(BaseModel):
-        pass
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    custom_validation_error = model_case.get_model(CustomValidationError)
 
     @app.route("/foo")
     @api.validate(resp=Response(HTTP_200=None))
@@ -183,24 +211,33 @@ def test_model_for_validation_errors_specified():
         pass
 
     @app.route("/bar")
-    @api.validate(resp=Response(HTTP_200=None, HTTP_422=CustomValidationError))
+    @api.validate(resp=Response(HTTP_200=None, HTTP_422=custom_validation_error))
     def bar():
         pass
 
     api.register(app)
 
     assert foo.resp.find_model(422) is api.model_adapter.validation_error
-    assert bar.resp.find_model(422) is CustomValidationError
+    assert bar.resp.find_model(422) is custom_validation_error
 
 
-def test_global_model_for_validation_errors_specified():
-    class GlobalValidationError(BaseModel):
-        pass
+def test_global_model_for_validation_errors_specified(model_case):
+    @dataclass
+    class GlobalValidationError:
+        user_id: int
 
-    class RouteValidationError(BaseModel):
-        pass
+    @dataclass
+    class RouteValidationError:
+        user_id: int
 
-    api = SpecTree("flask", validation_error_model=GlobalValidationError)
+    global_validation_error = model_case.get_model(GlobalValidationError)
+    route_validation_error = model_case.get_model(RouteValidationError)
+
+    api = SpecTree(
+        "flask",
+        validation_error_model=global_validation_error,
+        model_adapter=model_case.adapter,
+    )
     app = Flask(__name__)
 
     @app.route("/foo")
@@ -209,14 +246,14 @@ def test_global_model_for_validation_errors_specified():
         pass
 
     @app.route("/bar")
-    @api.validate(resp=Response(HTTP_200=None, HTTP_422=RouteValidationError))
+    @api.validate(resp=Response(HTTP_200=None, HTTP_422=route_validation_error))
     def bar():
         pass
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is GlobalValidationError
-    assert bar.resp.find_model(422) is RouteValidationError
+    assert foo.resp.find_model(422) is global_validation_error
+    assert bar.resp.find_model(422) is route_validation_error
 
 
 def test_annotations_preserve_named_root_model_metadata(model_case):
@@ -243,8 +280,10 @@ def test_annotations_preserve_named_root_model_metadata(model_case):
     ["override_operation_id", "expected_operation_id"],
     [(None, "get__foo"), ("getFoo", "getFoo")],
 )
-def test_operation_id_override(override_operation_id, expected_operation_id):
-    api = SpecTree("flask")
+def test_operation_id_override(
+    override_operation_id, expected_operation_id, model_case
+):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
     app = Flask(__name__)
 
     @app.route("/foo")
@@ -259,25 +298,28 @@ def test_operation_id_override(override_operation_id, expected_operation_id):
         assert operation_id == expected_operation_id
 
 
-def test_custom_model_naming_strategies_are_used_in_refs_and_components():
-    class Child(BaseModel):
-        value: int
-
-    class Payload(BaseModel):
+def test_custom_model_naming_strategies_are_used_in_refs_and_components(model_case):
+    @dataclass
+    class Payload:
         child: Child
 
-    class Result(BaseModel):
+    @dataclass
+    class Result:
         child: Child
 
     api = SpecTree(
         "flask",
         naming_strategy=lambda model: model.__name__.lower(),
         nested_naming_strategy=lambda _parent, child: child.lower(),
+        model_adapter=model_case.adapter,
     )
     app = Flask(__name__)
 
     @app.route("/items", methods=["POST"])
-    @api.validate(json=Payload, resp=Response(HTTP_200=Result))
+    @api.validate(
+        json=model_case.get_model(Payload),
+        resp=Response(HTTP_200=model_case.get_model(Result)),
+    )
     def create_item():
         pass
 

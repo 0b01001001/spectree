@@ -27,30 +27,20 @@
         "title": "CustomError",
         "type": "object"
       },
-      "FormFileUpload.c46f088": {
+      "FormPayload.ba74342": {
         "properties": {
           "file": {
-            "anyOf": [
-              {
-                "format": "binary",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": null,
             "title": "File"
           },
           "other": {
-            "title": "Other",
-            "type": "string"
+            "title": "Other"
           }
         },
         "required": [
           "other"
         ],
-        "title": "FormFileUpload",
+        "title": "FormPayload",
         "type": "object"
       },
       "Headers.c46f088": {
@@ -74,14 +64,14 @@
         "title": "Language",
         "type": "string"
       },
-      "ListPayload.a60c7aa": {
+      "ItemList.ba74342": {
         "items": {
-          "$ref": "#/components/schemas/ListPayload.a60c7aa.Payload"
+          "$ref": "#/components/schemas/ItemList.ba74342.Item"
         },
-        "title": "ListPayload",
+        "title": "ItemList",
         "type": "array"
       },
-      "ListPayload.a60c7aa.Payload": {
+      "ItemList.ba74342.Item": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -96,7 +86,7 @@
           "name",
           "limit"
         ],
-        "title": "Payload",
+        "title": "Item",
         "type": "object"
       },
       "OptionalAliasResp.c46f088": {
@@ -198,6 +188,19 @@
         "title": "Order",
         "type": "integer"
       },
+      "RequiredLimitQuery.ba74342": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "title": "RequiredLimitQuery",
+        "type": "object"
+      },
       "Resp.ba74342": {
         "properties": {
           "name": {
@@ -240,10 +243,10 @@
         "title": "RespFromAttrs",
         "type": "object"
       },
-      "RootResp.a60c7aa": {
+      "RootPayload.a60c7aa": {
         "anyOf": [
           {
-            "$ref": "#/components/schemas/RootResp.a60c7aa.Payload"
+            "$ref": "#/components/schemas/RootPayload.a60c7aa.Payload"
           },
           {
             "items": {
@@ -252,9 +255,9 @@
             "type": "array"
           }
         ],
-        "title": "RootResp"
+        "title": "RootPayload"
       },
-      "RootResp.a60c7aa.Payload": {
+      "RootPayload.a60c7aa.Payload": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -385,7 +388,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/FormFileUpload.c46f088"
+                "$ref": "#/components/schemas/FormPayload.ba74342"
               }
             }
           },
@@ -427,6 +430,58 @@
         "tags": []
       }
     },
+    "/api/items": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_items",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload.ba74342"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList.ba74342"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "create_item <POST>",
+        "tags": []
+      }
+    },
     "/api/list_json": {
       "post": {
         "description": "",
@@ -436,7 +491,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListPayload.a60c7aa"
+                "$ref": "#/components/schemas/PayloadList.ba74342"
               }
             }
           },
@@ -595,7 +650,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RootResp.a60c7aa"
+                  "$ref": "#/components/schemas/RootPayload.a60c7aa"
                 }
               }
             },
@@ -961,6 +1016,58 @@
           "API",
           "test"
         ]
+      }
+    },
+    "/api/view-items": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_view-items",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload.ba74342"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList.ba74342"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "post <POST>",
+        "tags": []
       }
     },
     "/ping": {

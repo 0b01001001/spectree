@@ -45,30 +45,20 @@
         "title": "Form",
         "type": "object"
       },
-      "FormFileUpload.c46f088": {
+      "FormPayload.ba74342": {
         "properties": {
           "file": {
-            "anyOf": [
-              {
-                "format": "binary",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
             "default": null,
             "title": "File"
           },
           "other": {
-            "title": "Other",
-            "type": "string"
+            "title": "Other"
           }
         },
         "required": [
           "other"
         ],
-        "title": "FormFileUpload",
+        "title": "FormPayload",
         "type": "object"
       },
       "Headers.c46f088": {
@@ -92,14 +82,14 @@
         "title": "Language",
         "type": "string"
       },
-      "ListPayload.a60c7aa": {
+      "ItemList.ba74342": {
         "items": {
-          "$ref": "#/components/schemas/ListPayload.a60c7aa.Payload"
+          "$ref": "#/components/schemas/ItemList.ba74342.Item"
         },
-        "title": "ListPayload",
+        "title": "ItemList",
         "type": "array"
       },
-      "ListPayload.a60c7aa.Payload": {
+      "ItemList.ba74342.Item": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -114,7 +104,7 @@
           "name",
           "limit"
         ],
-        "title": "Payload",
+        "title": "Item",
         "type": "object"
       },
       "OptionalAliasResp.c46f088": {
@@ -232,6 +222,19 @@
         "title": "QueryList",
         "type": "object"
       },
+      "RequiredLimitQuery.ba74342": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "title": "RequiredLimitQuery",
+        "type": "object"
+      },
       "Resp.ba74342": {
         "properties": {
           "name": {
@@ -274,10 +277,10 @@
         "title": "RespFromAttrs",
         "type": "object"
       },
-      "RootResp.a60c7aa": {
+      "RootPayload.a60c7aa": {
         "anyOf": [
           {
-            "$ref": "#/components/schemas/RootResp.a60c7aa.Payload"
+            "$ref": "#/components/schemas/RootPayload.a60c7aa.Payload"
           },
           {
             "items": {
@@ -286,9 +289,9 @@
             "type": "array"
           }
         ],
-        "title": "RootResp"
+        "title": "RootPayload"
       },
-      "RootResp.a60c7aa.Payload": {
+      "RootPayload.a60c7aa.Payload": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -419,7 +422,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/FormFileUpload.c46f088"
+                "$ref": "#/components/schemas/FormPayload.ba74342"
               }
             }
           },
@@ -461,6 +464,89 @@
         "tags": []
       }
     },
+    "/api/invalid_response": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_invalid_response",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp.ba74342"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "invalid_response <GET>",
+        "tags": []
+      }
+    },
+    "/api/items": {
+      "post": {
+        "description": "",
+        "operationId": "post__api_items",
+        "parameters": [
+          {
+            "description": "",
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload.ba74342"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList.ba74342"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "create_item <POST>",
+        "tags": []
+      }
+    },
     "/api/list_json": {
       "post": {
         "description": "",
@@ -470,7 +556,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListPayload.a60c7aa"
+                "$ref": "#/components/schemas/PayloadList.ba74342"
               }
             }
           },
@@ -486,18 +572,22 @@
         "description": "",
         "operationId": "get__api_no_response",
         "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StrDict.a60c7aa"
-              }
-            }
+        "responses": {
+          "200": {
+            "description": "OK"
           },
-          "required": true
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
         },
-        "responses": {},
-        "summary": "no_response <GET>",
+        "summary": "no_response_get <GET>",
         "tags": []
       },
       "post": {
@@ -515,7 +605,7 @@
           "required": true
         },
         "responses": {},
-        "summary": "no_response <POST>",
+        "summary": "no_response_post <POST>",
         "tags": []
       }
     },
@@ -735,7 +825,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RootResp.a60c7aa"
+                  "$ref": "#/components/schemas/RootPayload.a60c7aa"
                 }
               }
             },
@@ -798,6 +888,45 @@
       }
     },
     "/api/user/{name}": {
+      "get": {
+        "description": "",
+        "operationId": "get__api_user_{name}",
+        "parameters": [
+          {
+            "description": "",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrDict.a60c7aa"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError.ad30e22"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "get_user <GET>",
+        "tags": []
+      },
       "post": {
         "description": "",
         "operationId": "post__api_user_{name}",

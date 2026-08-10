@@ -1,6 +1,7 @@
 import inspect
 from collections import namedtuple
-from functools import cache, partial
+from contextvars import ContextVar
+from functools import partial
 from json import JSONDecodeError
 from typing import Any, Callable, Optional
 
@@ -9,11 +10,8 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import compile_path
 
-from spectree._types import HookHandler
-from spectree.model_adapter import (
-    ModelClass,
-    get_pydantic_model_adapter,
-)
+from spectree._types import HookHandler, ModelAdapterType
+from spectree.model_adapter import ModelClass
 from spectree.plugins.base import (
     BasePlugin,
     Context,
@@ -25,23 +23,40 @@ from spectree.utils import cached_type_hints, get_multidict_items_starlette
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
+_active_model_adapter: ContextVar[ModelAdapterType | None] = ContextVar(
+    "spectree_starlette_model_adapter",
+    default=None,
+)
+_response_models: dict[int, ModelClass] = {}
 
 
-@cache
-def _get_pydantic_response_model():
-    adapter = get_pydantic_model_adapter()
-    return adapter, adapter.make_root_model(Any, name="_PydanticResponseModel")
+def _get_response_model(model_adapter: ModelAdapterType) -> ModelClass:
+    adapter_key = id(model_adapter)
+    response_model = _response_models.get(adapter_key)
+    if response_model is None:
+        response_model = model_adapter.make_root_model(
+            Any,
+            name="_SpecTreeStarletteResponseModel",
+        )
+        _response_models[adapter_key] = response_model
+    return response_model
 
 
-class _PydanticResponse(JSONResponse):
+def _get_starlette_response_model_adapter() -> ModelAdapterType:
+    model_adapter = _active_model_adapter.get()
+    if model_adapter is None:
+        raise RuntimeError(
+            "SpecTreeStarletteResponse must be rendered inside a SpecTree request"
+        )
+    return model_adapter
+
+
+class SpecTreeStarletteResponse(JSONResponse):
     def render(self, content) -> bytes:
-        adapter, response_model = _get_pydantic_response_model()
+        adapter = _get_starlette_response_model_adapter()
+        response_model = _get_response_model(adapter)
         self._model_class = content.__class__
         return adapter.dump_json(adapter.validate_obj(response_model, content))
-
-
-def PydanticResponse(content):
-    return _PydanticResponse(content)
 
 
 class StarlettePlugin(BasePlugin):
@@ -114,6 +129,15 @@ class StarlettePlugin(BasePlugin):
         *args: Any,
         **kwargs: Any,
     ):
+        async def call_with_model_adapter() -> Any:
+            model_adapter_token = _active_model_adapter.set(self.model_adapter)
+            try:
+                if inspect.iscoroutinefunction(func):
+                    return await func(*args, **kwargs)
+                return func(*args, **kwargs)
+            finally:
+                _active_model_adapter.reset(model_adapter_token)
+
         if isinstance(args[0], Request):
             instance, request = None, args[0]
         else:
@@ -156,10 +180,7 @@ class StarlettePlugin(BasePlugin):
                         getattr(request, "context", None), name, None
                     )
 
-        if inspect.iscoroutinefunction(func):
-            response = await func(*args, **kwargs)
-        else:
-            response = func(*args, **kwargs)
+        response = await call_with_model_adapter()
 
         if (
             not skip_validation

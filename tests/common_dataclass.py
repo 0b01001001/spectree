@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Any
 
 
@@ -10,6 +10,15 @@ class Order(IntEnum):
 
     asce = 0
     desc = 1
+
+
+class ReturnCase(str, Enum):
+    PAYLOAD = "Payload"
+    MODEL = "Model"
+    ROOT_MODEL = "RootModel"
+    RAW_LIST = "RawList"
+    ROOT_LIST = "RootList"
+    MODEL_LIST = "ModelList"
 
 
 @dataclass
@@ -105,3 +114,27 @@ class SimpleModel:
 @dataclass
 class RootModelLookalike:
     __root__: list[str]
+
+
+@dataclass
+class DemoModel:
+    uid: int
+    limit: int
+    name: str
+
+
+@dataclass
+class DemoQuery:
+    names1: list[str]
+    names2: list[str]
+
+
+@dataclass
+class OptionalListQuery:
+    names: list[str] | None = None
+    title: str | None = None
+
+
+@dataclass
+class Child:
+    value: int
