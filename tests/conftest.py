@@ -1,4 +1,3 @@
-import importlib.util
 from pathlib import Path
 
 import pytest
@@ -6,18 +5,12 @@ from syrupy.extensions.json import JSONSnapshotExtension
 
 from tests.model_cases import MODEL_CASE_PARAMS, build_model_case
 
-_MSGSPEC_TEST_FILES = {
-    "test_msgspec.py",
-    "test_plugin_with_msgspec.py",
-    "test_msgspec_plugin.py",
-}
-_MSGSPEC_AVAILABLE = importlib.util.find_spec("msgspec") is not None
-
 
 def pytest_ignore_collect(collection_path, config):
-    if _MSGSPEC_AVAILABLE:
-        return False
-    return Path(str(collection_path)).name in _MSGSPEC_TEST_FILES
+    path = Path(str(collection_path))
+    if path.parent.name == "import_module" or path.name == "import_module":
+        return True
+    return None
 
 
 @pytest.fixture

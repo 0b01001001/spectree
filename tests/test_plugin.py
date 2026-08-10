@@ -1,66 +1,88 @@
+from importlib import import_module
+
 import pytest
 
 from spectree.utils import get_model_key
-from tests.common import SECURITY_SCHEMAS
+from tests.common import build_security_schemes
 from tests.common_dataclass import Cookies, Payload, Query, Resp
-from tests.common_pydantic import Headers
 from tests.model_cases import build_model_case
-from tests.test_plugin_falcon_model_adapters import (
+from tests.plugin_falcon.apps import (
     FALCON_BACKEND,
     build_falcon_adapter_app,
 )
-from tests.test_plugin_flask import (
-    api as flask_api,
-    api_global_secure as flask_api_global_secure,
-    api_secure as flask_api_secure,
+from tests.plugin_flask.apps import (
+    build_flask_adapter_app,
+    build_flask_blueprint_adapter_app,
+    build_flask_global_secure_adapter_api,
+    build_flask_secure_adapter_api,
+    build_flask_view_adapter_app,
 )
-from tests.test_plugin_flask_blueprint import api as flask_bp_api
-from tests.test_plugin_flask_view import api as flask_view_api
-from tests.test_plugin_starlette import api as starlette_api
+from tests.plugin_starlette.apps import build_starlette_adapter_app
 
-pytestmark = pytest.mark.pydantic
-
-pydantic_case = build_model_case("pydantic")
-PYDANTIC_SCHEMA_MODELS = (
-    pydantic_case.get_model(Query),
-    pydantic_case.get_model(Payload),
-    pydantic_case.get_model(Resp),
-    pydantic_case.get_model(Cookies),
-    Headers,
-)
-falcon_api = build_falcon_adapter_app(FALCON_BACKEND, pydantic_case).spec
+PLUGIN_API_BUILDERS = [
+    pytest.param(build_flask_adapter_app, id="flask"),
+    pytest.param(build_flask_blueprint_adapter_app, id="flask_blueprint"),
+    pytest.param(build_flask_view_adapter_app, id="flask_view"),
+    pytest.param(build_starlette_adapter_app, id="starlette"),
+    pytest.param(
+        lambda model_case: build_falcon_adapter_app(FALCON_BACKEND, model_case),
+        id="falcon",
+    ),
+]
 
 
-@pytest.mark.parametrize(
-    "api",
-    [
-        pytest.param(flask_api, id="flask"),
-        pytest.param(flask_bp_api, id="flask_blueprint"),
-        pytest.param(flask_view_api, id="flask_view"),
-        pytest.param(starlette_api, id="starlette"),
-        pytest.param(falcon_api, id="falcon"),
-    ],
-)
-def test_plugin_spec(api, snapshot_json):
+def _schema_models(model_case):
+    models = [
+        model_case.get_model(Query),
+        model_case.get_model(Payload),
+        model_case.get_model(Resp),
+        model_case.get_model(Cookies),
+    ]
+    if model_case.name == "pydantic":
+        models.append(import_module("tests.common_pydantic").Headers)
+    return models
+
+
+def _assert_schema_models(api, model_case):
     model_adapter = api.model_adapter
     models = {
         get_model_key(model=m): model_adapter.json_schema(
             model=m,
             ref_template=f"#/components/schemas/{get_model_key(model=m)}.{{model}}",
         )
-        for m in PYDANTIC_SCHEMA_MODELS
+        for m in _schema_models(model_case)
     }
     for name, schema in models.items():
         schema.pop("definitions", None)
         schema.pop("$defs", None)
         assert api.spec["components"]["schemas"][name] == schema
 
+
+@pytest.mark.pydantic
+@pytest.mark.parametrize("api_builder", PLUGIN_API_BUILDERS)
+def test_plugin_spec(api_builder, snapshot_json):
+    pytest.importorskip("pydantic")
+    pydantic_case = build_model_case("pydantic")
+    api = api_builder(pydantic_case).spec
+
+    _assert_schema_models(api, pydantic_case)
+
     assert api.spec == snapshot_json(name="full_spec")
 
 
-def test_secure_spec():
+@pytest.mark.parametrize("api_builder", PLUGIN_API_BUILDERS)
+def test_plugin_spec_model_adapters(model_case, api_builder):
+    adapter_app = api_builder(model_case)
+
+    _assert_schema_models(adapter_app.spec, model_case)
+
+
+def test_secure_spec(model_case):
+    security_schemes = build_security_schemes(model_case)
+    flask_api_secure = build_flask_secure_adapter_api(model_case)
+
     assert [*flask_api_secure.spec["components"]["securitySchemes"].keys()] == [
-        scheme.name for scheme in SECURITY_SCHEMAS
+        scheme.name for scheme in security_schemes
     ]
 
     paths = flask_api_secure.spec["paths"]
@@ -74,22 +96,25 @@ def test_secure_spec():
             # iter secure names and params
             for secure_key, secure_value in security[0].items():
                 # check secure names valid
-                assert secure_key in [scheme.name for scheme in SECURITY_SCHEMAS]
+                assert secure_key in [scheme.name for scheme in security_schemes]
 
                 # check if flow exist
                 if secure_value:
                     scopes = [
                         scheme.data.flows["authorizationCode"]["scopes"]
-                        for scheme in SECURITY_SCHEMAS
+                        for scheme in security_schemes
                         if scheme.name == secure_key
                     ]
 
                     assert set(secure_value).issubset(*scopes)
 
 
-def test_secure_global_spec():
+def test_secure_global_spec(model_case):
+    security_schemes = build_security_schemes(model_case)
+    flask_api_global_secure = build_flask_global_secure_adapter_api(model_case)
+
     assert [*flask_api_global_secure.spec["components"]["securitySchemes"].keys()] == [
-        scheme.name for scheme in SECURITY_SCHEMAS
+        scheme.name for scheme in security_schemes
     ]
 
     paths = flask_api_global_secure.spec["paths"]

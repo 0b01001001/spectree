@@ -1,8 +1,9 @@
 import json
-from typing import Optional
+from dataclasses import dataclass
+from importlib import import_module
+from typing import Any
 
 import pytest
-from pydantic import BaseModel, computed_field
 
 from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
@@ -19,12 +20,11 @@ from spectree.utils import (
     parse_resp,
 )
 from tests.common import get_model_path_key
-from tests.common_pydantic import DefaultEnumValue, DemoModel, DemoQuery, Numeric
-
-pytestmark = pytest.mark.pydantic
-
-api = SpecTree()
-model_adapter = get_pydantic_model_adapter()
+from tests.common_dataclass import (
+    DemoModel as DemoModelDef,
+    DemoQuery as DemoQueryDef,
+    OptionalListQuery,
+)
 
 
 def undecorated_func():
@@ -33,33 +33,56 @@ def undecorated_func():
     description"""
 
 
-@api.validate(json=DemoModel, resp=Response(HTTP_200=DemoModel))
-def demo_func():
-    """
-    summary
-
-    description"""
-
-
-@api.validate(query=DemoQuery)
-def demo_func_with_query():
-    """
-    a summary
-
-    a description
-    """
+@dataclass(frozen=True)
+class UtilsModels:
+    adapter: Any
+    demo_model: Any
+    demo_query: Any
+    optional_list_query: Any
+    demo_func: Any
+    demo_func_with_query: Any
+    demo_class: Any
 
 
-class DemoClass:
-    @api.validate(query=DemoModel)
-    def demo_method(self):
-        """summary
+@pytest.fixture
+def utils_models(model_case):
+    api = SpecTree(model_adapter=model_case.adapter)
+    demo_model = model_case.get_model(DemoModelDef)
+    demo_query = model_case.get_model(DemoQueryDef)
+    optional_list_query = model_case.get_model(OptionalListQuery)
 
-        description
+    @api.validate(json=demo_model, resp=Response(HTTP_200=demo_model))
+    def demo_func():
+        """
+        summary
+
+        description"""
+
+    @api.validate(query=demo_query)
+    def demo_func_with_query():
+        """
+        a summary
+
+        a description
         """
 
+    class DemoClass:
+        @api.validate(query=demo_model)
+        def demo_method(self):
+            """summary
 
-demo_class = DemoClass()
+            description
+            """
+
+    return UtilsModels(
+        adapter=model_case.adapter,
+        demo_model=demo_model,
+        demo_query=demo_query,
+        optional_list_query=optional_list_query,
+        demo_func=demo_func,
+        demo_func_with_query=demo_func_with_query,
+        demo_class=DemoClass(),
+    )
 
 
 @pytest.mark.parametrize(
@@ -181,15 +204,18 @@ def test_parse_comments(docstring, expected_summary, expected_description):
         pytest.param(
             undecorated_func, "summary", "description", id="undecorated-function"
         ),
-        pytest.param(demo_func, "summary", "description", id="decorated-function"),
-        pytest.param(
-            demo_class.demo_method, "summary", "description", id="class-method"
-        ),
+        pytest.param("demo_func", "summary", "description", id="decorated-function"),
+        pytest.param("demo_method", "summary", "description", id="class-method"),
     ],
 )
 def test_parse_comments_with_different_callable_types(
-    func, expected_summary, expected_description
+    utils_models, func, expected_summary, expected_description
 ):
+    if func == "demo_func":
+        func = utils_models.demo_func
+    elif func == "demo_method":
+        func = utils_models.demo_class.demo_method
+
     assert parse_comments(func) == (expected_summary, expected_description)
 
 
@@ -201,56 +227,90 @@ def test_parse_code():
     assert parse_code("HTTP_404") == "404"
 
 
-def test_parse_name():
+def test_parse_name(utils_models):
     assert parse_name(lambda x: x) == "<lambda>"
     assert parse_name(undecorated_func) == "undecorated_func"
-    assert parse_name(demo_func) == "demo_func"
-    assert parse_name(demo_class.demo_method) == "demo_method"
+    assert parse_name(utils_models.demo_func) == "demo_func"
+    assert parse_name(utils_models.demo_class.demo_method) == "demo_method"
 
 
-def test_has_model():
+def test_has_model(utils_models):
     assert not has_model(undecorated_func)
-    assert has_model(demo_func)
-    assert has_model(demo_class.demo_method)
+    assert has_model(utils_models.demo_func)
+    assert has_model(utils_models.demo_class.demo_method)
 
 
-def test_parse_resp():
+def test_parse_resp(utils_models):
     assert parse_resp(undecorated_func) == {}
-    resp_spec = parse_resp(demo_func)
+    resp_spec = parse_resp(utils_models.demo_func)
 
     assert resp_spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     model_path_key = get_model_path_key(
-        f"{model_adapter.validation_error.__module__}.{model_adapter.validation_error.__name__}"
+        f"{utils_models.adapter.validation_error.__module__}."
+        f"{utils_models.adapter.validation_error.__name__}"
     )
     assert (
         resp_spec["422"]["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
     )
-    model_path_key = get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
+    model_path_key = get_model_path_key(
+        f"{utils_models.demo_model.__module__}.{utils_models.demo_model.__name__}"
+    )
     assert (
         resp_spec["200"]["content"]["application/json"]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
     )
 
 
-def test_parse_request():
-    model_path_key = get_model_path_key(f"{DemoModel.__module__}.{DemoModel.__name__}")
+def test_parse_request(utils_models):
+    model_path_key = get_model_path_key(
+        f"{utils_models.demo_model.__module__}.{utils_models.demo_model.__name__}"
+    )
     assert (
-        parse_request(demo_func)["content"]["application/json"]["schema"]["$ref"]
+        parse_request(utils_models.demo_func)["content"]["application/json"]["schema"][
+            "$ref"
+        ]
         == f"#/components/schemas/{model_path_key}"
     )
-    assert parse_request(demo_class.demo_method) == {}
+    assert parse_request(utils_models.demo_class.demo_method) == {}
 
 
-def test_parse_params():
+def test_parse_params(utils_models):
+    models = {
+        get_model_path_key(
+            f"{utils_models.demo_model.__module__}.{utils_models.demo_model.__name__}"
+        ): utils_models.adapter.json_schema(
+            utils_models.demo_model,
+            ref_template="#/components/schemas/{model}",
+        )
+    }
+    assert parse_params(utils_models.demo_func, [], models) == []
+    params = parse_params(utils_models.demo_class.demo_method, [], models)
+    assert len(params) == 3
+    assert params[0]["name"] == "uid"
+    assert params[0]["in"] == "query"
+    assert params[0]["required"] is True
+    assert params[0]["description"] == ""
+    assert params[0]["schema"]["type"] == "integer"
+    assert params[2]["name"] == "name"
+    assert params[2]["schema"]["type"] == "string"
+
+
+@pytest.mark.pydantic
+def test_parse_params_preserves_pydantic_field_description():
+    DemoModel = import_module("tests.common_pydantic").DemoModel
+    api = SpecTree()
+
+    @api.validate(query=DemoModel)
+    def demo_method():
+        pass
+
     models = {
         get_model_path_key(
             f"{DemoModel.__module__}.{DemoModel.__name__}"
         ): DemoModel.model_json_schema(ref_template="#/components/schemas/{model}")
     }
-    assert parse_params(demo_func, [], models) == []
-    params = parse_params(demo_class.demo_method, [], models)
-    assert len(params) == 3
+    params = parse_params(demo_method, [], models)
     assert params[0] == {
         "name": "uid",
         "in": "query",
@@ -261,7 +321,15 @@ def test_parse_params():
     assert params[2]["description"] == "user name"
 
 
+@pytest.mark.pydantic
 def test_parse_params_with_route_param_keywords():
+    DemoQuery = import_module("tests.common_pydantic").DemoQuery
+    api = SpecTree()
+
+    @api.validate(query=DemoQuery)
+    def demo_func_with_query():
+        pass
+
     models = {
         get_model_path_key(
             "tests.common_pydantic.DemoQuery"
@@ -293,23 +361,22 @@ def test_parse_params_with_route_param_keywords():
     ]
 
 
-def test_is_list_item():
-    class OptionalListQuery(BaseModel):
-        names: Optional[list[str]] = None
-        title: Optional[str] = None
-
-    assert is_list_item("names1", DemoQuery)
-    assert is_list_item("names2", DemoQuery)
-    assert is_list_item("names", OptionalListQuery)
-    assert not is_list_item("uid", DemoModel)
-    assert not is_list_item("title", OptionalListQuery)
-    assert not is_list_item("missing", DemoQuery)
+def test_is_list_item(utils_models):
+    assert is_list_item("names1", utils_models.demo_query)
+    assert is_list_item("names2", utils_models.demo_query)
+    assert is_list_item("names", utils_models.optional_list_query)
+    assert not is_list_item("uid", utils_models.demo_model)
+    assert not is_list_item("title", utils_models.optional_list_query)
+    assert not is_list_item("missing", utils_models.demo_query)
     assert not is_list_item("names", None)
 
 
+@pytest.mark.pydantic
 def test_json_compatible_schema():
+    common_pydantic = import_module("tests.common_pydantic")
+    model_adapter = get_pydantic_model_adapter()
     schema = model_adapter.json_schema(
-        Numeric, ref_template="#/components/schemas/{model}"
+        common_pydantic.Numeric, ref_template="#/components/schemas/{model}"
     )
 
     with pytest.raises(ValueError):
@@ -319,14 +386,20 @@ def test_json_compatible_schema():
     assert json.dumps(json_schema, allow_nan=False)
 
     schema = model_adapter.json_schema(
-        DefaultEnumValue, ref_template="#/components/schemas/{model}"
+        common_pydantic.DefaultEnumValue,
+        ref_template="#/components/schemas/{model}",
     )
     json_schema = json_compatible_deepcopy(schema)
     assert json.dumps(json_schema)
 
 
+@pytest.mark.pydantic
 def test_get_model_schema_mode_parameter():
     """Test get_model_schema mode parameter for Pydantic v2"""
+    pydantic = import_module("pydantic")
+    BaseModel = pydantic.BaseModel
+    computed_field = pydantic.computed_field
+    model_adapter = get_pydantic_model_adapter()
 
     class TestModel(BaseModel):
         """Model with computed field"""

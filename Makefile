@@ -15,19 +15,21 @@ import_test:
 	uv sync --extra msgspec --extra falcon
 	bash -c "uv run tests/import_module/test_msgspec_plugin.py"
 
-import_test_without_msgspec:
-	for module in flask quart falcon starlette; do \
-		uv sync --extra pydantic --extra $$module; \
-		bash -c "uv run tests/import_module/test_$${module}_plugin.py" || exit 1; \
-	done
-
 test: import_test
 	uv sync --all-extras --group dev
 	uv run -- pytest tests -vv -rs --disable-warnings
 
-test_without_msgspec: import_test_without_msgspec
-	uv sync --extra pydantic --extra flask --extra quart --extra falcon --extra starlette --extra offline --group dev
-	uv run -- pytest tests -vv -rs --disable-warnings -m "not msgspec"
+test_common:
+	uv sync --all-extras --group dev --no-extra msgspec --no-extra pydantic
+	uv run -- pytest tests -vv -rs --disable-warnings -m "not pydantic and not msgspec"
+
+test_pydantic:
+	uv sync --all-extras --no-extra msgspec --group dev
+	uv run -- pytest tests -vv -rs --disable-warnings -m pydantic
+
+test_msgspec:
+	uv sync --all-extras --no-extra pydantic --group dev
+	uv run -- pytest tests -vv -rs --disable-warnings -m msgspec
 
 update_snapshot:
 	@uv run -- pytest --snapshot-update
@@ -54,6 +56,7 @@ format:
 	@uv run -- ruff check --fix ${SOURCE_FILES}
 
 lint:
+	@uv sync --extra pydantic --group dev
 	@uv run -- ruff format --check ${SOURCE_FILES}
 	@uv run -- ruff check ${SOURCE_FILES}
 	@uv run -- mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
@@ -61,4 +64,4 @@ lint:
 changelog:
 	@git-cliff --config cliff.toml --repository . --output CHANGELOG.md
 
-.PHONY: test doc
+.PHONY: test test_common test_pydantic test_msgspec doc

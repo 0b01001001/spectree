@@ -53,4 +53,4 @@ jobs:
         run: make test
       - name: Test without msgspec
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: make test_without_msgspec
+        run: make test_common test_pydantic

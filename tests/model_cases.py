@@ -26,7 +26,7 @@ from spectree.model_adapter import (
 )
 
 PYDANTIC_MODEL_CASE_PARAMS = [
-    pytest.param("pydantic", id="pydantic"),
+    pytest.param("pydantic", marks=pytest.mark.pydantic, id="pydantic"),
 ]
 MSGSPEC_MODEL_CASE_PARAMS = [
     pytest.param("msgspec", marks=pytest.mark.msgspec, id="msgspec"),

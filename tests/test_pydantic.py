@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import List
 
 import pytest
+
+pytest.importorskip("pydantic")
+
 from pydantic import BaseModel
 
 from spectree.model_adapter import get_pydantic_model_adapter

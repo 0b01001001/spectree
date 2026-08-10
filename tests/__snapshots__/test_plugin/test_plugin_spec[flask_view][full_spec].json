@@ -14,19 +14,6 @@
         "title": "Cookies",
         "type": "object"
       },
-      "CustomError.c46f088": {
-        "properties": {
-          "foo": {
-            "title": "Foo",
-            "type": "string"
-          }
-        },
-        "required": [
-          "foo"
-        ],
-        "title": "CustomError",
-        "type": "object"
-      },
       "Form.ba74342": {
         "properties": {
           "limit": {
@@ -43,32 +30,6 @@
           "limit"
         ],
         "title": "Form",
-        "type": "object"
-      },
-      "FormFileUpload.c46f088": {
-        "properties": {
-          "file": {
-            "anyOf": [
-              {
-                "format": "binary",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "File"
-          },
-          "other": {
-            "title": "Other",
-            "type": "string"
-          }
-        },
-        "required": [
-          "other"
-        ],
-        "title": "FormFileUpload",
         "type": "object"
       },
       "Headers.c46f088": {
@@ -92,14 +53,14 @@
         "title": "Language",
         "type": "string"
       },
-      "ListPayload.a60c7aa": {
+      "ItemList.ba74342": {
         "items": {
-          "$ref": "#/components/schemas/ListPayload.a60c7aa.Payload"
+          "$ref": "#/components/schemas/ItemList.ba74342.Item"
         },
-        "title": "ListPayload",
+        "title": "ItemList",
         "type": "array"
       },
-      "ListPayload.a60c7aa.Payload": {
+      "ItemList.ba74342.Item": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -114,72 +75,10 @@
           "name",
           "limit"
         ],
-        "title": "Payload",
-        "type": "object"
-      },
-      "OptionalAliasResp.c46f088": {
-        "properties": {
-          "limit": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Limit"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Name"
-          },
-          "schema": {
-            "title": "Schema",
-            "type": "string"
-          }
-        },
-        "required": [
-          "schema"
-        ],
-        "title": "OptionalAliasResp",
+        "title": "Item",
         "type": "object"
       },
       "Payload.ba74342": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "limit"
-        ],
-        "title": "Payload",
-        "type": "object"
-      },
-      "PayloadList.ba74342": {
-        "items": {
-          "$ref": "#/components/schemas/PayloadList.ba74342.Payload"
-        },
-        "title": "PayloadList",
-        "type": "array"
-      },
-      "PayloadList.ba74342.Payload": {
         "properties": {
           "limit": {
             "title": "Limit",
@@ -216,20 +115,17 @@
         "title": "Order",
         "type": "integer"
       },
-      "QueryList.ba74342": {
+      "RequiredLimitQuery.ba74342": {
         "properties": {
-          "ids": {
-            "items": {
-              "type": "integer"
-            },
-            "title": "Ids",
-            "type": "array"
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
           }
         },
         "required": [
-          "ids"
+          "limit"
         ],
-        "title": "QueryList",
+        "title": "RequiredLimitQuery",
         "type": "object"
       },
       "Resp.ba74342": {
@@ -251,59 +147,6 @@
           "score"
         ],
         "title": "Resp",
-        "type": "object"
-      },
-      "RespFromAttrs.c46f088": {
-        "properties": {
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "score": {
-            "items": {
-              "type": "integer"
-            },
-            "title": "Score",
-            "type": "array"
-          }
-        },
-        "required": [
-          "name",
-          "score"
-        ],
-        "title": "RespFromAttrs",
-        "type": "object"
-      },
-      "RootResp.a60c7aa": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/RootResp.a60c7aa.Payload"
-          },
-          {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array"
-          }
-        ],
-        "title": "RootResp"
-      },
-      "RootResp.a60c7aa.Payload": {
-        "properties": {
-          "limit": {
-            "title": "Limit",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "limit"
-        ],
-        "title": "Payload",
         "type": "object"
       },
       "StrDict.a60c7aa": {
@@ -369,407 +212,6 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/custom_error": {
-      "post": {
-        "description": "",
-        "operationId": "post__api_custom_error",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CustomError.c46f088"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomError.c46f088"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "post <POST>",
-        "tags": []
-      }
-    },
-    "/api/file_upload": {
-      "post": {
-        "description": "",
-        "operationId": "post__api_file_upload",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/FormFileUpload.c46f088"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {},
-        "summary": "post <POST>",
-        "tags": []
-      }
-    },
-    "/api/force_serialize": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_force_serialize",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RespFromAttrs.c46f088"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/list_json": {
-      "post": {
-        "description": "",
-        "operationId": "post__api_list_json",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ListPayload.a60c7aa"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {},
-        "summary": "post <POST>",
-        "tags": []
-      }
-    },
-    "/api/no_response": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_no_response",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      },
-      "post": {
-        "description": "",
-        "operationId": "post__api_no_response",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StrDict.a60c7aa"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {},
-        "summary": "post <POST>",
-        "tags": []
-      }
-    },
-    "/api/query_list": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_query_list",
-        "parameters": [
-          {
-            "description": "",
-            "in": "query",
-            "name": "ids",
-            "required": true,
-            "schema": {
-              "items": {
-                "type": "integer"
-              },
-              "title": "Ids",
-              "type": "array"
-            }
-          }
-        ],
-        "responses": {},
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/return_list": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_list",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PayloadList.ba74342"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/return_make_response": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_make_response",
-        "parameters": [
-          {
-            "description": "",
-            "in": "query",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "title": "Name",
-              "type": "string"
-            }
-          },
-          {
-            "description": "",
-            "in": "query",
-            "name": "limit",
-            "required": true,
-            "schema": {
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "",
-            "in": "header",
-            "name": "lang",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Headers.c46f088.Language"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp.ba74342"
-                }
-              }
-            },
-            "description": "Created"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      },
-      "post": {
-        "description": "",
-        "operationId": "post__api_return_make_response",
-        "parameters": [
-          {
-            "description": "",
-            "in": "header",
-            "name": "lang",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Headers.c46f088.Language"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Payload.ba74342"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp.ba74342"
-                }
-              }
-            },
-            "description": "Created"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "post <POST>",
-        "tags": []
-      }
-    },
-    "/api/return_model": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_model",
-        "parameters": [],
-        "responses": {},
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/return_optional_alias": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_optional_alias",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OptionalAliasResp.c46f088"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/return_root": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_root",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RootResp.a60c7aa"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError.ad30e22"
-                }
-              }
-            },
-            "description": "Unprocessable Content"
-          }
-        },
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
-    "/api/return_string_status": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_return_string_status",
-        "parameters": [],
-        "responses": {},
-        "summary": "get <GET>",
-        "tags": []
-      }
-    },
     "/api/user/{name}": {
       "post": {
         "description": "",
@@ -850,45 +292,6 @@
           "API",
           "test"
         ]
-      }
-    },
-    "/api/user/{name}/address/{address_id}": {
-      "get": {
-        "description": "",
-        "operationId": "get__api_user_{name}_address_{address_id}",
-        "parameters": [
-          {
-            "description": "The name that uniquely identifies the user.",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "",
-            "in": "path",
-            "name": "address_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "",
-            "in": "query",
-            "name": "order",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/Query.ba74342.Order",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {},
-        "summary": "get <GET>",
-        "tags": []
       }
     },
     "/api/user_annotated/{name}": {
@@ -1014,11 +417,6 @@
               "schema": {
                 "$ref": "#/components/schemas/Payload.ba74342"
               }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Form.ba74342"
-              }
             }
           },
           "required": true
@@ -1055,38 +453,19 @@
         ]
       }
     },
-    "/api/user_skip/{name}": {
+    "/api/view-items": {
       "post": {
         "description": "",
-        "operationId": "post__api_user_skip_{name}",
+        "operationId": "post__api_view-items",
         "parameters": [
           {
             "description": "",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "",
             "in": "query",
-            "name": "order",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/Query.ba74342.Order",
-              "default": 0
-            }
-          },
-          {
-            "description": "",
-            "in": "cookie",
-            "name": "pub",
+            "name": "limit",
             "required": true,
             "schema": {
-              "title": "Pub",
-              "type": "string"
+              "title": "Limit",
+              "type": "integer"
             }
           }
         ],
@@ -1105,14 +484,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Resp.ba74342"
+                  "$ref": "#/components/schemas/ItemList.ba74342"
                 }
               }
             },
             "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "422": {
             "content": {
@@ -1126,10 +502,7 @@
           }
         },
         "summary": "post <POST>",
-        "tags": [
-          "API",
-          "test"
-        ]
+        "tags": []
       }
     },
     "/ping": {

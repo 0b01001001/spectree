@@ -326,11 +326,11 @@ You can change the `validation_error_status` in SpecTree (global) or a specific 
 
 Yes, returning an instance produced by your configured model backend will assume the model is valid and bypass Spectree's validation. Spectree will serialize that instance through the active model adapter.
 
-For starlette you should return a `PydanticResponse`:
+For starlette you should return a `SpecTreeStarletteResponse`:
 ```py
-from spectree.plugins.starlette_plugin import PydanticResponse
+from spectree.plugins.starlette_plugin import SpecTreeStarletteResponse
 
-return PydanticResponse(MyModel)
+return SpecTreeStarletteResponse(MyModel)
 ```
 
 ## Demo
@@ -490,7 +490,7 @@ from starlette.routing import Mount, Route
 
 from spectree import Response, SpecTree
 
-# from spectree.plugins.starlette_plugin import PydanticResponse
+# from spectree.plugins.starlette_plugin import SpecTreeStarletteResponse
 
 
 class Profile(BaseModel):
@@ -515,7 +515,7 @@ async def user_profile(request, json: Profile):
     print(json)  # or await request.json()
     return JSONResponse(
         {"text": "it works"}
-    )  # or `return PydanticResponse(Message(text='it works'))`
+    )  # or `return SpecTreeStarletteResponse(Message(text='it works'))`
 
 
 if __name__ == "__main__":
