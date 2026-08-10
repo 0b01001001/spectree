@@ -27,18 +27,17 @@ _active_model_adapter: ContextVar[ModelAdapterType | None] = ContextVar(
     "spectree_starlette_model_adapter",
     default=None,
 )
-_response_models: dict[int, ModelClass] = {}
+_response_models: dict[object, ModelClass] = {}
 
 
 def _get_response_model(model_adapter: ModelAdapterType) -> ModelClass:
-    adapter_key = id(model_adapter)
-    response_model = _response_models.get(adapter_key)
+    response_model = _response_models.get(model_adapter)
     if response_model is None:
         response_model = model_adapter.make_root_model(
             Any,
             name="_SpecTreeStarletteResponseModel",
         )
-        _response_models[adapter_key] = response_model
+        _response_models[model_adapter] = response_model
     return response_model
 
 
