@@ -1,3 +1,5 @@
+from typing import Annotated
+
 import flask
 import pytest
 
@@ -6,7 +8,7 @@ pytest.importorskip("msgspec")
 import msgspec
 
 import spectree.model_adapter as model_adapter_module
-from spectree import Response
+from spectree import Response, model_adapter
 from spectree.config import Configuration
 from spectree.model_adapter import get_msgspec_model_adapter
 from spectree.model_adapter.msgspec_adapter import MsgspecModelAdapter
@@ -233,3 +235,22 @@ def test_msgspec_generic_schema_with_stable_model_key():
     ]["schema"] == {"$ref": f"#/components/schemas/{root_model_key}"}
     assert schemas[list_model_key]["type"] == "array"
     assert schemas[root_model_key]["title"] == "Users"
+
+
+class DemoStruct:
+    pass
+
+
+def test_msgspec_model_spec_type_expressions():
+    assert ADAPTER.is_model_type(DemoStruct)
+    assert ADAPTER.is_model_type(list[DemoStruct])
+
+
+def test_msgspec_annotated_model_spec():
+    model = Annotated[
+        DemoStruct,
+        msgspec.Meta(title="Demo"),
+    ]
+
+    assert ADAPTER.is_model_type(model)
+

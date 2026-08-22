@@ -1,60 +1,70 @@
 from typing import Any, Literal, Protocol, TypeAlias, TypeVar
 
-ModelClass: TypeAlias = type[Any]
+# ModelSpec is not "any value accepted by Spectree".
+# It is a type expression whose support is determined by the selected adapter.
+ModelSpec: TypeAlias = Any
 ModelT = TypeVar("ModelT")
 ValidationErrorT = TypeVar("ValidationErrorT", bound=Exception)
 BaseFileT = TypeVar("BaseFileT")
+
 SchemaMode: TypeAlias = Literal["validation", "serialization"]
 
 
 class ModelAdapter(Protocol[ModelT, ValidationErrorT, BaseFileT]):
     """The protocol of model adapter.
 
-    - check the model type
-    - validate the model
-    - dump model instance to a JSON
-    - generate the JSON schema
-    - check the validation errors
+    A model spec is an adapter-defined runtime type expression. It may be a
+    model class, a generic alias such as ``list[User]``, ``Annotated[...]``,
+    or another type expression supported by the adapter.
     """
 
     validation_error: type[ValidationErrorT]
     basefile: BaseFileT
 
-    def is_model_type(self, value: Any) -> bool:
+    def is_model_type(self, value: ModelSpec) -> bool:
         """Check if the value can be used to generate a schema."""
         ...
 
-    def is_model_instance(self, value: Any, model) -> bool:
-        """Check if the value is the instance of the model under this adapter.
+    def is_model_instance(self, value: Any, model: ModelSpec) -> bool:
+        """Check if ``value`` is an instance of ``model`` under this adapter.
 
-        If it's already an instance, we could skip the validation.
+        If it is already a valid model instance, runtime validation may be
+        skipped.
         """
         ...
 
-    def is_partial_model_instance(self, value: Any) -> bool: ...
+    def is_partial_model_instance(self, value: Any) -> bool:
+        ...
 
-    def validate_obj(self, model: type[ModelT], value: Any) -> ModelT: ...
+    def validate_obj(self, model: ModelSpec, value: Any) -> ModelT:
+        ...
 
-    def validate_json(self, model: type[ModelT], value: bytes) -> ModelT: ...
+    def validate_json(self, model: ModelSpec, value: bytes) -> ModelT:
+        ...
 
-    def dump_json(self, value: Any) -> bytes: ...
+    def dump_json(self, value: Any) -> bytes:
+        ...
 
     def make_root_model(
         self,
-        root_type: Any,
+        root_type: ModelSpec,
         *,
         name: str | None = None,
         module: str | None = None,
-    ) -> ModelClass: ...
+    ) -> ModelSpec:
+        ...
 
-    def make_list_model(self, model: ModelClass) -> ModelClass: ...
+    def make_list_model(self, model: ModelSpec) -> ModelSpec:
+        ...
 
     def json_schema(
         self,
-        model: ModelClass,
+        model: ModelSpec,
         *,
         ref_template: str,
         mode: SchemaMode = "validation",
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        ...
 
-    def validation_errors(self, err: ValidationErrorT) -> Any: ...
+    def validation_errors(self, err: ValidationErrorT) -> Any:
+        ...

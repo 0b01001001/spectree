@@ -14,7 +14,7 @@ from typing import (
 
 from spectree._types import HookHandler, JsonType, ModelAdapterType
 from spectree.config import Configuration
-from spectree.model_adapter import ModelClass
+from spectree.model_adapter import ModelSpec
 from spectree.response import Response
 
 if TYPE_CHECKING:
@@ -61,11 +61,11 @@ class BasePlugin(Generic[BackendRoute]):
     def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
+        query: Optional[ModelSpec],
+        json: Optional[ModelSpec],
+        form: Optional[ModelSpec],
+        headers: Optional[ModelSpec],
+        cookies: Optional[ModelSpec],
         resp: Optional[Response],
         before: HookHandler,
         after: HookHandler,
@@ -141,7 +141,7 @@ class ResponseValidationResult:
 
 def validate_response(
     model_adapter: ModelAdapterType,
-    validation_model: Optional[ModelClass],
+    validation_model: Optional[ModelSpec],
     response_payload: Any,
     force_serialize: bool = False,
 ) -> ResponseValidationResult:

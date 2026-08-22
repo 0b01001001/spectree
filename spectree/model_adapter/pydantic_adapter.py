@@ -5,7 +5,7 @@ from typing import Any, Sequence
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 from pydantic_core import core_schema
 
-from spectree.model_adapter.protocol import ModelAdapter, SchemaMode
+from spectree.model_adapter.protocol import ModelAdapter, SchemaMode, ModelSpec
 from spectree.models import ValidationErrorElement
 
 
@@ -48,7 +48,7 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
             self._type_adapters[value] = adapter
         return adapter
 
-    def is_model_type(self, value: type) -> bool:
+    def is_model_type(self, value: ModelSpec) -> bool:
         return (
             value is ValidationError
             or issubclass(value, BaseModel)
@@ -73,12 +73,12 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
             return any(self.is_partial_model_instance(item) for item in value)
         return False
 
-    def validate_obj(self, model: type[Any], value: Any) -> Any:
+    def validate_obj(self, model: ModelSpec, value: Any) -> Any:
         if issubclass(model, BaseModel):
             return model.model_validate(value)
         return self._type_adapter(model).validate_python(value)
 
-    def validate_json(self, model: type[Any], value: bytes) -> Any:
+    def validate_json(self, model: ModelSpec, value: bytes) -> Any:
         if issubclass(model, BaseModel):
             return model.model_validate_json(value)
         return self._type_adapter(model).validate_json(value)
@@ -97,12 +97,12 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
         *,
         name: str | None = None,
         module: str | None = None,
-    ) -> type[BaseModel]:
+    ) -> ModelSpec:
         model_name = name or "GeneratedRootModel"
         module_name = module or __name__
         return type(model_name, (RootModel[root_type],), {"__module__": module_name})
 
-    def make_list_model(self, model: type[Any]) -> type[BaseModel]:
+    def make_list_model(self, model: ModelSpec) -> ModelSpec:
         return self.make_root_model(
             list[model],  # type: ignore[valid-type]
             name=f"{model.__name__}List",
@@ -111,7 +111,7 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
 
     def json_schema(
         self,
-        model: type[Any],
+        model: ModelSpec,
         *,
         ref_template: str,
         mode: SchemaMode = "validation",

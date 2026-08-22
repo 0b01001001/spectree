@@ -1,6 +1,7 @@
 import pytest
 
-from tests.common_dataclass import SimpleModel
+from spectree.model_adapter import ModelSpec
+from tests.common_dataclass import SimpleModel, DemoModel
 
 
 def _partial_model_instance_value(model_case, kind):
@@ -141,3 +142,9 @@ def test_validation_errors(model_case):
     assert list(errors[0]["loc"]) == ["user_id"]
     assert errors[0]["msg"]
     assert errors[0]["type"]
+
+
+def test_model_spec_accepts_generic_alias():
+    model: ModelSpec = list[DemoModel]
+    assert model == list[DemoModel]
+

@@ -3,6 +3,8 @@ from typing import List
 
 import pytest
 
+from tests.common_pydantic import DemoModel
+
 pytest.importorskip("pydantic")
 
 from pydantic import BaseModel
@@ -49,3 +51,14 @@ class RootModelLookalike:
 )
 def test_is_base_model_instance(value, expected):
     assert ADAPTER.is_model_instance(value, BaseModel) is expected
+
+
+class DemoDataclass:
+    pass
+
+
+def test_pydantic_model_spec_types(
+    model_adapter,
+):
+    assert model_adapter.is_model_type(DemoModel)
+    assert model_adapter.is_model_type(DemoDataclass)

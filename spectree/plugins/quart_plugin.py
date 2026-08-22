@@ -5,7 +5,7 @@ import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
 
 from spectree._types import HookHandler
-from spectree.model_adapter import ModelClass
+from spectree.model_adapter import ModelSpec
 from spectree.plugins.base import Context, validate_response
 from spectree.plugins.werkzeug_utils import WerkzeugPlugin, flask_response_unpack
 from spectree.response import Response
@@ -115,11 +115,11 @@ class QuartPlugin(WerkzeugPlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
+        query: Optional[ModelSpec],
+        json: Optional[ModelSpec],
+        form: Optional[ModelSpec],
+        headers: Optional[ModelSpec],
+        cookies: Optional[ModelSpec],
         resp: Optional[Response],
         before: HookHandler,
         after: HookHandler,

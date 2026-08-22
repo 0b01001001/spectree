@@ -27,7 +27,7 @@ from falcon.routing.compiled import _FIELD_PATTERN as FALCON_FIELD_PATTERN
 from falcon.util.reader import DEFAULT_CHUNK_SIZE, BufferedReader
 
 from spectree._types import HookHandler
-from spectree.model_adapter import ModelClass
+from spectree.model_adapter import ModelSpec
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
 from spectree.utils import cached_type_hints
@@ -300,11 +300,11 @@ class FalconPlugin(BasePlugin):
     def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
+        query: Optional[ModelSpec],
+        json: Optional[ModelSpec],
+        form: Optional[ModelSpec],
+        headers: Optional[ModelSpec],
+        cookies: Optional[ModelSpec],
         resp: Optional[Response],
         before: HookHandler,
         after: HookHandler,
@@ -396,11 +396,11 @@ class FalconAsgiPlugin(FalconPlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
+        query: Optional[ModelSpec],
+        json: Optional[ModelSpec],
+        form: Optional[ModelSpec],
+        headers: Optional[ModelSpec],
+        cookies: Optional[ModelSpec],
         resp: Optional[Response],
         before: HookHandler,
         after: HookHandler,

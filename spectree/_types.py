@@ -9,9 +9,9 @@ from typing import (
     Union,
 )
 
-from spectree.model_adapter.protocol import ModelAdapter, ModelClass
+from spectree.model_adapter.protocol import ModelAdapter, ModelSpec
 
-NamingStrategy = Callable[[ModelClass], str]
+NamingStrategy = Callable[[ModelSpec], str]
 NestedNamingStrategy = Callable[[str, str], str]
 ModelAdapterType = ModelAdapter[Any, Exception, Any]
 HookHandler = Callable[
