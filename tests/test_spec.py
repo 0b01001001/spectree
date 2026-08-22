@@ -10,7 +10,10 @@ from spectree.config import Configuration
 from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
-from spectree.utils import get_model_key
+from spectree.utils import (
+    get_model_key,
+    json_compatible_deepcopy,
+)
 from tests.common import get_paths
 from tests.common_dataclass import Child
 
@@ -348,3 +351,239 @@ def test_custom_model_naming_strategies_are_used_in_refs_and_components(model_ca
     }
     assert "Child" not in schemas
     assert "child" in schemas
+
+
+def test_validation_and_serialization_models_have_distinct_schema_components(
+    model_case,
+    monkeypatch,
+):
+    target_model = model_case.get_model(
+        dict[str, str],
+        name="ModeAwareModel",
+    )
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: (
+            "ModeAwareModel"
+            if model is target_model
+            else "ValidationError"
+        ),
+        model_adapter=model_case.adapter,
+    )
+
+    def fake_json_schema(*, model, ref_template, mode):
+        if model is target_model:
+            if mode == "validation":
+                return {
+                    "title": "ModeAwareModel",
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                    },
+                }
+
+            return {
+                "title": "ModeAwareModel",
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "display_name": {"type": "string"},
+                },
+            }
+
+        return {
+            "title": "ValidationError",
+            "type": "object",
+        }
+
+    monkeypatch.setattr(
+        api.model_adapter,
+        "json_schema",
+        fake_json_schema,
+    )
+
+    app = Flask(__name__)
+
+    @app.route("/users", methods=["POST"])
+    @api.validate(
+        json=target_model,
+        resp=Response(HTTP_200=target_model),
+    )
+    def users():
+        return {"name": "alice"}
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    assert (
+        spec["paths"]["/users"]["post"]["requestBody"]["content"][
+            "application/json"
+        ]["schema"]
+        == {"$ref": "#/components/schemas/ModeAwareModel"}
+    )
+
+    assert (
+        spec["paths"]["/users"]["post"]["responses"]["200"]["content"][
+            "application/json"
+        ]["schema"]
+        == {"$ref": "#/components/schemas/ModeAwareModel.serialization"}
+    )
+
+    assert "ModeAwareModel" in spec["components"]["schemas"]
+    assert "ModeAwareModel.serialization" in spec["components"]["schemas"]
+
+    assert (
+        spec["components"]["schemas"]["ModeAwareModel"]["properties"]
+        == {"name": {"type": "string"}}
+    )
+
+    assert (
+        spec["components"]["schemas"]["ModeAwareModel.serialization"]["properties"]
+        == {
+            "name": {"type": "string"},
+            "display_name": {"type": "string"},
+        }
+    )
+
+
+def test_generate_spec_does_not_mutate_registered_schema(
+    model_case,
+    monkeypatch,
+):
+    target_model = model_case.get_model(
+        dict[str, str],
+        name="QueryModel",
+    )
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: (
+            "QueryModel"
+            if model is target_model
+            else "ValidationError"
+        ),
+        model_adapter=model_case.adapter,
+    )
+
+    def fake_json_schema(*, model, ref_template, mode):
+        if model is target_model:
+            return {
+                "title": "QueryModel",
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "style": "form",
+                        "explode": True,
+                    },
+                },
+                "$defs": {
+                    "Child": {
+                        "type": "object",
+                    },
+                },
+            }
+
+        return {
+            "title": "ValidationError",
+            "type": "object",
+        }
+
+    monkeypatch.setattr(
+        api.model_adapter,
+        "json_schema",
+        fake_json_schema,
+    )
+
+    app = Flask(__name__)
+
+    @app.route("/query")
+    @api.validate(query=target_model)
+    def query():
+        return "ok"
+
+    api.register(app)
+
+    before = json_compatible_deepcopy(dict(api.models))
+
+    with app.app_context():
+        first_spec = api.spec
+
+    after_first = json_compatible_deepcopy(dict(api.models))
+
+    with app.app_context():
+        second_spec = api._generate_spec()
+
+    after_second = json_compatible_deepcopy(dict(api.models))
+
+    assert before == after_first
+    assert after_first == after_second
+    assert first_spec == second_spec
+
+    assert "style" in api.models["QueryModel"]["properties"]["query"]
+    assert "explode" in api.models["QueryModel"]["properties"]["query"]
+    assert "$defs" in api.models["QueryModel"]
+
+
+def test_response_declaration_is_not_mutated_by_spectree(
+    model_case,
+):
+    model = model_case.get_model(
+        dict[str, str],
+        name="ResponseModel",
+    )
+
+    response = Response(HTTP_200=model)
+
+    api = SpecTree(
+        "flask",
+        model_adapter=model_case.adapter,
+    )
+
+    app = Flask(__name__)
+
+    @app.route("/response")
+    @api.validate(resp=response)
+    def response_endpoint():
+        return {"value": "ok"}
+
+    assert response.model_adapter is None
+    assert response.code_models == {}
+    assert response._model_keys == {}
+
+    api.register(app)
+
+    assert response.model_adapter is None
+    assert response.code_models == {}
+    assert response._model_keys == {}
+
+    assert response_endpoint.resp is not response
+    assert response_endpoint.resp.model_adapter is api.model_adapter
+
+
+def test_response_can_be_reused_by_different_model_adapters(
+    model_case,
+):
+    model = model_case.get_model(
+        dict[str, str],
+        name="SharedResponseModel",
+    )
+
+    response = Response(HTTP_200=model)
+
+    pydantic_api = SpecTree(
+        "flask",
+        model_adapter=model_case.adapter,
+    )
+
+    # This test should actually use two independent adapters if available.
+    compiled = response.copy_for_model_adapter(
+        pydantic_api.model_adapter,
+    )
+
+    assert response.model_adapter is None
+    assert compiled.model_adapter is pydantic_api.model_adapter
+    assert response.code_models == {}

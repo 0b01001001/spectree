@@ -26,18 +26,18 @@ from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
+from spectree.schema_registry import SchemaRegistry
 from spectree.utils import (
     default_after_handler,
     default_before_handler,
     get_model_key,
     get_nested_key,
     get_security,
-    json_compatible_deepcopy,
     parse_comments,
     parse_name,
     parse_params,
     parse_request,
-    parse_resp,
+    parse_resp, json_compatible_deepcopy,
 )
 
 
@@ -110,7 +110,10 @@ class SpecTree:
             plugin = PLUGINS[backend_name]
             module = import_module(plugin.name, plugin.package)
             self.backend = getattr(module, plugin.class_name)(self)
-        self.models: Dict[str, Any] = {}
+        self.models = SchemaRegistry(
+            naming_strategy=self.naming_strategy,
+            nested_naming_strategy=self.nested_naming_strategy,
+        )
         if app:
             self.register(app)
 
@@ -278,17 +281,25 @@ class SpecTree:
                     setattr(validation, name, model_key)
 
             if resp:
-                resp.bind_model_adapter(self.model_adapter)
-                # Make sure that the endpoint specific status code and data model for
-                # validation errors shows up in the response spec.
-                resp.add_model(
+                compiled_resp = resp.copy_for_model_adapter(self.model_adapter)
+
+                # Make sure that the endpoint-specific status code and data model
+                # for validation errors shows up in the response spec.
+                compiled_resp.add_model(
                     validation_error_status,
-                    self.validation_error_model or self.model_adapter.validation_error,
+                    self.validation_error_model
+                    or self.model_adapter.validation_error,
                     replace=False,
                 )
-                for model in resp.models:
-                    self._add_model(model=model, mode="serialization")
-                validation.resp = resp
+
+                for code, model in compiled_resp.code_models.items():
+                    model_key = self._add_model(
+                        model=model,
+                        mode="serialization",
+                    )
+                    compiled_resp._set_model_key(code, model_key)
+
+                validation.resp = compiled_resp
 
             if tags:
                 validation.tags = tags
@@ -303,51 +314,37 @@ class SpecTree:
 
         return decorate_validation
 
-    def _add_model(self, model: ModelClass, mode: SchemaMode = "validation") -> str:
+    def _add_model(
+            self,
+            model: ModelClass,
+            mode: SchemaMode = "validation",
+    ) -> str:
         """
-        unified model processing
+        Register a model schema and return its OpenAPI component name.
 
-        :param model: model class to add to the schema
-        :param mode: schema generation mode - 'validation' for input models
-            and 'serialization' for output models
+        :param model: model used for request/response validation.
+        :param mode: schema generation mode:
+            'validation' for input models,
+            'serialization' for output models.
         """
-        model_key = self.naming_strategy(model)
-        schema = json_compatible_deepcopy(
-            self.model_adapter.json_schema(
-                model=model,
-                ref_template="#/components/schemas/{model}",
-                mode=mode,
-            )
+        schema = self.model_adapter.json_schema(
+            model=model,
+            ref_template="#/components/schemas/{model}",
+            mode=mode,
         )
 
-        definitions = schema.get("$defs")
-        if isinstance(definitions, dict):
-            # The adapter emits refs with its own $defs keys. Rewrite them to the
-            # final component names before _get_model_definitions lifts $defs.
-            replacements = {
-                f"#/components/schemas/{key}": (
-                    f"#/components/schemas/{self.nested_naming_strategy(model_key, key)}"
-                )
-                for key in definitions
-            }
-            schema_values: list[Any] = [schema]
-            while schema_values:
-                value = schema_values.pop()
-                if isinstance(value, dict):
-                    ref = value.get("$ref")
-                    if isinstance(ref, str) and ref in replacements:
-                        value["$ref"] = replacements[ref]
-                    schema_values.extend(value.values())
-                elif isinstance(value, list):
-                    schema_values.extend(value)
-
-        self.models[model_key] = schema
-        return model_key
+        return self.models.register(
+            model=model,
+            mode=mode,
+            schema=schema,
+        )
 
     def _generate_spec(self) -> Dict[str, Any]:
         """
         generate OpenAPI spec according to routes and decorators
         """
+        models = json_compatible_deepcopy(dict(self.models))
+
         routes: Dict[str, Dict] = defaultdict(dict)
         tags = {}
         for route in self.backend.find_routes():
@@ -380,7 +377,7 @@ class SpecTree:
                     ),
                     "description": desc or "",
                     "tags": [str(x) for x in getattr(func, "tags", ())],
-                    "parameters": parse_params(func, parameters[:], self.models),
+                    "parameters": parse_params(func, parameters[:], models),
                     "responses": parse_resp(func, self.naming_strategy),
                 }
 
@@ -402,7 +399,10 @@ class SpecTree:
             "tags": list(tags.values()),
             "paths": {**routes},
             "components": {
-                "schemas": {**self.models, **self._get_model_definitions()},
+                "schemas": {
+                    **models,
+                    **self._get_model_definitions(models),
+                },
             },
         }
 
@@ -420,18 +420,43 @@ class SpecTree:
         spec["security"] = get_security(self.config.security)
         return spec
 
-    def _get_model_definitions(self) -> Dict[str, Any]:
+    def _get_model_definitions(
+            self,
+            models: Mapping[str, Any],
+    ) -> Dict[str, Any]:
         """
-        handle nested models
+        Extract nested $defs into OpenAPI components without mutating
+        the registry.
         """
-        definitions = {}
-        def_key = "$defs"
-        for name, schema in self.models.items():
-            if def_key in schema:
-                for key, value in schema[def_key].items():
-                    composed_key = self.nested_naming_strategy(name, key)
-                    if composed_key not in definitions:
-                        definitions[composed_key] = value
-                del schema[def_key]
+        definitions: dict[str, Any] = {}
+
+        for name, schema in models.items():
+            nested = schema.get("$defs")
+
+            if not isinstance(nested, dict):
+                continue
+
+            for key, value in nested.items():
+                composed_key = self.nested_naming_strategy(name, key)
+
+                if composed_key in models:
+                    if models[composed_key] != value:
+                        raise ValueError(
+                            f"Nested schema collision for component "
+                            f"{composed_key!r}."
+                        )
+                    continue
+
+                existing = definitions.get(composed_key)
+
+                if existing is not None and existing != value:
+                    raise ValueError(
+                        f"Nested schema collision for component "
+                        f"{composed_key!r}."
+                    )
+
+                definitions[composed_key] = value
+
+            schema.pop("$defs", None)
 
         return definitions
