@@ -34,7 +34,7 @@ from spectree.utils import (
     default_before_handler,
     get_model_key,
     get_nested_key,
-    get_parameter_type_hints,
+    get_request_model_hints,
     get_security,
     json_compatible_deepcopy,
     parse_comments,
@@ -274,7 +274,7 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                annotations = get_parameter_type_hints(func, include_extras=True)
+                annotations = get_request_model_hints(func, include_extras=True)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)

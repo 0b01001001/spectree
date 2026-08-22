@@ -265,35 +265,33 @@ def get_multidict_items_starlette(
     return res
 
 
-def get_parameter_type_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
-    """Resolve the parameter type hints of ``func``.
+_REQUEST_ANNOTATION_NAMES = frozenset({"query", "json", "form", "headers", "cookies"})
 
-    :meth:`SpecTree.validate` only reads the annotations of the request
-    parameters (``query``, ``json``, ``form``, ``headers``, ``cookies``); the
-    return annotation is never used. :func:`typing.get_type_hints` however
-    evaluates *every* annotation on the function, including the return type.
 
-    A return annotation that references a name only imported under
-    ``typing.TYPE_CHECKING`` (e.g. Flask's ``ResponseReturnValue``) therefore
-    makes ``get_type_hints`` raise ``NameError`` even though spectree never
-    needs that annotation. See https://github.com/0b01001001/spectree/issues/312
-    and the underlying CPython limitation https://bugs.python.org/issue43463.
+def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
+    """Resolve only the request model annotations used by Spectree.
 
-    To stay robust, temporarily drop the return annotation before resolving so
-    an unresolvable return type cannot break the parameter annotations we do
-    need. The function's ``__globals__`` are left untouched so forward
-    references in the parameter annotations still resolve correctly.
+    Spectree reads only ``query``, ``json``, ``form``, ``headers`` and
+    ``cookies`` annotations from an endpoint. Other annotations, including the
+    return annotation and unrelated parameters, must not affect resolution.
+
+    An unresolved annotation of a required Spectree request parameter is
+    allowed to propagate as an exception because Spectree cannot validate that
+    parameter without its type.
     """
     annotations = getattr(func, "__annotations__", {})
-    if "return" not in annotations:
-        return get_type_hints(func)
 
-    # Build a thread-safe proxy that shares __globals__ with the original but
-    # carries only the parameter annotations (no 'return').  Mutating
-    # func.__annotations__ in place is not thread-safe, so we create a new
-    # FunctionType object instead.  If a *parameter* annotation is
-    # unresolvable, the NameError propagates — spectree genuinely needs those
-    # types.
+    selected_annotations = {
+        name: annotation
+        for name, annotation in annotations.items()
+        if name in _REQUEST_ANNOTATION_NAMES
+    }
+
+    if not selected_annotations:
+        return {}
+
+    # Never mutate the original function's annotations: the same function
+    # object may be inspected concurrently.
     proxy = FunctionType(
         func.__code__,
         func.__globals__,
@@ -301,8 +299,10 @@ def get_parameter_type_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
         func.__defaults__,
         func.__closure__,
     )
-    proxy.__annotations__ = {k: v for k, v in annotations.items() if k != "return"}
-    return get_type_hints(proxy)
+    proxy.__annotations__ = selected_annotations
+
+    # Keep extras such as Annotated[...] metadata.
+    return get_type_hints(proxy, include_extras=True)
 
 
 def is_list_item(key: str, model: ModelClass | None) -> bool:

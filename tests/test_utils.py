@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
-from typing import Optional, get_type_hints
+from typing import Annotated, Optional, TypeVar, get_args, get_type_hints
 
 import pytest
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
-    get_parameter_type_hints,
+    get_request_model_hints,
     has_model,
     is_list_item,
     json_compatible_deepcopy,
@@ -396,38 +396,82 @@ def test_parse_params_with_route_param_keywords():
     )
     assert repeated_params == params
 
-def test_get_parameter_type_hints():
-    def func(query: DemoQuery, json: DemoModel) -> int:
+def test_get_request_model_hints():
+    def func(
+        query: DemoQuery,
+        json: DemoModel,
+        form: DemoModel,
+        headers: DemoModel,
+        cookies: DemoModel,
+    ) -> int:
         return 0
 
-    hints = get_parameter_type_hints(func)
-    assert hints["query"] is DemoQuery
-    assert hints["json"] is DemoModel
-    assert "return" not in hints
+    hints = get_request_model_hints(func)
+
+    assert hints == {
+        "query": DemoQuery,
+        "json": DemoModel,
+        "form": DemoModel,
+        "headers": DemoModel,
+        "cookies": DemoModel,
+    }
 
 
-def test_get_parameter_type_hints_unresolvable_return_annotation():
-    # The return annotation references a `TYPE_CHECKING`-only name, so plain
-    # `get_type_hints` raises `NameError` even though spectree never reads it.
-    # Regression test for https://github.com/0b01001001/spectree/issues/312.
+def test_get_request_model_hints_unresolvable_return_annotation():
+    original_annotations = dict(type_checking_view_func.__annotations__)
+
     with pytest.raises(NameError):
         get_type_hints(type_checking_view_func)
 
-    hints = get_parameter_type_hints(type_checking_view_func)
+    hints = get_request_model_hints(type_checking_view_func)
+
     assert hints == {"json": DemoModel}
-    # The original (unresolvable) return annotation must be left intact.
-    assert "return" in type_checking_view_func.__annotations__
+    assert type_checking_view_func.__annotations__ == original_annotations
 
 
-def test_get_parameter_type_hints_unresolvable_parameter_annotation():
-    # If a *parameter* annotation references an unresolvable name, the error
-    # must propagate — spectree genuinely needs those types, unlike the return
-    # annotation which is never read.
+def test_get_request_model_hints_ignores_unresolvable_unrelated_parameter():
+    def func(
+        json: DemoModel,
+        dependency: "CompletelyNonExistentType",
+    ) -> int:
+        raise NotImplementedError
+
+    hints = get_request_model_hints(func)
+
+    assert hints == {"json": DemoModel}
+
+
+def test_get_request_model_hints_unresolvable_parameter_annotation():
     def func(json: "CompletelyNonExistentType") -> int:  # noqa: F821
         raise NotImplementedError
 
     with pytest.raises(NameError):
-        get_parameter_type_hints(func)
+        get_request_model_hints(func)
+
+
+def test_get_request_model_hints_preserves_annotated():
+    def func(json: Annotated[DemoModel, "metadata"]):
+        raise NotImplementedError
+
+    hints = get_request_model_hints(func)
+
+    assert get_args(hints["json"]) == (DemoModel, "metadata")
+
+
+def test_get_request_model_hints_without_annotations():
+    def func():
+        return None
+
+    assert get_request_model_hints(func) == {}
+
+
+def test_get_request_model_hints_generic_function():
+    T = TypeVar("T")
+
+    def func(json: T) -> T:
+        raise NotImplementedError
+
+    assert get_request_model_hints(func) == {"json": T}
 
 
 def test_is_list_item():
