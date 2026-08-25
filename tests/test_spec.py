@@ -279,6 +279,9 @@ def test_plain_dataclass_models_are_supported_for_all_api_parts(model_case):
     assert operation["requestBody"]["content"]["application/json"]["schema"] == {
         "$ref": f"#/components/schemas/{get_model_key(Payload)}"
     }
+    assert operation["requestBody"]["content"]["multipart/form-data"]["schema"] == {
+        "$ref": f"#/components/schemas/{get_model_key(Form)}"
+    }
     assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
         "$ref": f"#/components/schemas/{get_model_key(Resp)}"
     }
