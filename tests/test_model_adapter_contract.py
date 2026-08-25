@@ -31,6 +31,24 @@ def test_validate_obj_and_is_model_instance(model_case):
     assert adapter.is_model_instance(simple_model, simple_model) is False
 
 
+def test_plain_dataclass_is_supported_as_a_model(model_case):
+    adapter = model_case.adapter
+
+    instance = adapter.validate_obj(SimpleModel, {"user_id": "1"})
+
+    assert instance == SimpleModel(user_id=1)
+    assert adapter.is_model_type(SimpleModel) is True
+    assert adapter.is_model_instance(instance, SimpleModel) is True
+    assert adapter.dump_json(instance) == b'{"user_id":1}'
+    assert (
+        adapter.json_schema(
+            SimpleModel,
+            ref_template="#/components/schemas/{model}",
+        )["properties"]["user_id"]["type"]
+        == "integer"
+    )
+
+
 def test_root_model_instances(model_case):
     adapter = model_case.adapter
     dummy_root_model = model_case.get_model(list[int], name="DummyRootModel")
@@ -59,7 +77,7 @@ def test_root_model_instances(model_case):
     assert model_case.dump_python(nested_root_instance) == [1, 2, 3]
 
 
-def test_root_model_lookalike_is_not_model_instance(model_case):
+def test_plain_dataclass_with_root_like_field_is_model_instance(model_case):
     lookalike = model_case.root_model_lookalike(__root__=["False"])
 
     assert (
@@ -67,7 +85,7 @@ def test_root_model_lookalike_is_not_model_instance(model_case):
             lookalike,
             model_case.root_model_lookalike,
         )
-        is False
+        is True
     )
 
 

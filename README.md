@@ -76,6 +76,28 @@ Check the [examples](examples) folder.
 
 If the request doesn't pass the validation, it will return a 422 with a JSON error message(ctx, loc, msg, type).
 
+### Python dataclasses
+
+Plain Python `@dataclass` classes can be used directly as models for `query`, `json`,
+`form`, `headers`, `cookies`, and `Response` data. They are validated and serialized
+by the configured adapter, and their type annotations are included in the generated
+OpenAPI schema.
+
+```py
+from dataclasses import dataclass
+
+@dataclass
+class Profile:
+    name: str
+
+@api.validate(json=Profile, resp=Response(HTTP_200=Profile))
+def profile(json: Profile):
+    return Profile(name=json.name)
+```
+
+This works with both the default Pydantic adapter and the Msgspec adapter. Install
+the corresponding optional dependency and configure Msgspec explicitly when using it.
+
 ### Falcon response validation
 
 For Falcon response, this library only validates against media as it is the serializable object. Response.text is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`

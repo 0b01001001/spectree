@@ -12,7 +12,7 @@ from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
 from tests.common import get_paths
-from tests.common_dataclass import Child
+from tests.common_dataclass import Child, Cookies, Form, Headers, Payload, Query, Resp
 
 
 def backend_app():
@@ -254,6 +254,42 @@ def test_global_model_for_validation_errors_specified(model_case):
 
     assert foo.resp.find_model(422) is global_validation_error
     assert bar.resp.find_model(422) is route_validation_error
+
+
+def test_plain_dataclass_models_are_supported_for_all_api_parts(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+
+    @app.route("/items", methods=["POST"])
+    @api.validate(
+        query=Query,
+        json=Payload,
+        form=Form,
+        headers=Headers,
+        cookies=Cookies,
+        resp=Response(HTTP_200=Resp),
+    )
+    def create_item():
+        pass
+
+    api.register(app)
+    with app.app_context():
+        operation = api.spec["paths"]["/items"]["post"]
+
+    assert operation["requestBody"]["content"]["application/json"]["schema"] == {
+        "$ref": f"#/components/schemas/{get_model_key(Payload)}"
+    }
+    assert operation["requestBody"]["content"]["multipart/form-data"]["schema"] == {
+        "$ref": f"#/components/schemas/{get_model_key(Form)}"
+    }
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": f"#/components/schemas/{get_model_key(Resp)}"
+    }
+    assert {parameter["in"] for parameter in operation["parameters"]} == {
+        "query",
+        "header",
+        "cookie",
+    }
 
 
 def test_annotations_preserve_named_root_model_metadata(model_case):

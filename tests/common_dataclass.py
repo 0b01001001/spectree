@@ -65,6 +65,11 @@ class Cookies:
 
 
 @dataclass
+class Headers:
+    token: str
+
+
+@dataclass
 class Form:
     name: str
     limit: str
