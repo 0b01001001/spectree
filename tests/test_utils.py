@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+from spectree.metadata import FunctionDecorator, get_function_metadata
 from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
@@ -235,14 +236,14 @@ def test_parse_name(utils_models):
 
 
 def test_has_model(utils_models):
-    assert not has_model(undecorated_func)
-    assert has_model(utils_models.demo_func)
-    assert has_model(utils_models.demo_class.demo_method)
+    assert not has_model(FunctionDecorator())
+    assert has_model(get_function_metadata(utils_models.demo_func))
+    assert has_model(get_function_metadata(utils_models.demo_class.demo_method))
 
 
 def test_parse_resp(utils_models):
-    assert parse_resp(undecorated_func) == {}
-    resp_spec = parse_resp(utils_models.demo_func)
+    assert parse_resp(FunctionDecorator()) == {}
+    resp_spec = parse_resp(get_function_metadata(utils_models.demo_func))
 
     assert resp_spec["422"]["description"] == DEFAULT_CODE_DESC["HTTP_422"]
     model_path_key = get_model_path_key(
@@ -267,12 +268,14 @@ def test_parse_request(utils_models):
         f"{utils_models.demo_model.__module__}.{utils_models.demo_model.__name__}"
     )
     assert (
-        parse_request(utils_models.demo_func)["content"]["application/json"]["schema"][
-            "$ref"
-        ]
+        parse_request(get_function_metadata(utils_models.demo_func))["content"][
+            "application/json"
+        ]["schema"]["$ref"]
         == f"#/components/schemas/{model_path_key}"
     )
-    assert parse_request(utils_models.demo_class.demo_method) == {}
+    assert (
+        parse_request(get_function_metadata(utils_models.demo_class.demo_method)) == {}
+    )
 
 
 def test_parse_params(utils_models):
@@ -284,8 +287,10 @@ def test_parse_params(utils_models):
             ref_template="#/components/schemas/{model}",
         )
     }
-    assert parse_params(utils_models.demo_func, [], models) == []
-    params = parse_params(utils_models.demo_class.demo_method, [], models)
+    assert parse_params(get_function_metadata(utils_models.demo_func), [], models) == []
+    params = parse_params(
+        get_function_metadata(utils_models.demo_class.demo_method), [], models
+    )
     assert len(params) == 3
     assert params[0]["name"] == "uid"
     assert params[0]["in"] == "query"
@@ -310,7 +315,7 @@ def test_parse_params_preserves_pydantic_field_description():
             f"{DemoModel.__module__}.{DemoModel.__name__}"
         ): DemoModel.model_json_schema(ref_template="#/components/schemas/{model}")
     }
-    params = parse_params(demo_method, [], models)
+    params = parse_params(get_function_metadata(demo_method), [], models)
     assert params[0] == {
         "name": "uid",
         "in": "query",
@@ -335,7 +340,7 @@ def test_parse_params_with_route_param_keywords():
             "tests.common_pydantic.DemoQuery"
         ): DemoQuery.model_json_schema(ref_template="#/components/schemas/{model}")
     }
-    params = parse_params(demo_func_with_query, [], models)
+    params = parse_params(get_function_metadata(demo_func_with_query), [], models)
     assert params == [
         {
             "name": "names1",

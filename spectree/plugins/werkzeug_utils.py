@@ -1,5 +1,6 @@
 import re
-from typing import Any, Iterator, Mapping, Optional, Tuple, Union
+from collections.abc import Iterator, Mapping
+from typing import Any
 
 from werkzeug.datastructures import Headers
 from werkzeug.routing import parse_converter_args
@@ -25,7 +26,7 @@ RE_FLASK_RULE = re.compile(
 
 def werkzeug_parse_rule(
     rule: str,
-) -> Iterator[Tuple[Optional[str], Optional[str], str]]:
+) -> Iterator[tuple[str | None, str | None, str]]:
     """A copy of werkzeug.parse_rule which is now removed.
 
     Parse a rule and return it as generator. Each iteration yields tuples
@@ -59,10 +60,10 @@ def werkzeug_parse_rule(
 
 def flask_response_unpack(
     resp: Any,
-) -> Tuple[Any, int, Union[list[Tuple[str, str]], Headers]]:
+) -> tuple[Any, int, list[tuple[str, str]] | Headers]:
     """Parse Flask response object into a tuple of (payload, status_code, headers)."""
     status = 200
-    headers: list[Tuple[str, str]] = []
+    headers: list[tuple[str, str]] = []
     payload = None
     if not isinstance(resp, tuple):
         return resp, status, headers
@@ -151,9 +152,9 @@ class WerkzeugPlugin(BasePlugin):
 
     def parse_path(
         self,
-        route: Optional[Mapping[str, str]],
-        path_parameter_descriptions: Optional[Mapping[str, str]],
-    ) -> Tuple[str, list]:
+        route: Mapping[str, str] | None,
+        path_parameter_descriptions: Mapping[str, str] | None,
+    ) -> tuple[str, list]:
         subs = []
         parameters = []
 

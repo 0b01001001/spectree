@@ -1,26 +1,26 @@
 import warnings
 from collections import defaultdict
+from collections.abc import Callable, Mapping, Sequence
 from functools import wraps
 from importlib import import_module
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Mapping,
-    Optional,
-    Sequence,
-    Type,
     get_type_hints,
 )
 
 from spectree._types import (
-    FunctionDecorator,
     HookHandler,
     ModelAdapterType,
     NamingStrategy,
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
+from spectree.metadata import (
+    FunctionDecorator,
+    get_function_metadata,
+    get_function_owner,
+    register_function_metadata,
+)
 from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag
@@ -35,9 +35,6 @@ from spectree.utils import (
     json_compatible_deepcopy,
     parse_comments,
     parse_name,
-    parse_params,
-    parse_request,
-    parse_resp,
 )
 
 
@@ -81,15 +78,15 @@ class SpecTree:
     def __init__(
         self,
         backend_name: str = "base",
-        backend: Optional[Type[BasePlugin]] = None,
+        backend: type[BasePlugin] | None = None,
         app: Any = None,
         before: HookHandler = default_before_handler,
         after: HookHandler = default_after_handler,
         validation_error_status: int = 422,
-        validation_error_model: Optional[ModelClass] = None,
+        validation_error_model: ModelClass | None = None,
         naming_strategy: NamingStrategy = get_model_key,
         nested_naming_strategy: NestedNamingStrategy = get_nested_key,
-        model_adapter: Optional[ModelAdapterType] = None,
+        model_adapter: ModelAdapterType | None = None,
         **kwargs: Any,
     ):
         self.naming_strategy = naming_strategy
@@ -110,7 +107,7 @@ class SpecTree:
             plugin = PLUGINS[backend_name]
             module = import_module(plugin.name, plugin.package)
             self.backend = getattr(module, plugin.class_name)(self)
-        self.models: Dict[str, Any] = {}
+        self.models: dict[str, Any] = {}
         if app:
             self.register(app)
 
@@ -144,29 +141,28 @@ class SpecTree:
         """
         if self.config.mode == ModeEnum.greedy:
             return False
-        elif self.config.mode == ModeEnum.strict:
-            return getattr(func, "_decorator", None) != self
-        else:
-            decorator = getattr(func, "_decorator", None)
-            return bool(decorator and decorator != self)
+        if self.config.mode == ModeEnum.strict:
+            return get_function_owner(func) is not self
+        owner = get_function_owner(func)
+        return owner is not None and owner is not self
 
     def validate(  # noqa: PLR0913, PLR0917
         self,
-        query: Optional[ModelClass] = None,
-        json: Optional[ModelClass] = None,
-        form: Optional[ModelClass] = None,
-        headers: Optional[ModelClass] = None,
-        cookies: Optional[ModelClass] = None,
-        resp: Optional[Response] = None,
+        query: ModelClass | None = None,
+        json: ModelClass | None = None,
+        form: ModelClass | None = None,
+        headers: ModelClass | None = None,
+        cookies: ModelClass | None = None,
+        resp: Response | None = None,
         tags: Sequence = (),
         security: Any = None,
         deprecated: bool = False,
-        before: Optional[HookHandler] = None,
-        after: Optional[HookHandler] = None,
+        before: HookHandler | None = None,
+        after: HookHandler | None = None,
         validation_error_status: int = 0,
-        path_parameter_descriptions: Optional[Mapping[str, str]] = None,
+        path_parameter_descriptions: Mapping[str, str] | None = None,
         skip_validation: bool = False,
-        operation_id: Optional[str] = None,
+        operation_id: str | None = None,
         force_resp_serialize: bool = False,
     ) -> Callable:
         """
@@ -254,7 +250,7 @@ class SpecTree:
                     **kwargs,
                 )
 
-            validation: FunctionDecorator = (
+            validation: Callable = (
                 async_validate if self.backend.ASYNC else sync_validate  # type: ignore
             )
 
@@ -267,6 +263,8 @@ class SpecTree:
                 headers = annotations.get("headers", headers)
                 cookies = annotations.get("cookies", cookies)
 
+            metadata = FunctionDecorator()
+
             # register
             for name, model in zip(
                 ("query", "json", "form", "headers", "cookies"),
@@ -275,7 +273,7 @@ class SpecTree:
             ):
                 if model is not None:
                     model_key = self._add_model(model=model, mode="validation")
-                    setattr(validation, name, model_key)
+                    setattr(metadata, name, model_key)
 
             if resp:
                 resp.bind_model_adapter(self.model_adapter)
@@ -288,17 +286,16 @@ class SpecTree:
                 )
                 for model in resp.models:
                     self._add_model(model=model, mode="serialization")
-                validation.resp = resp
+                metadata.resp = resp
 
             if tags:
-                validation.tags = tags
+                metadata.tags = tags
 
-            validation.security = security
-            validation.deprecated = deprecated
-            validation.path_parameter_descriptions = path_parameter_descriptions
-            validation.operation_id = operation_id
-            # register decorator
-            validation._decorator = self
+            metadata.security = security
+            metadata.deprecated = deprecated
+            metadata.path_parameter_descriptions = path_parameter_descriptions
+            metadata.operation_id = operation_id
+            register_function_metadata(validation, self, metadata)
             return validation
 
         return decorate_validation
@@ -344,27 +341,26 @@ class SpecTree:
         self.models[model_key] = schema
         return model_key
 
-    def _generate_spec(self) -> Dict[str, Any]:
+    def _generate_spec(self) -> dict[str, Any]:
         """
         generate OpenAPI spec according to routes and decorators
         """
-        routes: Dict[str, Dict] = defaultdict(dict)
+        routes: dict[str, dict] = defaultdict(dict)
         tags = {}
         for route in self.backend.find_routes():
             for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
-                path_parameter_descriptions = getattr(
-                    func, "path_parameter_descriptions", None
-                )
+                metadata = get_function_metadata(func) or FunctionDecorator()
+                path_parameter_descriptions = metadata.path_parameter_descriptions
                 path, parameters = self.backend.parse_path(
                     route, path_parameter_descriptions
                 )
 
                 name = parse_name(func)
                 summary, desc = parse_comments(func)
-                func_tags = getattr(func, "tags", ())
+                func_tags = metadata.tags
                 for tag in func_tags:
                     if str(tag) not in tags:
                         tags[str(tag)] = (
@@ -375,28 +371,27 @@ class SpecTree:
 
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
-                    "operationId": self.backend.get_func_operation_id(
-                        func, path, method
-                    ),
+                    "operationId": metadata.operation_id
+                    or self.backend.get_func_operation_id(func, path, method),
                     "description": desc or "",
-                    "tags": [str(x) for x in getattr(func, "tags", ())],
-                    "parameters": parse_params(func, parameters[:], self.models),
-                    "responses": parse_resp(func, self.naming_strategy),
+                    "tags": [str(x) for x in metadata.tags],
+                    "parameters": metadata.parse_params(parameters[:], self.models),
+                    "responses": metadata.parse_resp(self.naming_strategy),
                 }
 
-                security = getattr(func, "security", None)
+                security = metadata.security
                 if security is not None:
                     routes[path][method.lower()]["security"] = get_security(security)
 
-                deprecated = getattr(func, "deprecated", False)
+                deprecated = metadata.deprecated
                 if deprecated:
                     routes[path][method.lower()]["deprecated"] = deprecated
 
-                request_body = parse_request(func)
+                request_body = metadata.parse_request()
                 if request_body:
                     routes[path][method.lower()]["requestBody"] = request_body
 
-        spec: Dict[str, Any] = {
+        spec: dict[str, Any] = {
             "openapi": self.config.openapi_version,
             "info": self.config.openapi_info(),
             "tags": list(tags.values()),
@@ -420,7 +415,7 @@ class SpecTree:
         spec["security"] = get_security(self.config.security)
         return spec
 
-    def _get_model_definitions(self) -> Dict[str, Any]:
+    def _get_model_definitions(self) -> dict[str, Any]:
         """
         handle nested models
         """

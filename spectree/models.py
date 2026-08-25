@@ -2,7 +2,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, ClassVar, Dict, Optional, Set
+from typing import Any, ClassVar
 
 from spectree.dataclass_model import AdapterBackedDataclass
 from spectree.errors import SpecTreeValidationError
@@ -25,7 +25,7 @@ class Tag(AdapterBackedDataclass):
 
     name: str
     description: str = ""
-    externalDocs: Optional[ExternalDocs] = None
+    externalDocs: ExternalDocs | None = None
 
     def __str__(self) -> str:
         return self.name
@@ -38,7 +38,7 @@ class ValidationErrorElement(AdapterBackedDataclass):
     loc: list[str] = field(metadata={"title": "Missing field name"})
     msg: str = field(metadata={"title": "Error message"})
     type: str = field(metadata={"title": "Error type"})
-    ctx: Optional[Dict[str, Any]] = field(
+    ctx: dict[str, Any] | None = field(
         default=None,
         metadata={"title": "Error context"},
     )
@@ -57,7 +57,7 @@ class InType(str, Enum):
     COOKIE = "cookie"
 
 
-SECURE_TYPE_REQUIRED_FIELDS: Dict[SecureType, Set[str]] = {
+SECURE_TYPE_REQUIRED_FIELDS: dict[SecureType, set[str]] = {
     SecureType.HTTP: {"scheme"},
     SecureType.API_KEY: {"name", "field_in"},
     SecureType.OAUTH_TWO: {"flows"},
@@ -75,25 +75,25 @@ class SecuritySchemeData(AdapterBackedDataclass):
     type: SecureType = field(
         metadata={"description": "Secure scheme type"},
     )
-    description: Optional[str] = field(
+    description: str | None = field(
         default=None,
         metadata={"description": "A short description for security scheme."},
     )
-    name: Optional[str] = field(
+    name: str | None = field(
         default=None,
         metadata={
             "description": "The name of the header, query or cookie parameter to be used."
         },
     )
-    field_in: Optional[InType] = field(
+    field_in: InType | None = field(
         default=None,
         metadata={"description": "The location of the API key."},
     )
-    scheme: Optional[str] = field(
+    scheme: str | None = field(
         default=None,
         metadata={"description": "The name of the HTTP Authorization scheme."},
     )
-    bearer_format: Optional[str] = field(
+    bearer_format: str | None = field(
         default=None,
         metadata={
             "description": (
@@ -101,13 +101,13 @@ class SecuritySchemeData(AdapterBackedDataclass):
             ),
         },
     )
-    flows: Optional[Dict[str, Any]] = field(
+    flows: dict[str, Any] | None = field(
         default=None,
         metadata={
             "description": "Containing configuration information for the flow types supported."
         },
     )
-    open_id_connect_url: Optional[str] = field(
+    open_id_connect_url: str | None = field(
         default=None,
         metadata={
             "description": "OpenId Connect URL to discover OAuth2 configuration values.",
@@ -187,11 +187,11 @@ class Server(AdapterBackedDataclass):
             ),
         }
     )
-    description: Optional[str] = field(
+    description: str | None = field(
         default=None,
         metadata={"description": "Custom server description for server URL"},
     )
-    variables: Optional[Dict[str, Any]] = field(
+    variables: dict[str, Any] | None = field(
         default=None,
         metadata={"description": "Variables for customizing server URL"},
     )

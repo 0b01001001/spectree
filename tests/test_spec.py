@@ -7,6 +7,7 @@ from starlette.applications import Starlette
 
 from spectree import Response
 from spectree.config import Configuration
+from spectree.metadata import get_function_metadata
 from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
@@ -217,8 +218,11 @@ def test_model_for_validation_errors_specified(model_case):
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is api.model_adapter.validation_error
-    assert bar.resp.find_model(422) is custom_validation_error
+    assert (
+        get_function_metadata(foo).resp.find_model(422)
+        is api.model_adapter.validation_error
+    )
+    assert get_function_metadata(bar).resp.find_model(422) is custom_validation_error
 
 
 def test_global_model_for_validation_errors_specified(model_case):
@@ -252,8 +256,8 @@ def test_global_model_for_validation_errors_specified(model_case):
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is global_validation_error
-    assert bar.resp.find_model(422) is route_validation_error
+    assert get_function_metadata(foo).resp.find_model(422) is global_validation_error
+    assert get_function_metadata(bar).resp.find_model(422) is route_validation_error
 
 
 def test_plain_dataclass_models_are_supported_for_all_api_parts(model_case):

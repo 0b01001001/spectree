@@ -1,9 +1,10 @@
 import inspect
 from collections import namedtuple
+from collections.abc import Callable
 from contextvars import ContextVar
 from functools import partial
 from json import JSONDecodeError
-from typing import Any, Callable, Optional
+from typing import Any
 
 from starlette.convertors import CONVERTOR_TYPES
 from starlette.requests import Request
@@ -114,12 +115,12 @@ class StarlettePlugin(BasePlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
-        resp: Optional[Response],
+        query: ModelClass | None,
+        json: ModelClass | None,
+        form: ModelClass | None,
+        headers: ModelClass | None,
+        cookies: ModelClass | None,
+        resp: Response | None,
         before: HookHandler,
         after: HookHandler,
         validation_error_status: int,

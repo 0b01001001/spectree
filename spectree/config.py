@@ -1,7 +1,8 @@
 import warnings
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, ClassVar, Mapping, Optional, Union
+from typing import Any, ClassVar
 
 from spectree.dataclass_model import AdapterBackedDataclass
 from spectree.models import SecurityScheme, Server
@@ -19,7 +20,7 @@ class ModeEnum(str, Enum):
     greedy = "greedy"
 
 
-SecurityValue = Union[dict[str, list[str]], list[dict[str, list[str]]]]
+SecurityValue = dict[str, list[str]] | list[dict[str, list[str]]]
 
 
 @dataclass
@@ -29,9 +30,9 @@ class Contact(AdapterBackedDataclass):
     #: name of the contact
     name: str
     #: contact url
-    url: Optional[str] = field(default=None, metadata={"format": "url"})
+    url: str | None = field(default=None, metadata={"format": "url"})
     #: contact email address
-    email: Optional[str] = None
+    email: str | None = None
 
 
 @dataclass
@@ -41,7 +42,7 @@ class License(AdapterBackedDataclass):
     #: name of the license
     name: str
     #: license url
-    url: Optional[str] = field(default=None, metadata={"format": "url"})
+    url: str | None = field(default=None, metadata={"format": "url"})
 
 
 @dataclass
@@ -52,15 +53,15 @@ class Configuration(AdapterBackedDataclass):
     #: title of the service
     title: str = "Service API Document"
     #: service OpenAPI document description
-    description: Optional[str] = None
+    description: str | None = None
     #: service version
     version: str = "0.1.0"
     #: terms of service url
-    terms_of_service: Optional[str] = field(default=None, metadata={"format": "url"})
+    terms_of_service: str | None = field(default=None, metadata={"format": "url"})
     #: author contact information
-    contact: Optional[Contact] = None
+    contact: Contact | None = None
     #: license information
-    license: Optional[License] = None
+    license: License | None = None
 
     # SpecTree configurations
     #: OpenAPI doc route path prefix (i.e. /apidoc/)
@@ -82,7 +83,7 @@ class Configuration(AdapterBackedDataclass):
     #: servers section of OAS :py:class:`spectree.models.Server`
     servers: list[Server] = field(default_factory=list)
     #: OpenAPI `securitySchemes` :py:class:`spectree.models.SecurityScheme`
-    security_schemes: Optional[list[SecurityScheme]] = None
+    security_schemes: list[SecurityScheme] | None = None
     #: OpenAPI `security` JSON at the global level
     security: SecurityValue = field(default_factory=dict)
     # Swagger OAuth2 configs

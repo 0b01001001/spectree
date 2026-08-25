@@ -1,12 +1,7 @@
+from collections.abc import Callable, Iterator
 from typing import (
     Any,
-    Callable,
-    Iterator,
-    Mapping,
-    Optional,
     Protocol,
-    Sequence,
-    Union,
 )
 
 from spectree.model_adapter.protocol import ModelAdapter, ModelClass
@@ -21,7 +16,7 @@ HookHandler = Callable[
 
 
 class MultiDict(Protocol):
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         pass
 
     def getlist(self, key: str) -> list[str]:
@@ -42,13 +37,4 @@ class MultiDictStarlette(Protocol):
         pass
 
 
-class FunctionDecorator(Protocol):
-    resp: Any
-    tags: Sequence[Any]
-    security: Union[dict, list[Any], None]
-    deprecated: bool
-    path_parameter_descriptions: Optional[Mapping[str, str]]
-    _decorator: Any
-
-
-JsonType = Union[int, str, bool, list["JsonType"], dict[str, "JsonType"], None]
+JsonType = int | str | bool | list["JsonType"] | dict[str, "JsonType"] | None

@@ -1,6 +1,4 @@
-from typing import Dict
-
-ONLINE_PAGE_TEMPLATES: Dict[str, str] = {
+ONLINE_PAGE_TEMPLATES: dict[str, str] = {
     # https://github.com/Redocly/redoc
     "redoc": """
 <!DOCTYPE html>
