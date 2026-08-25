@@ -1,4 +1,5 @@
 import re
+from dataclasses import is_dataclass
 from typing import Annotated, Any, TypeAlias, get_args, get_origin
 
 import msgspec
@@ -55,6 +56,8 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
                 and isinstance(item_model, type)
                 and all(isinstance(item, item_model) for item in value)
             )
+        if isinstance(model, type) and is_dataclass(model):
+            return isinstance(value, model)
         return (
             isinstance(model, type)
             and issubclass(model, msgspec.Struct)
@@ -65,6 +68,8 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         if not value:
             return False
         if isinstance(value, msgspec.Struct):
+            return True
+        if is_dataclass(value):
             return True
         if isinstance(value, dict):
             return any(

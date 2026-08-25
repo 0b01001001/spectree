@@ -56,12 +56,16 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
         )
 
     def is_model_instance(self, value: Any, model) -> bool:
-        return isinstance(value, model) and issubclass(model, BaseModel)
+        return isinstance(value, model) and (
+            issubclass(model, BaseModel) or is_dataclass(model)
+        )
 
     def is_partial_model_instance(self, value: Any) -> bool:
         if not value:
             return False
         if isinstance(value, BaseModel):
+            return True
+        if is_dataclass(value):
             return True
         if isinstance(value, dict):
             return any(
