@@ -1,6 +1,7 @@
 import gc
 import weakref
 from dataclasses import dataclass
+from functools import wraps
 
 import pytest
 from falcon import App as FalconApp
@@ -206,6 +207,26 @@ def test_function_metadata_does_not_retain_spectree(model_case):
 
     assert api_ref() is None
     assert func_ref() is None
+
+
+def test_function_metadata_handles_wrapped_and_non_weakrefable_callables(model_case):
+    api = SpecTree(model_adapter=model_case.adapter)
+
+    @api.validate()
+    def endpoint():
+        pass
+
+    @wraps(endpoint)
+    def wrapped_endpoint():
+        return endpoint()
+
+    assert api.get_function_metadata(wrapped_endpoint) is not None
+    assert not api.bypass(wrapped_endpoint)
+    assert not api.bypass(len)
+
+    strict_api = SpecTree(mode="strict", model_adapter=model_case.adapter)
+    assert strict_api.bypass(wrapped_endpoint)
+    assert strict_api.bypass(len)
 
 
 def test_two_endpoints_with_the_same_path(model_case):

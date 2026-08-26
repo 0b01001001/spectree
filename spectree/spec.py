@@ -19,6 +19,7 @@ from spectree.config import Configuration, ModeEnum
 from spectree.metadata import (
     FunctionDecorator,
     is_validated_function,
+    iter_wrapped_functions,
     register_validated_function,
 )
 from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
@@ -144,16 +145,21 @@ class SpecTree:
         """
         if self.config.mode == ModeEnum.greedy:
             return False
-        func = getattr(func, "__func__", func)
-        owned_by_self = func in self._function_metadata
+        owned_by_self = self.get_function_metadata(func) is not None
         if self.config.mode == ModeEnum.strict:
             return not owned_by_self
         return not owned_by_self and is_validated_function(func)
 
     def get_function_metadata(self, func: Callable) -> FunctionDecorator | None:
         """Return metadata for a callable validated by this instance."""
-        func = getattr(func, "__func__", func)
-        return self._function_metadata.get(func)
+        for candidate in iter_wrapped_functions(func):
+            try:
+                metadata = self._function_metadata.get(candidate)
+            except TypeError:
+                continue
+            if metadata is not None:
+                return metadata
+        return None
 
     def validate(  # noqa: PLR0913, PLR0917
         self,

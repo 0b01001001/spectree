@@ -72,6 +72,17 @@ class FunctionDecorator:
 _VALIDATED_FUNCTIONS: weakref.WeakSet[Any] = weakref.WeakSet()
 
 
+def iter_wrapped_functions(func: Any):
+    """Yield a callable and its bound-method/``__wrapped__`` chain."""
+    seen: set[int] = set()
+    current = func
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        current = getattr(current, "__func__", current)
+        yield current
+        current = getattr(current, "__wrapped__", None)
+
+
 def register_validated_function(func: Any) -> None:
     """Record a callable as having been validated by a ``SpecTree`` instance."""
     _VALIDATED_FUNCTIONS.add(func)
@@ -79,7 +90,10 @@ def register_validated_function(func: Any) -> None:
 
 def is_validated_function(func: Any) -> bool:
     """Return whether a callable was validated by any ``SpecTree`` instance."""
-    try:
-        return func in _VALIDATED_FUNCTIONS
-    except TypeError:
-        return False
+    for candidate in iter_wrapped_functions(func):
+        try:
+            if candidate in _VALIDATED_FUNCTIONS:
+                return True
+        except TypeError:
+            continue
+    return False
