@@ -19,7 +19,6 @@ class FunctionDecorator:
     deprecated: bool = False
     path_parameter_descriptions: Mapping[str, str] | None = None
     operation_id: str | None = None
-    owner: Any = field(default=None, repr=False, compare=False)
 
     def parse_request(self) -> dict[str, Any]:
         content_items = {}
@@ -69,34 +68,17 @@ class FunctionDecorator:
         return self.resp.generate_spec(naming_strategy) if self.resp else {}
 
 
-_FUNCTION_METADATA: weakref.WeakKeyDictionary[Any, FunctionDecorator] = (
-    weakref.WeakKeyDictionary()
-)
+_VALIDATED_FUNCTIONS: weakref.WeakSet[Any] = weakref.WeakSet()
 
 
-def register_function_metadata(
-    func: Any, owner: Any, metadata: FunctionDecorator
-) -> None:
-    """Associate validation metadata with a callable without mutating it."""
-    metadata.owner = owner
-    _FUNCTION_METADATA[func] = metadata
+def register_validated_function(func: Any) -> None:
+    """Record a callable as having been validated by a ``SpecTree`` instance."""
+    _VALIDATED_FUNCTIONS.add(func)
 
 
-def get_function_metadata(func: Any) -> FunctionDecorator | None:
-    """Return Spectree metadata for a callable, if it was validated."""
-    func = getattr(func, "__func__", func)
+def is_validated_function(func: Any) -> bool:
+    """Return whether a callable was validated by any ``SpecTree`` instance."""
     try:
-        entry = _FUNCTION_METADATA.get(func)
+        return func in _VALIDATED_FUNCTIONS
     except TypeError:
-        return None
-    return entry
-
-
-def get_function_owner(func: Any) -> Any:
-    """Return the SpecTree instance that registered metadata for a callable."""
-    func = getattr(func, "__func__", func)
-    try:
-        entry = _FUNCTION_METADATA.get(func)
-    except TypeError:
-        return None
-    return entry.owner if entry is not None else None
+        return False

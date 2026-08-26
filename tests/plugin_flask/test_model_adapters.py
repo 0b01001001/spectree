@@ -5,7 +5,6 @@ from http import HTTPStatus
 
 import pytest
 
-from spectree.metadata import get_function_metadata
 from spectree.utils import get_model_key
 from tests.common import UserXmlData, build_security_schemes, get_paths
 from tests.common_dataclass import Item, Payload, RequiredLimitQuery, ReturnCase
@@ -452,13 +451,15 @@ def test_flask_model_adapter_response_models_and_spec(model_case, flask_adapter_
     ):
         assert handler is not None
         assert (
-            get_function_metadata(handler).resp.find_model(
+            flask_adapter_app.spec.get_function_metadata(handler).resp.find_model(
                 HTTPStatus.UNPROCESSABLE_ENTITY
             )
             is flask_adapter_app.spec.model_adapter.validation_error
         )
 
-        response_model = get_function_metadata(handler).resp.find_model(HTTPStatus.OK)
+        response_model = flask_adapter_app.spec.get_function_metadata(
+            handler
+        ).resp.find_model(HTTPStatus.OK)
         assert get_model_key(response_model) == get_model_key(expected_list_model)
 
     spec = flask_adapter_app.spec.spec

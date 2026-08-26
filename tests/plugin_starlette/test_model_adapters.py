@@ -9,7 +9,6 @@ from starlette.routing import Route
 from starlette.testclient import TestClient
 
 from spectree import SpecTree
-from spectree.metadata import get_function_metadata
 from spectree.plugins.starlette_plugin import SpecTreeStarletteResponse
 from spectree.utils import get_model_key
 from tests.common import UserXmlData
@@ -303,13 +302,15 @@ def test_starlette_model_adapter_response_models_and_spec(
         starlette_adapter_app.endpoint_post,
     ):
         assert (
-            get_function_metadata(handler).resp.find_model(
+            starlette_adapter_app.spec.get_function_metadata(handler).resp.find_model(
                 HTTPStatus.UNPROCESSABLE_ENTITY
             )
             is starlette_adapter_app.spec.model_adapter.validation_error
         )
 
-        response_model = get_function_metadata(handler).resp.find_model(HTTPStatus.OK)
+        response_model = starlette_adapter_app.spec.get_function_metadata(
+            handler
+        ).resp.find_model(HTTPStatus.OK)
         assert get_model_key(response_model) == get_model_key(expected_list_model)
 
     spec = starlette_adapter_app.spec.spec

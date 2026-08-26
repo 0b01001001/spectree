@@ -17,9 +17,8 @@ from spectree._types import (
 from spectree.config import Configuration, ModeEnum
 from spectree.metadata import (
     FunctionDecorator,
-    get_function_metadata,
-    get_function_owner,
-    register_function_metadata,
+    is_validated_function,
+    register_validated_function,
 )
 from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
@@ -108,6 +107,7 @@ class SpecTree:
             module = import_module(plugin.name, plugin.package)
             self.backend = getattr(module, plugin.class_name)(self)
         self.models: dict[str, Any] = {}
+        self._function_metadata: dict[Callable, FunctionDecorator] = {}
         if app:
             self.register(app)
 
@@ -141,10 +141,16 @@ class SpecTree:
         """
         if self.config.mode == ModeEnum.greedy:
             return False
+        func = getattr(func, "__func__", func)
+        owned_by_self = func in self._function_metadata
         if self.config.mode == ModeEnum.strict:
-            return get_function_owner(func) is not self
-        owner = get_function_owner(func)
-        return owner is not None and owner is not self
+            return not owned_by_self
+        return not owned_by_self and is_validated_function(func)
+
+    def get_function_metadata(self, func: Callable) -> FunctionDecorator | None:
+        """Return metadata for a callable validated by this instance."""
+        func = getattr(func, "__func__", func)
+        return self._function_metadata.get(func)
 
     def validate(  # noqa: PLR0913, PLR0917
         self,
@@ -295,7 +301,8 @@ class SpecTree:
             metadata.deprecated = deprecated
             metadata.path_parameter_descriptions = path_parameter_descriptions
             metadata.operation_id = operation_id
-            register_function_metadata(validation, self, metadata)
+            self._function_metadata[validation] = metadata
+            register_validated_function(validation)
             return validation
 
         return decorate_validation
@@ -352,7 +359,7 @@ class SpecTree:
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
 
-                metadata = get_function_metadata(func) or FunctionDecorator()
+                metadata = self.get_function_metadata(func) or FunctionDecorator()
                 path_parameter_descriptions = metadata.path_parameter_descriptions
                 path, parameters = self.backend.parse_path(
                     route, path_parameter_descriptions
