@@ -380,6 +380,14 @@ def test_parse_params_with_route_param_keywords():
             "explode": True,
         },
     ]
+    query_schema = models[get_model_path_key("tests.common_pydantic.DemoQuery")]
+    assert query_schema["properties"]["names2"]["style"] == "matrix"
+    assert query_schema["properties"]["names2"]["explode"] is True
+
+    repeated_params = parse_params(
+        api.get_function_metadata(demo_func_with_query), [], models
+    )
+    assert repeated_params == params
 
 
 def test_is_list_item(utils_models):

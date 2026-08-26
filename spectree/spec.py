@@ -1,4 +1,5 @@
 import warnings
+import weakref
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from functools import wraps
@@ -107,7 +108,9 @@ class SpecTree:
             module = import_module(plugin.name, plugin.package)
             self.backend = getattr(module, plugin.class_name)(self)
         self.models: dict[str, Any] = {}
-        self._function_metadata: dict[Callable, FunctionDecorator] = {}
+        self._function_metadata: weakref.WeakKeyDictionary[
+            Callable, FunctionDecorator
+        ] = weakref.WeakKeyDictionary()
         if app:
             self.register(app)
 

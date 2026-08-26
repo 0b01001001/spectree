@@ -43,7 +43,8 @@ class FunctionDecorator:
                 continue
             model = models[model_key]
             properties = model.get("properties", {model.get("title"): model})
-            for name, schema in properties.items():
+            for name, property_schema in properties.items():
+                schema = property_schema.copy()
                 extra = {
                     kw: schema.pop(kw) for kw in route_param_keywords if kw in schema
                 }
