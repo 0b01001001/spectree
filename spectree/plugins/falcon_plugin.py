@@ -1,9 +1,9 @@
 import asyncio
 import inspect
 import re
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Mapping
 from functools import partial
-from typing import Any, Callable, Mapping, Optional
+from typing import Any
 
 try:
     # some platforms may ban `tempfile`, e.g. Google App Engine
@@ -39,7 +39,7 @@ class StreamWrapper:
         stream.pipe(self._buf)
         self._buf.seek(0)
 
-    def read(self, size: Optional[int] = -1, /) -> bytes:
+    def read(self, size: int | None = -1, /) -> bytes:
         """read bytes from the stream, size -1 or None means max bytes"""
         return self._buf.read(size if size is not None else -1)
 
@@ -61,7 +61,7 @@ class AsyncStreamWrapper(StreamWrapper):
         await loop.run_in_executor(None, obj._buf.seek, 0)
         return obj
 
-    async def read(self, size: Optional[int] = -1, /) -> bytes:  # type: ignore[override]
+    async def read(self, size: int | None = -1, /) -> bytes:  # type: ignore[override]
         return await asyncio.get_running_loop().run_in_executor(
             None, super().read, size
         )
@@ -264,10 +264,10 @@ class FalconPlugin(BasePlugin):
     def validate_response(
         self,
         resp: FalconResponse,
-        resp_model: Optional[Response],
+        resp_model: Response | None,
         skip_validation: bool,
         force_resp_serialize: bool,
-    ) -> Optional[Exception]:
+    ) -> Exception | None:
         resp_validation_error = None
         if not self._data_set_manually(resp):
             if not skip_validation and resp_model:
@@ -300,12 +300,12 @@ class FalconPlugin(BasePlugin):
     def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
-        resp: Optional[Response],
+        query: ModelClass | None,
+        json: ModelClass | None,
+        form: ModelClass | None,
+        headers: ModelClass | None,
+        cookies: ModelClass | None,
+        resp: Response | None,
         before: HookHandler,
         after: HookHandler,
         validation_error_status: int,
@@ -396,12 +396,12 @@ class FalconAsgiPlugin(FalconPlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
-        resp: Optional[Response],
+        query: ModelClass | None,
+        json: ModelClass | None,
+        form: ModelClass | None,
+        headers: ModelClass | None,
+        cookies: ModelClass | None,
+        resp: Response | None,
         before: HookHandler,
         after: HookHandler,
         validation_error_status: int,

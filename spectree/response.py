@@ -1,6 +1,7 @@
 import sys
+from collections.abc import Iterable
 from http import HTTPStatus
-from typing import Any, Iterable, Optional, Tuple, TypeAlias, Union
+from typing import Any, TypeAlias
 
 from spectree._types import ModelAdapterType, NamingStrategy
 from spectree.model_adapter import ModelClass
@@ -16,11 +17,9 @@ DEFAULT_CODE_DESC: dict[str, str] = dict(
 # Python's typing cannot precisely express runtime type expressions such as
 # `list[User]` here without relying on non-portable internals.
 ResponseModelSpec: TypeAlias = object
-ResponseModelConfig: TypeAlias = Union[
-    ResponseModelSpec,
-    Tuple[Optional[ResponseModelSpec], str],
-    None,
-]
+ResponseModelConfig: TypeAlias = (
+    ResponseModelSpec | tuple[ResponseModelSpec | None, str] | None
+)
 
 # additional status codes and fixes
 if sys.version_info < (3, 13):
@@ -62,7 +61,7 @@ class Response:
         *codes: str,
         **code_models: ResponseModelConfig,
     ) -> None:
-        self.model_adapter: Optional[ModelAdapterType] = None
+        self.model_adapter: ModelAdapterType | None = None
         self.codes: list[str] = []
         self._raw_code_models: dict[str, Any] = {}
 
@@ -71,10 +70,10 @@ class Response:
             self.codes.append(code)
 
         self.code_models: dict[str, ModelClass] = {}
-        self.code_descriptions: dict[str, Optional[str]] = {}
+        self.code_descriptions: dict[str, str | None] = {}
         for code, model_and_description in code_models.items():
             assert code in DEFAULT_CODE_DESC, "invalid HTTP status code"
-            description: Optional[str] = None
+            description: str | None = None
             if isinstance(model_and_description, tuple):
                 assert len(model_and_description) == 2, (
                     "unexpected number of arguments for a tuple of "
@@ -126,7 +125,7 @@ class Response:
         code: int,
         model: ResponseModelSpec,
         replace: bool = True,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> None:
         """Add data *model* for the specified status *code*.
 
@@ -152,7 +151,7 @@ class Response:
         """
         return bool(self.code_models)
 
-    def find_model(self, code: int) -> Optional[ModelClass]:
+    def find_model(self, code: int) -> ModelClass | None:
         """
         :param code: ``r'\\d{3}'``
         """

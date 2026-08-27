@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import quart
 from quart import Blueprint, abort, current_app, jsonify, make_response, request
@@ -61,7 +62,7 @@ class QuartPlugin(WerkzeugPlugin):
     async def validate_response(
         self,
         resp,
-        resp_model: Optional[Response],
+        resp_model: Response | None,
         skip_validation: bool,
         force_resp_serialize: bool,
     ):
@@ -115,12 +116,12 @@ class QuartPlugin(WerkzeugPlugin):
     async def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
-        resp: Optional[Response],
+        query: ModelClass | None,
+        json: ModelClass | None,
+        form: ModelClass | None,
+        headers: ModelClass | None,
+        cookies: ModelClass | None,
+        resp: Response | None,
         before: HookHandler,
         after: HookHandler,
         validation_error_status: int,

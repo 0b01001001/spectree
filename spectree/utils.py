@@ -2,6 +2,7 @@ import functools
 import inspect
 import logging
 import re
+from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
@@ -9,11 +10,6 @@ from types import UnionType
 from typing import (
     Annotated,
     Any,
-    Callable,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
     Union,
     get_args,
     get_origin,
@@ -26,6 +22,7 @@ from spectree._types import (
     MultiDictStarlette,
     NamingStrategy,
 )
+from spectree.metadata import FunctionDecorator
 from spectree.model_adapter import ModelClass
 
 # parse HTTP status code to get the code
@@ -37,7 +34,7 @@ cached_type_hints = functools.cache(get_type_hints)
 logger = logging.getLogger(__name__)
 
 
-def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[str]]:
+def parse_comments(func: Callable[..., Any]) -> tuple[str | None, str | None]:
     """Parse function docstring into a summary and description string.
 
     The first few lines of the docstring up to the first empty line will be extracted
@@ -71,70 +68,30 @@ def parse_comments(func: Callable[..., Any]) -> Tuple[Optional[str], Optional[st
     return summary, description
 
 
-def parse_request(func: Any) -> dict[str, Any]:
+def parse_request(metadata: FunctionDecorator) -> dict[str, Any]:
     """
     get json spec
     """
-    content_items = {}
-    if hasattr(func, "json"):
-        content_items["application/json"] = {
-            "schema": {"$ref": f"#/components/schemas/{func.json}"}
-        }
-
-    if hasattr(func, "form"):
-        content_items["multipart/form-data"] = {
-            "schema": {"$ref": f"#/components/schemas/{func.form}"}
-        }
-
-    if not content_items:
-        return {}
-
-    return {"content": content_items, "required": True}
+    return metadata.parse_request()
 
 
 def parse_params(
-    func: Callable[..., Any],
+    metadata: FunctionDecorator,
     params: list[Mapping[str, Any]],
     models: Mapping[str, Any],
 ) -> list[Mapping[str, Any]]:
     """
     get spec for (query, headers, cookies)
     """
-    attr_to_spec_key = {"query": "query", "headers": "header", "cookies": "cookie"}
-    route_param_keywords = ("explode", "style", "allowReserved")
-
-    for attr, position in attr_to_spec_key.items():
-        if hasattr(func, attr):
-            model = models[getattr(func, attr)]
-            properties = model.get("properties", {model.get("title"): model})
-            for name, schema in properties.items():
-                # Route parameters keywords taken out of schema level
-                extra = {
-                    kw: schema.pop(kw) for kw in route_param_keywords if kw in schema
-                }
-                params.append(
-                    {
-                        "name": name,
-                        "in": position,
-                        "schema": schema,
-                        "required": name in model.get("required", []),
-                        "description": schema.get("description", ""),
-                        **extra,
-                    }
-                )
-
-    return params
+    return metadata.parse_params(params, models)
 
 
-def has_model(func: Any) -> bool:
+def has_model(metadata: FunctionDecorator) -> bool:
     """
     return True if this function have
     :py:class:`spectree.model_adapter.ModelClass`
     """
-    if any(hasattr(func, x) for x in ("query", "json", "headers")):
-        return True
-
-    return bool(hasattr(func, "resp") and func.resp.has_model())
+    return metadata.has_model()
 
 
 def parse_code(http_code: str) -> str:
@@ -260,7 +217,7 @@ def get_nested_key(parent: str, child: str) -> str:
     return f"{parent}.{child}"
 
 
-def get_security(security: Union[Mapping, Sequence[Any], None]) -> list[Any]:
+def get_security(security: Mapping | Sequence[Any] | None) -> list[Any]:
     """
     return the correct format of security
     """
@@ -275,12 +232,12 @@ def get_security(security: Union[Mapping, Sequence[Any], None]) -> list[Any]:
 
 
 def get_multidict_items(
-    multidict: MultiDict, model: Optional[ModelClass] = None
-) -> dict[str, Union[str, list[str], None]]:
+    multidict: MultiDict, model: ModelClass | None = None
+) -> dict[str, str | list[str] | None]:
     """
     return the items of a :class:`werkzeug.datastructures.ImmutableMultiDict`
     """
-    res: dict[str, Union[str, list[str], None]] = {}
+    res: dict[str, str | list[str] | None] = {}
     for key in multidict:
         values = multidict.getlist(key)
         if (model is not None and is_list_item(key, model)) or len(values) > 1:
@@ -292,7 +249,7 @@ def get_multidict_items(
 
 
 def get_multidict_items_starlette(
-    multidict: MultiDictStarlette, model: Optional[ModelClass] = None
+    multidict: MultiDictStarlette, model: ModelClass | None = None
 ):
     """
     return the items of a :class:`starlette.datastructures.ImmutableMultiDict`
@@ -308,7 +265,7 @@ def get_multidict_items_starlette(
     return res
 
 
-def is_list_item(key: str, model: Optional[ModelClass]) -> bool:
+def is_list_item(key: str, model: ModelClass | None) -> bool:
     """Check if this key is a list item in the model."""
     if model is None:
         return False
@@ -333,7 +290,9 @@ def _annotation_is_list(annotation: Any) -> bool:
     return False
 
 
-def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
+def parse_resp(
+    metadata: FunctionDecorator, naming_strategy: NamingStrategy = get_model_key
+):
     """
     get the response spec
 
@@ -341,11 +300,7 @@ def parse_resp(func: Any, naming_strategy: NamingStrategy = get_model_key):
     a ``422 Validation Error`` will be appended to the response spec, since
     this may be triggered in the validation step.
     """
-    responses = {}
-    if hasattr(func, "resp"):
-        responses = func.resp.generate_spec(naming_strategy)
-
-    return responses
+    return metadata.parse_resp(naming_strategy)
 
 
 def json_compatible_deepcopy(obj: Any) -> Any:

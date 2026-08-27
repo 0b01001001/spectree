@@ -1,6 +1,6 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import is_dataclass
-from typing import Any, Sequence
+from typing import Any
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 from pydantic_core import core_schema

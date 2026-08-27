@@ -1,15 +1,12 @@
 import logging
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Generic,
-    Mapping,
     NamedTuple,
-    Optional,
     TypeVar,
-    Union,
 )
 
 from spectree._types import HookHandler, JsonType, ModelAdapterType
@@ -23,11 +20,11 @@ if TYPE_CHECKING:
 
 
 class Context(NamedTuple):
-    query: Optional[Any]
-    json: Optional[Any]
-    form: Optional[Any]
-    headers: Optional[Any]
-    cookies: Optional[Any]
+    query: Any | None
+    json: Any | None
+    form: Any | None
+    headers: Any | None
+    cookies: Any | None
 
 
 BackendRoute = TypeVar("BackendRoute")
@@ -61,12 +58,12 @@ class BasePlugin(Generic[BackendRoute]):
     def validate(
         self,
         func: Callable,
-        query: Optional[ModelClass],
-        json: Optional[ModelClass],
-        form: Optional[ModelClass],
-        headers: Optional[ModelClass],
-        cookies: Optional[ModelClass],
-        resp: Optional[Response],
+        query: ModelClass | None,
+        json: ModelClass | None,
+        form: ModelClass | None,
+        headers: ModelClass | None,
+        cookies: ModelClass | None,
+        resp: Response | None,
         before: HookHandler,
         after: HookHandler,
         validation_error_status: int,
@@ -96,7 +93,7 @@ class BasePlugin(Generic[BackendRoute]):
         raise NotImplementedError
 
     def parse_path(
-        self, route: Any, path_parameter_descriptions: Optional[Mapping[str, str]]
+        self, route: Any, path_parameter_descriptions: Mapping[str, str] | None
     ):
         """
         :param route: API routes
@@ -131,7 +128,7 @@ class BasePlugin(Generic[BackendRoute]):
 
 @dataclass(frozen=True)
 class RawResponsePayload:
-    payload: Union[JsonType, bytes]
+    payload: JsonType | bytes
 
 
 @dataclass(frozen=True)
@@ -141,7 +138,7 @@ class ResponseValidationResult:
 
 def validate_response(
     model_adapter: ModelAdapterType,
-    validation_model: Optional[ModelClass],
+    validation_model: ModelClass | None,
     response_payload: Any,
     force_serialize: bool = False,
 ) -> ResponseValidationResult:

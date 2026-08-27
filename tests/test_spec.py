@@ -1,4 +1,7 @@
+import gc
+import weakref
 from dataclasses import dataclass
+from functools import wraps
 
 import pytest
 from falcon import App as FalconApp
@@ -185,6 +188,47 @@ def test_spec_bypass_mode(model_case):
         assert get_paths(api_strict.spec) == ["/bar"]
 
 
+def test_function_metadata_does_not_retain_spectree(model_case):
+    def create_registered_api():
+        app = Flask(__name__)
+        api = SpecTree("flask", model_adapter=model_case.adapter)
+
+        @app.route("/foo")
+        @api.validate()
+        def foo():
+            pass
+
+        api.register(app)
+        assert api.get_function_metadata(foo) is not None
+        return weakref.ref(api), weakref.ref(foo)
+
+    api_ref, func_ref = create_registered_api()
+    gc.collect()
+
+    assert api_ref() is None
+    assert func_ref() is None
+
+
+def test_function_metadata_handles_wrapped_and_non_weakrefable_callables(model_case):
+    api = SpecTree(model_adapter=model_case.adapter)
+
+    @api.validate()
+    def endpoint():
+        pass
+
+    @wraps(endpoint)
+    def wrapped_endpoint():
+        return endpoint()
+
+    assert api.get_function_metadata(wrapped_endpoint) is not None
+    assert not api.bypass(wrapped_endpoint)
+    assert not api.bypass(len)
+
+    strict_api = SpecTree(mode="strict", model_adapter=model_case.adapter)
+    assert strict_api.bypass(wrapped_endpoint)
+    assert strict_api.bypass(len)
+
+
 def test_two_endpoints_with_the_same_path(model_case):
     app, api, _, _, _ = create_app(model_case)
     api.register(app)
@@ -217,8 +261,13 @@ def test_model_for_validation_errors_specified(model_case):
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is api.model_adapter.validation_error
-    assert bar.resp.find_model(422) is custom_validation_error
+    assert (
+        api.get_function_metadata(foo).resp.find_model(422)
+        is api.model_adapter.validation_error
+    )
+    assert (
+        api.get_function_metadata(bar).resp.find_model(422) is custom_validation_error
+    )
 
 
 def test_global_model_for_validation_errors_specified(model_case):
@@ -252,8 +301,10 @@ def test_global_model_for_validation_errors_specified(model_case):
 
     api.register(app)
 
-    assert foo.resp.find_model(422) is global_validation_error
-    assert bar.resp.find_model(422) is route_validation_error
+    assert (
+        api.get_function_metadata(foo).resp.find_model(422) is global_validation_error
+    )
+    assert api.get_function_metadata(bar).resp.find_model(422) is route_validation_error
 
 
 def test_plain_dataclass_models_are_supported_for_all_api_parts(model_case):
