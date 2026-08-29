@@ -17,7 +17,7 @@ from spectree.spec import SpecTree
 from spectree.utils import get_model_key
 from tests.common import get_paths
 from tests.common_dataclass import Child, Cookies, Form, Headers, Payload, Query, Resp
-from tests.type_checking_annotation_case import view_func as type_checking_view_func
+from tests.type_checking_annotation_case import type_checking_view_func
 
 
 def backend_app():

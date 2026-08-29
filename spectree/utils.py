@@ -269,29 +269,45 @@ _REQUEST_ANNOTATION_NAMES = frozenset({"query", "json", "form", "headers", "cook
 
 
 def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
-    """Resolve only the request model annotations used by Spectree.
+    """Resolve annotations used by Spectree for request models.
 
-    Spectree reads only ``query``, ``json``, ``form``, ``headers`` and
-    ``cookies`` annotations from an endpoint. Other annotations, including the
-    return annotation and unrelated parameters, must not affect resolution.
-
-    An unresolved annotation of a required Spectree request parameter is
-    allowed to propagate as an exception because Spectree cannot validate that
-    parameter without its type.
+    Only ``query``, ``json``, ``form``, ``headers``, and ``cookies``
+    annotations are resolved. Return annotations and unrelated parameters
+    are ignored so unresolved forward references in them do not affect
+    request model processing.
     """
     annotations = getattr(func, "__annotations__", {})
 
-    selected_annotations = {
-        name: annotation
-        for name, annotation in annotations.items()
-        if name in _REQUEST_ANNOTATION_NAMES
-    }
-
-    if not selected_annotations:
+    if not annotations:
         return {}
 
-    # Never mutate the original function's annotations: the same function
-    # object may be inspected concurrently.
+    if "return" not in annotations:
+        selected_annotations = {
+            name: annotation
+            for name, annotation in annotations.items()
+            if name in _REQUEST_ANNOTATION_NAMES
+        }
+
+        if not selected_annotations:
+            return {}
+
+        # Nothing has to be filtered out, so keep the original callable.
+        # This is the fast path requested by the maintainer.
+        if len(selected_annotations) == len(annotations):
+            return get_type_hints(func, include_extras=True)
+    else:
+        selected_annotations = {
+            name: annotation
+            for name, annotation in annotations.items()
+            if name in _REQUEST_ANNOTATION_NAMES
+        }
+
+        if not selected_annotations:
+            return {}
+
+    # We have to exclude either `return` or unrelated parameters.
+    # Never mutate the original endpoint's __annotations__: decorators may
+    # be invoked concurrently.
     proxy = FunctionType(
         func.__code__,
         func.__globals__,
@@ -301,7 +317,12 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     )
     proxy.__annotations__ = selected_annotations
 
-    # Keep extras such as Annotated[...] metadata.
+    if hasattr(func, "__kwdefaults__"):
+        proxy.__kwdefaults__ = func.__kwdefaults__
+
+    if hasattr(func, "__type_params__"):
+        proxy.__type_params__ = func.__type_params__
+
     return get_type_hints(proxy, include_extras=True)
 
 

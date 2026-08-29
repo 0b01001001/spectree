@@ -1,11 +1,9 @@
 import json
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any
-from typing import Annotated, Optional, TypeVar, get_args, get_type_hints
+from typing import Annotated, Any, TypeVar, get_args, get_type_hints
 
 import pytest
-from pydantic import BaseModel
 
 from spectree.metadata import FunctionDecorator
 from spectree.model_adapter import get_pydantic_model_adapter
@@ -23,13 +21,17 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
+from tests.common import (
+    get_model_path_key,
+)
 from tests.common_dataclass import (
+    DemoModel,
     DemoModel as DemoModelDef,
+    DemoQuery,
     DemoQuery as DemoQueryDef,
     OptionalListQuery,
 )
-from tests.common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
-from tests.type_checking_annotation_case import view_func as type_checking_view_func
+from tests.type_checking_annotation_case import type_checking_view_func
 
 api = SpecTree()
 model_adapter = get_pydantic_model_adapter()
@@ -396,6 +398,7 @@ def test_parse_params_with_route_param_keywords():
     )
     assert repeated_params == params
 
+
 def test_get_request_model_hints():
     def func(
         query: DemoQuery,
@@ -432,7 +435,7 @@ def test_get_request_model_hints_unresolvable_return_annotation():
 def test_get_request_model_hints_ignores_unresolvable_unrelated_parameter():
     def func(
         json: DemoModel,
-        dependency: "CompletelyNonExistentType",
+        dependency: "CompletelyNonExistentType",  # noqa: F821
     ) -> int:
         raise NotImplementedError
 
@@ -473,11 +476,6 @@ def test_get_request_model_hints_generic_function():
 
     assert get_request_model_hints(func) == {"json": T}
 
-
-def test_is_list_item():
-    class OptionalListQuery(BaseModel):
-        names: Optional[list[str]] = None
-        title: Optional[str] = None
 
 def test_is_list_item(utils_models):
     assert is_list_item("names1", utils_models.demo_query)

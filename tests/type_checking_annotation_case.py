@@ -11,13 +11,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests.common import DemoModel
+from tests.common_dataclass import DemoModel
 
 if TYPE_CHECKING:
     # Intentionally guarded so the name does not exist at runtime.
     from tests.common import DemoQuery as ResponseValue
 
 
-def view_func(json: DemoModel) -> ResponseValue:
+def type_checking_view_func(json: DemoModel) -> ResponseValue:
     # The body is never executed; only the annotations matter for this fixture.
     raise NotImplementedError

@@ -10,13 +10,6 @@ from typing import (
     Sequence,
 )
 
-from spectree.metadata import (
-    FunctionDecorator,
-    is_validated_function,
-    iter_wrapped_functions,
-    register_validated_function,
-)
-
 from spectree._types import (
     HookHandler,
     ModelAdapterType,
@@ -24,6 +17,12 @@ from spectree._types import (
     NestedNamingStrategy,
 )
 from spectree.config import Configuration, ModeEnum
+from spectree.metadata import (
+    FunctionDecorator,
+    is_validated_function,
+    iter_wrapped_functions,
+    register_validated_function,
+)
 from spectree.model_adapter import ModelClass, get_pydantic_model_adapter
 from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag
@@ -274,7 +273,7 @@ class SpecTree:
 
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
-                annotations = get_request_model_hints(func, include_extras=True)
+                annotations = get_request_model_hints(func)
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)
