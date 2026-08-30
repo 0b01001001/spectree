@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
 from hashlib import sha1
 from math import isinf, isnan
-from types import UnionType
+from types import FunctionType, UnionType
 from typing import (
     Annotated,
     Any,
@@ -263,6 +263,51 @@ def get_multidict_items_starlette(
             res[key] = multidict[key]
 
     return res
+
+
+_REQUEST_ANNOTATION_NAMES = frozenset({"query", "json", "form", "headers", "cookies"})
+
+
+def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
+    """Resolve annotations used by Spectree for request models.
+
+    Only ``query``, ``json``, ``form``, ``headers``, and ``cookies``
+    annotations are resolved. Return annotations and unrelated parameters
+    are ignored so unresolved forward references in them do not affect
+    request model processing.
+    """
+    annotations = getattr(func, "__annotations__", {})
+
+    if not annotations:
+        return {}
+
+    if "return" not in annotations:
+        return get_type_hints(func, include_extras=True)
+
+    selected_annotations = {
+        name: annotation
+        for name, annotation in annotations.items()
+        if name in _REQUEST_ANNOTATION_NAMES
+    }
+
+    if not selected_annotations:
+        return {}
+
+    proxy = FunctionType(
+        func.__code__,
+        func.__globals__,
+        func.__name__,
+        func.__defaults__,
+        func.__closure__,
+    )
+    proxy.__annotations__ = selected_annotations
+
+    type_params = getattr(func, "__type_params__", ())
+    if type_params:
+        proxy.__type_params__ = type_params
+
+    localns = {param.__name__: param for param in type_params}
+    return get_type_hints(proxy, localns=localns or None, include_extras=True)
 
 
 def is_list_item(key: str, model: ModelClass | None) -> bool:

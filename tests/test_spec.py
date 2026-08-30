@@ -10,12 +10,23 @@ from starlette.applications import Starlette
 
 from spectree import Response
 from spectree.config import Configuration
+from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
 from tests.common import get_paths
-from tests.common_dataclass import Child, Cookies, Form, Headers, Payload, Query, Resp
+from tests.common_dataclass import (
+    Child,
+    Cookies,
+    DemoModel,
+    Form,
+    Headers,
+    Payload,
+    Query,
+    Resp,
+)
+from tests.type_checking_annotation_case import type_checking_view_func
 
 
 def backend_app():
@@ -68,6 +79,32 @@ def test_spec_generate(name, app_factory, model_case):
 
     assert spec["info"]["title"] == name
     assert spec["paths"] == {}
+
+
+@pytest.mark.pydantic
+def test_annotations_ignore_unresolvable_return_annotation():
+    app = Flask(__name__)
+    api = SpecTree(
+        "flask",
+        model_adapter=get_pydantic_model_adapter(),
+    )
+
+    decorated = api.validate()(type_checking_view_func)
+    app.add_url_rule(
+        "/type-checking",
+        view_func=decorated,
+        methods=["POST"],
+    )
+
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+
+    operation = spec["paths"]["/type-checking"]["post"]
+    assert operation["requestBody"]["content"]["application/json"]["schema"] == {
+        "$ref": f"#/components/schemas/{get_model_key(DemoModel)}"
+    }
 
 
 @pytest.mark.parametrize("name, app_factory", backend_app())

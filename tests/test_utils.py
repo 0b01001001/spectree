@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any
+from typing import Annotated, Any, TypeVar, get_args, get_type_hints
 
 import pytest
 
@@ -10,6 +10,7 @@ from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
+    get_request_model_hints,
     has_model,
     is_list_item,
     json_compatible_deepcopy,
@@ -20,12 +21,17 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
-from tests.common import get_model_path_key
+from tests.common import (
+    get_model_path_key,
+)
 from tests.common_dataclass import (
+    DemoModel,
     DemoModel as DemoModelDef,
+    DemoQuery,
     DemoQuery as DemoQueryDef,
     OptionalListQuery,
 )
+from tests.type_checking_annotation_case import type_checking_view_func
 
 
 def undecorated_func():
@@ -388,6 +394,90 @@ def test_parse_params_with_route_param_keywords():
         api.get_function_metadata(demo_func_with_query), [], models
     )
     assert repeated_params == params
+
+
+def test_get_request_model_hints():
+    def func(
+        query: DemoQuery,
+        json: Annotated[DemoModel, "metadata"],
+        form: DemoModel,
+        headers: DemoModel,
+        cookies: DemoModel,
+    ) -> int:
+        return 0
+
+    hints = get_request_model_hints(func)
+
+    assert hints["query"] is DemoQuery
+    assert get_args(hints["json"]) == (DemoModel, "metadata")
+    assert hints["form"] is DemoModel
+    assert hints["headers"] is DemoModel
+    assert hints["cookies"] is DemoModel
+    assert "return" not in hints
+
+
+def test_get_request_model_hints_unresolvable_return_annotation():
+    original_annotations = dict(type_checking_view_func.__annotations__)
+
+    with pytest.raises(NameError):
+        get_type_hints(type_checking_view_func)
+
+    assert get_request_model_hints(type_checking_view_func) == {"json": DemoModel}
+    assert type_checking_view_func.__annotations__ == original_annotations
+
+
+def test_get_request_model_hints_unresolvable_parameter_annotation():
+    def func(json: DemoModel) -> int:
+        raise NotImplementedError
+
+    func.__annotations__["json"] = "CompletelyNonExistentType"
+
+    with pytest.raises(NameError):
+        get_request_model_hints(func)
+
+
+def test_get_request_model_hints_preserves_annotated():
+    def func(json: Annotated[DemoModel, "metadata"]):
+        raise NotImplementedError
+
+    hints = get_request_model_hints(func)
+
+    assert get_args(hints["json"]) == (DemoModel, "metadata")
+
+
+def test_get_request_model_hints_without_annotations():
+    def func():
+        return None
+
+    assert get_request_model_hints(func) == {}
+
+
+def test_get_request_model_hints_generic_function():
+    T = TypeVar("T")
+
+    def func(json: T) -> T:
+        raise NotImplementedError
+
+    assert get_request_model_hints(func) == {"json": T}
+
+
+@pytest.mark.skipif(
+    not hasattr(lambda: None, "__type_params__"),
+    reason="PEP 695 requires Python 3.12+",
+)
+def test_get_request_model_hints_pep_695_generic_function():
+    T = TypeVar("T")
+
+    def func(json):
+        raise NotImplementedError
+
+    func.__annotations__ = {
+        "json": "T",
+        "return": "CompletelyNonExistentType",
+    }
+    func.__type_params__ = (T,)
+
+    assert get_request_model_hints(func) == {"json": T}
 
 
 def test_is_list_item(utils_models):

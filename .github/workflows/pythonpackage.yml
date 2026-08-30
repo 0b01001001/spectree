@@ -36,6 +36,8 @@ jobs:
 
   test:
     runs-on: ${{ matrix.os }}
+    env:
+      UV_MANAGED_PYTHON: "true"
     strategy:
       fail-fast: false
       matrix:
