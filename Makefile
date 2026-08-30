@@ -62,6 +62,8 @@ lint:
 	@uv run -- mypy --install-types --non-interactive ${MYPY_SOURCE_FILES}
 
 changelog:
+	@git describe --tags --abbrev=0 >/dev/null 2>&1 || \
+		(echo "No reachable release tags. Run 'git fetch --tags <release-remote>' first." && exit 1)
 	@git-cliff --config cliff.toml --repository . --output CHANGELOG.md
 
 .PHONY: test test_common test_pydantic test_msgspec doc
