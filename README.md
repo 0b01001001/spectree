@@ -54,7 +54,7 @@ Check the [examples](examples) folder.
 * [flask example](examples/flask_demo.py)
 * [quart example](examples/quart_demo.py)
 * [falcon example with logging when validation failed](examples/falcon_demo.py)
-* [falcon example with msgspec models](examples/falcon_msgspec_demo.py)
+* [falcon example mixing msgspec and dataclass models](examples/falcon_msgspec_demo.py)
 * [starlette example](examples/starlette_demo.py)
 
 ### Step by Step
@@ -95,8 +95,11 @@ def profile(json: Profile):
     return Profile(name=json.name)
 ```
 
-This works with both the default Pydantic adapter and the Msgspec adapter. Install
-the corresponding optional dependency and configure Msgspec explicitly when using it.
+This works with both the default Pydantic adapter and the Msgspec adapter. Models from
+both styles can be mixed in the same application; the
+[Falcon Msgspec example](examples/falcon_msgspec_demo.py) uses dataclasses for its query
+and successful response models alongside Msgspec structs. Install the corresponding
+optional dependency and configure Msgspec explicitly when using it.
 
 ### Falcon response validation
 

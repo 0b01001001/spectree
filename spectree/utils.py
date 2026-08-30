@@ -281,9 +281,6 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     if not annotations:
         return {}
 
-    if "return" not in annotations:
-        return get_type_hints(func, include_extras=True)
-
     selected_annotations = {
         name: annotation
         for name, annotation in annotations.items()
@@ -292,6 +289,10 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
 
     if not selected_annotations:
         return {}
+
+    # fast-path when only SpecTree required annotations are present
+    if "return" not in annotations and len(selected_annotations) == len(annotations):
+        return get_type_hints(func, include_extras=True)
 
     proxy = FunctionType(
         func.__code__,

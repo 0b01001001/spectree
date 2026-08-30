@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add adapter-agnostic model contract tests (#487)
 - Add adapter test to response (#488)
+- Support dataclass as model type (#511)
 
 ### Changed
 
@@ -26,10 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump actions/checkout from 6 to 7 in the all-actions group (#499)
 - Bump the all-pips group with 8 updates (#500)
 - Pin github ci action commits (#505)
+- Bump py versions, fix ruff, update changelog (#506)
+- Use function metadata to avoid dynamic attr (#512)
+- Demonstrate dataclasses with msgspec
 
 ### Fixed
 
 - Apply the model adapter to all the tests (#504)
+- Ignore unsolvable return annotation in annotations mode (#493 continuation) (#508)
+- Handle changelog releases without predecessors
+- Require release tags for changelog generation
 
 ## [3.0.0a0] - 2026-05-12
 

@@ -426,6 +426,18 @@ def test_get_request_model_hints_unresolvable_return_annotation():
     assert type_checking_view_func.__annotations__ == original_annotations
 
 
+def test_get_request_model_hints_ignores_unrelated_parameter_without_return():
+    def func(json: DemoModel, unrelated):
+        raise NotImplementedError
+
+    func.__annotations__["unrelated"] = "CompletelyNonExistentType"
+
+    with pytest.raises(NameError):
+        get_type_hints(func)
+
+    assert get_request_model_hints(func) == {"json": DemoModel}
+
+
 def test_get_request_model_hints_unresolvable_parameter_annotation():
     def func(json: DemoModel) -> int:
         raise NotImplementedError
