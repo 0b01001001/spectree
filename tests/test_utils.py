@@ -427,8 +427,9 @@ def test_get_request_model_hints_unresolvable_return_annotation():
 
 
 def test_get_request_model_hints_unresolvable_parameter_annotation():
-    def func(json: "DemoModel") -> int:  # noqa: F821
+    def func(json: DemoModel) -> int:
         raise NotImplementedError
+
     func.__annotations__["json"] = "CompletelyNonExistentType"
 
     with pytest.raises(NameError):

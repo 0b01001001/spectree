@@ -72,6 +72,7 @@ def test_spec_generate(name, app_factory, model_case):
     assert spec["paths"] == {}
 
 
+@pytest.mark.pydantic
 def test_annotations_ignore_unresolvable_return_annotation():
     app = Flask(__name__)
     api = SpecTree(
