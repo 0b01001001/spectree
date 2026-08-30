@@ -281,9 +281,6 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     if not annotations:
         return {}
 
-    if "return" not in annotations:
-        return get_type_hints(func, include_extras=True)
-
     selected_annotations = {
         name: annotation
         for name, annotation in annotations.items()
