@@ -1397,7 +1397,7 @@ wheels = [
 
 [[package]]
 name = "spectree"
-version = "3.0.0a0"
+version = "3.0.0a1"
 source = { editable = "." }
 
 [package.optional-dependencies]
