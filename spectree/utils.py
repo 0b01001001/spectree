@@ -282,32 +282,17 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
         return {}
 
     if "return" not in annotations:
-        selected_annotations = {
-            name: annotation
-            for name, annotation in annotations.items()
-            if name in _REQUEST_ANNOTATION_NAMES
-        }
+        return get_type_hints(func, include_extras=True)
 
-        if not selected_annotations:
-            return {}
+    selected_annotations = {
+        name: annotation
+        for name, annotation in annotations.items()
+        if name in _REQUEST_ANNOTATION_NAMES
+    }
 
-        # Nothing has to be filtered out, so keep the original callable.
-        # This is the fast path requested by the maintainer.
-        if len(selected_annotations) == len(annotations):
-            return get_type_hints(func, include_extras=True)
-    else:
-        selected_annotations = {
-            name: annotation
-            for name, annotation in annotations.items()
-            if name in _REQUEST_ANNOTATION_NAMES
-        }
+    if not selected_annotations:
+        return {}
 
-        if not selected_annotations:
-            return {}
-
-    # We have to exclude either `return` or unrelated parameters.
-    # Never mutate the original endpoint's __annotations__: decorators may
-    # be invoked concurrently.
     proxy = FunctionType(
         func.__code__,
         func.__globals__,

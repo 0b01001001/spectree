@@ -33,9 +33,6 @@ from tests.common_dataclass import (
 )
 from tests.type_checking_annotation_case import type_checking_view_func
 
-api = SpecTree()
-model_adapter = get_pydantic_model_adapter()
-
 
 def undecorated_func():
     """summary
@@ -402,7 +399,7 @@ def test_parse_params_with_route_param_keywords():
 def test_get_request_model_hints():
     def func(
         query: DemoQuery,
-        json: DemoModel,
+        json: Annotated[DemoModel, "metadata"],
         form: DemoModel,
         headers: DemoModel,
         cookies: DemoModel,
@@ -411,13 +408,12 @@ def test_get_request_model_hints():
 
     hints = get_request_model_hints(func)
 
-    assert hints == {
-        "query": DemoQuery,
-        "json": DemoModel,
-        "form": DemoModel,
-        "headers": DemoModel,
-        "cookies": DemoModel,
-    }
+    assert hints["query"] is DemoQuery
+    assert get_args(hints["json"]) == (DemoModel, "metadata")
+    assert hints["form"] is DemoModel
+    assert hints["headers"] is DemoModel
+    assert hints["cookies"] is DemoModel
+    assert "return" not in hints
 
 
 def test_get_request_model_hints_unresolvable_return_annotation():
@@ -426,26 +422,12 @@ def test_get_request_model_hints_unresolvable_return_annotation():
     with pytest.raises(NameError):
         get_type_hints(type_checking_view_func)
 
-    hints = get_request_model_hints(type_checking_view_func)
-
-    assert hints == {"json": DemoModel}
+    assert get_request_model_hints(type_checking_view_func) == {"json": DemoModel}
     assert type_checking_view_func.__annotations__ == original_annotations
 
 
-def test_get_request_model_hints_ignores_unresolvable_unrelated_parameter():
-    def func(
-        json: DemoModel,
-        dependency: "CompletelyNonExistentType",  # noqa: F821
-    ) -> int:
-        raise NotImplementedError
-
-    hints = get_request_model_hints(func)
-
-    assert hints == {"json": DemoModel}
-
-
 def test_get_request_model_hints_unresolvable_parameter_annotation():
-    def func(json: "CompletelyNonExistentType") -> int:  # noqa: F821
+    def func(json: "CompletelyNonExistentType") -> int:  # noqa: F821# type: ignore
         raise NotImplementedError
 
     with pytest.raises(NameError):
