@@ -302,10 +302,12 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     )
     proxy.__annotations__ = selected_annotations
 
-    if hasattr(func, "__type_params__"):
-        proxy.__type_params__ = func.__type_params__
+    type_params = getattr(func, "__type_params__", ())
+    if type_params:
+        proxy.__type_params__ = type_params
 
-    return get_type_hints(proxy, include_extras=True)
+    localns = {param.__name__: param for param in type_params}
+    return get_type_hints(proxy, localns=localns or None, include_extras=True)
 
 
 def is_list_item(key: str, model: ModelClass | None) -> bool:
