@@ -2,10 +2,10 @@
 
 ``ResponseValue`` is only imported while type checking, so the string forward
 reference in ``type_checking_view_func``'s return annotation cannot be evaluated
-at runtime.
-This mirrors Flask's ``flask.typing.ResponseReturnValue`` (which references a
-``TYPE_CHECKING``-only ``Response``) and would make ``typing.get_type_hints``
-raise ``NameError`` even though spectree only needs the parameter annotations.
+at runtime. This mirrors Flask's ``flask.typing.ResponseReturnValue`` (which
+references a ``TYPE_CHECKING``-only ``Response``) and would make
+``typing.get_type_hints`` raise ``NameError`` even though spectree only needs
+the parameter annotations.
 """
 
 from __future__ import annotations

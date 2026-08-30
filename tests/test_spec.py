@@ -10,9 +10,9 @@ from spectree.models import Server, ValidationError
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
+from tests.type_checking_annotation_case import type_checking_view_func
 
 from .common import DemoModel, get_paths
-from tests.type_checking_annotation_case import type_checking_view_func
 
 
 def backend_app():

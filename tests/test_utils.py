@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, Any, TypeVar, get_args, get_type_hints
+from typing import Annotated, TypeVar, get_args, get_type_hints
 
 import pytest
 from pydantic import BaseModel, computed_field
@@ -19,9 +19,9 @@ from spectree.utils import (
     parse_request,
     parse_resp,
 )
+from tests.type_checking_annotation_case import type_checking_view_func
 
 from .common import DefaultEnumValue, DemoModel, DemoQuery, Numeric, get_model_path_key
-from tests.type_checking_annotation_case import type_checking_view_func
 
 api = SpecTree()
 
@@ -320,6 +320,18 @@ def test_get_request_model_hints_unresolvable_return_annotation():
 
     assert get_request_model_hints(type_checking_view_func) == {"json": DemoModel}
     assert type_checking_view_func.__annotations__ == original_annotations
+
+
+def test_get_request_model_hints_ignores_unrelated_parameter_without_return():
+    def func(json: DemoModel, unrelated):
+        raise NotImplementedError
+
+    func.__annotations__["unrelated"] = "CompletelyNonExistentType"
+
+    with pytest.raises(NameError):
+        get_type_hints(func)
+
+    assert get_request_model_hints(func) == {"json": DemoModel}
 
 
 def test_get_request_model_hints_unresolvable_parameter_annotation():
