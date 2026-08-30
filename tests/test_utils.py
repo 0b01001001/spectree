@@ -461,6 +461,25 @@ def test_get_request_model_hints_generic_function():
     assert get_request_model_hints(func) == {"json": T}
 
 
+@pytest.mark.skipif(
+    not hasattr(lambda: None, "__type_params__"),
+    reason="PEP 695 requires Python 3.12+",
+)
+def test_get_request_model_hints_pep_695_generic_function():
+    T = TypeVar("T")
+
+    def func(json):
+        raise NotImplementedError
+
+    func.__annotations__ = {
+        "json": "T",
+        "return": "CompletelyNonExistentType",
+    }
+    func.__type_params__ = (T,)
+
+    assert get_request_model_hints(func) == {"json": T}
+
+
 def test_is_list_item(utils_models):
     assert is_list_item("names1", utils_models.demo_query)
     assert is_list_item("names2", utils_models.demo_query)

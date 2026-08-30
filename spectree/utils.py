@@ -302,9 +302,6 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     )
     proxy.__annotations__ = selected_annotations
 
-    if hasattr(func, "__kwdefaults__"):
-        proxy.__kwdefaults__ = func.__kwdefaults__
-
     if hasattr(func, "__type_params__"):
         proxy.__type_params__ = func.__type_params__
 
