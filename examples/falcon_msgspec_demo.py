@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from random import random
 from wsgiref import simple_server
 
@@ -28,7 +29,8 @@ demo = Tag(
 )
 
 
-class Resp(msgspec.Struct):
+@dataclass
+class Resp:
     label: int
     score: float
 
@@ -39,7 +41,8 @@ class BadLuck(msgspec.Struct):
     typ: str
 
 
-class Query(msgspec.Struct):
+@dataclass
+class Query:
     text: str
 
 
