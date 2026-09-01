@@ -47,6 +47,12 @@ If you want to use `msgspec` instead of `pydantic`:
 pip install "spectree[msgspec]"
 ```
 
+## Upgrading from v2
+
+Version 3 introduces model adapters and makes the model backend an optional
+dependency. Read the [v3 migration guide](https://spectree.readthedocs.io/en/latest/migration.html)
+before upgrading an existing application.
+
 ### Examples
 
 Check the [examples](examples) folder.
@@ -341,7 +347,7 @@ In the above example, the key "page_name" will be used in the URL to access this
 
 > How can I change the response when there is a validation error? Can I record some metrics?
 
-This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or a specific endpoint validation.
+This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [Flask adapter tests](https://github.com/0b01001001/spectree/blob/main/tests/plugin_flask/test_model_adapters.py). You can change the handlers for SpecTree or a specific endpoint validation.
 
 > How to change the default `ValidationError` status code?
 

@@ -12,8 +12,15 @@
 #
 import os
 import sys
+from pathlib import Path
+from urllib.parse import quote
+
+from docutils import nodes
+from sphinx import addnodes
 
 sys.path.insert(0, os.path.abspath("../../"))
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
 # -- Project information -----------------------------------------------------
@@ -48,6 +55,7 @@ myst_enable_extensions = [
     "html_admonition",
     "deflist",
 ]
+myst_heading_anchors = 3
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -90,3 +98,34 @@ html_css_files = ["custom.css"]
 
 # read the doc
 master_doc = "index"
+
+
+def resolve_repository_links(app, doctree):
+    """Resolve repository-relative README links when rendered by Sphinx."""
+    source_user = app.config.html_context["source_user"]
+    source_repo = app.config.html_context["source_repo"]
+
+    for node in list(doctree.findall(addnodes.pending_xref)):
+        target = node.get("reftarget", "")
+        path, separator, fragment = target.partition("#")
+        repository_path = (REPOSITORY_ROOT / path).resolve()
+        if not repository_path.is_relative_to(REPOSITORY_ROOT):
+            continue
+        if not repository_path.exists():
+            continue
+
+        object_type = "tree" if repository_path.is_dir() else "blob"
+        refuri = (
+            f"https://github.com/{source_user}/{source_repo}/{object_type}/HEAD/"
+            f"{quote(path)}"
+        )
+        if separator:
+            refuri = f"{refuri}#{quote(fragment)}"
+
+        reference = nodes.reference("", "", internal=False, refuri=refuri)
+        reference.extend(node.children)
+        node.replace_self(reference)
+
+
+def setup(app):
+    app.connect("doctree-read", resolve_repository_links)

@@ -13,6 +13,16 @@
 ---
 maxdepth: 2
 hidden:
+caption: Guides
+---
+migration
+examples
+```
+
+```{toctree}
+---
+maxdepth: 2
+hidden:
 caption: API reference
 ---
 spectree
