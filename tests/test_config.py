@@ -177,7 +177,8 @@ def test_swagger_oauth2_config_serialization(model_case):
         use_pkce_with_authorization_code_grant=False,
     )
 
-    oauth_config = config.swagger_oauth2_config()
+    with pytest.warns(UserWarning, match="client_secret"):
+        oauth_config = config.swagger_oauth2_config()
 
     assert oauth_config["client_id"] == "client-id"
     assert oauth_config["client_secret"] == "client-secret"

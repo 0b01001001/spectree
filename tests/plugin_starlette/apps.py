@@ -1,4 +1,5 @@
 import importlib
+from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Any, Union
@@ -83,11 +84,15 @@ def build_starlette_adapter_app(model_case) -> StarletteAdapterApp:  # noqa: PLR
     @spec.validate(form=model_case.get_model(FormPayload))
     async def file_upload(request, form: model_case.get_model(FormPayload)):
         assert form.file
-        content = await form.file.read()
-        other = (
-            form.other.decode("utf-8") if isinstance(form.other, bytes) else form.other
-        )
-        return JSONResponse({"file": content.decode("utf-8"), "other": other})
+        async with AsyncExitStack() as stack:
+            stack.push_async_callback(form.file.close)
+            content = await form.file.read()
+            other = (
+                form.other.decode("utf-8")
+                if isinstance(form.other, bytes)
+                else form.other
+            )
+            return JSONResponse({"file": content.decode("utf-8"), "other": other})
 
     @spec.validate(
         query=model_case.get_model(Query),
