@@ -131,7 +131,7 @@ instead of assuming a Pydantic `ValidationError`.
 ### Upgrade checklist
 
 1. Install `spectree[pydantic]` or `spectree[msgspec]`.
-2. Pass a non-default model adapter to `SpecTree`.
+2. If using `msgspec` or a custom adapter, pass it to `SpecTree`.
 3. Update hook functions to accept `model_adapter`.
 4. Replace direct `spectree.BaseFile` use with `model_adapter.basefile`.
 5. Replace Pydantic-only operations on Spectree metadata classes.

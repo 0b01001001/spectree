@@ -65,9 +65,9 @@ Check the [examples](examples) folder.
 
 ### Step by Step
 
-1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`
-2. create a `spectree.SpecTree` instance with the web framework name you are using, like `spec = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default; pass `model_adapter=get_msgspec_model_adapter()` to use the `msgspec` adapter, or pass another model adapter implementation.
-3. `spec.validate` decorate the route with (the default value is given in parentheses):
+1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`.
+2. Create a `spectree.SpecTree` instance with the web framework name you are using, like `spec = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default; pass `model_adapter=get_msgspec_model_adapter()` to use the `msgspec` adapter, or pass another model adapter implementation.
+3. Decorate the route with `spec.validate`, using any of these arguments (default values are given in parentheses):
    * `query`
    * `json`
    * `headers`
@@ -76,11 +76,12 @@ Check the [examples](examples) folder.
    * `tags` *(no tags on endpoint)*
    * `security` *(`None` - endpoint is not secured)*
    * `deprecated` *(`False` - endpoint is not marked as deprecated)*
-4. access these data from the function annotations (see the examples below). Of course, you can still access them from the original place where the framework offered.
-5. register to the web application `spec.register(app)`
-6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger` or `/apidoc/scalar`
+4. Access the validated data through the function arguments (see the examples below). You can also access the original data through the web framework.
+5. Register Spectree with the web application by calling `spec.register(app)`.
+6. Open the generated document at `/apidoc/redoc`, `/apidoc/swagger`, or `/apidoc/scalar`.
 
-If the request doesn't pass the validation, it will return a 422 with a JSON error message(ctx, loc, msg, type).
+If a request fails validation, Spectree returns a 422 response containing error
+details produced by the configured model adapter.
 
 ### Adapter models and Python dataclasses
 
@@ -101,6 +102,10 @@ as field types within another model.
 from dataclasses import dataclass
 
 from pydantic import BaseModel
+from spectree import Response, SpecTree
+
+
+spec = SpecTree("flask")
 
 
 @dataclass
