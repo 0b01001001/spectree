@@ -84,8 +84,8 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 
 ### Adapter models and Python dataclasses
 
-Start by defining request and response models with the class provided by your
-adapter:
+Start by defining request and response models with the class provided by the
+adapter you choose:
 
 - Use `pydantic.BaseModel` with the `pydantic` adapter.
 - Use `msgspec.Struct` with the `msgspec` adapter.
