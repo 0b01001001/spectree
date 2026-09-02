@@ -84,10 +84,12 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 
 ### Adapter models and Python dataclasses
 
-The model passed directly to `spec.validate`, or assigned to a status code in
-`Response`, should use the active adapter's model class: `pydantic.BaseModel` for
-the `pydantic` adapter or `msgspec.Struct` for the `msgspec` adapter. Fields on
-that model can use plain Python dataclasses as their types.
+The request model supplied to Spectree—either in `spec.validate`, such as
+`json=Profile`, or through a parameter annotation, such as `json: Profile`—should
+use the active adapter's model class. The same applies to a response model assigned
+to a status code in `Response`: use `pydantic.BaseModel` for the `pydantic` adapter
+or `msgspec.Struct` for the `msgspec` adapter. Fields on those models can use plain
+Python dataclasses as their types.
 
 ```py
 from dataclasses import dataclass
@@ -104,7 +106,7 @@ class Profile(BaseModel):
     name: str
     address: Address
 
-@spec.validate(json=Profile, resp=Response(HTTP_200=Profile))
+@spec.validate(resp=Response(HTTP_200=Profile))
 def profile(json: Profile):
     return json
 ```
