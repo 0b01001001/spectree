@@ -1,4 +1,5 @@
 import gc
+import warnings
 import weakref
 from dataclasses import dataclass
 from functools import wraps
@@ -105,6 +106,31 @@ def test_annotations_ignore_unresolvable_return_annotation():
     assert operation["requestBody"]["content"]["application/json"]["schema"] == {
         "$ref": f"#/components/schemas/{get_model_key(DemoModel)}"
     }
+
+
+@pytest.mark.pydantic
+def test_skip_validation_only_warns_for_request_annotations():
+    api = SpecTree(
+        "flask",
+        model_adapter=get_pydantic_model_adapter(),
+    )
+
+    with pytest.warns(UserWarning, match="skip_validation"):
+
+        @api.validate(skip_validation=True)
+        def annotated(query: Query):
+            return query
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+
+        @api.validate(query=Query, skip_validation=True)
+        def explicit_model():
+            return None
+
+    assert not captured
+    assert annotated
+    assert explicit_model
 
 
 @pytest.mark.parametrize("name, app_factory", backend_app())

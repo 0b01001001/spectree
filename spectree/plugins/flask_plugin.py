@@ -121,6 +121,14 @@ class FlaskPlugin(WerkzeugPlugin):
         *args: Any,
         **kwargs: Any,
     ):
+        # WebSocket handlers do not produce an HTTP response that Spectree can
+        # validate or serialize. Leave their lifecycle entirely to Werkzeug and
+        # the WebSocket implementation.
+        if request.url_rule is not None and getattr(
+            request.url_rule, "websocket", False
+        ):
+            return func(*args, **kwargs)
+
         response, req_validation_error = None, None
         if not skip_validation:
             try:

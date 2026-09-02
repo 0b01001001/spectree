@@ -218,14 +218,6 @@ class SpecTree:
         if validation_error_status == 0:
             validation_error_status = self.validation_error_status
 
-        if self.config.annotations and skip_validation:
-            warnings.warn(
-                "`skip_validation` cannot be used with `annotations` enabled. The instances"
-                " of `json`, `headers`, `cookies`, etc. read from function will be `None`.",
-                UserWarning,
-                stacklevel=2,
-            )
-
         def decorate_validation(func: Callable):
             # for sync framework
             @wraps(func)
@@ -274,6 +266,14 @@ class SpecTree:
             if self.config.annotations:
                 nonlocal query, json, form, headers, cookies
                 annotations = get_request_model_hints(func)
+                if skip_validation and annotations:
+                    warnings.warn(
+                        "`skip_validation` cannot be used with `annotations` enabled. "
+                        "The instances of `json`, `headers`, `cookies`, etc. read from "
+                        "the function will be `None`.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
                 query = annotations.get("query", query)
                 json = annotations.get("json", json)
                 form = annotations.get("form", form)
