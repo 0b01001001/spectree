@@ -108,6 +108,9 @@ def resolve_repository_links(app, doctree):
     for node in list(doctree.findall(addnodes.pending_xref)):
         target = node.get("reftarget", "")
         path, separator, fragment = target.partition("#")
+        if not path:
+            continue
+
         repository_path = (REPOSITORY_ROOT / path).resolve()
         if not repository_path.is_relative_to(REPOSITORY_ROOT):
             continue
