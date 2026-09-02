@@ -158,7 +158,8 @@ it can use that `SpecTree` instance's model adapter.
 3. Update hook functions to accept `model_adapter`.
 4. Replace direct `spectree.BaseFile` use with `model_adapter.basefile`.
 5. Replace Pydantic-only operations on Spectree metadata classes.
-6. Replace Starlette `PydanticResponse` calls with `SpecTreeStarletteResponse`.
+6. If using Starlette, replace `PydanticResponse` calls with
+   `SpecTreeStarletteResponse`.
 7. Compare the generated OpenAPI document, especially component names and
    serialized response schemas, before deploying.
 
