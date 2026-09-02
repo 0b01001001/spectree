@@ -392,7 +392,10 @@ def build_falcon_adapter_app(backend: str, model_case) -> FalconAdapterApp:  # n
                 resp,
                 form: model_case.get_model(FormPayload),
             ):
-                file_content = await form.file.stream.read() if form.file else None
+                file_content = None
+                if form.file:
+                    async with form.file.stream as stream:
+                        file_content = await stream.read()
                 other = (
                     form.other.decode("utf-8")
                     if isinstance(form.other, bytes)
@@ -417,8 +420,9 @@ def build_falcon_adapter_app(backend: str, model_case) -> FalconAdapterApp:  # n
             ):
                 length = 0
                 if form.file:
-                    async for chunk in form.file.stream:
-                        length += len(chunk)
+                    async with form.file.stream as stream:
+                        async for chunk in stream:
+                            length += len(chunk)
                 other = (
                     form.other.decode("utf-8")
                     if isinstance(form.other, bytes)
@@ -437,7 +441,10 @@ def build_falcon_adapter_app(backend: str, model_case) -> FalconAdapterApp:  # n
                 resp,
                 form: model_case.get_model(FormPayload),
             ):
-                file_content = form.file.stream.read() if form.file else None
+                file_content = None
+                if form.file:
+                    with form.file.stream as stream:
+                        file_content = stream.read()
                 other = (
                     form.other.decode("utf-8")
                     if isinstance(form.other, bytes)
