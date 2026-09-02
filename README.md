@@ -5,7 +5,7 @@
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![CodeQL](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml/badge.svg)](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml)
-[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)](https://0b01001001.github.io/spectree/)
+[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)][documentation]
 
 Yet another library to generate OpenAPI documents and validate requests & responses with Python annotations.
 
@@ -47,6 +47,12 @@ If you want to use `msgspec` instead of `pydantic`:
 pip install "spectree[msgspec]"
 ```
 
+## Upgrading from v2
+
+Version 3 introduces model adapters and makes the model backend an optional
+dependency. Read the [v2 to v3 migration guide](docs/source/migration.md#migrating-from-spectree-v2-to-v3)
+before upgrading an existing application.
+
 ### Examples
 
 Check the [examples](examples) folder.
@@ -59,9 +65,9 @@ Check the [examples](examples) folder.
 
 ### Step by Step
 
-1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`
-2. create `spectree.SpecTree` instance with the web framework name you are using, like `api = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default, or you can pass another adapter explicitly with `model_adapter=...`.
-3. `api.validate` decorate the route with (the default value is given in parentheses):
+1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`.
+2. Create a `spectree.SpecTree` instance with the web framework name you are using, like `spec = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default; pass `model_adapter=get_msgspec_model_adapter()` to use the `msgspec` adapter, or pass another model adapter implementation.
+3. Decorate the route with `spec.validate`, using any of these arguments (default values are given in parentheses):
    * `query`
    * `json`
    * `headers`
@@ -70,57 +76,82 @@ Check the [examples](examples) folder.
    * `tags` *(no tags on endpoint)*
    * `security` *(`None` - endpoint is not secured)*
    * `deprecated` *(`False` - endpoint is not marked as deprecated)*
-4. access these data from the function annotations (see the examples below). Of course, you can still access them from the original place where the framework offered.
-5. register to the web application `api.register(app)`
-6. check the document at URL location `/apidoc/redoc` or `/apidoc/swagger` or `/apidoc/scalar`
+4. Access the validated data through the function arguments (see the examples below). You can also access the original data through the web framework.
+5. Register Spectree with the web application by calling `spec.register(app)`.
+   Without this call, validation still works, but Spectree does not generate the
+   OpenAPI document.
+6. Open the generated document at `/apidoc/redoc`, `/apidoc/swagger`, or `/apidoc/scalar`.
 
-If the request doesn't pass the validation, it will return a 422 with a JSON error message(ctx, loc, msg, type).
+If a request fails validation, Spectree returns a 422 response containing error
+details produced by the configured model adapter.
 
-### Python dataclasses
+### Adapter models and Python dataclasses
 
-Plain Python `@dataclass` classes can be used directly as models for `query`, `json`,
-`form`, `headers`, `cookies`, and `Response` data. They are validated and serialized
-by the configured adapter, and their type annotations are included in the generated
-OpenAPI schema.
+Start by defining request and response models with one of the model types
+supported by the adapter you choose:
+
+- `pydantic`: use `pydantic.BaseModel` or a standard-library `@dataclass`.
+- `msgspec`: use `msgspec.Struct` or a standard-library `@dataclass`.
+
+For requests, either pass the model to `spec.validate` (`json=Profile`) or add it
+as a parameter annotation (`json: Profile`). Put response models in `Response`,
+for example `Response(HTTP_200=Message)`.
+
+Plain Python dataclasses can be used directly as request or response models, or
+as field types within another model.
 
 ```py
 from dataclasses import dataclass
 
-@dataclass
-class Profile:
+from pydantic import BaseModel
+from spectree import Response, SpecTree
+
+
+spec = SpecTree("flask")
+
+
+class Profile(BaseModel):
     name: str
 
-@api.validate(json=Profile, resp=Response(HTTP_200=Profile))
+
+@dataclass
+class Message:
+    text: str
+
+
+@spec.validate(resp=Response(HTTP_200=Message))
 def profile(json: Profile):
-    return Profile(name=json.name)
+    return Message(text=f"Hello, {json.name}")
 ```
 
-This works with both the default Pydantic adapter and the Msgspec adapter. Models from
-both styles can be mixed in the same application; the
-[Falcon Msgspec example](examples/falcon_msgspec_demo.py) uses dataclasses for its query
-and successful response models alongside Msgspec structs. Install the corresponding
-optional dependency and configure Msgspec explicitly when using it.
+`Profile` is the `pydantic` request model selected by the `json` annotation.
+`Message` is the dataclass response model assigned to status 200. The configured
+adapter validates and serializes both models and includes them in the generated
+OpenAPI schema.
 
 ### Falcon response validation
 
-For Falcon response, this library only validates against media as it is the serializable object. Response.text is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `api.validate` should be like `Response(HTTP_200=None)`
+For Falcon response, this library only validates against media as it is the serializable object. Response.text is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `spec.validate` should be like `Response(HTTP_200=None)`
 
-### Opt-in type annotation feature
-This library also supports the injection of validated fields into view function arguments along with parameter annotation-based type declaration. This works well with linters that can take advantage of typing features like mypy. See the examples section below.
+### Type annotation feature
+Type annotation support is enabled by default. Spectree injects validated fields into
+view function arguments based on their parameter annotations. This works well with
+linters that take advantage of typing features such as mypy. Set `annotations=False`
+on `SpecTree` to opt out.
 
 ## How-To
 
-> How to add summary and description to endpoints?
+### How to add summary and description to endpoints?
 
 Just add docs to the endpoint function. The 1st line is the summary, and the rest is the description for this endpoint.
 
-> How to add a description to parameters?
+### How to add a description to parameters?
 
 Check your model backend's field metadata and schema documentation for how to attach descriptions.
 
-> Any config I can change?
+### Any config I can change?
 
-Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
+Of course. Check the [`Configuration`](spectree/config.py) source.
 
 You can update the config when init the spectree like:
 
@@ -128,7 +159,7 @@ You can update the config when init the spectree like:
 SpecTree('flask', title='Demo API', version='v1.0', path='doc')
 ```
 
-> How do I choose between `pydantic` and `msgspec`?
+### How do I choose between `pydantic` and `msgspec`?
 
 Install the extra for the backend you want to use, then pass the adapter when creating `SpecTree`:
 
@@ -139,7 +170,7 @@ SpecTree("falcon", model_adapter=get_msgspec_model_adapter())
 SpecTree("flask")  # uses pydantic by default
 ```
 
-> What is `Response` and how to use it?
+### What is `Response` and how to use it?
 
 To build a response for the endpoint, you need to declare the status code with format `HTTP_{code}` and corresponding data (optional).
 
@@ -150,7 +181,7 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
 
-> How can I skip the validation?
+### How can I skip the validation?
 
 Add `skip_validation=True` to the decorator.
 
@@ -159,10 +190,10 @@ Before v1.3.0, this only skip the response validation.
 Starts from v1.3.0, this will skip all the validations. As an result, you won't be able to access the validated data from `context`.
 
 ```py
-@api.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
+@spec.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
 ```
 
-> What is the callback signature for `before` and `after` hooks?
+### What is the callback signature for `before` and `after` hooks?
 
 Both hooks now receive the active model adapter as their last argument:
 
@@ -177,22 +208,22 @@ def after(req, resp, resp_validation_error, instance, model_adapter):
 
 This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook.
 
-> How can I use the validation without the OpenAPI document?
+### How can I use the validation without the OpenAPI document?
 
-The OpenAPI endpoints are added by `spectree.register(app)`. If you don't want to add the OpenAPI endpoints, you don't need to register it to the application.
+The OpenAPI endpoints are added by `spec.register(app)`. If you don't want to add the OpenAPI endpoints, you don't need to register it to the application.
 
-> How to secure API endpoints?
+### How to secure API endpoints?
 
 For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. Then there are two ways to enforce security:
 
-1. You can enforce security on individual API endpoints by defining the `security` argument in the `api.validate` decorator of relevant function/method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as a dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in the following example:
+1. You can enforce security on individual API endpoints by defining the `security` argument in the `spec.validate` decorator of relevant function/method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as a dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in the following example:
 
 <details>
 <summary>Click to expand the code example:</summary>
 <p>
 
 ```py
-api = SpecTree(security_schemes=[
+spec = SpecTree(security_schemes=[
         SecurityScheme(
             name="auth_apiKey",
             data={"type": "apiKey", "name": "Authorization", "in": "header"},
@@ -221,7 +252,7 @@ api = SpecTree(security_schemes=[
 
 
 # Not secured API endpoint
-@api.validate(
+@spec.validate(
     resp=Response(HTTP_200=None),
 )
 def foo():
@@ -229,7 +260,7 @@ def foo():
 
 
 # API endpoint secured by API key type or OAuth2 type
-@api.validate(
+@spec.validate(
     resp=Response(HTTP_200=None),
     security={"auth_apiKey": [], "auth_oauth2": ["read", "write"]},  # Local security type
 )
@@ -241,14 +272,14 @@ def bar():
 </details>
 
 
-2. You can enforce security on the whole API by defining the `security` argument in the `SpecTree` constructor (this corresponds to the define security section on the root level in `OpenAPI`). It is possible to override global security by defining local security, as well as override to no security on some API endpoint, in the `security` argument of `api.validate` decorator of relevant function/method as was described in the previous point. It is also shown in the following small example:
+2. You can enforce security on the whole API by defining the `security` argument in the `SpecTree` constructor (this corresponds to the define security section on the root level in `OpenAPI`). It is possible to override global security by defining local security, as well as override to no security on some API endpoint, in the `security` argument of `spec.validate` decorator of relevant function/method as was described in the previous point. It is also shown in the following small example:
 
 <details>
 <summary>Click to expand the code example:</summary>
 <p>
 
 ```py
-api = SpecTree(security_schemes=[
+spec = SpecTree(security_schemes=[
         SecurityScheme(
             name="auth_apiKey",
             data={"type": "apiKey", "name": "Authorization", "in": "header"},
@@ -277,7 +308,7 @@ api = SpecTree(security_schemes=[
 )
 
 # Force no security
-@api.validate(
+@spec.validate(
     resp=Response(HTTP_200=None),
     security={}, # Locally overridden security type
 )
@@ -286,7 +317,7 @@ def foo():
 
 
 # Force another type of security than global one
-@api.validate(
+@spec.validate(
     resp=Response(HTTP_200=None),
     security={"auth_oauth2": ["read"]}, # Locally overridden security type
 )
@@ -295,7 +326,7 @@ def bar():
 
 
 # Use the global security
-@api.validate(
+@spec.validate(
     resp=Response(HTTP_200=None),
 )
 def foobar():
@@ -305,33 +336,33 @@ def foobar():
 </p>
 </details>
 
-> How to mark deprecated endpoint?
+### How to mark deprecated endpoint?
 
-Use `deprecated` attribute with value `True` in `api.validate()` decorator. This way, an endpoint will be marked as
+Use `deprecated` attribute with value `True` in `spec.validate()` decorator. This way, an endpoint will be marked as
  deprecated and will be marked with a strikethrough in API documentation.
 
 Code example:
 ```
-@api.validate(
+@spec.validate(
     deprecated=True,
 )
 def deprecated_endpoint():
     ...
 ```
 
-> What should I return when I'm using the library?
+### What should I return when I'm using the library?
 
 No need to change anything. Just return what the framework required.
 
-> How to log when the validation failed?
+### How to log when the validation failed?
 
 Validation errors are logged with the INFO level. Details are passed into `extra`. Check the [falcon example](examples/falcon_demo.py) for details.
 
-> How can I write a customized plugin for another backend framework?
+### How can I write a customized plugin for another backend framework?
 
-Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `api = SpecTree(backend=MyCustomizedPlugin)`.
+Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `spec = SpecTree(backend=MyCustomizedPlugin)`.
 
-> How to use a customized template page?
+### How to use a customized template page?
 
 ```py
 SpecTree(page_templates={"page_name": "customized page contains {spec_url} for rendering"})
@@ -339,15 +370,17 @@ SpecTree(page_templates={"page_name": "customized page contains {spec_url} for r
 
 In the above example, the key "page_name" will be used in the URL to access this page "/apidoc/page_name". The value should be a string that contains `{spec_url}` which will be used to access the OpenAPI JSON file.
 
-> How can I change the response when there is a validation error? Can I record some metrics?
+### How can I change the response when there is a validation error? Can I record some metrics?
 
-This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [test case](tests/test_plugin_flask.py). You can change the handlers for SpecTree or a specific endpoint validation.
+This library provides `before` and `after` hooks to do these. Check the
+[documentation] or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py).
+You can change the handlers for SpecTree or a specific endpoint validation.
 
-> How to change the default `ValidationError` status code?
+### How to change the default `ValidationError` status code?
 
 You can change the `validation_error_status` in SpecTree (global) or a specific endpoint (local). This also takes effect in the OpenAPI documentation.
 
-> How can I return my model directly?
+### How can I return my model directly?
 
 Yes, returning an instance produced by your configured model backend will assume the model is valid and bypass Spectree's validation. Spectree will serialize that instance through the active model adapter.
 
@@ -570,3 +603,5 @@ You can use [`pydantic.model_validator(mode="before")`](https://docs.pydantic.de
 > ValidationError: value is not a valid list for the query
 
 Since there is no standard for HTTP queries with multiple values, it's hard to find a way to handle this for different web frameworks.
+
+[documentation]: https://0b01001001.github.io/spectree/

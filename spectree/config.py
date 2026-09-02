@@ -78,7 +78,7 @@ class Configuration(AdapterBackedDataclass):
     #: `{spec_url}` placeholder, that'll be replaced by the actual OpenAPI spec URL in
     #: the rendered documentation page
     page_templates: dict[str, str] = field(default_factory=lambda: dict(PAGE_TEMPLATES))
-    #: opt-in type annotation feature, see the README examples
+    #: type annotation feature, enabled by default; see the README examples
     annotations: bool = True
     #: servers section of OAS :py:class:`spectree.models.Server`
     servers: list[Server] = field(default_factory=list)

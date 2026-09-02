@@ -1,6 +1,6 @@
 [project]
 name = "spectree"
-version = "3.0.0a1"
+version = "3.0.0rc1"
 dynamic = []
 description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"
@@ -84,6 +84,9 @@ markers = [
     "pydantic: tests that rely on pydantic-specific models or behavior",
     "msgspec: tests that require msgspec, which is not available on PyPy",
 ]
+
+[tool.typos.files]
+extend-exclude = ["CHANGELOG.md", "cliff.toml", "tests/"]
 
 [dependency-groups]
 dev = [

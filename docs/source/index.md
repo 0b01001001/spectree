@@ -26,6 +26,15 @@ adapter
 
 ```{toctree}
 ---
+maxdepth: 2
+hidden:
+caption: Guides
+---
+migration
+```
+
+```{toctree}
+---
 hidden:
 caption: Project Links
 ---
