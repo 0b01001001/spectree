@@ -84,9 +84,10 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 
 ### Adapter models and Python dataclasses
 
-The top-level request or response model should use the active adapter's model class:
-`pydantic.BaseModel` for the Pydantic adapter or `msgspec.Struct` for the msgspec
-adapter. Plain Python dataclasses can be used as nested types within that model.
+The model passed directly to `spec.validate`, or assigned to a status code in
+`Response`, should use the active adapter's model class: `pydantic.BaseModel` for
+the `pydantic` adapter or `msgspec.Struct` for the `msgspec` adapter. Fields on
+that model can use plain Python dataclasses as their types.
 
 ```py
 from dataclasses import dataclass
