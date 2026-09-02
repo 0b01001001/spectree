@@ -78,6 +78,8 @@ Check the [examples](examples) folder.
    * `deprecated` *(`False` - endpoint is not marked as deprecated)*
 4. Access the validated data through the function arguments (see the examples below). You can also access the original data through the web framework.
 5. Register Spectree with the web application by calling `spec.register(app)`.
+   Without this call, validation still works, but Spectree does not generate the
+   OpenAPI document.
 6. Open the generated document at `/apidoc/redoc`, `/apidoc/swagger`, or `/apidoc/scalar`.
 
 If a request fails validation, Spectree returns a 422 response containing error
