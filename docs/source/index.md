@@ -13,15 +13,6 @@
 ---
 maxdepth: 2
 hidden:
-caption: Guides
----
-migration
-```
-
-```{toctree}
----
-maxdepth: 2
-hidden:
 caption: API reference
 ---
 spectree
@@ -31,6 +22,15 @@ models
 utils
 plugins
 adapter
+```
+
+```{toctree}
+---
+maxdepth: 2
+hidden:
+caption: Guides
+---
+migration
 ```
 
 ```{toctree}
