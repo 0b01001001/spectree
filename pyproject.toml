@@ -85,6 +85,9 @@ markers = [
     "msgspec: tests that require msgspec, which is not available on PyPy",
 ]
 
+[tool.typos.files]
+extend-exclude = ["CHANGELOG.md", "cliff.toml", "tests/"]
+
 [dependency-groups]
 dev = [
     "anyio>=4.10.0",

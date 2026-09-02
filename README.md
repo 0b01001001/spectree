@@ -95,7 +95,7 @@ supported by the adapter you choose:
 
 For requests, either pass the model to `spec.validate` (`json=Profile`) or add it
 as a parameter annotation (`json: Profile`). Put response models in `Response`,
-for example `Response(HTTP_200=Profile)`.
+for example `Response(HTTP_200=Message)`.
 
 Plain Python dataclasses can be used directly as request or response models, or
 as field types within another model.

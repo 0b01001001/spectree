@@ -142,14 +142,14 @@ return PydanticResponse(model)
 ```
 
 ```python
-# Spectree v3
+# Spectree v3, this works for both `pydantic` and `msgspec`
 from spectree.plugins.starlette_plugin import SpecTreeStarletteResponse
 
 return SpecTreeStarletteResponse(model)
 ```
 
 Create `SpecTreeStarletteResponse` inside a route wrapped by `spec.validate` so
-it can use that `SpecTree` instance's model adapter.
+it can use that `SpecTree` instance's model adapter automatically.
 
 ### Upgrade checklist
 
