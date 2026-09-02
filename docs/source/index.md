@@ -16,7 +16,6 @@ hidden:
 caption: Guides
 ---
 migration
-examples
 ```
 
 ```{toctree}
