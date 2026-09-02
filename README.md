@@ -123,15 +123,15 @@ on `SpecTree` to opt out.
 
 ## How-To
 
-> How to add summary and description to endpoints?
+### How to add summary and description to endpoints?
 
 Just add docs to the endpoint function. The 1st line is the summary, and the rest is the description for this endpoint.
 
-> How to add a description to parameters?
+### How to add a description to parameters?
 
 Check your model backend's field metadata and schema documentation for how to attach descriptions.
 
-> Any config I can change?
+### Any config I can change?
 
 Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
 
@@ -141,7 +141,7 @@ You can update the config when init the spectree like:
 SpecTree('flask', title='Demo API', version='v1.0', path='doc')
 ```
 
-> How do I choose between `pydantic` and `msgspec`?
+### How do I choose between `pydantic` and `msgspec`?
 
 Install the extra for the backend you want to use, then pass the adapter when creating `SpecTree`:
 
@@ -152,7 +152,7 @@ SpecTree("falcon", model_adapter=get_msgspec_model_adapter())
 SpecTree("flask")  # uses pydantic by default
 ```
 
-> What is `Response` and how to use it?
+### What is `Response` and how to use it?
 
 To build a response for the endpoint, you need to declare the status code with format `HTTP_{code}` and corresponding data (optional).
 
@@ -163,7 +163,7 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
 
-> How can I skip the validation?
+### How can I skip the validation?
 
 Add `skip_validation=True` to the decorator.
 
@@ -175,7 +175,7 @@ Starts from v1.3.0, this will skip all the validations. As an result, you won't 
 @spec.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
 ```
 
-> What is the callback signature for `before` and `after` hooks?
+### What is the callback signature for `before` and `after` hooks?
 
 Both hooks now receive the active model adapter as their last argument:
 
@@ -190,11 +190,11 @@ def after(req, resp, resp_validation_error, instance, model_adapter):
 
 This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook.
 
-> How can I use the validation without the OpenAPI document?
+### How can I use the validation without the OpenAPI document?
 
 The OpenAPI endpoints are added by `spec.register(app)`. If you don't want to add the OpenAPI endpoints, you don't need to register it to the application.
 
-> How to secure API endpoints?
+### How to secure API endpoints?
 
 For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. Then there are two ways to enforce security:
 
@@ -318,7 +318,7 @@ def foobar():
 </p>
 </details>
 
-> How to mark deprecated endpoint?
+### How to mark deprecated endpoint?
 
 Use `deprecated` attribute with value `True` in `spec.validate()` decorator. This way, an endpoint will be marked as
  deprecated and will be marked with a strikethrough in API documentation.
@@ -332,19 +332,19 @@ def deprecated_endpoint():
     ...
 ```
 
-> What should I return when I'm using the library?
+### What should I return when I'm using the library?
 
 No need to change anything. Just return what the framework required.
 
-> How to log when the validation failed?
+### How to log when the validation failed?
 
 Validation errors are logged with the INFO level. Details are passed into `extra`. Check the [falcon example](examples/falcon_demo.py) for details.
 
-> How can I write a customized plugin for another backend framework?
+### How can I write a customized plugin for another backend framework?
 
 Inherit `spectree.plugins.base.BasePlugin` and implement the functions you need. After that, init like `spec = SpecTree(backend=MyCustomizedPlugin)`.
 
-> How to use a customized template page?
+### How to use a customized template page?
 
 ```py
 SpecTree(page_templates={"page_name": "customized page contains {spec_url} for rendering"})
@@ -352,15 +352,15 @@ SpecTree(page_templates={"page_name": "customized page contains {spec_url} for r
 
 In the above example, the key "page_name" will be used in the URL to access this page "/apidoc/page_name". The value should be a string that contains `{spec_url}` which will be used to access the OpenAPI JSON file.
 
-> How can I change the response when there is a validation error? Can I record some metrics?
+### How can I change the response when there is a validation error? Can I record some metrics?
 
 This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py). You can change the handlers for SpecTree or a specific endpoint validation.
 
-> How to change the default `ValidationError` status code?
+### How to change the default `ValidationError` status code?
 
 You can change the `validation_error_status` in SpecTree (global) or a specific endpoint (local). This also takes effect in the OpenAPI documentation.
 
-> How can I return my model directly?
+### How can I return my model directly?
 
 Yes, returning an instance produced by your configured model backend will assume the model is valid and bypass Spectree's validation. Spectree will serialize that instance through the active model adapter.
 
