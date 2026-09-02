@@ -5,7 +5,7 @@
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![CodeQL](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml/badge.svg)](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml)
-[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)](https://0b01001001.github.io/spectree/)
+[![Python document](https://github.com/0b01001001/spectree/workflows/Python%20document/badge.svg)][documentation]
 
 Yet another library to generate OpenAPI documents and validate requests & responses with Python annotations.
 
@@ -150,7 +150,7 @@ Check your model backend's field metadata and schema documentation for how to at
 
 ### Any config I can change?
 
-Of course. Check the [config](https://spectree.readthedocs.io/en/latest/config.html) document.
+Of course. Check the [config](docs/source/config.rst) document.
 
 You can update the config when init the spectree like:
 
@@ -371,7 +371,9 @@ In the above example, the key "page_name" will be used in the URL to access this
 
 ### How can I change the response when there is a validation error? Can I record some metrics?
 
-This library provides `before` and `after` hooks to do these. Check the [doc](https://spectree.readthedocs.io/en/latest) or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py). You can change the handlers for SpecTree or a specific endpoint validation.
+This library provides `before` and `after` hooks to do these. Check the
+[documentation] or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py).
+You can change the handlers for SpecTree or a specific endpoint validation.
 
 ### How to change the default `ValidationError` status code?
 
@@ -600,3 +602,5 @@ You can use [`pydantic.model_validator(mode="before")`](https://docs.pydantic.de
 > ValidationError: value is not a valid list for the query
 
 Since there is no standard for HTTP queries with multiple values, it's hard to find a way to handle this for different web frameworks.
+
+[documentation]: https://0b01001001.github.io/spectree/
