@@ -66,7 +66,7 @@ Check the [examples](examples) folder.
 ### Step by Step
 
 1. Define your data structures for `query`, `json`, `headers`, `cookies`, and `resp` with the model backend you configured for `SpecTree`
-2. create a `spectree.SpecTree` instance with the web framework name you are using, like `spec = SpecTree('flask')`. `SpecTree` uses the Pydantic adapter by default; pass `model_adapter=get_msgspec_model_adapter()` to use the msgspec adapter, or pass another model adapter implementation.
+2. create a `spectree.SpecTree` instance with the web framework name you are using, like `spec = SpecTree('flask')`. `SpecTree` uses the `pydantic` adapter by default; pass `model_adapter=get_msgspec_model_adapter()` to use the `msgspec` adapter, or pass another model adapter implementation.
 3. `spec.validate` decorate the route with (the default value is given in parentheses):
    * `query`
    * `json`
