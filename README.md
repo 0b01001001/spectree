@@ -110,23 +110,24 @@ from spectree import Response, SpecTree
 spec = SpecTree("flask")
 
 
-@dataclass
-class Address:
-    city: str
-
-
 class Profile(BaseModel):
     name: str
-    address: Address
 
 
-@spec.validate(resp=Response(HTTP_200=Profile))
+@dataclass
+class Message:
+    text: str
+
+
+@spec.validate(resp=Response(HTTP_200=Message))
 def profile(json: Profile):
-    return json
+    return Message(text=f"Hello, {json.name}")
 ```
 
-The configured adapter validates and serializes the nested dataclass and includes its
-type annotations in the generated OpenAPI schema.
+`Profile` is the `pydantic` request model selected by the `json` annotation.
+`Message` is the dataclass response model assigned to status 200. The configured
+adapter validates and serializes both models and includes them in the generated
+OpenAPI schema.
 
 ### Falcon response validation
 
