@@ -47,6 +47,18 @@ class StreamWrapper:
         self._buf.seek(0)
         self._buf.truncate(0)
 
+    def close(self) -> None:
+        self._buf.close()
+
+    def __enter__(self) -> "StreamWrapper":
+        return self
+
+    def __exit__(self, *_args: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        self.close()
+
 
 class AsyncStreamWrapper(StreamWrapper):
     def __init__(self):
@@ -74,6 +86,15 @@ class AsyncStreamWrapper(StreamWrapper):
 
     async def exhaust(self) -> None:  # type: ignore[override]
         super().exhaust()
+
+    async def aclose(self) -> None:
+        await asyncio.get_running_loop().run_in_executor(None, self.close)
+
+    async def __aenter__(self) -> "AsyncStreamWrapper":
+        return self
+
+    async def __aexit__(self, *_args: Any) -> None:
+        await self.aclose()
 
 
 class OpenAPI:
