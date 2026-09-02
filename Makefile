@@ -17,19 +17,19 @@ import_test:
 
 test: import_test
 	uv sync --all-extras --group dev
-	uv run -- pytest tests -vv -rs --disable-warnings
+	uv run -- pytest tests -vv -rs
 
 test_common:
 	uv sync --all-extras --group dev --no-extra msgspec --no-extra pydantic
-	uv run -- pytest tests -vv -rs --disable-warnings -m "not pydantic and not msgspec"
+	uv run -- pytest tests -vv -rs -m "not pydantic and not msgspec"
 
 test_pydantic:
 	uv sync --all-extras --no-extra msgspec --group dev
-	uv run -- pytest tests -vv -rs --disable-warnings -m pydantic
+	uv run -- pytest tests -vv -rs -m pydantic
 
 test_msgspec:
 	uv sync --all-extras --no-extra pydantic --group dev
-	uv run -- pytest tests -vv -rs --disable-warnings -m msgspec
+	uv run -- pytest tests -vv -rs -m msgspec
 
 update_snapshot:
 	@uv run -- pytest --snapshot-update
