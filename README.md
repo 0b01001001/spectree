@@ -87,10 +87,8 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 Start by defining request and response models with one of the model types
 supported by the adapter you choose:
 
-- With the `pydantic` adapter, use `pydantic.BaseModel` or a standard-library
-  `@dataclass`.
-- With the `msgspec` adapter, use `msgspec.Struct` or a standard-library
-  `@dataclass`.
+- `pydantic`: use `pydantic.BaseModel` or a standard-library `@dataclass`.
+- `msgspec`: use `msgspec.Struct` or a standard-library `@dataclass`.
 
 For requests, either pass the model to `spec.validate` (`json=Profile`) or add it
 as a parameter annotation (`json: Profile`). Put response models in `Response`,
