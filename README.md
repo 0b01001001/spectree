@@ -82,37 +82,44 @@ Check the [examples](examples) folder.
 
 If the request doesn't pass the validation, it will return a 422 with a JSON error message(ctx, loc, msg, type).
 
-### Python dataclasses
+### Adapter models and Python dataclasses
 
-Plain Python `@dataclass` classes can be used directly as models for `query`, `json`,
-`form`, `headers`, `cookies`, and `Response` data. They are validated and serialized
-by the configured adapter, and their type annotations are included in the generated
-OpenAPI schema.
+The top-level request or response model should use the active adapter's model class:
+`pydantic.BaseModel` for the Pydantic adapter or `msgspec.Struct` for the msgspec
+adapter. Plain Python dataclasses can be used as nested types within that model.
 
 ```py
 from dataclasses import dataclass
 
+from pydantic import BaseModel
+
+
 @dataclass
-class Profile:
+class Address:
+    city: str
+
+
+class Profile(BaseModel):
     name: str
+    address: Address
 
 @spec.validate(json=Profile, resp=Response(HTTP_200=Profile))
 def profile(json: Profile):
-    return Profile(name=json.name)
+    return json
 ```
 
-This works with both the default Pydantic adapter and the Msgspec adapter. Models from
-both styles can be mixed in the same application; the
-[Falcon Msgspec example](examples/falcon_msgspec_demo.py) uses dataclasses for its query
-and successful response models alongside Msgspec structs. Install the corresponding
-optional dependency and configure Msgspec explicitly when using it.
+The configured adapter validates and serializes the nested dataclass and includes its
+type annotations in the generated OpenAPI schema.
 
 ### Falcon response validation
 
 For Falcon response, this library only validates against media as it is the serializable object. Response.text is a string representing response content and will not be validated. For no assigned media situation, `resp` parameter in `spec.validate` should be like `Response(HTTP_200=None)`
 
-### Opt-in type annotation feature
-This library also supports the injection of validated fields into view function arguments along with parameter annotation-based type declaration. This works well with linters that can take advantage of typing features like mypy. See the examples section below.
+### Type annotation feature
+Type annotation support is enabled by default. Spectree injects validated fields into
+view function arguments based on their parameter annotations. This works well with
+linters that take advantage of typing features such as mypy. Set `annotations=False`
+on `SpecTree` to opt out.
 
 ## How-To
 
