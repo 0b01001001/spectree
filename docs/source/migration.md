@@ -32,7 +32,7 @@ Existing Pydantic applications can continue to rely on the default:
 ```python
 from spectree import SpecTree
 
-api = SpecTree("flask")
+spec = SpecTree("flask")
 ```
 
 Applications using msgspec must pass its adapter:
@@ -40,7 +40,7 @@ Applications using msgspec must pass its adapter:
 ```python
 from spectree import SpecTree, get_msgspec_model_adapter
 
-api = SpecTree("falcon", model_adapter=get_msgspec_model_adapter())
+spec = SpecTree("falcon", model_adapter=get_msgspec_model_adapter())
 ```
 
 Custom adapters must implement the
@@ -114,7 +114,7 @@ Use `naming_strategy` and `nested_naming_strategy` on `SpecTree` when component
 names are part of a published OpenAPI contract:
 
 ```python
-api = SpecTree(
+spec = SpecTree(
     "flask",
     naming_strategy=lambda model: model.__name__.lower(),
     nested_naming_strategy=lambda _parent, child: child,
