@@ -84,17 +84,20 @@ If the request doesn't pass the validation, it will return a 422 with a JSON err
 
 ### Adapter models and Python dataclasses
 
-Start by defining request and response models with the class provided by the
-adapter you choose:
+Start by defining request and response models with one of the model types
+supported by the adapter you choose:
 
-- Use `pydantic.BaseModel` with the `pydantic` adapter.
-- Use `msgspec.Struct` with the `msgspec` adapter.
+- With the `pydantic` adapter, use `pydantic.BaseModel` or a standard-library
+  `@dataclass`.
+- With the `msgspec` adapter, use `msgspec.Struct` or a standard-library
+  `@dataclass`.
 
 For requests, either pass the model to `spec.validate` (`json=Profile`) or add it
 as a parameter annotation (`json: Profile`). Put response models in `Response`,
 for example `Response(HTTP_200=Profile)`.
 
-These models can have fields whose types are plain Python dataclasses.
+Plain Python dataclasses can be used directly as request or response models, or
+as field types within another model.
 
 ```py
 from dataclasses import dataclass
