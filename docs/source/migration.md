@@ -128,6 +128,29 @@ model adapter. Code in custom hooks or plugins should use
 `model_adapter.validation_error` and `model_adapter.validation_errors(error)`
 instead of assuming a Pydantic `ValidationError`.
 
+### Starlette model responses have a new name
+
+The Pydantic-specific `PydanticResponse` factory has been replaced by
+`SpecTreeStarletteResponse`, which serializes models through the active adapter.
+Update Starlette handlers that return model instances:
+
+```python
+# Spectree v2
+from spectree.plugins.starlette_plugin import PydanticResponse
+
+return PydanticResponse(model)
+```
+
+```python
+# Spectree v3
+from spectree.plugins.starlette_plugin import SpecTreeStarletteResponse
+
+return SpecTreeStarletteResponse(model)
+```
+
+Create `SpecTreeStarletteResponse` inside a route wrapped by `spec.validate` so
+it can use that `SpecTree` instance's model adapter.
+
 ### Upgrade checklist
 
 1. Install `spectree[pydantic]` or `spectree[msgspec]`.
@@ -135,7 +158,8 @@ instead of assuming a Pydantic `ValidationError`.
 3. Update hook functions to accept `model_adapter`.
 4. Replace direct `spectree.BaseFile` use with `model_adapter.basefile`.
 5. Replace Pydantic-only operations on Spectree metadata classes.
-6. Compare the generated OpenAPI document, especially component names and
+6. Replace Starlette `PydanticResponse` calls with `SpecTreeStarletteResponse`.
+7. Compare the generated OpenAPI document, especially component names and
    serialized response schemas, before deploying.
 
 ## Migrating from Spectree v1 to v2
