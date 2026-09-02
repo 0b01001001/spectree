@@ -150,7 +150,7 @@ Check your model backend's field metadata and schema documentation for how to at
 
 ### Any config I can change?
 
-Of course. Check the [config](docs/source/config.rst) document.
+Of course. Check the [`Configuration`](spectree/config.py) source.
 
 You can update the config when init the spectree like:
 
