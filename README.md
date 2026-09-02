@@ -50,7 +50,7 @@ pip install "spectree[msgspec]"
 ## Upgrading from v2
 
 Version 3 introduces model adapters and makes the model backend an optional
-dependency. Read the [v2 to v3 migration guide](https://spectree.readthedocs.io/en/latest/migration.html#migrating-from-spectree-v2-to-v3)
+dependency. Read the [v2 to v3 migration guide](docs/source/migration.md#migrating-from-spectree-v2-to-v3)
 before upgrading an existing application.
 
 ### Examples

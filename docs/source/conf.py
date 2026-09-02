@@ -117,6 +117,19 @@ def resolve_repository_links(app, doctree):
         if not repository_path.exists():
             continue
 
+        if repository_path.is_relative_to(Path(app.srcdir)):
+            docname = (
+                repository_path.relative_to(app.srcdir).with_suffix("").as_posix()
+            )
+            if docname in app.env.found_docs:
+                refuri = app.builder.get_relative_uri(app.env.docname, docname)
+                if separator:
+                    refuri = f"{refuri}#{quote(fragment)}"
+                reference = nodes.reference("", "", internal=True, refuri=refuri)
+                reference.extend(node.children)
+                node.replace_self(reference)
+                continue
+
         object_type = "tree" if repository_path.is_dir() else "blob"
         refuri = (
             f"https://github.com/{source_user}/{source_repo}/{object_type}/HEAD/"
