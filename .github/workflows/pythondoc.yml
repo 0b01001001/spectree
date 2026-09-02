@@ -10,6 +10,7 @@ on:
       - 'docs/**'
       - '.github/workflows/pythondoc.yml'
       - 'examples/**'
+      - 'README.md'
   push:
     branches:
       - master
@@ -19,6 +20,7 @@ on:
       - 'docs/**'
       - '.github/workflows/pythondoc.yml'
       - 'examples/**'
+      - 'README.md'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -36,6 +38,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
+    - uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
     - name: Setup Pages
       uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
     - name: Install uv
@@ -67,4 +70,4 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+      uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -187,7 +187,7 @@ Add `skip_validation=True` to the decorator.
 
 Before v1.3.0, this only skip the response validation.
 
-Starts from v1.3.0, this will skip all the validations. As an result, you won't be able to access the validated data from `context`.
+Starts from v1.3.0, this will skip all the validations. As a result, you won't be able to access the validated data from `context`.
 
 ```py
 @spec.validate(json=Profile, resp=Response(HTTP_200=Message, HTTP_403=None), skip_validation=True)
@@ -216,7 +216,7 @@ The OpenAPI endpoints are added by `spec.register(app)`. If you don't want to ad
 
 For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. Then there are two ways to enforce security:
 
-1. You can enforce security on individual API endpoints by defining the `security` argument in the `spec.validate` decorator of relevant function/method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as a dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is showed in the following example:
+1. You can enforce security on individual API endpoints by defining the `security` argument in the `spec.validate` decorator of relevant function/method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as a dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is shown in the following example:
 
 <details>
 <summary>Click to expand the code example:</summary>
