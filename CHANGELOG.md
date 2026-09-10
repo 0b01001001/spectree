@@ -5,7 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-09-10
+
+### Added
+
+- Add typos ci, fix typos in readme (#523)
+
+## [3.0.0rc1] - 2026-09-02
+
+### Added
+
+- Add migration guide (#519)
+
+### Changed
+
+- Bump the all-pips group with 5 updates (#515)
+- Bump astral-sh/setup-uv from 9.0.0 to 10.0.1 in the all-actions group (#514)
+- Run CodeQL checks on main (#516)
+
+### Fixed
+
+- Close uploaded files deterministically (#520)
+- Expose and assert warnings (#521)
+- Bypass validation for WebSocket routes (#517)
+
+## [3.0.0a1] - 2026-08-30
 
 ### Added
 
@@ -29,14 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pin github ci action commits (#505)
 - Bump py versions, fix ruff, update changelog (#506)
 - Use function metadata to avoid dynamic attr (#512)
-- Demonstrate dataclasses with msgspec
+- Demonstrate dataclasses with msgspec (#513)
 
 ### Fixed
 
 - Apply the model adapter to all the tests (#504)
 - Ignore unsolvable return annotation in annotations mode (#493 continuation) (#508)
-- Handle changelog releases without predecessors
-- Require release tags for changelog generation
 
 ## [3.0.0a0] - 2026-05-12
 
@@ -1353,7 +1375,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix base interface, fix flask register function
 - Fix lambda closure bug
 
-[unreleased]: https://github.com/0b01001001/spectree/compare/v3.0.0a0..HEAD
+[3.0.0]: https://github.com/0b01001001/spectree/compare/v3.0.0rc1..v3.0.0
+[3.0.0rc1]: https://github.com/0b01001001/spectree/compare/v3.0.0a1..v3.0.0rc1
+[3.0.0a1]: https://github.com/0b01001001/spectree/compare/v3.0.0a0..v3.0.0a1
 [3.0.0a0]: https://github.com/0b01001001/spectree/compare/v2.0.1..v3.0.0a0
 [2.0.1]: https://github.com/0b01001001/spectree/compare/v2.0.0..v2.0.1
 [2.0.0]: https://github.com/0b01001001/spectree/compare/v2.0.0a1..v2.0.0
