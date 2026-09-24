@@ -46,8 +46,6 @@ jobs:
       with:
         enable-cache: true
         python-version: "3.13"
-    - name: Install dependencies
-      run: make install
     - name: Generate docs
       run: make doc
     - name: Upload artifact
