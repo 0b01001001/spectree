@@ -35,6 +35,7 @@ update_snapshot:
 	@uv run -- pytest --snapshot-update
 
 doc:
+	@uv sync --group docs
 	@cd docs && make html
 
 opendoc:
