@@ -25,6 +25,12 @@ If all you need is a framework-agnostic library that can generate OpenAPI docume
   * Falcon [demo](#falcon)
   * Starlette [demo](#starlette)
 
+## Upgrading from v2
+
+Version 3 introduces model adapters and makes the model backend an optional
+dependency. Read the [v2 to v3 migration guide](docs/source/migration.md#migrating-from-spectree-v2-to-v3)
+before upgrading an existing application.
+
 ## Quick Start
 
 Install with pip:
@@ -46,12 +52,6 @@ If you want to use `msgspec` instead of `pydantic`:
 ```bash
 pip install "spectree[msgspec]"
 ```
-
-## Upgrading from v2
-
-Version 3 introduces model adapters and makes the model backend an optional
-dependency. Read the [v2 to v3 migration guide](docs/source/migration.md#migrating-from-spectree-v2-to-v3)
-before upgrading an existing application.
 
 ### Examples
 
@@ -206,7 +206,7 @@ def after(req, resp, resp_validation_error, instance, model_adapter):
     ...
 ```
 
-This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook.
+This is useful when you need adapter-specific error details or other model-backend behavior in a custom hook. See the [hooks guide](docs/source/hooks.md) for details.
 
 ### How can I use the validation without the OpenAPI document?
 
@@ -373,7 +373,7 @@ In the above example, the key "page_name" will be used in the URL to access this
 ### How can I change the response when there is a validation error? Can I record some metrics?
 
 This library provides `before` and `after` hooks to do these. Check the
-[documentation] or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py).
+[hooks guide](docs/source/hooks.md) or the [Flask adapter tests](tests/plugin_flask/test_model_adapters.py).
 You can change the handlers for SpecTree or a specific endpoint validation.
 
 ### How to change the default `ValidationError` status code?

@@ -30,6 +30,7 @@ maxdepth: 2
 hidden:
 caption: Guides
 ---
+hooks
 migration
 ```
 
