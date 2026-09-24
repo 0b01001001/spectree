@@ -1,7 +1,7 @@
 # SpecTree
 
 
-[![GitHub Actions](https://github.com/0b01001001/spectree/workflows/Python%20package/badge.svg)](https://github.com/0b01001001/spectree/actions)
+[![Python Check](https://github.com/0b01001001/spectree/actions/workflows/pythonpackage.yml/badge.svg)](https://github.com/0b01001001/spectree/actions/workflows/pythonpackage.yml)
 [![pypi](https://img.shields.io/pypi/v/spectree.svg)](https://pypi.python.org/pypi/spectree)
 [![versions](https://img.shields.io/pypi/pyversions/spectree.svg)](https://github.com/0b01001001/spectree)
 [![CodeQL](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml/badge.svg)](https://github.com/0b01001001/spectree/actions/workflows/codeql.yml)
