@@ -25,4 +25,4 @@ def model_case(request):
 
 @pytest.fixture
 def snapshot_json(snapshot):
-    return snapshot.use_extension(JSONSnapshotExtension).with_defaults()
+    return snapshot.use_extension(JSONSnapshotExtension)
