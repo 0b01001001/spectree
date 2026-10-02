@@ -1462,7 +1462,7 @@ dev = [
     { name = "prek", specifier = ">=0.1.2" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "ruff", specifier = ">=0.11.12" },
-    { name = "syrupy", specifier = ">=4.9.1" },
+    { name = "syrupy", specifier = ">=6.0.0" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]
 docs = [
