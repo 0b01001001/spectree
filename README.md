@@ -214,7 +214,7 @@ The OpenAPI endpoints are added by `spec.register(app)`. If you don't want to ad
 
 ### How to secure API endpoints?
 
-For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. Then there are two ways to enforce security:
+For secure API endpoints, it is needed to define the `security_schemes` argument in the `SpecTree` constructor. `security_schemes` argument needs to contain an array of `SecurityScheme` objects. The `SecuritySchemeData` mapping is validated through the active model adapter; see the [migration guide](docs/source/migration.md#spectree-metadata-models-are-no-longer-pydantic-models). Then there are two ways to enforce security:
 
 1. You can enforce security on individual API endpoints by defining the `security` argument in the `spec.validate` decorator of relevant function/method (this corresponds to define security section on operation level, under `paths`, in `OpenAPI`). `security` argument is defined as a dictionary, where each key is the name of security used in `security_schemes` argument of `SpecTree` constructor and its value is required security scope, as is shown in the following example:
 
@@ -223,27 +223,42 @@ For secure API endpoints, it is needed to define the `security_schemes` argument
 <p>
 
 ```py
+from spectree import (
+    SecurityScheme,
+    SecuritySchemeData,
+    SpecTree,
+    get_pydantic_model_adapter,
+)
+
+model_adapter = get_pydantic_model_adapter()
+
 spec = SpecTree(security_schemes=[
         SecurityScheme(
             name="auth_apiKey",
-            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+            data=SecuritySchemeData.model_validate(
+                {"type": "apiKey", "name": "Authorization", "in": "header"},
+                model_adapter=model_adapter,
+            ),
         ),
         SecurityScheme(
             name="auth_oauth2",
-            data={
-                "type": "oauth2",
-                "flows": {
-                    "authorizationCode": {
-                        "authorizationUrl": "https://example.com/oauth/authorize",
-                        "tokenUrl": "https://example.com/oauth/token",
-                        "scopes": {
-                            "read": "Grants read access",
-                            "write": "Grants write access",
-                            "admin": "Grants access to admin operations",
+            data=SecuritySchemeData.model_validate(
+                {
+                    "type": "oauth2",
+                    "flows": {
+                        "authorizationCode": {
+                            "authorizationUrl": "https://example.com/oauth/authorize",
+                            "tokenUrl": "https://example.com/oauth/token",
+                            "scopes": {
+                                "read": "Grants read access",
+                                "write": "Grants write access",
+                                "admin": "Grants access to admin operations",
+                            },
                         },
                     },
                 },
-            },
+                model_adapter=model_adapter,
+            ),
         ),
         # ...
     ],
@@ -279,27 +294,42 @@ def bar():
 <p>
 
 ```py
+from spectree import (
+    SecurityScheme,
+    SecuritySchemeData,
+    SpecTree,
+    get_pydantic_model_adapter,
+)
+
+model_adapter = get_pydantic_model_adapter()
+
 spec = SpecTree(security_schemes=[
         SecurityScheme(
             name="auth_apiKey",
-            data={"type": "apiKey", "name": "Authorization", "in": "header"},
+            data=SecuritySchemeData.model_validate(
+                {"type": "apiKey", "name": "Authorization", "in": "header"},
+                model_adapter=model_adapter,
+            ),
         ),
         SecurityScheme(
             name="auth_oauth2",
-            data={
-                "type": "oauth2",
-                "flows": {
-                    "authorizationCode": {
-                        "authorizationUrl": "https://example.com/oauth/authorize",
-                        "tokenUrl": "https://example.com/oauth/token",
-                        "scopes": {
-                            "read": "Grants read access",
-                            "write": "Grants write access",
-                            "admin": "Grants access to admin operations",
+            data=SecuritySchemeData.model_validate(
+                {
+                    "type": "oauth2",
+                    "flows": {
+                        "authorizationCode": {
+                            "authorizationUrl": "https://example.com/oauth/authorize",
+                            "tokenUrl": "https://example.com/oauth/token",
+                            "scopes": {
+                                "read": "Grants read access",
+                                "write": "Grants write access",
+                                "admin": "Grants access to admin operations",
+                            },
                         },
                     },
                 },
-            },
+                model_adapter=model_adapter,
+            ),
         ),
         # ...
     ],
@@ -356,7 +386,7 @@ No need to change anything. Just return what the framework required.
 
 ### How to log when the validation failed?
 
-Validation errors are logged with the INFO level. Details are passed into `extra`. Check the [falcon example](examples/falcon_demo.py) for details.
+Validation errors are logged by the default handlers at the `ERROR` level, with the adapter-specific error details included in the log message. To customize logging or the error response, pass your own `before`/`after` hooks; check the [hooks guide](docs/source/hooks.md) for details.
 
 ### How can I write a customized plugin for another backend framework?
 
