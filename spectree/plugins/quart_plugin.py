@@ -34,7 +34,7 @@ class QuartPlugin(WerkzeugPlugin):
         req_headers: werkzeug.datastructures.EnvironHeaders
         req_cookies: werkzeug.datastructures.ImmutableMultiDict
         """
-        req_query = get_multidict_items(request.args)
+        req_query = get_multidict_items(request.args, query)
         req_headers = dict(iter(request.headers)) or {}
         req_cookies = get_multidict_items(request.cookies) or {}
         has_data = request.method not in ("GET", "DELETE")
