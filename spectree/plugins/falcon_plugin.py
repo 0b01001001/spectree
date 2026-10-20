@@ -30,7 +30,7 @@ from spectree._types import HookHandler
 from spectree.model_adapter import ModelClass
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
-from spectree.utils import cached_type_hints
+from spectree.utils import cached_type_hints, is_list_item
 
 
 class StreamWrapper:
@@ -252,9 +252,18 @@ class FalconPlugin(BasePlugin):
 
         return f"/{'/'.join(subs)}", parameters
 
+    def _query_params(self, req: FalconRequest, query) -> dict[str, str | list[str]]:
+        params = dict(req.params)
+        for key, value in params.items():
+            if not isinstance(value, list) and is_list_item(key, query):
+                params[key] = [value]
+        return params
+
     def validate_request(self, req: FalconRequest, query, json, form, headers, cookies):
         if query:
-            req.context.query = self.model_adapter.validate_obj(query, req.params)
+            req.context.query = self.model_adapter.validate_obj(
+                query, self._query_params(req, query)
+            )
         if headers:
             req.context.headers = self.model_adapter.validate_obj(headers, req.headers)
         if cookies:
@@ -388,7 +397,9 @@ class FalconAsgiPlugin(FalconPlugin):
         self, req: FalconASGIRequest, query, json, form, headers, cookies
     ):
         if query:
-            req.context.query = self.model_adapter.validate_obj(query, req.params)
+            req.context.query = self.model_adapter.validate_obj(
+                query, self._query_params(req, query)
+            )
         if headers:
             req.context.headers = self.model_adapter.validate_obj(headers, req.headers)
         if cookies:
