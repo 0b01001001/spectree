@@ -19,6 +19,7 @@ from tests.common_dataclass import (
     Order,
     Payload,
     Query,
+    QueryList,
     Resp,
     RespObject,
     ReturnCase,
@@ -171,6 +172,11 @@ def build_quart_adapter_app(model_case) -> QuartAdapterApp:
     @api.validate(json=model_case.get_model(list[Payload], name="ListPayload"))
     async def list_json():
         return {}
+
+    @app.route("/api/query_list", methods=["GET"])
+    @api.validate(query=model_case.get_model(QueryList))
+    async def query_list():
+        return {"ids": request.context.query.ids}
 
     @app.route("/api/return_list")
     @api.validate(
@@ -383,6 +389,15 @@ async def test_quart_model_adapter_no_response(client):
 async def test_quart_model_adapter_list_json_request(client):
     resp = await client.post("/api/list_json", json=[{"name": "foo", "limit": 1}])
     assert resp.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "query_string, expected", [("ids=1", [1]), ("ids=1&ids=2", [1, 2])]
+)
+async def test_quart_model_adapter_query_list(client, query_string, expected):
+    resp = await client.get(f"/api/query_list?{query_string}")
+    assert resp.status_code == 200
+    assert await resp.json == {"ids": expected}
 
 
 @pytest.mark.parametrize("pre_serialize", [False, True])
