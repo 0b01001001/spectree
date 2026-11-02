@@ -282,6 +282,16 @@ def test_falcon_model_adapter_list_json_request(falcon_adapter_app):
     assert response.status_code == HTTPStatus.OK
 
 
+@pytest.mark.parametrize(
+    "query_string, expected", [("ids=1", [1]), ("ids=1&ids=2", [1, 2])]
+)
+def test_falcon_model_adapter_query_list(falcon_adapter_app, query_string, expected):
+    response = falcon_adapter_app.client.simulate_get(f"/api/query_list?{query_string}")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json == {"ids": expected}
+
+
 @pytest.mark.parametrize("pre_serialize", [False, True])
 def test_falcon_model_adapter_return_list(falcon_adapter_app, pre_serialize):
     response = falcon_adapter_app.client.simulate_get(

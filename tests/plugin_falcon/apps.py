@@ -21,6 +21,7 @@ from tests.common_dataclass import (
     OptionalPayload,
     Payload,
     Query,
+    QueryList,
     Resp,
     RespObject,
     ReturnCase,
@@ -270,6 +271,12 @@ def build_falcon_adapter_app(backend: str, model_case) -> FalconAdapterApp:  # n
         def on_post(self, req, resp, json: model_case.get_model(list[Payload])):
             pass
 
+    class QueryListView:
+        @spec.validate(query=model_case.get_model(QueryList))
+        @view
+        def on_get(self, req, resp):
+            resp.media = {"ids": req.context.query.ids}
+
     class ReturnListView:
         @spec.validate(
             resp=Response(HTTP_200=model_case.list_of(model_case.get_model(Item)))
@@ -490,6 +497,7 @@ def build_falcon_adapter_app(backend: str, model_case) -> FalconAdapterApp:  # n
     app.add_route("/api/user_optional", OptionalUserScore())
     app.add_route("/api/no_response", NoResponseView())
     app.add_route("/api/list_json", ListJsonView())
+    app.add_route("/api/query_list", QueryListView())
     app.add_route("/api/return_list", ReturnListView())
     app.add_route("/api/return_root", ReturnRootView())
     app.add_route("/api/return_model", ReturnModelView())
