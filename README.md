@@ -33,7 +33,7 @@ before upgrading an existing application.
 
 ## Quick Start
 
-Install with pip:
+Spectree requires Python 3.11 or newer. Install with pip:
 
 ```bash
 pip install "spectree[pydantic]"
