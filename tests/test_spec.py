@@ -519,6 +519,57 @@ def _component_name(ref):
     return ref.removeprefix("#/components/schemas/")
 
 
+@dataclass
+class FirstBody:
+    a: int
+
+
+@dataclass
+class SecondBody:
+    b: str
+
+
+def test_reused_validate_decorator_resolves_models_per_function(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    first_model = model_case.get_model(FirstBody)
+    second_model = model_case.get_model(SecondBody)
+    decorator = api.validate()
+
+    @app.post("/first")
+    @decorator
+    def first(json: first_model):
+        return {"a": json.a}
+
+    @app.post("/untyped")
+    @decorator
+    def untyped():
+        return {"ok": True}
+
+    @app.post("/second")
+    @decorator
+    def second(json: second_model):
+        return {"b": json.b}
+
+    api.register(app)
+    client = app.test_client()
+
+    assert client.post("/first", json={"a": 1}).json == {"a": 1}
+    assert client.post("/first", json={"b": "x"}).status_code == 422
+    assert client.post("/untyped").json == {"ok": True}
+    assert client.post("/second", json={"b": "x"}).json == {"b": "x"}
+
+    with app.app_context():
+        paths = api.spec["paths"]
+    assert "requestBody" not in paths["/untyped"]["post"]
+    assert _component_name(_json_schema_ref(paths["/first"]["post"])) == (
+        get_model_key(first_model)
+    )
+    assert _component_name(_json_schema_ref(paths["/second"]["post"])) == (
+        get_model_key(second_model)
+    )
+
+
 def test_spec_is_regenerated_for_endpoints_decorated_after_first_access(model_case):
     api = SpecTree("flask", model_adapter=model_case.adapter)
     app = Flask(__name__)
@@ -686,6 +737,33 @@ def test_list_models_can_be_reused_by_several_endpoints(model_case):
     assert _response_schema_ref(first) == _response_schema_ref(second)
     assert_component_refs_resolve(spec)
     assert app.test_client().post("/b", json=[{"value": 1}]).json == [{"value": 1}]
+
+
+def test_one_handler_decorated_twice_is_documented_per_route(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    first_model = model_case.get_model(FirstBody)
+    second_model = model_case.get_model(SecondBody)
+
+    def handler():
+        return {}
+
+    app.add_url_rule(
+        "/first", "first", api.validate(json=first_model)(handler), methods=["POST"]
+    )
+    app.add_url_rule(
+        "/second", "second", api.validate(json=second_model)(handler), methods=["POST"]
+    )
+    api.register(app)
+    with app.app_context():
+        paths = api.spec["paths"]
+
+    assert _component_name(_json_schema_ref(paths["/first"]["post"])) == (
+        get_model_key(first_model)
+    )
+    assert _component_name(_json_schema_ref(paths["/second"]["post"])) == (
+        get_model_key(second_model)
+    )
 
 
 @dataclass
