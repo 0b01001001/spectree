@@ -100,6 +100,10 @@ for example `Response(HTTP_200=Message)`.
 Plain Python dataclasses can be used directly as request or response models, or
 as field types within another model.
 
+Both adapters also accept type expressions built from such models, for example
+`json=list[Profile]`, `Response(HTTP_200=dict[str, Message])`, `Profile | None`
+or `Annotated[Profile, ...]`.
+
 ```py
 from dataclasses import dataclass
 

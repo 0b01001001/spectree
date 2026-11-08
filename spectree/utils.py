@@ -199,11 +199,22 @@ def get_model_key(model: ModelClass) -> str:
             args = get_args(value)
             item_name = get_name(args[0]) if args else "Any"
             return f"{item_name}List"
-        return value.__name__
+        return get_type_name(value)
 
     model_name = get_name(model)
     module_path = model.__module__ if get_origin(model) is None else repr(model)
     return f"{model_name}.{hash_module_path(module_path=module_path)}"
+
+
+def get_type_name(value: Any) -> str:
+    """Return the ``__name__`` of a type or type expression.
+
+    ``X | Y`` is named "Union" on every Python version: it has no ``__name__``
+    before Python 3.14, where it became ``typing.Union``.
+    """
+    if get_origin(value) is UnionType:
+        return "Union"
+    return value.__name__
 
 
 def get_nested_key(parent: str, child: str) -> str:
@@ -316,7 +327,18 @@ def is_list_item(key: str, model: ModelClass | None) -> bool:
     if model is None:
         return False
 
-    annotation = cached_type_hints(model).get(key)  # type: ignore
+    origin = get_origin(model)
+    if origin is Annotated:
+        return is_list_item(key, get_args(model)[0])
+    if origin in (Union, UnionType):
+        return any(
+            is_list_item(key, arg) for arg in get_args(model) if arg is not type(None)
+        )
+    if origin is not None or not isinstance(model, type):
+        # other type expressions, such as `dict[str, int]`, have no fields
+        return False
+
+    annotation = cached_type_hints(model).get(key)  # type: ignore[arg-type]
     if annotation is None:
         return False
     return _annotation_is_list(annotation)
