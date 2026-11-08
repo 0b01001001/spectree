@@ -1,6 +1,6 @@
 import warnings
 import weakref
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from functools import wraps
 from importlib import import_module
 from typing import (
@@ -28,6 +28,7 @@ from spectree.model_adapter.protocol import SchemaMode
 from spectree.models import Tag
 from spectree.plugins import PLUGINS, BasePlugin
 from spectree.response import Response
+from spectree.schema_registry import COMPONENT_REF_PREFIX, SchemaRegistry
 from spectree.utils import (
     default_after_handler,
     default_before_handler,
@@ -35,7 +36,6 @@ from spectree.utils import (
     get_nested_key,
     get_request_model_hints,
     get_security,
-    json_compatible_deepcopy,
     parse_comments,
     parse_name,
 )
@@ -66,12 +66,16 @@ class SpecTree:
         adapter (including the ValidationError).
     :param naming_strategy: A callable that receives a model class and returns
         the top-level component schema name used in the OpenAPI document.
-        For example, ``lambda model: model.__name__.lower()``.
+        For example, ``lambda model: model.__name__.lower()``. When a model's
+        request (validation) and response (serialization) schemas differ, the
+        response schema is published as ``<name>.serialization``.
     :param nested_naming_strategy: A callable that receives ``(parent, child)``
         schema names and returns the component schema name for nested models
         lifted from ``$defs``. The default includes the parent name to avoid
         collisions. To share nested models by child name, use
-        ``lambda _parent, child: child``.
+        ``lambda _parent, child: child``; a nested model whose response schema
+        differs from its request schema is then published as
+        ``<name>.serialization`` for responses.
     :param model_adapter: adapter for validation and OpenAPI JSON schema generation.
         Choose from the `spectree.model_adapter`. If not set, will use `pydantic`.
     :param kwargs: init :class:`spectree.config.Configuration`, they can also be
@@ -110,12 +114,24 @@ class SpecTree:
             plugin = PLUGINS[backend_name]
             module = import_module(plugin.name, plugin.package)
             self.backend = getattr(module, plugin.class_name)(self)
-        self.models: dict[str, Any] = {}
+        self._schemas = SchemaRegistry()
+        self._spec: dict[str, Any] | None = None
         self._function_metadata: weakref.WeakKeyDictionary[
             Callable, FunctionDecorator
         ] = weakref.WeakKeyDictionary()
         if app:
             self.register(app)
+
+    @property
+    def models(self) -> dict[str, Any]:
+        """
+        the component schemas of the models registered by validated endpoints
+
+        This is a new copy on every access: changing it does not change the
+        OpenAPI document.
+        """
+        models, _ = self._schemas.render(self.nested_naming_strategy)
+        return models
 
     def register(self, app: Any):
         """
@@ -131,8 +147,13 @@ class SpecTree:
     def spec(self):
         """
         get the OpenAPI spec
+
+        The document is generated on first access and cached until another
+        endpoint is decorated by this instance.
         """
-        if not hasattr(self, "_spec"):
+        # `getattr`: deleting `_spec` was the way to force a regeneration before
+        # the cache was invalidated automatically.
+        if getattr(self, "_spec", None) is None:
             self._spec = self._generate_spec()
         return self._spec
 
@@ -219,17 +240,71 @@ class SpecTree:
             validation_error_status = self.validation_error_status
 
         def decorate_validation(func: Callable):
+            # Resolve the models of this function only. The arguments of
+            # `validate()` are shared by every function this decorator object is
+            # applied to, so they must never be reassigned here.
+            query_model, json_model, form_model, headers_model, cookies_model = (
+                query,
+                json,
+                form,
+                headers,
+                cookies,
+            )
+            if self.config.annotations:
+                annotations = get_request_model_hints(func)
+                if skip_validation and annotations:
+                    warnings.warn(
+                        "`skip_validation` cannot be used with `annotations` enabled. "
+                        "The instances of `json`, `headers`, `cookies`, etc. read from "
+                        "the function will be `None`.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                query_model = annotations.get("query", query_model)
+                json_model = annotations.get("json", json_model)
+                form_model = annotations.get("form", form_model)
+                headers_model = annotations.get("headers", headers_model)
+                cookies_model = annotations.get("cookies", cookies_model)
+
+            metadata = FunctionDecorator()
+
+            # register
+            for name, model in zip(
+                ("query", "json", "form", "headers", "cookies"),
+                (query_model, json_model, form_model, headers_model, cookies_model),
+                strict=True,
+            ):
+                if model is not None:
+                    model_key = self._add_model(model=model, mode="validation")
+                    setattr(metadata, name, model_key)
+
+            # Bind a copy so that the caller's declaration is never modified and
+            # can be shared by other endpoints and `SpecTree` instances.
+            endpoint_resp = None
+            if resp:
+                endpoint_resp = resp.copy_for_model_adapter(self.model_adapter)
+                # Make sure that the endpoint specific status code and data model for
+                # validation errors shows up in the response spec.
+                endpoint_resp.add_model(
+                    validation_error_status,
+                    self.validation_error_model or self.model_adapter.validation_error,
+                    replace=False,
+                )
+                for model in endpoint_resp.models:
+                    self._add_model(model=model, mode="serialization")
+                metadata.resp = endpoint_resp
+
             # for sync framework
             @wraps(func)
             def sync_validate(*args: Any, **kwargs: Any):
                 return self.backend.validate(
                     func,
-                    query,
-                    json,
-                    form,
-                    headers,
-                    cookies,
-                    resp,
+                    query_model,
+                    json_model,
+                    form_model,
+                    headers_model,
+                    cookies_model,
+                    endpoint_resp,
                     before or self.before,
                     after or self.after,
                     validation_error_status,
@@ -244,12 +319,12 @@ class SpecTree:
             async def async_validate(*args: Any, **kwargs: Any):
                 return await self.backend.validate(
                     func,
-                    query,
-                    json,
-                    form,
-                    headers,
-                    cookies,
-                    resp,
+                    query_model,
+                    json_model,
+                    form_model,
+                    headers_model,
+                    cookies_model,
+                    endpoint_resp,
                     before or self.before,
                     after or self.after,
                     validation_error_status,
@@ -263,48 +338,6 @@ class SpecTree:
                 async_validate if self.backend.ASYNC else sync_validate  # type: ignore
             )
 
-            if self.config.annotations:
-                nonlocal query, json, form, headers, cookies
-                annotations = get_request_model_hints(func)
-                if skip_validation and annotations:
-                    warnings.warn(
-                        "`skip_validation` cannot be used with `annotations` enabled. "
-                        "The instances of `json`, `headers`, `cookies`, etc. read from "
-                        "the function will be `None`.",
-                        UserWarning,
-                        stacklevel=2,
-                    )
-                query = annotations.get("query", query)
-                json = annotations.get("json", json)
-                form = annotations.get("form", form)
-                headers = annotations.get("headers", headers)
-                cookies = annotations.get("cookies", cookies)
-
-            metadata = FunctionDecorator()
-
-            # register
-            for name, model in zip(
-                ("query", "json", "form", "headers", "cookies"),
-                (query, json, form, headers, cookies),
-                strict=True,
-            ):
-                if model is not None:
-                    model_key = self._add_model(model=model, mode="validation")
-                    setattr(metadata, name, model_key)
-
-            if resp:
-                resp.bind_model_adapter(self.model_adapter)
-                # Make sure that the endpoint specific status code and data model for
-                # validation errors shows up in the response spec.
-                resp.add_model(
-                    validation_error_status,
-                    self.validation_error_model or self.model_adapter.validation_error,
-                    replace=False,
-                )
-                for model in resp.models:
-                    self._add_model(model=model, mode="serialization")
-                metadata.resp = resp
-
             if tags:
                 metadata.tags = tags
 
@@ -314,6 +347,8 @@ class SpecTree:
             metadata.operation_id = operation_id
             self._function_metadata[validation] = metadata
             register_validated_function(validation)
+            # A document generated earlier does not contain this endpoint.
+            self._spec = None
             return validation
 
         return decorate_validation
@@ -325,39 +360,21 @@ class SpecTree:
         :param model: model class to add to the schema
         :param mode: schema generation mode - 'validation' for input models
             and 'serialization' for output models
+        :returns: the component key of the model
         """
         model_key = self.naming_strategy(model)
-        schema = json_compatible_deepcopy(
-            self.model_adapter.json_schema(
-                model=model,
-                ref_template="#/components/schemas/{model}",
-                mode=mode,
-            )
+        schema = self.model_adapter.json_schema(
+            model=model,
+            ref_template=f"{COMPONENT_REF_PREFIX}{{model}}",
+            mode=mode,
         )
-
-        definitions = schema.get("$defs")
-        if isinstance(definitions, dict):
-            # The adapter emits refs with its own $defs keys. Rewrite them to the
-            # final component names before _get_model_definitions lifts $defs.
-            replacements = {
-                f"#/components/schemas/{key}": (
-                    f"#/components/schemas/{self.nested_naming_strategy(model_key, key)}"
-                )
-                for key in definitions
-            }
-            schema_values: list[Any] = [schema]
-            while schema_values:
-                value = schema_values.pop()
-                if isinstance(value, dict):
-                    ref = value.get("$ref")
-                    if isinstance(ref, str) and ref in replacements:
-                        value["$ref"] = replacements[ref]
-                    schema_values.extend(value.values())
-                elif isinstance(value, list):
-                    schema_values.extend(value)
-
-        self.models[model_key] = schema
+        self._schemas.register(model_key, mode, schema)
         return model_key
+
+    def _response_component_name(self, model: Any) -> str:
+        return self._schemas.component_name(
+            self.naming_strategy(model), "serialization"
+        )
 
     def _generate_spec(self) -> dict[str, Any]:
         """
@@ -365,6 +382,10 @@ class SpecTree:
         """
         routes: dict[str, dict] = defaultdict(dict)
         tags = {}
+        models, definitions = self._schemas.render(self.nested_naming_strategy)
+        # Parameters are built from the request models themselves, even if a
+        # nested definition is published under the same name.
+        parameter_models = ChainMap(models, definitions)
         for route in self.backend.find_routes():
             for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
@@ -393,8 +414,10 @@ class SpecTree:
                     or self.backend.get_func_operation_id(func, path, method),
                     "description": desc or "",
                     "tags": [str(x) for x in metadata.tags],
-                    "parameters": metadata.parse_params(parameters[:], self.models),
-                    "responses": metadata.parse_resp(self.naming_strategy),
+                    "parameters": metadata.parse_params(
+                        parameters[:], parameter_models
+                    ),
+                    "responses": metadata.parse_resp(self._response_component_name),
                 }
 
                 security = metadata.security
@@ -414,9 +437,7 @@ class SpecTree:
             "info": self.config.openapi_info(),
             "tags": list(tags.values()),
             "paths": {**routes},
-            "components": {
-                "schemas": {**self.models, **self._get_model_definitions()},
-            },
+            "components": {"schemas": {**models, **definitions}},
         }
 
         if self.config.servers:
@@ -432,19 +453,3 @@ class SpecTree:
 
         spec["security"] = get_security(self.config.security)
         return spec
-
-    def _get_model_definitions(self) -> dict[str, Any]:
-        """
-        handle nested models
-        """
-        definitions = {}
-        def_key = "$defs"
-        for name, schema in self.models.items():
-            if def_key in schema:
-                for key, value in schema[def_key].items():
-                    composed_key = self.nested_naming_strategy(name, key)
-                    if composed_key not in definitions:
-                        definitions[composed_key] = value
-                del schema[def_key]
-
-        return definitions

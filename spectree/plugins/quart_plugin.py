@@ -10,7 +10,7 @@ from spectree.model_adapter import ModelClass
 from spectree.plugins.base import Context, validate_response
 from spectree.plugins.werkzeug_utils import WerkzeugPlugin, flask_response_unpack
 from spectree.response import Response
-from spectree.utils import cached_type_hints, get_multidict_items
+from spectree.utils import get_injected_request_arguments, get_multidict_items
 
 
 class QuartPlugin(WerkzeugPlugin):
@@ -26,6 +26,13 @@ class QuartPlugin(WerkzeugPlugin):
     @staticmethod
     def is_blueprint(app: Any) -> bool:
         return isinstance(app, Blueprint)
+
+    async def fill_form(self, request) -> dict:  # type: ignore[override]
+        # Quart loads the form and the files of a request asynchronously.
+        form, files = await request.form, await request.files
+        req_data = get_multidict_items(form)
+        req_data.update(get_multidict_items(files) if files else {})
+        return req_data
 
     async def request_validation(self, request, query, json, form, headers, cookies):
         """
@@ -52,7 +59,7 @@ class QuartPlugin(WerkzeugPlugin):
             )
             if use_json
             else None,
-            self.model_adapter.validate_obj(form, self.fill_form(request))
+            self.model_adapter.validate_obj(form, await self.fill_form(request))
             if use_form
             else None,
             self.model_adapter.validate_obj(headers, req_headers) if headers else None,
@@ -147,12 +154,8 @@ class QuartPlugin(WerkzeugPlugin):
             abort(response)  # type: ignore
 
         if self.config.annotations:
-            annotations = cached_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(
-                        getattr(request, "context", None), name, None
-                    )
+            for name in get_injected_request_arguments(func):
+                kwargs[name] = getattr(getattr(request, "context", None), name, None)
 
         result = (
             await func(*args, **kwargs)

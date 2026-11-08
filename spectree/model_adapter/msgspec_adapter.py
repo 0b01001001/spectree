@@ -6,6 +6,7 @@ import msgspec
 
 from spectree.model_adapter.protocol import ModelAdapter, SchemaMode
 from spectree.models import ValidationErrorElement
+from spectree.utils import get_type_name
 
 _ERROR_PATH_RE = re.compile(r" - at `(?P<path>.+)`$")
 
@@ -17,6 +18,28 @@ MsgspecValidationError: TypeAlias = Annotated[
 BaseFile = Annotated[
     Any, msgspec.Meta(extra_json_schema={"format": "binary", "type": "string"})
 ]
+
+
+def _payload_model(model: Any) -> Any:
+    """Return the type that describes the payload of ``model``.
+
+    ``msgspec.ValidationError`` is used as the model of validation error
+    responses; its payload is described by :data:`MsgspecValidationError`.
+    """
+    return MsgspecValidationError if model is msgspec.ValidationError else model
+
+
+def _references(value: Any, ref: str) -> bool:
+    pending = [value]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, dict):
+            if current.get("$ref") == ref:
+                return True
+            pending.extend(current.values())
+        elif isinstance(current, list):
+            pending.extend(current)
+    return False
 
 
 def _parse_error_location(message: str) -> list[str]:
@@ -82,10 +105,10 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         return False
 
     def validate_obj(self, model: type[Any], value: Any) -> Any:
-        return msgspec.convert(value, type=model, strict=False)
+        return msgspec.convert(value, type=_payload_model(model), strict=False)
 
     def validate_json(self, model: type[Any], value: bytes) -> Any:
-        return msgspec.json.decode(value, type=model, strict=False)
+        return msgspec.json.decode(value, type=_payload_model(model), strict=False)
 
     def dump_json(self, value: Any) -> bytes:
         return self.encoder.encode(value)
@@ -107,7 +130,10 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         return T  # type: ignore
 
     def make_list_model(self, model: type) -> type:
-        list_model = self.make_root_model(list[model], name=f"{model.__name__}List")  # type: ignore
+        list_model = self.make_root_model(
+            list[model],  # type: ignore[valid-type]
+            name=f"{get_type_name(model)}List",
+        )
         return list_model
 
     def json_schema(
@@ -122,23 +148,23 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
 
         See https://github.com/jcrist/msgspec/issues/686
         """
-        if model is msgspec.ValidationError:
-            model = MsgspecValidationError  # type: ignore
         ref_template = ref_template.replace("{model}", "{name}")
         schemas, components = msgspec.json.schema_components(
-            (model,),
+            (_payload_model(model),),
             ref_template=ref_template,
         )
         schema = schemas[0]
 
         # msgspec returns structs as a root $ref plus a component. SpecTree stores
         # the root model under its own naming_strategy key, so keep only true nested
-        # components in $defs and return the root schema directly.
+        # components in $defs and return the root schema directly. A recursive root
+        # model refers to its own component, so it stays in $defs behind the $ref.
         ref = schema.get("$ref")
         if isinstance(ref, str):
             for key in tuple(components):
                 if ref == ref_template.format(name=key):
-                    schema = components.pop(key)
+                    if not _references(components, ref):
+                        schema = components.pop(key)
                     break
 
         if components:
