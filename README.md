@@ -33,7 +33,7 @@ before upgrading an existing application.
 
 ## Quick Start
 
-Install with pip:
+Spectree requires Python 3.11 or newer. Install with pip:
 
 ```bash
 pip install "spectree[pydantic]"
@@ -180,6 +180,17 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 # with custom code description
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
+
+### How are the schema components named?
+
+Each model is published under `naming_strategy(model)`, `Name.<hash>` by default, and
+its nested models under `nested_naming_strategy(parent, child)`. A model used both in
+a request and in a response is validated and serialized differently (for example
+computed fields or serialization aliases appear only in responses). When the two
+schemas are identical, both refer to one component; when they differ, the request
+schema keeps the name and the response schema is published as `<name>.serialization`.
+The same applies to nested models when a custom `nested_naming_strategy` gives a
+request and a response definition the same name.
 
 ### How can I skip the validation?
 

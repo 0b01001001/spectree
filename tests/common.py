@@ -10,6 +10,7 @@ __all__ = [
     "UserXmlData",
     "api_after_handler",
     "api_tag",
+    "assert_component_refs_resolve",
     "build_security_schemes",
     "get_model_path_key",
     "get_paths",
@@ -31,6 +32,28 @@ def get_paths(spec):
 
     paths.sort()
     return paths
+
+
+def assert_component_refs_resolve(spec):
+    """Every ``$ref`` in the document points to an existing component, and no
+    component keeps unpublished ``$defs``."""
+    components = spec["components"]["schemas"]
+    refs = []
+    pending = [spec]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            if isinstance(value.get("$ref"), str):
+                refs.append(value["$ref"])
+            pending.extend(value.values())
+        elif isinstance(value, list):
+            pending.extend(value)
+
+    prefix = "#/components/schemas/"
+    assert all(ref.startswith(prefix) for ref in refs), refs
+    dangling = sorted({ref for ref in refs if ref[len(prefix) :] not in components})
+    assert not dangling, dangling
+    assert not [name for name, schema in components.items() if "$defs" in schema]
 
 
 def _set_response_header(resp, name: str, value: str) -> None:
