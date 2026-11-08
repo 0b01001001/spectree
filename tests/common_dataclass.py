@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any
@@ -143,3 +143,14 @@ class OptionalListQuery:
 @dataclass
 class Child:
     value: int
+
+
+@dataclass
+class Parent:
+    child: Child
+
+
+@dataclass
+class TreeNode:
+    value: int
+    children: list["TreeNode"] = field(default_factory=list)

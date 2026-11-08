@@ -41,7 +41,7 @@ class FunctionDecorator:
             model_key = getattr(self, attr)
             if model_key is None:
                 continue
-            model = models[model_key]
+            model = _object_schema(models[model_key], models)
             properties = model.get("properties", {model.get("title"): model})
             for name, property_schema in properties.items():
                 schema = property_schema.copy()
@@ -67,6 +67,37 @@ class FunctionDecorator:
 
     def parse_resp(self, naming_strategy: Any) -> dict[str, Any]:
         return self.resp.generate_spec(naming_strategy) if self.resp else {}
+
+
+_COMPONENT_REF_PREFIX = "#/components/schemas/"
+
+
+def _object_schema(
+    schema: Mapping[str, Any], models: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Return the schema whose properties describe the parameters of a model.
+
+    The schema of a type expression such as ``Annotated[Model, ...]`` or
+    ``Model | None``, and of a recursive model, only refers to the model's
+    schema.
+    """
+    seen: set[str] = set()
+    while "properties" not in schema:
+        options = [
+            option
+            for option in schema.get("anyOf", ())
+            if isinstance(option, Mapping) and option.get("type") != "null"
+        ]
+        target = schema if "$ref" in schema else options[0] if len(options) == 1 else {}
+        ref = target.get("$ref")
+        if not isinstance(ref, str) or not ref.startswith(_COMPONENT_REF_PREFIX):
+            break
+        name = ref.removeprefix(_COMPONENT_REF_PREFIX)
+        if name in seen or name not in models:
+            break
+        seen.add(name)
+        schema = models[name]
+    return schema
 
 
 _VALIDATED_FUNCTIONS: weakref.WeakSet[Any] = weakref.WeakSet()

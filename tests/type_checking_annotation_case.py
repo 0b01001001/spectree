@@ -1,16 +1,17 @@
 """Fixture reproducing https://github.com/0b01001001/spectree/issues/312.
 
 ``ResponseValue`` is only imported while type checking, so the string forward
-reference in ``type_checking_view_func``'s return annotation cannot be evaluated
-at runtime. This mirrors Flask's ``flask.typing.ResponseReturnValue`` (which
-references a ``TYPE_CHECKING``-only ``Response``) and would make
-``typing.get_type_hints`` raise ``NameError`` even though spectree only needs
-the parameter annotations.
+reference in the return annotations below cannot be evaluated at runtime. This
+mirrors Flask's ``flask.typing.ResponseReturnValue`` (which references a
+``TYPE_CHECKING``-only ``Response``) and would make ``typing.get_type_hints``
+raise ``NameError`` even though spectree only needs the parameter annotations.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
+from starlette.responses import JSONResponse
 
 from tests.common_dataclass import DemoModel
 
@@ -22,3 +23,28 @@ if TYPE_CHECKING:
 def type_checking_view_func(json: DemoModel) -> ResponseValue:
     # The body is never executed; only the annotations matter for this fixture.
     raise NotImplementedError
+
+
+# Handlers that run: Spectree injects `json` from the parameter annotation.
+
+
+def sync_view(json: DemoModel) -> ResponseValue:
+    return {"name": json.name}
+
+
+async def async_view(json: DemoModel) -> ResponseValue:
+    return {"name": json.name}
+
+
+async def starlette_view(request, json: DemoModel) -> ResponseValue:
+    return JSONResponse({"name": json.name})
+
+
+class FalconResource:
+    def on_post(self, req, resp, json: DemoModel) -> ResponseValue:
+        resp.media = {"name": json.name}
+
+
+class FalconAsgiResource:
+    async def on_post(self, req, resp, json: DemoModel) -> ResponseValue:
+        resp.media = {"name": json.name}
