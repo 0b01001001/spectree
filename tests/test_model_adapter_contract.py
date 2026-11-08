@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from typing import Annotated
 
 import pytest
@@ -213,3 +214,60 @@ def test_type_expressions_are_models(model_case, build, value, expected):
     )
     with pytest.raises(adapter.validation_error):
         adapter.validate_obj(model, {"unexpected": "shape"})
+
+
+@dataclass(frozen=True, slots=True)
+class FrozenSlotsModel:
+    user_id: int
+    label: str = "default"
+
+
+@dataclass
+class NestedModel:
+    child: SimpleModel
+    tags: list[int]
+
+
+def test_frozen_and_slots_dataclass_is_supported_as_a_model(model_case):
+    adapter = model_case.adapter
+    instance = FrozenSlotsModel(user_id=1)
+
+    assert adapter.is_model_type(FrozenSlotsModel) is True
+    assert adapter.is_model_instance(instance, FrozenSlotsModel) is True
+    assert adapter.is_model_instance({"user_id": 1}, FrozenSlotsModel) is False
+    assert adapter.validate_obj(FrozenSlotsModel, {"user_id": "1"}) == instance
+    assert adapter.validate_json(FrozenSlotsModel, b'{"user_id":1}') == instance
+    assert adapter.dump_json(instance) == b'{"user_id":1,"label":"default"}'
+    schema = adapter.json_schema(
+        FrozenSlotsModel, ref_template="#/components/schemas/{model}"
+    )
+    assert schema["properties"]["user_id"]["type"] == "integer"
+    assert schema["properties"]["label"]["type"] == "string"
+
+
+@pytest.mark.parametrize(
+    "build, payload, item_of",
+    [
+        pytest.param(lambda m: m, b'{"child":{"user_id":42},"tags":[1,2,3]}', None),
+        pytest.param(lambda m: list[m], b'[{"child":{"user_id":1},"tags":[]}]', 0),
+        pytest.param(
+            lambda m: dict[str, m], b'{"a":{"child":{"user_id":1},"tags":[]}}', "a"
+        ),
+        pytest.param(
+            lambda m: Annotated[m, "metadata"],
+            b'{"child":{"user_id":7},"tags":[1]}',
+            None,
+        ),
+        pytest.param(lambda m: m | None, b'{"child":{"user_id":7},"tags":[1]}', None),
+    ],
+    ids=["model", "list", "dict", "annotated", "optional"],
+)
+def test_json_round_trip_preserves_dataclass_types(model_case, build, payload, item_of):
+    adapter = model_case.adapter
+
+    decoded = adapter.validate_json(build(NestedModel), payload)
+    item = decoded if item_of is None else decoded[item_of]
+
+    assert type(item) is NestedModel
+    assert type(item.child) is SimpleModel
+    assert adapter.dump_json(decoded) == payload
