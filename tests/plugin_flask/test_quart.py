@@ -1,10 +1,12 @@
 import importlib
+import io
 from dataclasses import dataclass
 from random import randint
 from typing import Any, Union
 
 import pytest
 from quart import Quart, jsonify, request
+from quart.datastructures import FileStorage
 
 from spectree import Response, SpecTree
 from tests.common import (
@@ -16,6 +18,8 @@ from tests.common import (
 )
 from tests.common_dataclass import (
     Cookies,
+    Form,
+    FormPayload,
     Order,
     Payload,
     Query,
@@ -39,6 +43,20 @@ def _score(limit: int, order: Order | int) -> list[int]:
     score = [randint(0, limit) for _ in range(5)]
     score.sort(reverse=(order == Order.desc or order == int(Order.desc)))
     return score
+
+
+def _add_form_routes(app, api, model_case) -> None:
+    @app.route("/api/form", methods=["POST"])
+    @api.validate(form=model_case.get_model(Form))
+    async def form_view():
+        form = request.context.form
+        return {"name": form.name, "limit": form.limit}
+
+    @app.route("/api/file_upload", methods=["POST"])
+    @api.validate(form=model_case.get_model(FormPayload))
+    async def file_upload():
+        form = request.context.form
+        return {"content": form.file.read().decode("utf-8"), "other": form.other}
 
 
 def build_quart_adapter_app(model_case) -> QuartAdapterApp:
@@ -244,6 +262,8 @@ def build_quart_adapter_app(model_case) -> QuartAdapterApp:
     @api.validate()
     def return_string_status():
         return "Response text string", 200
+
+    _add_form_routes(app, api, model_case)
 
     if pydantic_only:
         common_pydantic = importlib.import_module("tests.common_pydantic")
@@ -465,3 +485,21 @@ async def test_quart_pydantic_force_serializer(client):
     assert json_data["name"] == "flask"
     assert json_data["score"] == [1, 2, 3]
     assert "comment" not in json_data
+
+
+async def test_quart_model_adapter_form(client):
+    resp = await client.post("/api/form", form={"name": "quart", "limit": "10"})
+    assert resp.status_code == 200
+    assert await resp.get_json() == {"name": "quart", "limit": "10"}
+
+    resp = await client.post("/api/form", form={"name": "quart"})
+    assert resp.status_code == 422
+
+
+async def test_quart_model_adapter_upload_file(client):
+    upload = FileStorage(io.BytesIO(b"abcdef"), filename="test.txt")
+    resp = await client.post(
+        "/api/file_upload", form={"other": "test"}, files={"file": upload}
+    )
+    assert resp.status_code == 200
+    assert await resp.get_json() == {"content": "abcdef", "other": "test"}
