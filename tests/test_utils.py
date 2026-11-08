@@ -10,6 +10,8 @@ from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
+    get_injected_request_arguments,
+    get_model_key,
     get_request_model_hints,
     has_model,
     is_list_item,
@@ -446,6 +448,24 @@ def test_get_request_model_hints_unresolvable_parameter_annotation():
 
     with pytest.raises(NameError):
         get_request_model_hints(func)
+
+
+def test_get_injected_request_arguments_only_resolves_request_annotations():
+    def func(query: DemoQuery, json: DemoModel, other: int) -> int:
+        raise NotImplementedError
+
+    func.__annotations__["return"] = "CompletelyNonExistentType"
+    func.__annotations__["other"] = "AnotherNonExistentType"
+
+    assert get_injected_request_arguments(func) == ("query", "json")
+    assert get_injected_request_arguments(type_checking_view_func) == ("json",)
+
+
+def test_get_model_key_names_pep_604_unions():
+    union_key = get_model_key(DemoModel | None)
+
+    assert union_key.startswith("Union.")
+    assert union_key == get_model_key(DemoModel | None)
 
 
 def test_get_request_model_hints_preserves_annotated():

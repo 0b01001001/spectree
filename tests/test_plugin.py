@@ -3,7 +3,7 @@ from importlib import import_module
 import pytest
 
 from spectree.utils import get_model_key
-from tests.common import build_security_schemes
+from tests.common import assert_component_refs_resolve, build_security_schemes
 from tests.common_dataclass import Cookies, Payload, Query, Resp
 from tests.model_cases import build_model_case
 from tests.plugin_falcon.apps import (
@@ -75,6 +75,7 @@ def test_plugin_spec_model_adapters(model_case, api_builder):
     adapter_app = api_builder(model_case)
 
     _assert_schema_models(adapter_app.spec, model_case)
+    assert_component_refs_resolve(adapter_app.spec.spec)
 
 
 def test_secure_spec(model_case):

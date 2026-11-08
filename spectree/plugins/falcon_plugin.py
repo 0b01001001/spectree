@@ -30,7 +30,7 @@ from spectree._types import HookHandler
 from spectree.model_adapter import ModelClass
 from spectree.plugins.base import BasePlugin, validate_response
 from spectree.response import Response
-from spectree.utils import cached_type_hints
+from spectree.utils import get_injected_request_arguments
 
 
 class StreamWrapper:
@@ -352,10 +352,8 @@ class FalconPlugin(BasePlugin):
             return None
 
         if self.config.annotations:
-            annotations = cached_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(_req.context, name, None)
+            for name in get_injected_request_arguments(func):
+                kwargs[name] = getattr(_req.context, name, None)
 
         result = func(*args, **kwargs)
 
@@ -450,10 +448,8 @@ class FalconAsgiPlugin(FalconPlugin):
             return None
 
         if self.config.annotations:
-            annotations = cached_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(_req.context, name, None)
+            for name in get_injected_request_arguments(func):
+                kwargs[name] = getattr(_req.context, name, None)
 
         result = (
             await func(*args, **kwargs)
