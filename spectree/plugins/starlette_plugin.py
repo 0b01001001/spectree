@@ -20,7 +20,7 @@ from spectree.plugins.base import (
     validate_response,
 )
 from spectree.response import Response
-from spectree.utils import cached_type_hints, get_multidict_items_starlette
+from spectree.utils import get_injected_request_arguments, get_multidict_items_starlette
 
 METHODS = {"get", "post", "put", "patch", "delete"}
 Route = namedtuple("Route", ["path", "methods", "func"])
@@ -173,12 +173,8 @@ class StarlettePlugin(BasePlugin):
             return response
 
         if self.config.annotations:
-            annotations = cached_type_hints(func)
-            for name in ("query", "json", "form", "headers", "cookies"):
-                if annotations.get(name):
-                    kwargs[name] = getattr(
-                        getattr(request, "context", None), name, None
-                    )
+            for name in get_injected_request_arguments(func):
+                kwargs[name] = getattr(getattr(request, "context", None), name, None)
 
         response = await call_with_model_adapter()
 

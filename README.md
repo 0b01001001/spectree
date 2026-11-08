@@ -33,7 +33,7 @@ before upgrading an existing application.
 
 ## Quick Start
 
-Install with pip:
+Spectree requires Python 3.11 or newer. Install with pip:
 
 ```bash
 pip install "spectree[pydantic]"
@@ -99,6 +99,10 @@ for example `Response(HTTP_200=Message)`.
 
 Plain Python dataclasses can be used directly as request or response models, or
 as field types within another model.
+
+Both adapters also accept type expressions built from such models, for example
+`json=list[Profile]`, `Response(HTTP_200=dict[str, Message])`, `Profile | None`
+or `Annotated[Profile, ...]`.
 
 ```py
 from dataclasses import dataclass
@@ -180,6 +184,23 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 # with custom code description
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
+
+`spec.validate` does not modify the `Response` you pass to it, so one declaration
+can be reused by several endpoints, including endpoints of other `SpecTree`
+instances or model adapters. Each endpoint uses a copy made when it is decorated:
+changing the declaration afterwards (for example with `add_model`) does not affect
+endpoints that are already decorated.
+
+### How are the schema components named?
+
+Each model is published under `naming_strategy(model)`, `Name.<hash>` by default, and
+its nested models under `nested_naming_strategy(parent, child)`. A model used both in
+a request and in a response is validated and serialized differently (for example
+computed fields or serialization aliases appear only in responses). When the two
+schemas are identical, both refer to one component; when they differ, the request
+schema keeps the name and the response schema is published as `<name>.serialization`.
+The same applies to nested models when a custom `nested_naming_strategy` gives a
+request and a response definition the same name.
 
 ### How can I skip the validation?
 

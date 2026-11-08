@@ -1,3 +1,4 @@
+import copy
 import sys
 from collections.abc import Iterable
 from http import HTTPStatus
@@ -36,9 +37,11 @@ if sys.version_info < (3, 13):
 class Response:
     """
     SpecTree response object. The instance can only be used after calling the
-    :py:meth:`.bind_model_adapter` method. This method is called
-    automatically when it's passed to
-    :py:meth:`SpecTree.validate<spectree.spec.SpecTree.validate>` method.
+    :py:meth:`.bind_model_adapter` method.
+    :py:meth:`SpecTree.validate<spectree.spec.SpecTree.validate>` does not
+    modify the instance passed to it: it binds a copy (see
+    :py:meth:`.copy_for_model_adapter`), so one declaration can be shared by
+    several endpoints and ``SpecTree`` instances.
 
     :param codes: list of HTTP status code, format('HTTP_[0-9]{3}'), 'HTTP_200'
     :param code_models: dict of <HTTP status code>: <model class> or None or
@@ -99,6 +102,19 @@ class Response:
         """Bind a :py:class:`~spectree.model_adapter.ModelAdapter`"""
         self.model_adapter = model_adapter
         self.code_models = self._build_models(model_adapter)
+
+    def copy_for_model_adapter(self, model_adapter: ModelAdapterType) -> "Response":
+        """Return a copy of this declaration bound to ``model_adapter``.
+
+        This instance is left unchanged, and changes to the copy (such as
+        :py:meth:`.add_model`) do not affect it.
+        """
+        response = copy.copy(self)
+        response.codes = list(self.codes)
+        response._raw_code_models = dict(self._raw_code_models)
+        response.code_descriptions = dict(self.code_descriptions)
+        response.bind_model_adapter(model_adapter)
+        return response
 
     def _build_model(
         self, raw_model: Any, model_adapter: ModelAdapterType
