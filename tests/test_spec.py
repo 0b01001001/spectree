@@ -2,12 +2,18 @@ import gc
 import warnings
 import weakref
 from dataclasses import dataclass
+from decimal import Decimal
 from functools import wraps
+from importlib import import_module
+from typing import Annotated
 
 import pytest
 from falcon import App as FalconApp
-from flask import Flask
+from flask import Flask, request as flask_request
 from starlette.applications import Starlette
+from starlette.responses import JSONResponse
+from starlette.routing import Route
+from starlette.testclient import TestClient as StarletteTestClient
 
 from spectree import Response
 from spectree.config import Configuration
@@ -16,13 +22,14 @@ from spectree.models import Server
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
-from tests.common import get_paths
+from tests.common import assert_component_refs_resolve, get_paths
 from tests.common_dataclass import (
     Child,
     Cookies,
     DemoModel,
     Form,
     Headers,
+    Parent,
     Payload,
     Query,
     Resp,
@@ -498,3 +505,350 @@ def test_custom_model_naming_strategies_are_used_in_refs_and_components(model_ca
     }
     assert "Child" not in schemas
     assert "child" in schemas
+
+
+def _json_schema_ref(operation):
+    return operation["requestBody"]["content"]["application/json"]["schema"]["$ref"]
+
+
+def _response_schema_ref(operation, code="200"):
+    return operation["responses"][code]["content"]["application/json"]["schema"]["$ref"]
+
+
+def _component_name(ref):
+    return ref.removeprefix("#/components/schemas/")
+
+
+def test_spec_is_regenerated_for_endpoints_decorated_after_first_access(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    parent = model_case.get_model(Parent)
+
+    @app.post("/early")
+    @api.validate(json=parent)
+    def early():
+        return {}
+
+    api.register(app)
+    with app.app_context():
+        first = api.spec
+        assert api.spec is first
+
+        @app.post("/late")
+        @api.validate(json=parent)
+        def late():
+            return {}
+
+        second = api.spec
+
+    assert get_paths(first) == ["/early"]
+    assert get_paths(second) == ["/early", "/late"]
+    # nested components survive any number of generations
+    assert len(second["components"]["schemas"]) > 1
+    assert second["components"]["schemas"] == first["components"]["schemas"]
+    assert_component_refs_resolve(second)
+
+
+@pytest.mark.pydantic
+@pytest.mark.parametrize("response_first", [False, True])
+def test_request_and_response_schemas_of_one_model_are_documented_separately(
+    response_first,
+):
+    pydantic = pytest.importorskip("pydantic")
+
+    class Item(pydantic.BaseModel):
+        name: str
+
+        @pydantic.computed_field
+        @property
+        def upper(self) -> str:
+            return self.name.upper()
+
+    api = SpecTree("flask")
+    app = Flask(__name__)
+
+    def add_request_endpoint():
+        @app.post("/items")
+        @api.validate(json=Item)
+        def create():
+            return {}
+
+    def add_response_endpoint():
+        @app.get("/items")
+        @api.validate(resp=Response(HTTP_200=Item))
+        def read():
+            return Item(name="spectree")
+
+    for add_endpoint in (
+        (add_response_endpoint, add_request_endpoint)
+        if response_first
+        else (add_request_endpoint, add_response_endpoint)
+    ):
+        add_endpoint()
+    api.register(app)
+
+    with app.app_context():
+        spec = api.spec
+    schemas = spec["components"]["schemas"]
+    key = get_model_key(Item)
+    request_ref = _json_schema_ref(spec["paths"]["/items"]["post"])
+    response_ref = _response_schema_ref(spec["paths"]["/items"]["get"])
+
+    assert _component_name(request_ref) == key
+    assert _component_name(response_ref) == f"{key}.serialization"
+    assert set(schemas[key]["properties"]) == {"name"}
+    assert set(schemas[f"{key}.serialization"]["properties"]) == {"name", "upper"}
+    assert app.test_client().get("/items").json == {
+        "name": "spectree",
+        "upper": "SPECTREE",
+    }
+    assert_component_refs_resolve(spec)
+
+
+def test_identical_request_and_response_schemas_share_one_component(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    payload = model_case.get_model(Payload)
+
+    @app.post("/items")
+    @api.validate(json=payload, resp=Response(HTTP_200=payload))
+    def create():
+        return {}
+
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+    operation = spec["paths"]["/items"]["post"]
+    key = get_model_key(payload)
+
+    assert _component_name(_json_schema_ref(operation)) == key
+    assert _component_name(_response_schema_ref(operation)) == key
+    assert f"{key}.serialization" not in spec["components"]["schemas"]
+
+
+def _titled(model_case, model, title):
+    if model_case.name == "pydantic":
+        return Annotated[model, import_module("pydantic").Field(title=title)]
+    return Annotated[model, import_module("msgspec").Meta(title=title)]
+
+
+def test_type_expressions_are_supported_as_request_and_response_models(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    item = model_case.get_model(Child)
+
+    @app.post("/list")
+    @api.validate(json=list[item], resp=Response(HTTP_200=dict[str, item]))
+    def from_list():
+        return {"first": {"value": 1}}
+
+    @app.post("/optional")
+    @api.validate(
+        json=item | None, resp=Response(HTTP_200=_titled(model_case, item, "Titled"))
+    )
+    def optional():
+        return {"value": 2}
+
+    api.register(app)
+    client = app.test_client()
+    with app.app_context():
+        spec = api.spec
+
+    assert_component_refs_resolve(spec)
+    assert client.post("/list", json=[{"value": 1}]).json == {"first": {"value": 1}}
+    assert client.post("/list", json=[{"value": "x"}]).status_code == 422
+    assert client.post("/optional", json={"value": 2}).json == {"value": 2}
+    operation = spec["paths"]["/list"]["post"]
+    assert _component_name(_json_schema_ref(operation)) == get_model_key(list[item])
+    assert _component_name(_response_schema_ref(operation)) == get_model_key(
+        dict[str, item]
+    )
+
+
+def test_list_models_can_be_reused_by_several_endpoints(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    item = model_case.get_model(Child)
+
+    for path in ("/a", "/b"):
+
+        @app.post(path, endpoint=path)
+        @api.validate(json=list[item], resp=Response(HTTP_200=list[item]))
+        def view():
+            return [{"value": 1}]
+
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+    first, second = (spec["paths"][path]["post"] for path in ("/a", "/b"))
+
+    assert _json_schema_ref(first) == _json_schema_ref(second)
+    assert _response_schema_ref(first) == _response_schema_ref(second)
+    assert_component_refs_resolve(spec)
+    assert app.test_client().post("/b", json=[{"value": 1}]).json == [{"value": 1}]
+
+
+@dataclass
+class Filters:
+    ids: list[int]
+    name: str = "all"
+
+
+@pytest.mark.parametrize(
+    "query_model",
+    [Filters | None, Annotated[Filters, "filters"]],
+    ids=["optional", "annotated"],
+)
+def test_type_expressions_as_query_models(model_case, query_model):
+    flask_app = Flask(__name__)
+    flask_api = SpecTree("flask", model_adapter=model_case.adapter)
+
+    @flask_app.get("/items")
+    @flask_api.validate(query=query_model)
+    def flask_items():
+        return {"ids": flask_request.context.query.ids}
+
+    starlette_api = SpecTree("starlette", model_adapter=model_case.adapter)
+
+    @starlette_api.validate(query=query_model)
+    async def starlette_items(request):
+        return JSONResponse({"ids": request.context.query.ids})
+
+    starlette_app = Starlette(routes=[Route("/items", starlette_items)])
+    flask_api.register(flask_app)
+    with flask_app.app_context():
+        parameters = flask_api.spec["paths"]["/items"]["get"]["parameters"]
+
+    flask_client = flask_app.test_client()
+    starlette_client = StarletteTestClient(starlette_app)
+    for query, ids in (("ids=1", [1]), ("ids=1&ids=2", [1, 2])):
+        assert flask_client.get(f"/items?{query}").json == {"ids": ids}
+        assert starlette_client.get(f"/items?{query}").json() == {"ids": ids}
+    assert [(p["name"], p["required"]) for p in parameters] == [
+        ("ids", True),
+        ("name", False),
+    ]
+
+
+@pytest.mark.pydantic
+def test_query_parameters_come_from_the_request_model_when_names_are_shared():
+    pydantic = pytest.importorskip("pydantic")
+
+    class Priced(pydantic.BaseModel):
+        price: Decimal
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: model.__name__,
+        nested_naming_strategy=lambda _parent, child: child,
+    )
+    app = Flask(__name__)
+
+    @app.get("/items")
+    @api.validate(query=Priced, resp=Response(HTTP_200=list[Priced]))
+    def items():
+        return []
+
+    api.register(app)
+    with app.app_context():
+        (parameter,) = api.spec["paths"]["/items"]["get"]["parameters"]
+
+    assert parameter["schema"] == Priced.model_json_schema()["properties"]["price"]
+
+
+@pytest.mark.pydantic
+@pytest.mark.parametrize("response_first", [False, True])
+def test_shared_nested_names_document_response_schemas(response_first):
+    """The documented recipe `nested_naming_strategy=lambda _parent, child: child`
+    with a nested model that is serialized differently than it is validated."""
+    pydantic = pytest.importorskip("pydantic")
+
+    class Line(pydantic.BaseModel):
+        qty: int
+
+        @pydantic.computed_field
+        @property
+        def double(self) -> int:
+            return self.qty * 2
+
+    class Order(pydantic.BaseModel):
+        line: Line
+
+    api = SpecTree(
+        "flask",
+        naming_strategy=lambda model: model.__name__.lower(),
+        nested_naming_strategy=lambda _parent, child: child,
+    )
+    app = Flask(__name__)
+
+    def add_request_endpoint():
+        @app.post("/orders")
+        @api.validate(json=Order)
+        def create():
+            return {}
+
+    def add_response_endpoint():
+        @app.get("/orders")
+        @api.validate(resp=Response(HTTP_200=Order))
+        def read():
+            return Order(line=Line(qty=1))
+
+    for add_endpoint in (
+        (add_response_endpoint, add_request_endpoint)
+        if response_first
+        else (add_request_endpoint, add_response_endpoint)
+    ):
+        add_endpoint()
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+    schemas = spec["components"]["schemas"]
+
+    def line_properties(ref):
+        order = schemas[_component_name(ref)]
+        return set(
+            schemas[_component_name(order["properties"]["line"]["$ref"])]["properties"]
+        )
+
+    assert line_properties(_json_schema_ref(spec["paths"]["/orders"]["post"])) == {
+        "qty"
+    }
+    assert line_properties(_response_schema_ref(spec["paths"]["/orders"]["get"])) == {
+        "qty",
+        "double",
+    }
+    assert_component_refs_resolve(spec)
+
+
+def test_nested_naming_strategy_can_be_changed_after_construction(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    api.nested_naming_strategy = lambda _parent, child: f"shared_{child}"
+    app = Flask(__name__)
+
+    @app.post("/parent")
+    @api.validate(json=model_case.get_model(Parent))
+    def create():
+        return {}
+
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+
+    assert "shared_Child" in spec["components"]["schemas"]
+    assert_component_refs_resolve(spec)
+
+
+def test_list_of_optional_models_as_response_model(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    item = model_case.get_model(Child)
+
+    @app.get("/items")
+    @api.validate(resp=Response(HTTP_200=list[item | None]))
+    def items():
+        return [{"value": 1}, None]
+
+    api.register(app)
+    with app.app_context():
+        assert_component_refs_resolve(api.spec)
+    assert app.test_client().get("/items").json == [{"value": 1}, None]

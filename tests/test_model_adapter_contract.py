@@ -1,3 +1,6 @@
+import json
+from typing import Annotated
+
 import pytest
 
 from tests.common_dataclass import SimpleModel
@@ -159,3 +162,54 @@ def test_validation_errors(model_case):
     assert list(errors[0]["loc"]) == ["user_id"]
     assert errors[0]["msg"]
     assert errors[0]["type"]
+
+
+@pytest.mark.parametrize(
+    "build, value, expected",
+    [
+        pytest.param(
+            lambda model: list[model],
+            [{"user_id": "1"}],
+            [{"user_id": 1}],
+            id="list",
+        ),
+        pytest.param(
+            lambda model: dict[str, model],
+            {"a": {"user_id": "1"}},
+            {"a": {"user_id": 1}},
+            id="dict",
+        ),
+        pytest.param(
+            lambda model: model | None,
+            {"user_id": "1"},
+            {"user_id": 1},
+            id="optional",
+        ),
+        pytest.param(
+            lambda model: Annotated[model, "metadata"],
+            {"user_id": "1"},
+            {"user_id": 1},
+            id="annotated",
+        ),
+    ],
+)
+def test_type_expressions_are_models(model_case, build, value, expected):
+    adapter = model_case.adapter
+    simple_model = model_case.get_model(SimpleModel)
+    model = build(simple_model)
+
+    instance = adapter.validate_obj(model, value)
+
+    assert adapter.is_model_type(model) is True
+    assert model_case.dump_python(instance) == expected
+    assert (
+        model_case.dump_python(adapter.validate_json(model, json.dumps(value).encode()))
+        == expected
+    )
+    assert adapter.is_model_instance(value, model) is False
+    assert isinstance(adapter.is_model_instance(instance, model), bool)
+    assert isinstance(
+        adapter.json_schema(model, ref_template="#/components/schemas/{model}"), dict
+    )
+    with pytest.raises(adapter.validation_error):
+        adapter.validate_obj(model, {"unexpected": "shape"})

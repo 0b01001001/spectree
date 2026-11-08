@@ -10,6 +10,7 @@ from spectree.model_adapter import get_pydantic_model_adapter
 from spectree.response import DEFAULT_CODE_DESC, Response
 from spectree.spec import SpecTree
 from spectree.utils import (
+    get_model_key,
     get_request_model_hints,
     has_model,
     is_list_item,
@@ -446,6 +447,13 @@ def test_get_request_model_hints_unresolvable_parameter_annotation():
 
     with pytest.raises(NameError):
         get_request_model_hints(func)
+
+
+def test_get_model_key_names_pep_604_unions():
+    union_key = get_model_key(DemoModel | None)
+
+    assert union_key.startswith("Union.")
+    assert union_key == get_model_key(DemoModel | None)
 
 
 def test_get_request_model_hints_preserves_annotated():

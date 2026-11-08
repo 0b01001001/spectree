@@ -6,6 +6,7 @@ import msgspec
 
 from spectree.model_adapter.protocol import ModelAdapter, SchemaMode
 from spectree.models import ValidationErrorElement
+from spectree.utils import get_type_name
 
 _ERROR_PATH_RE = re.compile(r" - at `(?P<path>.+)`$")
 
@@ -107,7 +108,10 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         return T  # type: ignore
 
     def make_list_model(self, model: type) -> type:
-        list_model = self.make_root_model(list[model], name=f"{model.__name__}List")  # type: ignore
+        list_model = self.make_root_model(
+            list[model],  # type: ignore[valid-type]
+            name=f"{get_type_name(model)}List",
+        )
         return list_model
 
     def json_schema(
