@@ -20,6 +20,19 @@ BaseFile = Annotated[
 ]
 
 
+def _references(value: Any, ref: str) -> bool:
+    pending = [value]
+    while pending:
+        current = pending.pop()
+        if isinstance(current, dict):
+            if current.get("$ref") == ref:
+                return True
+            pending.extend(current.values())
+        elif isinstance(current, list):
+            pending.extend(current)
+    return False
+
+
 def _parse_error_location(message: str) -> list[str]:
     match = _ERROR_PATH_RE.search(message)
     if match is None:
@@ -137,12 +150,14 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
 
         # msgspec returns structs as a root $ref plus a component. SpecTree stores
         # the root model under its own naming_strategy key, so keep only true nested
-        # components in $defs and return the root schema directly.
+        # components in $defs and return the root schema directly. A recursive root
+        # model refers to its own component, so it stays in $defs behind the $ref.
         ref = schema.get("$ref")
         if isinstance(ref, str):
             for key in tuple(components):
                 if ref == ref_template.format(name=key):
-                    schema = components.pop(key)
+                    if not _references(components, ref):
+                        schema = components.pop(key)
                     break
 
         if components:

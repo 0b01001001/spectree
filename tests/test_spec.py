@@ -35,6 +35,7 @@ from tests.common_dataclass import (
     Payload,
     Query,
     Resp,
+    TreeNode,
 )
 from tests.type_checking_annotation_case import type_checking_view_func
 
@@ -727,6 +728,43 @@ def test_identical_request_and_response_schemas_share_one_component(model_case):
     assert f"{key}.serialization" not in spec["components"]["schemas"]
 
 
+def test_nested_and_recursive_models_produce_resolvable_documents(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    parent = model_case.get_model(Parent)
+
+    @app.post("/tree")
+    @api.validate(
+        json=TreeNode,
+        resp=Response(HTTP_200=TreeNode, HTTP_201=list[TreeNode]),
+    )
+    def tree():
+        return {"value": 1}
+
+    @app.post("/parent")
+    @api.validate(json=parent, resp=Response(HTTP_200=parent))
+    def create_parent():
+        return {"child": {"value": 1}}
+
+    api.register(app)
+    client = app.test_client()
+    with app.app_context():
+        spec = api.spec
+
+    assert_component_refs_resolve(spec)
+    assert (
+        client.post("/tree", json={"value": 1, "children": [{"value": 2}]}).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            "/tree", json={"value": 1, "children": [{"value": "x"}]}
+        ).status_code
+        == 422
+    )
+    assert client.post("/parent", json={"child": {"value": 1}}).status_code == 200
+
+
 def _titled(model_case, model, title):
     if model_case.name == "pydantic":
         return Annotated[model, import_module("pydantic").Field(title=title)]
@@ -895,6 +933,24 @@ def test_type_expressions_as_query_models(model_case, query_model):
         ("ids", True),
         ("name", False),
     ]
+
+
+def test_recursive_query_model_is_documented_per_field(model_case):
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+
+    @app.get("/tree")
+    @api.validate(query=TreeNode)
+    def tree():
+        return {}
+
+    api.register(app)
+    with app.app_context():
+        spec = api.spec
+
+    parameters = spec["paths"]["/tree"]["get"]["parameters"]
+    assert [p["name"] for p in parameters] == ["value", "children"]
+    assert_component_refs_resolve(spec)
 
 
 @pytest.mark.pydantic
