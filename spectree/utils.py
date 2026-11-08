@@ -2,6 +2,7 @@ import functools
 import inspect
 import logging
 import re
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
 from hashlib import sha1
@@ -24,6 +25,9 @@ from spectree._types import (
 )
 from spectree.metadata import FunctionDecorator
 from spectree.model_adapter import ModelClass
+
+if sys.version_info >= (3, 14):
+    from annotationlib import Format, get_annotations
 
 # parse HTTP status code to get the code
 HTTP_CODE = re.compile(r"^HTTP_(?P<code>\d{3})$")
@@ -276,7 +280,8 @@ def get_multidict_items_starlette(
     return res
 
 
-_REQUEST_ANNOTATION_NAMES = frozenset({"query", "json", "form", "headers", "cookies"})
+_REQUEST_ARGUMENT_NAMES = ("query", "json", "form", "headers", "cookies")
+_REQUEST_ANNOTATION_NAMES = frozenset(_REQUEST_ARGUMENT_NAMES)
 
 
 def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
@@ -287,7 +292,7 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
     are ignored so unresolved forward references in them do not affect
     request model processing.
     """
-    annotations = getattr(func, "__annotations__", {})
+    annotations = _function_annotations(func)
 
     if not annotations:
         return {}
@@ -320,6 +325,28 @@ def get_request_model_hints(func: Callable[..., Any]) -> Mapping[str, Any]:
 
     localns = {param.__name__: param for param in type_params}
     return get_type_hints(proxy, localns=localns or None, include_extras=True)
+
+
+def _function_annotations(func: Callable[..., Any]) -> Mapping[str, Any]:
+    if sys.version_info >= (3, 14) and getattr(func, "__annotate__", None) is not None:
+        # Annotations are evaluated lazily (PEP 649). Names that cannot be
+        # resolved, such as types imported only under `TYPE_CHECKING`, are
+        # returned as forward references instead of raising `NameError`.
+        return get_annotations(func, format=Format.FORWARDREF)
+    return getattr(func, "__annotations__", {})
+
+
+@functools.cache
+def get_injected_request_arguments(func: Callable[..., Any]) -> tuple[str, ...]:
+    """Return the request arguments (``query``, ``json``, ...) that the plugins
+    pass to ``func`` when the ``annotations`` config is enabled.
+
+    Like :func:`get_request_model_hints`, only these parameters are resolved, so
+    other annotations (for example a return type imported under
+    ``TYPE_CHECKING``) cannot break request handling.
+    """
+    hints = get_request_model_hints(func)
+    return tuple(name for name in _REQUEST_ARGUMENT_NAMES if hints.get(name))
 
 
 def is_list_item(key: str, model: ModelClass | None) -> bool:

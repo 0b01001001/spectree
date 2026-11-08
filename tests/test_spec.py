@@ -1,4 +1,5 @@
 import gc
+import sys
 import warnings
 import weakref
 from dataclasses import dataclass
@@ -1018,3 +1019,22 @@ def test_list_of_optional_models_as_response_model(model_case):
     with app.app_context():
         assert_component_refs_resolve(api.spec)
     assert app.test_client().get("/items").json == [{"value": 1}, None]
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14), reason="annotations are evaluated lazily from 3.14"
+)
+def test_lazily_evaluated_type_checking_annotations(model_case):
+    case = import_module("tests.lazy_annotation_case")
+    api = SpecTree("flask", model_adapter=model_case.adapter)
+    app = Flask(__name__)
+    app.add_url_rule("/view", view_func=api.validate()(case.view), methods=["POST"])
+    api.register(app)
+
+    response = app.test_client().post(
+        "/view", json={"uid": 1, "limit": 2, "name": "spectree"}
+    )
+
+    assert response.json == {"name": "spectree"}
+    with app.app_context():
+        assert "requestBody" in api.spec["paths"]["/view"]["post"]
