@@ -765,6 +765,35 @@ def test_nested_and_recursive_models_produce_resolvable_documents(model_case):
     assert client.post("/parent", json={"child": {"value": 1}}).status_code == 200
 
 
+@pytest.mark.parametrize(
+    "spec_kwargs, response_status",
+    [({}, 422), ({"validation_error_status": 400}, 400)],
+)
+def test_handler_returned_error_payload_is_validated_against_the_error_model(
+    model_case, spec_kwargs, response_status
+):
+    api = SpecTree("flask", model_adapter=model_case.adapter, **spec_kwargs)
+    app = Flask(__name__)
+    error = [{"loc": ["name"], "msg": "already taken", "type": "value_error"}]
+
+    @app.get("/documented")
+    @api.validate(resp=Response(HTTP_200=None))
+    def documented():
+        return error, response_status
+
+    @app.get("/malformed")
+    @api.validate(resp=Response(HTTP_200=None))
+    def malformed():
+        return {"unexpected": "shape"}, response_status
+
+    client = app.test_client()
+    documented_response = client.get("/documented")
+
+    assert documented_response.status_code == response_status
+    assert documented_response.json == error
+    assert client.get("/malformed").status_code == 500
+
+
 def _titled(model_case, model, title):
     if model_case.name == "pydantic":
         return Annotated[model, import_module("pydantic").Field(title=title)]

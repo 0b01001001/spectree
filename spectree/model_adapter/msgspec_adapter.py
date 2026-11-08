@@ -20,6 +20,15 @@ BaseFile = Annotated[
 ]
 
 
+def _payload_model(model: Any) -> Any:
+    """Return the type that describes the payload of ``model``.
+
+    ``msgspec.ValidationError`` is used as the model of validation error
+    responses; its payload is described by :data:`MsgspecValidationError`.
+    """
+    return MsgspecValidationError if model is msgspec.ValidationError else model
+
+
 def _references(value: Any, ref: str) -> bool:
     pending = [value]
     while pending:
@@ -96,10 +105,10 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
         return False
 
     def validate_obj(self, model: type[Any], value: Any) -> Any:
-        return msgspec.convert(value, type=model, strict=False)
+        return msgspec.convert(value, type=_payload_model(model), strict=False)
 
     def validate_json(self, model: type[Any], value: bytes) -> Any:
-        return msgspec.json.decode(value, type=model, strict=False)
+        return msgspec.json.decode(value, type=_payload_model(model), strict=False)
 
     def dump_json(self, value: Any) -> bytes:
         return self.encoder.encode(value)
@@ -139,11 +148,9 @@ class MsgspecModelAdapter(ModelAdapter[Any, msgspec.ValidationError, BaseFile]):
 
         See https://github.com/jcrist/msgspec/issues/686
         """
-        if model is msgspec.ValidationError:
-            model = MsgspecValidationError  # type: ignore
         ref_template = ref_template.replace("{model}", "{name}")
         schemas, components = msgspec.json.schema_components(
-            (model,),
+            (_payload_model(model),),
             ref_template=ref_template,
         )
         schema = schemas[0]

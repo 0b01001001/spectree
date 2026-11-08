@@ -18,6 +18,15 @@ def _is_base_model(model: Any) -> bool:
     return isinstance(model, type) and issubclass(model, BaseModel)
 
 
+def _payload_model(model: Any) -> Any:
+    """Return the model that describes the payload of ``model``.
+
+    ``ValidationError`` is used as the model of validation error responses; its
+    payload is described by :class:`ValidationErrorType`.
+    """
+    return ValidationErrorType if model is ValidationError else model
+
+
 class BaseFile:
     """
     An uploaded file, will be assigned as the corresponding web framework's
@@ -94,11 +103,13 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
         return False
 
     def validate_obj(self, model: Any, value: Any) -> Any:
+        model = _payload_model(model)
         if _is_base_model(model):
             return model.model_validate(value)
         return self._type_adapter(model).validate_python(value)
 
     def validate_json(self, model: Any, value: bytes) -> Any:
+        model = _payload_model(model)
         if _is_base_model(model):
             return model.model_validate_json(value)
         return self._type_adapter(model).validate_json(value)
@@ -136,12 +147,9 @@ class PydanticModelAdapter(ModelAdapter[Any, ValidationError, type[BaseFile]]):
         ref_template: str,
         mode: SchemaMode = "validation",
     ) -> dict[str, Any]:
+        model = _payload_model(model)
         if _is_base_model(model):
             return model.model_json_schema(ref_template=ref_template, mode=mode)
-        elif model is ValidationError:
-            return ValidationErrorType.model_json_schema(
-                ref_template=ref_template, mode=mode
-            )
         return self._type_adapter(model).json_schema(
             ref_template=ref_template, mode=mode
         )

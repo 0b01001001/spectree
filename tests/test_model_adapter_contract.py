@@ -216,6 +216,22 @@ def test_type_expressions_are_models(model_case, build, value, expected):
         adapter.validate_obj(model, {"unexpected": "shape"})
 
 
+def test_validation_error_model_validates_the_error_payload(model_case):
+    adapter = model_case.adapter
+    errors = [{"loc": ["user_id"], "msg": "invalid", "type": "value_error"}]
+
+    adapter.validate_obj(adapter.validation_error, errors)
+    adapter.validate_json(adapter.validation_error, json.dumps(errors).encode())
+    with pytest.raises(adapter.validation_error):
+        adapter.validate_obj(adapter.validation_error, {"unexpected": "shape"})
+    assert (
+        adapter.json_schema(
+            adapter.validation_error, ref_template="#/components/schemas/{model}"
+        )["type"]
+        == "array"
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class FrozenSlotsModel:
     user_id: int
