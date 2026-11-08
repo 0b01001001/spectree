@@ -10,6 +10,6 @@
 def build():
     base(dev=True)
     shell("fish")
-    install.uv(python_version="3.10")
+    install.uv(python_version="3.11")
     install.codex()
     runtime.mount("~/.codex", "~/.codex")

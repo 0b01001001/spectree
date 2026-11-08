@@ -5,13 +5,12 @@ dynamic = []
 description = "Generate OpenAPI document and validate request & response with Python annotations."
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Keming Yang", email = "kemingy94@gmail.com" }]
 classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -47,7 +46,7 @@ includes = ["spectree"]
 source-includes = ["README.md", "CHANGELOG.md", "LICENSE"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "B", "G", "I", "SIM", "TID", "PL", "RUF"]
