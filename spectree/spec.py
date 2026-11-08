@@ -278,18 +278,21 @@ class SpecTree:
                     model_key = self._add_model(model=model, mode="validation")
                     setattr(metadata, name, model_key)
 
+            # Bind a copy so that the caller's declaration is never modified and
+            # can be shared by other endpoints and `SpecTree` instances.
+            endpoint_resp = None
             if resp:
-                resp.bind_model_adapter(self.model_adapter)
+                endpoint_resp = resp.copy_for_model_adapter(self.model_adapter)
                 # Make sure that the endpoint specific status code and data model for
                 # validation errors shows up in the response spec.
-                resp.add_model(
+                endpoint_resp.add_model(
                     validation_error_status,
                     self.validation_error_model or self.model_adapter.validation_error,
                     replace=False,
                 )
-                for model in resp.models:
+                for model in endpoint_resp.models:
                     self._add_model(model=model, mode="serialization")
-                metadata.resp = resp
+                metadata.resp = endpoint_resp
 
             # for sync framework
             @wraps(func)
@@ -301,7 +304,7 @@ class SpecTree:
                     form_model,
                     headers_model,
                     cookies_model,
-                    resp,
+                    endpoint_resp,
                     before or self.before,
                     after or self.after,
                     validation_error_status,
@@ -321,7 +324,7 @@ class SpecTree:
                     form_model,
                     headers_model,
                     cookies_model,
-                    resp,
+                    endpoint_resp,
                     before or self.before,
                     after or self.after,
                     validation_error_status,

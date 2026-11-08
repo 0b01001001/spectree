@@ -185,6 +185,12 @@ Response('HTTP_200') # equals to Response(HTTP_200=None)
 Response(HTTP_403=(ForbidModel, "custom code description"))
 ```
 
+`spec.validate` does not modify the `Response` you pass to it, so one declaration
+can be reused by several endpoints, including endpoints of other `SpecTree`
+instances or model adapters. Each endpoint uses a copy made when it is decorated:
+changing the declaration afterwards (for example with `add_model`) does not affect
+endpoints that are already decorated.
+
 ### How are the schema components named?
 
 Each model is published under `naming_strategy(model)`, `Name.<hash>` by default, and

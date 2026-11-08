@@ -17,8 +17,9 @@ from starlette.testclient import TestClient as StarletteTestClient
 
 from spectree import Response
 from spectree.config import Configuration
-from spectree.model_adapter import get_pydantic_model_adapter
+from spectree.model_adapter import get_msgspec_model_adapter, get_pydantic_model_adapter
 from spectree.models import Server
+from spectree.plugins.base import BasePlugin
 from spectree.plugins.flask_plugin import FlaskPlugin
 from spectree.spec import SpecTree
 from spectree.utils import get_model_key
@@ -600,6 +601,54 @@ def test_spec_is_regenerated_for_endpoints_decorated_after_first_access(model_ca
     assert_component_refs_resolve(second)
 
 
+def test_response_declaration_is_shared_without_being_modified(model_case):
+    resp_model = model_case.get_model(Resp)
+    shared = Response("HTTP_201", HTTP_200=resp_model)
+    first = SpecTree("flask", model_adapter=model_case.adapter)
+    second = SpecTree(
+        "flask", model_adapter=model_case.adapter, validation_error_status=400
+    )
+
+    first_endpoint = first.validate(resp=shared)(lambda: None)
+    second_endpoint = second.validate(resp=shared)(lambda: None)
+
+    assert shared.model_adapter is None
+    assert shared.codes == ["HTTP_201"]
+    assert shared.code_models == {}
+    assert first.get_function_metadata(first_endpoint).resp.find_model(400) is None
+    assert set(first.get_function_metadata(first_endpoint).resp.code_models) == {
+        "HTTP_200",
+        "HTTP_422",
+    }
+    assert set(second.get_function_metadata(second_endpoint).resp.code_models) == {
+        "HTTP_200",
+        "HTTP_400",
+    }
+
+
+@pytest.mark.pydantic
+@pytest.mark.msgspec
+def test_response_declaration_can_be_shared_by_different_model_adapters():
+    pytest.importorskip("pydantic")
+    pytest.importorskip("msgspec")
+    shared = Response(HTTP_200=Resp)
+
+    for adapter in (get_pydantic_model_adapter(), get_msgspec_model_adapter()):
+        api = SpecTree("flask", model_adapter=adapter)
+        app = Flask(__name__)
+
+        @app.get("/resp")
+        @api.validate(resp=shared)
+        def resp():
+            return {"name": "spectree", "score": [1]}
+
+        api.register(app)
+        with app.app_context():
+            spec = api.spec
+        assert app.test_client().get("/resp").status_code == 200
+        assert_component_refs_resolve(spec)
+
+
 @pytest.mark.pydantic
 @pytest.mark.parametrize("response_first", [False, True])
 def test_request_and_response_schemas_of_one_model_are_documented_separately(
@@ -764,6 +813,45 @@ def test_one_handler_decorated_twice_is_documented_per_route(model_case):
     assert _component_name(_json_schema_ref(paths["/second"]["post"])) == (
         get_model_key(second_model)
     )
+
+
+def test_custom_backend_receives_the_v3_validate_arguments(model_case):
+    calls = []
+
+    class RecordingPlugin(BasePlugin):
+        def validate(
+            self,
+            func,
+            query,
+            json,
+            form,
+            headers,
+            cookies,
+            resp,
+            before,
+            after,
+            validation_error_status,
+            skip_validation,
+            force_resp_serialize,
+            *args,
+            **kwargs,
+        ):
+            calls.append((json, resp, validation_error_status, skip_validation))
+            return func(*args, **kwargs)
+
+    api = SpecTree(backend=RecordingPlugin, model_adapter=model_case.adapter)
+    payload = model_case.get_model(Payload)
+    declaration = Response(HTTP_200=None)
+    view = api.validate(json=payload, resp=declaration, validation_error_status=400)(
+        lambda: "ok"
+    )
+
+    assert view() == "ok"
+    ((json_model, resp, status, skip_validation),) = calls
+    assert json_model is payload
+    assert resp is not declaration
+    assert resp.find_model(400) is api.model_adapter.validation_error
+    assert (status, skip_validation) == (400, False)
 
 
 @dataclass
