@@ -143,3 +143,8 @@ class OptionalListQuery:
 @dataclass
 class Child:
     value: int
+
+
+@dataclass
+class Parent:
+    child: Child
